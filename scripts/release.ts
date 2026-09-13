@@ -73,6 +73,8 @@ async function main() {
             `gh release create "${version}" --target "${targetBranch}" --prerelease --title "${version} (Pre-release)" --notes-file "${tempNotesPath}"`
         );
         console.log(`[Release] Successfully created pre-release ${version} on GitHub!`);
+        run(`gh release upload "${version}" "${changelogPath}" --clobber`);
+        console.log(`[Release] Successfully uploaded CHANGELOG.md to pre-release ${version}!`);
     } catch (err: any) {
         console.error(`[Release] Error executing gh release create:`, err.message || err);
         throw err;

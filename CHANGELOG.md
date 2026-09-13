@@ -11,6 +11,30 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-05] - 2026-09-13
+
+### Added
+
+- **Command Description Internationalization (`src/tools/types.ts`, `src/locales/{en,id}/tools.json`):**
+    - Enhanced `ToolDefinition` and `NormalizedTool` with optional `descriptionKey` field for explicit translation routing.
+    - Added universal `resolveToolDescription(def, t)` helper in `src/tools/types.ts` supporting four-tier fallback resolution:
+        1. Explicit `def.descriptionKey`.
+        2. Canonical `tools.commands.<clean_name>.description`.
+        3. Legacy `tools.<clean_name>.description`.
+        4. Default English fallback string (`def.description`).
+    - Integrated `descriptionKey: 'tools.commands.<clean_name>.description'` across all 58 bot command definitions in `src/tools/`.
+    - Added dedicated `"commands"` section in both `src/locales/en/tools.json` and `src/locales/id/tools.json` with 100% symmetric, bilingual descriptions.
+    - Added agent rule **Rule T** (`Standar Menu Bot & Kompatibilitas Deskripsi Perintah i18n`) to `AGENTS.md` and updated `i18n-localization-standards` skill guide.
+    - Added unit tests in `tests/menu.test.ts` asserting dynamic command description localization in both English (`en`) and Indonesian (`id`).
+
+### Changed
+
+- **Menu & Help Formatter Integration (`src/utils/menuFormatter.ts`, `src/services/menuService.ts`):**
+    - Updated `formatCategoryCommands` and `formatCommandDetail` in `src/utils/menuFormatter.ts` to dynamically resolve command descriptions using the chat/user translator `t`.
+    - Added `getToolDescription(tool, t)` method to `MenuService` (`src/services/menuService.ts`).
+
+---
+
 ## [RF-2609-04] - 2026-09-12
 
 ### Added
