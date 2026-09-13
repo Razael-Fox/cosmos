@@ -76,7 +76,7 @@ export async function processBankTransferConfirmation(
     senderRaw: string,
     chatJid: string,
     text: string,
-    t: (key: string, args?: Record<string, any>) => string
+    t: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string
 ): Promise<boolean> {
     const lower = text.trim().toLowerCase();
     if (lower !== 'confirm' && lower !== 'konfirmasi' && lower !== 'yes' && lower !== 'ya') {
@@ -97,7 +97,12 @@ export async function processBankTransferConfirmation(
     if (!result.success) {
         await sock.sendMessage(
             chatJid,
-            { text: renderAlert({ type: 'error', message: result.error || 'Transaction failed.' }) },
+            {
+                text: renderAlert({
+                    type: 'error',
+                    message: result.error || t('tools.bank.transaction_failed', 'Transaction failed.')
+                })
+            },
             { quoted: msg }
         );
         return true;
@@ -106,18 +111,18 @@ export async function processBankTransferConfirmation(
     // 1. Reply to sender
     const senderSuccessCard = renderAlert({
         type: 'success',
-        title: 'TRANSFER COMPLETED',
+        title: t('tools.bank.title_transfer_completed', 'TRANSFER COMPLETED'),
         message: t('tools.bank.transfer_sender_success', {
             amount: formatRupiah(pending.amount),
             targetAccount: pending.targetAccountNumber,
             newBankBalance: formatRupiah(result.newBankBalance ?? 0)
         }),
         details: [
-            `Recipient: ${pending.targetName}`,
-            `Target Account: ${pending.targetAccountNumber}`,
-            `Transfer Amount: ${formatRupiah(pending.amount)}`,
-            `Admin Fee: ${formatRupiah(pending.fee)}`,
-            `Remaining Bank Balance: ${formatRupiah(result.newBankBalance ?? 0)}`
+            t('tools.bank.detail_recipient', { name: pending.targetName }),
+            t('tools.bank.detail_target_account', { account: pending.targetAccountNumber }),
+            t('tools.bank.detail_transfer_amount', { amount: formatRupiah(pending.amount) }),
+            t('tools.bank.detail_admin_fee', { fee: formatRupiah(pending.fee) }),
+            t('tools.bank.detail_remaining_balance', { balance: formatRupiah(result.newBankBalance ?? 0) })
         ]
     });
     await sock.sendMessage(chatJid, { text: senderSuccessCard }, { quoted: msg });
@@ -128,17 +133,20 @@ export async function processBankTransferConfirmation(
             try {
                 const targetChatLanguage = await getChatLanguage(pending.targetUserJid);
                 const targetT = getTranslator(targetChatLanguage);
+                const senderDisplayName = msg.pushName || pending.senderAccountNumber;
                 const receiverCard = renderAlert({
                     type: 'success',
-                    title: 'FUNDS RECEIVED',
+                    title: targetT('tools.bank.title_funds_received', 'FUNDS RECEIVED'),
                     message: targetT('tools.bank.transfer_receiver_notification', {
                         amount: formatRupiah(pending.amount),
                         senderAccount: pending.senderAccountNumber,
-                        senderName: msg.pushName || pending.senderAccountNumber
+                        senderName: senderDisplayName
                     }),
                     details: [
-                        `Amount: +${formatRupiah(pending.amount)}`,
-                        `Sender: ${msg.pushName || pending.senderAccountNumber} (\`${pending.senderAccountNumber}\`)`
+                        targetT('tools.bank.detail_amount_received', { amount: formatRupiah(pending.amount) }),
+                        targetT('tools.bank.detail_sender', {
+                            sender: `${senderDisplayName} (\`${pending.senderAccountNumber}\`)`
+                        })
                     ]
                 });
                 await sock.sendMessage(pending.targetUserJid, { text: receiverCard });
@@ -199,11 +207,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
             return renderAlert({
                 type: 'success',
-                title: 'BANK ACCOUNT REGISTERED',
+                title: t('tools.bank.title_registered', 'BANK ACCOUNT REGISTERED'),
                 message: t('tools.bank.register_success', {
                     accountNumber: result.accountNumber
                 }),
-                details: [`Account Number: ${result.accountNumber}`, `Status: ACTIVE`]
+                details: [
+                    t('tools.bank.detail_account_number', { accountNumber: result.accountNumber }),
+                    t('tools.bank.detail_status', { status: 'ACTIVE' })
+                ]
             });
         }
 
@@ -232,14 +243,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
             return renderAlert({
                 type: 'success',
-                title: 'DEPOSIT SUCCESSFUL',
+                title: t('tools.bank.title_deposit_success', 'DEPOSIT SUCCESSFUL'),
                 message: t('tools.bank.deposit_success', {
                     amount: formatRupiah(amount),
                     newBankBalance: formatRupiah(result.newBankBalance ?? 0)
                 }),
                 details: [
-                    `Deposited Amount: +${formatRupiah(amount)}`,
-                    `New Bank Balance: ${formatRupiah(result.newBankBalance ?? 0)}`
+                    t('tools.bank.detail_deposited_amount', { amount: formatRupiah(amount) }),
+                    t('tools.bank.detail_new_balance', { balance: formatRupiah(result.newBankBalance ?? 0) })
                 ]
             });
         }
@@ -269,14 +280,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
             return renderAlert({
                 type: 'success',
-                title: 'WITHDRAWAL SUCCESSFUL',
+                title: t('tools.bank.title_withdrawal_success', 'WITHDRAWAL SUCCESSFUL'),
                 message: t('tools.bank.withdrawal_success', {
                     amount: formatRupiah(amount),
                     newBankBalance: formatRupiah(result.newBankBalance ?? 0)
                 }),
                 details: [
-                    `Withdrawn Cash: +${formatRupiah(amount)}`,
-                    `Remaining Bank Balance: ${formatRupiah(result.newBankBalance ?? 0)}`
+                    t('tools.bank.detail_withdrawn_cash', { amount: formatRupiah(amount) }),
+                    t('tools.bank.detail_remaining_balance', { balance: formatRupiah(result.newBankBalance ?? 0) })
                 ]
             });
         }
@@ -349,29 +360,41 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
             return [
                 renderCard({
-                    title: 'TRANSFER CONFIRMATION REQUIRED',
+                    title: t('tools.bank.title_transfer_confirmation', 'TRANSFER CONFIRMATION REQUIRED'),
                     icon: '⚠️',
                     headerStyle: 'light',
                     fields: [
-                        { icon: '📤', label: 'Recipient', value: validation.targetAccount.fullName },
+                        {
+                            icon: '📤',
+                            label: t('tools.bank.label_recipient', 'Recipient'),
+                            value: validation.targetAccount.fullName
+                        },
                         {
                             icon: '💳',
-                            label: 'Target Account',
+                            label: t('tools.bank.label_target_account', 'Target Account'),
                             value: `\`${validation.targetAccount.accountNumber}\``
                         },
-                        { icon: '💵', label: 'Amount', value: formatRupiah(amount) },
-                        { icon: '🏷️', label: 'Admin Fee', value: formatRupiah(BANK_TRANSFER_FEE) },
+                        { icon: '💵', label: t('tools.bank.label_amount', 'Amount'), value: formatRupiah(amount) },
+                        {
+                            icon: '🏷️',
+                            label: t('tools.bank.label_admin_fee', 'Admin Fee'),
+                            value: formatRupiah(BANK_TRANSFER_FEE)
+                        },
                         {
                             icon: '💰',
-                            label: 'Total Deduction',
+                            label: t('tools.bank.label_total_deduction', 'Total Deduction'),
                             value: formatRupiah(amount + BANK_TRANSFER_FEE)
                         },
-                        { icon: '⏱️', label: 'Timeout', value: '3 Minutes' }
+                        {
+                            icon: '⏱️',
+                            label: t('tools.bank.label_timeout', 'Timeout'),
+                            value: t('tools.bank.value_timeout', '3 Minutes')
+                        }
                     ]
                 }),
                 '',
-                `👉 Type *confirm* (or *konfirmasi*) to execute this transfer.`,
-                `❌ Type *.cancel* at any time to abort.`
+                t('tools.bank.prompt_confirm', '👉 Type *confirm* (or *konfirmasi*) to execute this transfer.'),
+                t('tools.bank.prompt_cancel', '❌ Type *.cancel* at any time to abort.')
             ].join('\n');
         }
 
@@ -387,16 +410,36 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             const headerCard = renderCard({
-                title: 'COSMOS CENTRAL BANK',
+                title: t('tools.bank.statement_card_title', 'COSMOS CENTRAL BANK'),
                 icon: '🏦',
                 headerStyle: 'heavy',
-                subtitle: 'Official Financial Statement',
+                subtitle: t('tools.bank.statement_card_subtitle', 'Official Financial Statement'),
                 fields: [
-                    { icon: '👤', label: 'Account Holder', value: statement.fullName },
-                    { icon: '💳', label: 'Account Number', value: `\`${statement.accountNumber}\`` },
-                    { icon: '🏛️', label: 'Account Status', value: renderBadge(statement.status || 'ACTIVE') },
-                    { icon: '💵', label: 'Vault Balance', value: formatRupiah(statement.bankBalance) },
-                    { icon: '📈', label: 'Compound Rate', value: '0.5% / Daily (Accrues at 00:00 UTC)' }
+                    {
+                        icon: '👤',
+                        label: t('tools.bank.label_account_holder', 'Account Holder'),
+                        value: statement.fullName
+                    },
+                    {
+                        icon: '💳',
+                        label: t('tools.bank.label_account_number', 'Account Number'),
+                        value: `\`${statement.accountNumber}\``
+                    },
+                    {
+                        icon: '🏛️',
+                        label: t('tools.bank.label_account_status', 'Account Status'),
+                        value: renderBadge(statement.status || 'ACTIVE')
+                    },
+                    {
+                        icon: '💵',
+                        label: t('tools.bank.label_vault_balance', 'Vault Balance'),
+                        value: formatRupiah(statement.bankBalance)
+                    },
+                    {
+                        icon: '📈',
+                        label: t('tools.bank.label_compound_rate', 'Compound Rate'),
+                        value: t('tools.bank.value_compound_rate', '0.5% / Daily (Accrues at 00:00 UTC)')
+                    }
                 ]
             });
 
@@ -426,12 +469,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const txCard =
                 statement.transactions.length > 0
                     ? renderCatalogCard(
-                          'RECENT TRANSACTIONS',
+                          t('tools.bank.recent_transactions', 'RECENT TRANSACTIONS'),
                           '📑',
                           txItems,
-                          'Transfers require interactive confirmation within 3 minutes.'
+                          t('tools.bank.transfer_tip', 'Transfers require interactive confirmation within 3 minutes.')
                       )
-                    : renderCatalogCard('RECENT TRANSACTIONS', '📑', [
+                    : renderCatalogCard(t('tools.bank.recent_transactions', 'RECENT TRANSACTIONS'), '📑', [
                           { title: t('tools.bank.statement_no_transactions') }
                       ]);
 
@@ -439,20 +482,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
 
         default: {
-            return renderCard({
-                title: 'COSMOS CENTRAL BANK',
-                icon: '🏦',
-                headerStyle: 'heavy',
-                body: [
-                    'Available commands:',
-                    '• *.bank register* - Open a new bank account',
-                    '• *.bank balance* - View account statement & balance',
-                    '• *.bank deposit <amount>* - Deposit cash to bank',
-                    '• *.bank withdraw <amount>* - Withdraw cash from bank',
-                    '• *.bank transfer <account> <amount>* - Transfer to another account'
-                ],
-                tips: ['Transfers require interactive confirmation within 3 minutes.']
-            });
+            return t('tools.bank.usage');
         }
     }
 }
