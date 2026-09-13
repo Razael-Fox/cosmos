@@ -152,3 +152,9 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 - **Skema Penomoran Versi:** Penomoran rilis dan versi Cosmos wajib menggunakan format `RF-YYMM-BUILD` (misal: `RF-2609-03`). Dilarang menggunakan semver biasa (`v1.2.0`) pada tag rilis atau changelog.
 - **Otomasi Pre-Release:** Seluruh pembuatan tag rilis dan publikasi halaman release di GitHub didelegasikan melalui script otomasi `scripts/release.ts` (`pnpm run release:pre`).
+
+### T. Standar Menu Bot & Kompatibilitas Deskripsi Perintah i18n (Menu & Command Description i18n Standards)
+
+- **Kompatibilitas Deskripsi Perintah (i18n Command Description):** Setiap deklarasi `ToolDefinition` di `src/tools/` **WAJIB** menyertakan atribut `descriptionKey` (berformat `tools.commands.<clean_name>.description`) selain `description` default berbahasa Inggris untuk keperluan Groq LLM tool calling. Seluruh deskripsi perintah wajib didaftarkan secara simetris di `src/locales/en/tools.json` dan `src/locales/id/tools.json` pada objek `"commands"`.
+- **Resolusi Deskripsi Dinamis:** Penampilan deskripsi perintah pada menu dan panduan bantuan (`.menu`, `.help`, `.menu <category>`, `.help <command>`) **WAJIB** diselesaikan secara dinamis melalui helper `resolveToolDescription(tool, t)` atau `menuService.getToolDescription(tool, t)` agar bahasa deskripsi dirender sesuai preferensi bahasa pengguna/obrolan (`ctx.t`).
+- **Modern Hero Banner & Baileys ExternalAdReply:** Seluruh respon tampilan menu bot (`.menu`, `.help`) **WAJIB** dikirimkan via Baileys `externalAdReply` dengan atribut `renderLargerThumbnail: true`, memanfaatkan buffer thumbnail aman dari `getMenuBannerBuffer()` (otomatis fallback ke placeholder jika file kosong/rusak), serta mengembalikan `undefined` untuk mencegah echo duplikasi pesan pada pipeline handler.

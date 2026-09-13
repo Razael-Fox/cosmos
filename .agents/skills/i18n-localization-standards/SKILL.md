@@ -104,6 +104,39 @@ const t = getTranslator(targetLang);
 return t('tools.setlang.success', { language: langName });
 ```
 
+### G. Standar Kompatibilitas Deskripsi Perintah i18n (Command Description i18n Standards)
+
+Setiap tool di `src/tools/` wajib mendukung lokalisasi deskripsi perintah:
+
+1. **Deklarasi `ToolDefinition`:**
+    - Menyertakan atribut `descriptionKey` berformat `tools.commands.<clean_name>.description`.
+    - Tetap menyediakan `description` bahasa Inggris default sebagai fallback dan fungsi Groq tool calling.
+
+```typescript
+export const definition: ToolDefinition = {
+    name: 'balance',
+    aliases: ['bal', 'saldo'],
+    description: "Check your current casino coin balance or another user's balance.",
+    descriptionKey: 'tools.commands.balance.description',
+    category: 'Casino',
+    parameters: { type: 'object', properties: {} }
+};
+```
+
+2. **Penyimpanan Simetris di `tools.json`:**
+    - Semua deskripsi perintah disimpan dalam objek `"commands"` di `src/locales/{en,id}/tools.json`:
+
+    ```json
+    "commands": {
+        "balance": {
+            "description": "Check your current casino coin balance or another user's balance."
+        }
+    }
+    ```
+
+3. **Resolusi Dinamis via Helper:**
+    - Gunakan `resolveToolDescription(tool, t)` dari `src/tools/types.ts` atau `menuService.getToolDescription(tool, t)` untuk merender teks deskripsi pada tampilan menu/help.
+
 ---
 
 ## 3. Cara Menambahkan & Menggunakan Translasi Baru
