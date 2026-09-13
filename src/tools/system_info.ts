@@ -8,6 +8,7 @@ export const definition: ToolDefinition = {
     category: 'System & Help',
     aliases: ['.ping', '.stats', '.status', '.speed'],
     description: 'Displays server specifications, bot status, and network latency.',
+    descriptionKey: 'tools.commands.system_info.description',
     parameters: {
         type: 'object',
         properties: {},

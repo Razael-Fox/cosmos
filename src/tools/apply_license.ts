@@ -10,6 +10,7 @@ export const definition: ToolDefinition = {
     category: 'Licensing',
     aliases: ['applylicense', 'sim'],
     description: 'Apply for a virtual driver license. Requires a valid Virtual ID Card and age >= 17.',
+    descriptionKey: 'tools.commands.apply_license.description',
     parameters: {
         type: 'object',
         properties: {

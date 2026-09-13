@@ -8,6 +8,7 @@ export const definition: ToolDefinition = {
     aliases: ['getpp', 'pp'],
     description:
         'Fetches the profile photo of a user. The photo will be auto-deleted after 10 seconds. You can mention the user, quote their message, or just use the command to get your own profile photo.',
+    descriptionKey: 'tools.commands.getprofilephoto.description',
     owner: false,
     parameters: {
         type: 'object',

@@ -446,5 +446,181 @@
         "reminder_5_days": "Your loan payment is due in 5 days. Please ensure you have sufficient funds in your bank account to avoid penalties and asset seizure.",
         "overdue_blocked": "Notice: You have failed to repay your loan by the due date. Your bank account has been temporarily restricted from further transactions until the outstanding balance of {{amount}} is resolved.",
         "seizure_notification": "Your outstanding debt of {{amount}} has triggered an automatic asset seizure. The system has confiscated the following assets to clear the balance: {{assetsList}}. Your bank account restrictions have been lifted."
+    },
+    "commands": {
+        "addbalance": {
+            "description": "Add balance to a user from the house vault. (Owner only)"
+        },
+        "apply_license": {
+            "description": "Apply for a virtual driver license. Requires a valid Virtual ID Card and age >= 17."
+        },
+        "autodl": {
+            "description": "Toggle automatic downloading of links for this group. E.g. .autodl tiktok on, .autodl ig off, .autodl list"
+        },
+        "balance": {
+            "description": "Check your current casino coin balance or another user's balance."
+        },
+        "bank": {
+            "description": "Cosmos Central Bank system for secure savings, transfers, and balance inquiries."
+        },
+        "cancel": {
+            "description": "Cancel an active multi-step operation, interactive prompt, or pending confirmation in the current chat."
+        },
+        "coinflip": {
+            "description": "Play coinflip. Example: .coinflip heads 1.000.000"
+        },
+        "daily": {
+            "description": "Claim your daily casino coin reward."
+        },
+        "dice": {
+            "description": "Play dice. Example: .dice 6 1.000.000"
+        },
+        "fevertime": {
+            "description": "Trigger a global Fever Time event for 15 minutes."
+        },
+        "forceupdate": {
+            "description": "Force an update of the global economy and inflation."
+        },
+        "getprofilephoto": {
+            "description": "Fetches the profile photo of a user. The photo will be auto-deleted after 10 seconds. You can mention the user, quote their message, or just use the command to get your own profile photo."
+        },
+        "help": {
+            "description": "Displays the bot navigation menu, category command lists, full command catalog, or detailed command guide."
+        },
+        "idcard": {
+            "description": "View your Virtual ID Card or register a new identity card."
+        },
+        "job": {
+            "description": "Browse careers, apply for jobs, and check your virtual employment status. Requires a valid Virtual ID Card."
+        },
+        "loan": {
+            "description": "Apply for an AI-underwritten loan, repay active loans, or inspect credit score."
+        },
+        "market": {
+            "description": "Check the current state of the global economy and inflation."
+        },
+        "menu": {
+            "description": "Displays the bot navigation menu, category command lists, or full command catalog."
+        },
+        "pinterestdl": {
+            "description": "Downloads a video, image, or carousel from a specified Pinterest URL."
+        },
+        "play": {
+            "description": "Searches for a song on YouTube and downloads it as an audio file. Supports --lyrics flag."
+        },
+        "playlyrics": {
+            "description": "Starts automated lyrics playback for the requested song. Fetches synchronized lyrics online if not found locally."
+        },
+        "buy": {
+            "description": "Purchase an item or property from the shop using your balance."
+        },
+        "catalog": {
+            "description": "View the property catalog to purchase real-world assets."
+        },
+        "inventory": {
+            "description": "View your currently owned items, equipment, and properties."
+        },
+        "sell": {
+            "description": "Sell or pawn a property you own to the bank, with an optional AI negotiation system."
+        },
+        "quoted": {
+            "description": "Forwards the message quoted by another user. Reply to a message that quotes another message with .q to forward the original message."
+        },
+        "rvo": {
+            "description": "Reveals a view-once media message (image, video, or voice note) and resends it as a normal forwarded message."
+        },
+        "bet": {
+            "description": "Place a bet for the Buckshot Roulette minigame."
+        },
+        "creategame": {
+            "description": "Create a new Buckshot Roulette minigame session."
+        },
+        "joingame": {
+            "description": "Join a Buckshot Roulette minigame session."
+        },
+        "shoot": {
+            "description": "Shoot a player or yourself in Buckshot Roulette."
+        },
+        "startgame": {
+            "description": "Start the Buckshot Roulette minigame."
+        },
+        "use": {
+            "description": "Use an item in Buckshot Roulette."
+        },
+        "setgrouplang": {
+            "description": "Set default bot language for the group (Admin only)."
+        },
+        "setlang": {
+            "description": "Set your preferred bot language (e.g. id, en)."
+        },
+        "shop": {
+            "description": "Browse the Cosmos Shop categories and available items."
+        },
+        "slot": {
+            "description": "Play the slot machine. Example: .slot 1.000.000 or .slot all"
+        },
+        "startautocorrection": {
+            "description": "Enables automated AI message auto-correction via OpenRouter for this chat."
+        },
+        "sticker_maker": {
+            "description": "Creates a sticker from an image, video, or GIF sent by the user."
+        },
+        "stopautocorrection": {
+            "description": "Disables automated AI message auto-correction via OpenRouter for this chat."
+        },
+        "stoplyrics": {
+            "description": "Stops ongoing lyrics playback in this chat."
+        },
+        "stoptogglesticker": {
+            "description": "Disables the Auto Sticker Maker feature for this chat."
+        },
+        "stt": {
+            "description": "Transcribes a quoted voice note into text using Groq Whisper."
+        },
+        "system_info": {
+            "description": "Displays server specifications, bot status, and network latency."
+        },
+        "telegramdl": {
+            "description": "Downloads media from a Telegram post link (t.me). Public posts are fetched directly, while posts from registered private groups are proxied through the dummy account."
+        },
+        "tgadd": {
+            "description": "Registers a private Telegram chat so its media can be proxied. Accepts an invite link (the dummy account joins automatically), a private post link, or a raw numeric chat id."
+        },
+        "tgdel": {
+            "description": "Removes a private Telegram chat from the proxy registry so its media is no longer accessible."
+        },
+        "tglist": {
+            "description": "Displays all private Telegram chats currently registered for media proxying."
+        },
+        "tiktokdl": {
+            "description": "Downloads a video from a specified TikTok URL."
+        },
+        "toggleautocorrection": {
+            "description": "Toggles automated AI message auto-correction via OpenRouter for this chat."
+        },
+        "toggleofflineai": {
+            "description": "Toggles the automated offline AI responder. When enabled, the AI will casually reply to messages while you are offline."
+        },
+        "togglesticker": {
+            "description": "Enables or disables the Auto Sticker Maker feature for this chat."
+        },
+        "top": {
+            "description": "View the group casino leaderboard."
+        },
+        "topglobal": {
+            "description": "View the global casino or roulette leaderboard."
+        },
+        "transfer": {
+            "description": "Transfer casino coins to another user."
+        },
+        "vault": {
+            "description": "View the House Vault statistics."
+        },
+        "work": {
+            "description": "Clock in for your work shift to earn salary influenced by macroeconomic inflation. Requires a valid Virtual ID Card and active job."
+        },
+        "ytdl": {
+            "description": "Downloads a video from a specified URL using yt-dlp. Currently supports basic video fetching."
+        }
     }
 }

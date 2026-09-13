@@ -284,7 +284,29 @@ async function runTests() {
     assert(notFoundEn.includes("Command 'random123' not found"), 'English not found format');
     const notFoundId = formatNotFound('command', 'random123', categories, tId, '.');
     assert(notFoundId.includes("Perintah 'random123' tidak ditemukan"), 'Indonesian not found format');
-    console.log('✓ Bilingual localization parity verified.');
+
+    // Command description localization in EN vs ID
+    const slotDetailEn = formatCommandDetail(slotByName, tEn, '.');
+    assert(slotDetailEn.includes('Play the slot machine'), 'English command detail must contain English description');
+
+    const slotDetailId = formatCommandDetail(slotByName, tId, '.');
+    assert(
+        slotDetailId.includes('Bermain mesin slot'),
+        'Indonesian command detail must contain localized Indonesian description'
+    );
+
+    const casinoViewEn = formatCategoryCommands(casinoCat, tEn, '.');
+    assert(
+        casinoViewEn.includes('Play the slot machine'),
+        'English category commands must contain English description'
+    );
+
+    const casinoViewId = formatCategoryCommands(casinoCat, tId, '.');
+    assert(
+        casinoViewId.includes('Bermain mesin slot'),
+        'Indonesian category commands must contain Indonesian description'
+    );
+    console.log('✓ Bilingual localization parity and command descriptions verified.');
 
     // [Test 10] Tool Execution with Baileys Hero Banner (renderLargerThumbnail: true)
     console.log('[Test 10] Testing Baileys hero banner dispatch in help & menu execution...');

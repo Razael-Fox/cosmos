@@ -9,6 +9,7 @@ const balanceTool: ToolModule = {
         name: 'balance',
         aliases: ['bal', 'saldo'],
         description: "Check your current casino coin balance or another user's balance.",
+        descriptionKey: 'tools.commands.balance.description',
         category: 'Casino',
         parameters: {
             type: 'object',

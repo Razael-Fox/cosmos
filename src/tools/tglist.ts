@@ -7,7 +7,8 @@ export const definition: ToolDefinition = {
     category: 'Downloaders',
     aliases: ['.tglist'],
     owner: true,
-    description: 'Displays all private Telegram chats currently registered for media proxying.'
+    description: 'Displays all private Telegram chats currently registered for media proxying.',
+    descriptionKey: 'tools.commands.tglist.description'
 };
 
 export async function execute(_args?: Record<string, any>, ctx?: ToolContext): Promise<string> {

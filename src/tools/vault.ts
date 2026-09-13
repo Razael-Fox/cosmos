@@ -8,6 +8,7 @@ const vaultTool: ToolModule = {
         name: 'vault',
         aliases: ['bandar'],
         description: 'View the House Vault statistics.',
+        descriptionKey: 'tools.commands.vault.description',
         category: 'Casino',
         owner: true,
         parameters: {

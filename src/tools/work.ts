@@ -11,6 +11,7 @@ export const definition: ToolDefinition = {
     aliases: ['shift', 'kerja', 'duty'],
     description:
         'Clock in for your work shift to earn salary influenced by macroeconomic inflation. Requires a valid Virtual ID Card and active job.',
+    descriptionKey: 'tools.commands.work.description',
     parameters: {
         type: 'object',
         properties: {}

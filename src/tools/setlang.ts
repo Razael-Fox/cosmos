@@ -9,6 +9,7 @@ export const definition: ToolDefinition = {
     category: 'Settings',
     aliases: ['language', 'lang', 'ubahbahasa'],
     description: 'Set your preferred bot language (e.g. id, en).',
+    descriptionKey: 'tools.commands.setlang.description',
     parameters: {
         type: 'object',
         properties: {

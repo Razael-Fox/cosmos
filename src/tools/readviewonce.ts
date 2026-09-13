@@ -8,6 +8,7 @@ export const definition: ToolDefinition = {
     aliases: ['readviewonce', 'openviewonce'],
     description:
         'Reveals a view-once media message (image, video, or voice note) and resends it as a normal forwarded message.',
+    descriptionKey: 'tools.commands.rvo.description',
     owner: true,
     parameters: {
         type: 'object',

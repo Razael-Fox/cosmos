@@ -9,6 +9,7 @@ const shootTool: ToolModule = {
     definition: {
         name: 'shoot',
         description: 'Shoot a player or yourself in Buckshot Roulette',
+        descriptionKey: 'tools.commands.shoot.description',
         category: 'Games',
         parameters: {
             type: 'object',

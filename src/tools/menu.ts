@@ -7,6 +7,7 @@ export const definition: ToolDefinition = {
     category: 'System & Help',
     aliases: ['.menu', '.allmenu'],
     description: 'Displays the bot navigation menu, category command lists, or full command catalog.',
+    descriptionKey: 'tools.commands.menu.description',
     parameters: {
         type: 'object',
         properties: {

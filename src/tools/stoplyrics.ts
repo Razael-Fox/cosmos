@@ -8,6 +8,7 @@ export const definition: ToolDefinition = {
     category: 'Music & Lyrics',
     aliases: ['.stoplyrics', '.slyrics'],
     description: 'Stops ongoing lyrics playback in this chat.',
+    descriptionKey: 'tools.commands.stoplyrics.description',
     parameters: {
         type: 'object',
         properties: {},

@@ -9,6 +9,7 @@ export const definition: ToolDefinition = {
     aliases: ['.autodl'],
     description:
         'Toggle automatic downloading of links for this group. E.g. .autodl tiktok on, .autodl ig off, .autodl list',
+    descriptionKey: 'tools.commands.autodl.description',
     parameters: {
         type: 'object',
         properties: {

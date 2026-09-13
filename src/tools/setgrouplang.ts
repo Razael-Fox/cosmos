@@ -8,6 +8,7 @@ export const definition: ToolDefinition = {
     category: 'Settings',
     aliases: ['grouplang', 'setgplang'],
     description: 'Set default bot language for the group (Admin only).',
+    descriptionKey: 'tools.commands.setgrouplang.description',
     parameters: {
         type: 'object',
         properties: {

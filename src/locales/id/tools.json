@@ -446,5 +446,181 @@
         "reminder_5_days": "Pembayaran pinjaman Anda jatuh tempo dalam 5 hari. Harap pastikan saldo rekening bank Anda mencukupi untuk menghindari penalti dan penyitaan aset.",
         "overdue_blocked": "Pemberitahuan: Anda belum melunasi pinjaman hingga tanggal jatuh tempo. Rekening bank Anda telah dibekukan sementara dari transaksi lanjutan sampai sisa tagihan sebesar {{amount}} diselesaikan.",
         "seizure_notification": "Tagihan terutang Anda sebesar {{amount}} telah memicu penyitaan aset otomatis. Sistem telah menyita aset berikut untuk melunasi tagihan: {{assetsList}}. Pembekuan rekening bank Anda telah dicabut."
+    },
+    "commands": {
+        "addbalance": {
+            "description": "Menambahkan saldo ke pengguna dari brankas bandar. (Khusus Pemilik)"
+        },
+        "apply_license": {
+            "description": "Mengajukan Surat Izin Mengemudi (SIM) virtual. Memerlukan KTP yang sah dan usia >= 17 tahun."
+        },
+        "autodl": {
+            "description": "Mengatur unduhan otomatis tautan di grup ini. Contoh: .autodl tiktok on, .autodl ig off, .autodl list"
+        },
+        "balance": {
+            "description": "Cek saldo koin kasino Anda saat ini atau saldo pengguna lain."
+        },
+        "bank": {
+            "description": "Sistem Cosmos Central Bank untuk tabungan aman, transfer, dan pengecekan saldo."
+        },
+        "cancel": {
+            "description": "Membatalkan proses multi-langkah yang aktif, prompt interaktif, atau konfirmasi tertunda di obrolan saat ini."
+        },
+        "coinflip": {
+            "description": "Bermain lempar koin. Contoh: .coinflip heads 1.000.000"
+        },
+        "daily": {
+            "description": "Klaim hadiah koin kasino harian Anda."
+        },
+        "dice": {
+            "description": "Bermain lempar dadu. Contoh: .dice 6 1.000.000"
+        },
+        "fevertime": {
+            "description": "Mengaktifkan acara global Fever Time selama 15 menit."
+        },
+        "forceupdate": {
+            "description": "Memaksa pembaruan data ekonomi global dan inflasi pasar."
+        },
+        "getprofilephoto": {
+            "description": "Mengambil foto profil pengguna. Foto akan dihapus otomatis setelah 10 detik. Anda dapat menyebutkan pengguna, membalas pesannya, atau menggunakan perintah ini untuk mengambil foto profil Anda sendiri."
+        },
+        "help": {
+            "description": "Menampilkan menu navigasi bot, daftar perintah per kategori, katalog lengkap, atau panduan detail perintah."
+        },
+        "idcard": {
+            "description": "Melihat Kartu ID Virtual (KTP) Anda atau mendaftarkan kartu identitas baru."
+        },
+        "job": {
+            "description": "Melihat katalog profesi, melamar pekerjaan, dan memeriksa status pekerjaan virtual. Memerlukan KTP yang sah."
+        },
+        "loan": {
+            "description": "Mengajukan pinjaman dengan penilaian AI, melunasi pinjaman aktif, atau memeriksa skor kredit."
+        },
+        "market": {
+            "description": "Memeriksa kondisi ekonomi global terkini dan tingkat inflasi pasar."
+        },
+        "menu": {
+            "description": "Menampilkan menu navigasi bot, daftar perintah per kategori, atau katalog lengkap perintah."
+        },
+        "pinterestdl": {
+            "description": "Mengunduh video, gambar, atau karosel dari tautan URL Pinterest."
+        },
+        "play": {
+            "description": "Mencari lagu di YouTube dan mengunduhnya sebagai file audio. Mendukung parameter --lyrics."
+        },
+        "playlyrics": {
+            "description": "Memulai pemutaran lirik otomatis untuk lagu yang diminta. Mengambil lirik tersinkronisasi daring jika tidak tersedia secara lokal."
+        },
+        "buy": {
+            "description": "Membeli barang atau properti dari toko menggunakan saldo Anda."
+        },
+        "catalog": {
+            "description": "Melihat katalog properti untuk membeli aset dunia nyata."
+        },
+        "inventory": {
+            "description": "Melihat barang, perlengkapan, dan properti yang Anda miliki saat ini."
+        },
+        "sell": {
+            "description": "Menjual atau menggadaikan properti milik Anda ke bank, dengan sistem negosiasi AI opsional."
+        },
+        "quoted": {
+            "description": "Meneruskan pesan yang dikutip pengguna lain. Balas pesan yang mengutip pesan lain dengan .q untuk meneruskan pesan asli."
+        },
+        "rvo": {
+            "description": "Membuka pesan media sekali lihat (gambar, video, atau voice note) dan mengirimkannya kembali sebagai pesan biasa."
+        },
+        "bet": {
+            "description": "Memasang taruhan untuk minigame Buckshot Roulette."
+        },
+        "creategame": {
+            "description": "Membuat sesi minigame Buckshot Roulette baru."
+        },
+        "joingame": {
+            "description": "Bergabung ke dalam sesi minigame Buckshot Roulette."
+        },
+        "shoot": {
+            "description": "Menembak pemain lain atau diri sendiri dalam Buckshot Roulette."
+        },
+        "startgame": {
+            "description": "Memulai minigame Buckshot Roulette."
+        },
+        "use": {
+            "description": "Menggunakan item dalam Buckshot Roulette."
+        },
+        "setgrouplang": {
+            "description": "Mengatur bahasa default bot untuk grup ini (Khusus Admin)."
+        },
+        "setlang": {
+            "description": "Mengatur preferensi bahasa bot Anda (contoh: id, en)."
+        },
+        "shop": {
+            "description": "Melihat kategori toko Cosmos dan barang-barang yang tersedia."
+        },
+        "slot": {
+            "description": "Bermain mesin slot. Contoh: .slot 1.000.000 atau .slot all"
+        },
+        "startautocorrection": {
+            "description": "Mengaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
+        },
+        "sticker_maker": {
+            "description": "Membuat stiker dari gambar, video, atau GIF yang dikirimkan oleh pengguna."
+        },
+        "stopautocorrection": {
+            "description": "Menonaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
+        },
+        "stoplyrics": {
+            "description": "Menghentikan pemutaran lirik lagu yang sedang berlangsung di obrolan ini."
+        },
+        "stoptogglesticker": {
+            "description": "Menonaktifkan fitur Pembuat Stiker Otomatis untuk obrolan ini."
+        },
+        "stt": {
+            "description": "Mentranskripsi voice note yang dikutip menjadi teks menggunakan Groq Whisper."
+        },
+        "system_info": {
+            "description": "Menampilkan spesifikasi server, status bot, dan latensi jaringan."
+        },
+        "telegramdl": {
+            "description": "Mengunduh media dari tautan kiriman Telegram (t.me). Kiriman publik diunduh langsung, sedangkan kiriman privat melalui proxy akun perantara."
+        },
+        "tgadd": {
+            "description": "Mendaftarkan obrolan Telegram privat agar medianya dapat diakses. Menerima tautan undangan, tautan kiriman privat, atau ID obrolan numerik."
+        },
+        "tgdel": {
+            "description": "Menghapus obrolan Telegram privat dari daftar proxy sehingga medianya tidak lagi dapat diakses."
+        },
+        "tglist": {
+            "description": "Menampilkan semua obrolan Telegram privat yang saat ini terdaftar untuk proxy media."
+        },
+        "tiktokdl": {
+            "description": "Mengunduh video dari tautan URL TikTok yang ditentukan."
+        },
+        "toggleautocorrection": {
+            "description": "Mengaktifkan atau menonaktifkan koreksi pesan otomatis AI via OpenRouter untuk obrolan ini."
+        },
+        "toggleofflineai": {
+            "description": "Mengaktifkan atau menonaktifkan penjawab AI offline otomatis saat Anda sedang tidak aktif."
+        },
+        "togglesticker": {
+            "description": "Mengaktifkan atau menonaktifkan fitur Pembuat Stiker Otomatis untuk obrolan ini."
+        },
+        "top": {
+            "description": "Melihat papan peringkat kasino grup."
+        },
+        "topglobal": {
+            "description": "Melihat papan peringkat kasino atau roulette global."
+        },
+        "transfer": {
+            "description": "Mentransfer koin kasino ke pengguna lain."
+        },
+        "vault": {
+            "description": "Melihat statistik Brankas Bandar (House Vault)."
+        },
+        "work": {
+            "description": "Masuk shift kerja untuk mendapatkan gaji yang dipengaruhi inflasi makroekonomi. Memerlukan KTP yang sah dan pekerjaan aktif."
+        },
+        "ytdl": {
+            "description": "Mengunduh video dari URL yang ditentukan menggunakan yt-dlp."
+        }
     }
 }

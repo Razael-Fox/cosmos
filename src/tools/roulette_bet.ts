@@ -9,6 +9,7 @@ const betTool: ToolModule = {
     definition: {
         name: 'bet',
         description: 'Place a bet for the Buckshot Roulette minigame',
+        descriptionKey: 'tools.commands.bet.description',
         category: 'Games',
         parameters: {
             type: 'object',

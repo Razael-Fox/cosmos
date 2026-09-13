@@ -8,6 +8,7 @@ const shopTool: ToolModule = {
         name: 'shop',
         aliases: ['store', 'itemshop'],
         description: 'Browse the Cosmos Shop categories and available items.',
+        descriptionKey: 'tools.commands.shop.description',
         category: 'Economy',
         parameters: {
             type: 'object',

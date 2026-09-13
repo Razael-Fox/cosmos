@@ -123,6 +123,7 @@ export const definition: ToolDefinition = {
     category: 'Banking',
     aliases: ['pinjam', 'pinjaman', 'hutang'],
     description: 'Apply for an AI-underwritten loan, repay active loans, or inspect credit score.',
+    descriptionKey: 'tools.commands.loan.description',
     parameters: {
         type: 'object',
         properties: {

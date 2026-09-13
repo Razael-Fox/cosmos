@@ -9,6 +9,7 @@ const diceTool: ToolModule = {
     definition: {
         name: 'dice',
         description: 'Play dice. Example: .dice 6 1.000.000',
+        descriptionKey: 'tools.commands.dice.description',
         category: 'Casino',
         parameters: {
             type: 'object',

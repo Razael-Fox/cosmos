@@ -7,6 +7,7 @@ export const definition: ToolDefinition = {
     aliases: ['q'],
     description:
         'Forwards the message quoted by another user. Reply to a message that quotes another message with .q to forward the original message.',
+    descriptionKey: 'tools.commands.quoted.description',
     parameters: {
         type: 'object',
         properties: {},

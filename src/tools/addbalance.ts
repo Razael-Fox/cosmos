@@ -7,6 +7,7 @@ const addBalanceTool: ToolModule = {
     definition: {
         name: 'addbalance',
         description: 'Add balance to a user from the house vault. (Owner only)',
+        descriptionKey: 'tools.commands.addbalance.description',
         category: 'Casino',
         owner: true,
         parameters: {

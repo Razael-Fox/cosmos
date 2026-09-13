@@ -131,6 +131,7 @@ export const definition: ToolDefinition = {
     category: 'Economy',
     aliases: ['atm', 'rekening', 'centralbank'],
     description: 'Cosmos Central Bank system for secure savings, transfers, and balance inquiries.',
+    descriptionKey: 'tools.commands.bank.description',
     parameters: {
         type: 'object',
         properties: {

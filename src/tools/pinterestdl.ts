@@ -33,6 +33,7 @@ export const definition: ToolDefinition = {
     category: 'Downloaders',
     aliases: ['.pinterest', '.pin', '.pindl'],
     description: 'Downloads a video, image, or carousel from a specified Pinterest URL.',
+    descriptionKey: 'tools.commands.pinterestdl.description',
     parameters: {
         type: 'object',
         properties: {

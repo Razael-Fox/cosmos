@@ -10,6 +10,7 @@ export const definition: ToolDefinition = {
     aliases: ['batal', 'abort'],
     description:
         'Cancel an active multi-step operation, interactive prompt, or pending confirmation in the current chat.',
+    descriptionKey: 'tools.commands.cancel.description',
     parameters: {
         type: 'object',
         properties: {

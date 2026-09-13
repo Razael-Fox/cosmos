@@ -7,6 +7,7 @@ const marketTool: ToolModule = {
         name: 'market',
         aliases: ['economy'],
         description: 'Check the current state of the global economy and inflation.',
+        descriptionKey: 'tools.commands.market.description',
         category: 'Economy'
     },
     execute: async (args: Record<string, any>, ctx: ToolContext) => {

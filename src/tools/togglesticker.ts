@@ -17,6 +17,7 @@ export const definition: ToolDefinition = {
         '.astiker'
     ],
     description: 'Enables or disables the Auto Sticker Maker feature for this chat.',
+    descriptionKey: 'tools.commands.togglesticker.description',
     parameters: {
         type: 'object',
         properties: {},

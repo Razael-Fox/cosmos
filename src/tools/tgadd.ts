@@ -10,6 +10,7 @@ export const definition: ToolDefinition = {
     owner: true,
     description:
         'Registers a private Telegram chat so its media can be proxied. Accepts an invite link (the dummy account joins automatically), a private post link, or a raw numeric chat id.',
+    descriptionKey: 'tools.commands.tgadd.description',
     parameters: {
         type: 'object',
         properties: {

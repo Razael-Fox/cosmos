@@ -19,6 +19,7 @@ export const definition: ToolDefinition = {
     aliases: ['.help', '.menu', '.bantuan'],
     description:
         'Displays the bot navigation menu, category command lists, full command catalog, or detailed command guide.',
+    descriptionKey: 'tools.commands.help.description',
     parameters: {
         type: 'object',
         properties: {

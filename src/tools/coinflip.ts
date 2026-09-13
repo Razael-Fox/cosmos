@@ -9,6 +9,7 @@ const coinflipTool: ToolModule = {
     definition: {
         name: 'coinflip',
         description: 'Play coinflip. Example: .coinflip heads 1.000.000',
+        descriptionKey: 'tools.commands.coinflip.description',
         category: 'Casino',
         parameters: {
             type: 'object',

@@ -6,6 +6,7 @@ const feverTimeTool: ToolModule = {
     definition: {
         name: 'fevertime',
         description: 'Trigger a global Fever Time event for 15 minutes.',
+        descriptionKey: 'tools.commands.fevertime.description',
         category: 'Casino',
         owner: true,
         parameters: {

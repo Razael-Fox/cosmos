@@ -17,6 +17,7 @@ const slotTool: ToolModule = {
     definition: {
         name: 'slot',
         description: 'Play the slot machine. Example: .slot 1.000.000 or .slot all',
+        descriptionKey: 'tools.commands.slot.description',
         category: 'Casino',
         parameters: {
             type: 'object',

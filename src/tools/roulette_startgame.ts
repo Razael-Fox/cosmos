@@ -9,6 +9,7 @@ const startGameTool: ToolModule = {
     definition: {
         name: 'startgame',
         description: 'Start the Buckshot Roulette minigame',
+        descriptionKey: 'tools.commands.startgame.description',
         category: 'Games'
     },
     execute: async (args: Record<string, any>, ctx: ToolContext) => {

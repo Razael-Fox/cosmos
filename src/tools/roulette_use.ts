@@ -7,6 +7,7 @@ const useTool: ToolModule = {
     definition: {
         name: 'use',
         description: 'Use an item in Buckshot Roulette',
+        descriptionKey: 'tools.commands.use.description',
         category: 'Games',
         parameters: {
             type: 'object',

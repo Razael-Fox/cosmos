@@ -13,6 +13,7 @@ const propertySellTool: ToolModule = {
         name: 'sell',
         aliases: ['pawn', 'sellproperty'],
         description: 'Sell or pawn a property you own to the bank, with an optional AI negotiation system.',
+        descriptionKey: 'tools.commands.sell.description',
         category: 'Economy',
         parameters: {
             type: 'object',

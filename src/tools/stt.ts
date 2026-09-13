@@ -15,6 +15,7 @@ export const definition: ToolDefinition = {
     category: 'AI & Correction',
     aliases: ['.stt', '.ptt'],
     description: 'Transcribes a quoted voice note into text using Groq Whisper.',
+    descriptionKey: 'tools.commands.stt.description',
     parameters: {
         type: 'object',
         properties: {},

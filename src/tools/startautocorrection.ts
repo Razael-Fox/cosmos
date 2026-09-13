@@ -7,6 +7,7 @@ export const definition: ToolDefinition = {
     category: 'AI & Correction',
     aliases: ['.startautocorrection', '.startautocorrect', '.enableautocorrect', '.enableautocorrection'],
     description: 'Enables automated AI message auto-correction via OpenRouter for this chat.',
+    descriptionKey: 'tools.commands.startautocorrection.description',
     owner: true,
     parameters: {
         type: 'object',

@@ -18,6 +18,7 @@ export const definition: ToolDefinition = {
     aliases: ['jobs', 'applyjob', 'apply-job', 'career', 'profesi'],
     description:
         'Browse careers, apply for jobs, and check your virtual employment status. Requires a valid Virtual ID Card.',
+    descriptionKey: 'tools.commands.job.description',
     parameters: {
         type: 'object',
         properties: {

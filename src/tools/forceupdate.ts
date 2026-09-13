@@ -7,6 +7,7 @@ const forceupdateTool: ToolModule = {
     definition: {
         name: 'forceupdate',
         description: 'Force an update of the global economy and inflation.',
+        descriptionKey: 'tools.commands.forceupdate.description',
         category: 'Economy',
         owner: true
     },

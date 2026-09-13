@@ -17,6 +17,7 @@ export const definition: ToolDefinition = {
         '.stopastiker'
     ],
     description: 'Disables the Auto Sticker Maker feature for this chat.',
+    descriptionKey: 'tools.commands.stoptogglesticker.description',
     parameters: {
         type: 'object',
         properties: {},

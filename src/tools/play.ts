@@ -14,6 +14,7 @@ export const definition: ToolDefinition = {
     category: 'Music & Audio',
     aliases: ['.play', '.ytplay', '.song', '.audio', '.ytm'],
     description: 'Searches for a song on YouTube and downloads it as an audio file. Supports --lyrics flag.',
+    descriptionKey: 'tools.commands.play.description',
     parameters: {
         type: 'object',
         properties: {

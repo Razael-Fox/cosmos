@@ -7,6 +7,7 @@ const propertyCatalogTool: ToolModule = {
         name: 'catalog',
         aliases: ['propertycatalog', 'properties'],
         description: 'View the property catalog to purchase real-world assets.',
+        descriptionKey: 'tools.commands.catalog.description',
         category: 'Economy'
     },
     execute: async (args: Record<string, any>, ctx: ToolContext) => {

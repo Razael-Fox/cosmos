@@ -9,6 +9,7 @@ export const definition: ToolDefinition = {
     aliases: ['.playlyrics', '.lirik', '.lyrics'],
     description:
         'Starts automated lyrics playback for the requested song. Fetches synchronized lyrics online if not found locally.',
+    descriptionKey: 'tools.commands.playlyrics.description',
     parameters: {
         type: 'object',
         properties: {

@@ -15,6 +15,7 @@ export const definition: ToolDefinition = {
     category: 'General',
     aliases: ['register-id', 'registerid', 'ktp', 'myid', 'check-id'],
     description: 'View your Virtual ID Card or register a new identity card.',
+    descriptionKey: 'tools.commands.idcard.description',
     parameters: {
         type: 'object',
         properties: {

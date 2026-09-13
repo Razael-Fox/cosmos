@@ -1,4 +1,5 @@
 import { NormalizedTool, CategoryInfo } from '../services/menuService.js';
+import { resolveToolDescription } from '../tools/types.js';
 
 export interface DashboardOptions {
     pushName?: string;
@@ -133,8 +134,9 @@ export function formatCategoryCommands(category: CategoryInfo, t: TranslatorFn, 
             spaceIdx !== -1
                 ? `*${cmd.usage.substring(0, spaceIdx)}* ${cmd.usage.substring(spaceIdx + 1)}`
                 : `*${cmd.usage}*`;
+        const desc = resolveToolDescription(cmd, t);
         lines.push(`│ ⭔ ${cmdHeader}`);
-        lines.push(`│   _${cmd.description}_`);
+        lines.push(`│   _${desc}_`);
         if (idx !== category.commands.length - 1) {
             lines.push(`│`);
         }
@@ -192,12 +194,13 @@ export function formatCommandDetail(tool: NormalizedTool, t: TranslatorFn, _pref
 
     const aliasesText = tool.aliases.length > 0 ? tool.aliases.join(', ') : t('tools.menu.none');
     const exampleText = tool.example || tool.usage;
+    const desc = resolveToolDescription(tool, t);
 
     return [
         `╭───「 *${guideTitle}* 」`,
         `│ 🏷️ *${cmdLabel}:* ${cleanName}`,
         `│ 📁 *${catLabel}:* ${tool.category}`,
-        `│ 📝 *${descLabel}:* ${tool.description}`,
+        `│ 📝 *${descLabel}:* ${desc}`,
         `│ 🔁 *${aliasesLabel}:* ${aliasesText}`,
         `│ 📌 *${usageLabel}:* ${tool.usage}`,
         `│ 💡 *${exampleLabel}:* ${exampleText}`,

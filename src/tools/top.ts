@@ -7,6 +7,7 @@ const topTool: ToolModule = {
         name: 'top',
         aliases: ['leaderboard', 'lb'],
         description: 'View the group casino leaderboard.',
+        descriptionKey: 'tools.commands.top.description',
         category: 'Casino',
         parameters: {
             type: 'object',

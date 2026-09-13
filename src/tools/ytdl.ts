@@ -13,6 +13,7 @@ export const definition: ToolDefinition = {
     category: 'Downloaders',
     aliases: ['.yt', '.ytdl', '.youtube'],
     description: 'Downloads a video from a specified URL using yt-dlp. Currently supports basic video fetching.',
+    descriptionKey: 'tools.commands.ytdl.description',
     parameters: {
         type: 'object',
         properties: {

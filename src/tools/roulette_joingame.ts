@@ -9,6 +9,7 @@ const joinGameTool: ToolModule = {
     definition: {
         name: 'joingame',
         description: 'Join a Buckshot Roulette minigame session',
+        descriptionKey: 'tools.commands.joingame.description',
         category: 'Games',
         parameters: {
             type: 'object',

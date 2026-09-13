@@ -246,6 +246,7 @@ export const definition: ToolDefinition = {
     aliases: ['.tg', '.tgdl', '.tele', '.telegram'],
     description:
         'Downloads media from a Telegram post link (t.me). Public posts are fetched directly, while posts from registered private groups are proxied through the dummy account.',
+    descriptionKey: 'tools.commands.telegramdl.description',
     parameters: {
         type: 'object',
         properties: {

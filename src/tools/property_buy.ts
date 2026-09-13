@@ -9,6 +9,7 @@ const buyTool: ToolModule = {
         name: 'buy',
         aliases: ['purchase'],
         description: 'Purchase an item or property from the shop using your balance.',
+        descriptionKey: 'tools.commands.buy.description',
         category: 'Economy',
         parameters: {
             type: 'object',

@@ -8,6 +8,7 @@ const inventoryTool: ToolModule = {
         name: 'inventory',
         aliases: ['myitems', 'bag', 'inv'],
         description: 'View your currently owned items, equipment, and properties.',
+        descriptionKey: 'tools.commands.inventory.description',
         category: 'Economy'
     },
     execute: async (_args: Record<string, any>, ctx: ToolContext) => {

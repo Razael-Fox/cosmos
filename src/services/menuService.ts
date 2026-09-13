@@ -1,4 +1,4 @@
-import { ToolModule } from '../tools/types.js';
+import { ToolModule, resolveToolDescription } from '../tools/types.js';
 import toolsHandler from '../tools/handler.js';
 
 export interface NormalizedTool {
@@ -7,6 +7,7 @@ export interface NormalizedTool {
     category: string;
     rawCategory: string;
     description: string;
+    descriptionKey?: string;
     aliases: string[];
     owner: boolean;
     usage: string;
@@ -180,6 +181,7 @@ export class MenuService {
                 category: canonicalCategory,
                 rawCategory: def.category || 'General',
                 description,
+                descriptionKey: def.descriptionKey,
                 aliases: normalizedAliases,
                 owner: Boolean(def.owner),
                 usage,
@@ -189,6 +191,13 @@ export class MenuService {
         }
 
         return normalized;
+    }
+
+    /**
+     * Resolves the localized description of a tool using the provided translator.
+     */
+    public getToolDescription(tool: NormalizedTool, t?: (key: string, args?: Record<string, any>) => string): string {
+        return resolveToolDescription(tool, t);
     }
 
     /**

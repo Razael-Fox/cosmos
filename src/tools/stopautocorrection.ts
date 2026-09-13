@@ -7,6 +7,7 @@ export const definition: ToolDefinition = {
     category: 'AI & Correction',
     aliases: ['.stopautocorrection', '.stopautocorrect', '.disableautocorrect', '.disableautocorrection'],
     description: 'Disables automated AI message auto-correction via OpenRouter for this chat.',
+    descriptionKey: 'tools.commands.stopautocorrection.description',
     owner: true,
     parameters: {
         type: 'object',

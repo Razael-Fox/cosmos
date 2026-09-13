@@ -11,6 +11,7 @@ const topGlobalTool: ToolModule = {
     definition: {
         name: 'topglobal',
         description: 'View the global casino or roulette leaderboard.',
+        descriptionKey: 'tools.commands.topglobal.description',
         category: 'Casino',
         parameters: {
             type: 'object',
