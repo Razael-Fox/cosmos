@@ -33,14 +33,20 @@ async function runTests() {
     assert(Buffer.isBuffer(defaultBuffer), 'Default banner must be a Buffer');
     assert(defaultBuffer.length > 0, 'Default banner buffer must not be empty');
 
-    // Since assets/menu_banner.png is 0 bytes, it should have fallen back to placeholder
+    const bannerPath = path.resolve(process.cwd(), 'assets', 'menu_banner.png');
     const placeholderPath = path.resolve(process.cwd(), 'assets', 'menu_banner.placeholder.png');
-    if (fs.existsSync(placeholderPath)) {
-        const placeholderSize = fs.statSync(placeholderPath).size;
+
+    if (fs.existsSync(bannerPath) && fs.statSync(bannerPath).size > 0) {
         assert.strictEqual(
             defaultBuffer.length,
-            placeholderSize,
-            'Should automatically fall back to menu_banner.placeholder.png when menu_banner.png is 0 bytes'
+            fs.statSync(bannerPath).size,
+            'Should load the actual menu_banner.png when available and non-empty'
+        );
+    } else if (fs.existsSync(placeholderPath)) {
+        assert.strictEqual(
+            defaultBuffer.length,
+            fs.statSync(placeholderPath).size,
+            'Should automatically fall back to menu_banner.placeholder.png when menu_banner.png is missing or 0 bytes'
         );
     }
 
@@ -49,6 +55,13 @@ async function runTests() {
     const fallbackBuffer = getMenuBannerBuffer('/non/existent/path/banner.png');
     assert(Buffer.isBuffer(fallbackBuffer), 'Fallback banner must be a Buffer');
     assert(fallbackBuffer.length > 0, 'Fallback banner buffer must not be empty');
+    if (fs.existsSync(placeholderPath)) {
+        assert.strictEqual(
+            fallbackBuffer.length,
+            fs.statSync(placeholderPath).size,
+            'Should fall back to placeholder banner when main banner is missing'
+        );
+    }
     console.log('✓ Banner asset loading and fallback verified.');
 
     // Load all actual tools for reflection tests
