@@ -2,6 +2,7 @@ import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
 import { getShopItems } from '../services/shopService.js';
+import { renderCard, renderCatalogCard, renderAlert } from '../utils/uiFormatter.js';
 
 const shopTool: ToolModule = {
     definition: {
@@ -54,13 +55,21 @@ const shopTool: ToolModule = {
                 }
             }
 
-            let text = `${ctx.t('tools.shop.categories_title')}\n\n`;
-            text += `${ctx.t('tools.shop.categories_select')}\n`;
-            categoryList.forEach((cat) => {
-                text += `• \`.shop ${cat.toLowerCase()}\`\n`;
+            const text = renderCard({
+                title: 'COSMOS SHOP DIRECTORY',
+                icon: '🏬',
+                headerStyle: 'light',
+                sections: [
+                    {
+                        title: 'AVAILABLE CATEGORIES',
+                        items: categoryList.map((cat) => ({
+                            label: cat,
+                            value: `.shop ${cat.toLowerCase()}`
+                        }))
+                    }
+                ],
+                tip: ctx.t('tools.shop.categories_usage')
             });
-            text += `${ctx.t('tools.shop.categories_items_view')}\n\n`;
-            text += `${ctx.t('tools.shop.categories_usage')}`;
 
             await sock.sendMessage(jid, { text }, { quoted: msg });
             return;
@@ -73,19 +82,31 @@ const shopTool: ToolModule = {
             });
 
             if (properties.length === 0) {
-                await sock.sendMessage(jid, { text: ctx.t('tools.shop.properties_empty') }, { quoted: msg });
+                await sock.sendMessage(
+                    jid,
+                    {
+                        text: renderAlert({
+                            type: 'info',
+                            title: 'PROPERTY CATALOG',
+                            message: ctx.t('tools.shop.properties_empty')
+                        })
+                    },
+                    { quoted: msg }
+                );
                 return;
             }
 
-            let text = `${ctx.t('tools.shop.properties_title')}\n\n`;
-            properties.forEach((p, index) => {
-                text += `${index + 1}. *${p.name}*\n`;
-                text += `   Type: ${p.typeCategory}\n`;
-                text += `   Price: ${formatRupiah(Number(p.basePrice))}\n`;
-                text += `   Depreciation: ${p.baseDepreciationRate * 100}%\n\n`;
-            });
-
-            text += ctx.t('tools.shop.properties_buy_tip');
+            const text = renderCatalogCard(
+                'COSMOS PROPERTY CATALOG',
+                '🏬',
+                properties.map((p) => ({
+                    title: p.name,
+                    subtitle: `Type: ${p.typeCategory} • Depreciation: ${p.baseDepreciationRate * 100}%`,
+                    value: formatRupiah(Number(p.basePrice)),
+                    badge: 'PROPERTY'
+                })),
+                ctx.t('tools.shop.properties_buy_tip')
+            );
             await sock.sendMessage(jid, { text }, { quoted: msg });
             return;
         }
@@ -98,7 +119,11 @@ const shopTool: ToolModule = {
             await sock.sendMessage(
                 jid,
                 {
-                    text: ctx.t('tools.shop.no_items', { category: rawCategory })
+                    text: renderAlert({
+                        type: 'warning',
+                        title: 'NO ITEMS FOUND',
+                        message: ctx.t('tools.shop.no_items', { category: rawCategory })
+                    })
                 },
                 { quoted: msg }
             );
@@ -109,15 +134,17 @@ const shopTool: ToolModule = {
             ? `${filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1)} Items`
             : 'All Items';
 
-        let text = `${ctx.t('tools.shop.header_title', { title: headerTitle })}\n\n`;
-        items.forEach((item, index) => {
-            text += `${index + 1}. *${item.name}* (\`${item.shortId}\`)\n`;
-            text += `   Type: ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}\n`;
-            text += `   Price: ${formatRupiah(item.price)}\n`;
-            text += `   Desc: ${item.description}\n\n`;
-        });
-
-        text += ctx.t('tools.shop.buy_tip');
+        const text = renderCatalogCard(
+            `COSMOS SHOP - ${headerTitle.toUpperCase()}`,
+            '🛍️',
+            items.map((item) => ({
+                title: `${item.name} (${item.shortId})`,
+                subtitle: item.description,
+                value: formatRupiah(item.price),
+                badge: item.type.toUpperCase()
+            })),
+            ctx.t('tools.shop.buy_tip')
+        );
 
         await sock.sendMessage(jid, { text }, { quoted: msg });
     }

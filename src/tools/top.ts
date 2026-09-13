@@ -1,6 +1,8 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
+import { formatMentions } from '../utils/casino.js';
+import { renderCard, renderCatalogCard, CatalogItem } from '../utils/uiFormatter.js';
 
 const topTool: ToolModule = {
     definition: {
@@ -97,7 +99,6 @@ const topTool: ToolModule = {
                 let pushName = '';
 
                 for (const u of allUsers) {
-                    // Match by JID or LID
                     if (
                         u.id === pIdClean ||
                         u.lid === pIdClean ||
@@ -113,16 +114,14 @@ const topTool: ToolModule = {
                 }
 
                 if (hasRecord) {
-                    // Filter out users who have never played
                     if (isRoulette) {
                         if (rouletteRounds === 0 && rouletteWins === 0) continue;
                     } else {
-                        // 10000 is the starter pack. Filter if they haven't played and balance is untouched.
                         if (gamesPlayed === 0 && balance === 10000n) continue;
                     }
 
                     participantStats.push({
-                        mentionId: p.id, // e.g. "628...@s.whatsapp.net" or "1203...@lid"
+                        mentionId: p.id,
                         cleanId: pIdClean,
                         pushName,
                         balance,
@@ -138,41 +137,63 @@ const topTool: ToolModule = {
 
             const finalTopUsers = participantStats.slice(0, 10);
 
-            let text = isRoulette
-                ? `${ctx.t('tools.top.roulette_title')}\n\n`
-                : `${ctx.t('tools.top.casino_title')}\n\n`;
-            const mentions: string[] = [];
-
             if (finalTopUsers.length === 0) {
-                text += ctx.t('tools.top.empty');
-            } else {
-                finalTopUsers.forEach((user: any, index: number) => {
-                    mentions.push(user.mentionId);
-                    const displayName = user.pushName ? ` (${user.pushName})` : '';
-
-                    if (isRoulette) {
-                        text +=
-                            ctx.t('tools.top.roulette_entry', {
-                                icon: index === 0 ? '👑' : '💀',
-                                rank: index + 1,
-                                user: user.cleanId,
-                                wins: user.rouletteWins,
-                                matches: user.rouletteRounds
-                            }) + '\n';
-                    } else {
-                        text +=
-                            ctx.t('tools.top.casino_entry', {
-                                icon: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎗️',
-                                rank: index + 1,
-                                user: user.cleanId,
-                                name: displayName,
-                                balance: formatRupiah(user.balance)
-                            }) + '\n';
-                    }
-                });
+                await sock.sendMessage(jid, { text: ctx.t('tools.top.empty') }, { quoted: msg });
+                return;
             }
 
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            const headerCard = renderCard({
+                title: isRoulette ? 'ROULETTE HIGH ROLLERS' : 'CASINO HIGH ROLLERS',
+                icon: '🏆',
+                headerStyle: 'heavy',
+                fields: [
+                    { icon: '📍', label: 'Scope', value: 'Group Leaderboard' },
+                    { icon: '👥', label: 'Ranked Players', value: `${finalTopUsers.length}` }
+                ]
+            });
+
+            const mentions: string[] = [];
+            const items: CatalogItem[] = finalTopUsers.map((user: any, index: number) => {
+                const medals = ['🥇', '🥈', '🥉', '🎗️'];
+                const medal = index < 3 ? medals[index] : medals[3];
+                mentions.push(...formatMentions(user.mentionId));
+                const namePart = user.pushName ? ` (${user.pushName})` : '';
+
+                if (isRoulette) {
+                    return {
+                        rank: `${medal} ${index + 1}`,
+                        title: `@${user.cleanId}${namePart}`,
+                        subtitle: `Wins: ${user.rouletteWins} • Matches: ${user.rouletteRounds}`
+                    };
+                } else {
+                    const netWorth = Number(user.balance);
+                    const tier =
+                        netWorth >= 10000000
+                            ? '💎 Diamond'
+                            : netWorth >= 1000000
+                              ? '🥇 Gold'
+                              : netWorth >= 100000
+                                ? '🥈 Silver'
+                                : '🥉 Bronze';
+                    return {
+                        rank: `${medal} ${index + 1}`,
+                        title: `@${user.cleanId}${namePart}`,
+                        value: `Balance: ${formatRupiah(user.balance)}`,
+                        subtitle: `Tier: ${tier}`
+                    };
+                }
+            });
+
+            const listCard = renderCatalogCard(
+                isRoulette ? 'ROULETTE CHAMPIONS' : 'TOP BILLIONAIRES',
+                '👑',
+                items,
+                'Wager in .roulette or invest in .properties to climb the ranks!'
+            );
+
+            const text = `${headerCard}\n\n${listCard}`;
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             await sock.sendMessage(jid, { text, mentions }, { quoted: msg });
         } catch (error) {
             console.error('[Top Command Error]', error);

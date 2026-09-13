@@ -12,7 +12,11 @@ export interface DashboardOptions {
     date?: Date;
 }
 
-export type TranslatorFn = (key: string, args?: Record<string, any>) => string;
+export type TranslatorFn = (
+    key: string,
+    variablesOrFallback?: Record<string, any> | string,
+    variables?: Record<string, any>
+) => string;
 
 /**
  * Formats a duration in seconds into a human-readable string (e.g. 2d 14h 32m).

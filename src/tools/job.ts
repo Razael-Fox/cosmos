@@ -10,6 +10,7 @@ import {
     formatRemainingTime,
     ENTREPRENEUR_INITIAL_INVESTMENT
 } from '../services/jobs.js';
+import { renderCard, renderCatalogCard, CatalogItem } from '#utils/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'job',
@@ -43,9 +44,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
     const parts = rawText.split(/\s+/);
-    // If command invoked as .job <subcommand> [params...]
     const subCommand = (parts[1] || args.action || '').toLowerCase();
-    const query = parts.slice(2).join(' ') || args.target || '';
+    const query = parts.slice(2).join(' ') || args.target || args.job_name || '';
 
     // If user typed: .apply-job <target>
     const firstWord = parts[0]?.toLowerCase() || '';
@@ -76,9 +76,16 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         case 'daftar':
         case 'all': {
             const jobs = await getJobList();
-            let text = `${t('tools.job.list_header')}\n\n`;
 
-            for (const j of jobs) {
+            const headerCard = renderCard({
+                title: t('tools.job.directory_title', 'COSMOS EMPLOYMENT EXCHANGE'),
+                icon: '💼',
+                headerStyle: 'heavy',
+                subtitle: t('tools.job.directory_subtitle', 'Official Career & Job Catalog'),
+                tips: [t('tools.job.mandatory_idcard', 'Mandatory: Valid Virtual ID Card (.register-id)')]
+            });
+
+            const items: CatalogItem[] = jobs.map((j) => {
                 const reqs: string[] = ['ID Card'];
                 if (j.name === 'Mining') reqs.push('Pickaxe');
                 else if (j.name === 'Office Work') reqs.push('MacBook');
@@ -87,19 +94,31 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                     reqs.push('MacBook or iPhone', `Capital: ${formatRupiah(ENTREPRENEUR_INITIAL_INVESTMENT)}`);
                 }
 
-                let cycle = 'day';
-                if (j.cooldownMinutes >= 10080) cycle = 'week';
-                else if (j.cooldownMinutes <= 60) cycle = 'delivery';
+                let cycle = t('tools.job.per_day', 'day');
+                if (j.cooldownMinutes >= 10080) cycle = t('tools.job.per_week', 'week');
+                else if (j.cooldownMinutes <= 60) cycle = t('tools.job.per_delivery', 'delivery');
 
-                text += `*${j.id}. ${j.name}*\n`;
-                text += `• *Base Salary:* ${formatRupiah(Number(j.baseSalary))} / ${cycle}\n`;
-                text += `• *Cooldown:* ${formatRemainingTime(j.cooldownMinutes * 60)}\n`;
-                text += `• *Requirements:* ${reqs.join(', ')}\n`;
-                text += `• *Description:* _${j.description}_\n\n`;
-            }
+                const basePayStr = `${t('tools.job.base_pay_label', 'Base Pay')}: ${formatRupiah(Number(j.baseSalary))} / ${cycle}`;
+                const cooldownStr = `${t('tools.job.cooldown_label', 'Shift Cooldown')}: ${formatRemainingTime(j.cooldownMinutes * 60)}`;
+                const toolsStr = `${t('tools.job.tools_label', 'Tools')}: ${reqs.join(', ')}`;
+                const descStr = `_${j.description}_`;
 
-            text += `${t('tools.job.list_footer')}`;
-            return text;
+                return {
+                    rank: `${j.id}`,
+                    title: j.name,
+                    value: `💵 ${basePayStr} • ⏱️ ${cooldownStr}`,
+                    subtitle: `📦 ${toolsStr}\n│    📝 ${descStr}`
+                };
+            });
+
+            const catalogCard = renderCatalogCard(
+                'AVAILABLE CAREER PATHS',
+                '📋',
+                items,
+                t('tools.job.how_to_join', 'Type .job join <job_id> (e.g. .job join 1).')
+            );
+
+            return `${headerCard}\n\n${catalogCard}`;
         }
 
         case 'join':
@@ -140,13 +159,16 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             });
         }
 
-        case 'info':
-        case 'status':
         default: {
-            // Default view: display current employment status
             const status = await getUserJobStatus(senderJid);
             if (!status || !status.currentJob) {
-                return `${t('tools.job.status_unemployed')}\n\n${t('tools.job.status_help')}`;
+                return renderCard({
+                    title: 'CAREER STATUS: UNEMPLOYED',
+                    icon: '💼',
+                    headerStyle: 'light',
+                    body: t('tools.job.status_unemployed', 'You do not currently hold a job position.'),
+                    tips: ['.job list - View all available jobs', '.job join <ID|Name> - Apply or switch jobs']
+                });
             }
 
             const job = status.currentJob;
@@ -156,18 +178,35 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                       remaining: formatRemainingTime(status.cooldownRemainingSeconds)
                   });
 
-            let cycle = 'day';
-            if (job.cooldownMinutes >= 10080) cycle = 'week';
-            else if (job.cooldownMinutes <= 60) cycle = 'delivery';
+            let cycle = t('tools.job.per_day', 'day');
+            if (job.cooldownMinutes >= 10080) cycle = t('tools.job.per_week', 'week');
+            else if (job.cooldownMinutes <= 60) cycle = t('tools.job.per_delivery', 'delivery');
 
-            let text = `${t('tools.job.status_header')}\n\n`;
-            text += `• *Profession:* *${job.name}*\n`;
-            text += `• *Base Salary:* ${formatRupiah(Number(job.baseSalary))} / ${cycle}\n`;
-            text += `• *Cooldown:* ${formatRemainingTime(job.cooldownMinutes * 60)}\n`;
-            text += `• *Shift Status:* ${shiftStatus}\n`;
-            text += `• *Description:* _${job.description}_\n\n`;
-            text += `${t('tools.job.status_help')}`;
-            return text;
+            return renderCard({
+                title: 'COSMOS EMPLOYMENT STATUS',
+                icon: '💼',
+                headerStyle: 'heavy',
+                fields: [
+                    { icon: '👷', label: t('tools.work.profession_label', 'Profession'), value: `*${job.name}*` },
+                    {
+                        icon: '💵',
+                        label: t('tools.job.base_pay_label', 'Base Pay'),
+                        value: `${formatRupiah(Number(job.baseSalary))} / ${cycle}`
+                    },
+                    {
+                        icon: '⏱️',
+                        label: t('tools.job.cooldown_label', 'Shift Cooldown'),
+                        value: formatRemainingTime(job.cooldownMinutes * 60)
+                    },
+                    { icon: '🚦', label: 'Shift Status', value: shiftStatus },
+                    {
+                        icon: '📝',
+                        label: t('tools.job.description_label', 'Description'),
+                        value: `_${job.description}_`
+                    }
+                ],
+                tips: ['.work - Clock in to earn your salary', '.job leave - Resign from your current position']
+            });
         }
     }
 }

@@ -1,8 +1,17 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
-import { getSenderJid, resolveId, getUser } from '../utils/casino.js';
+import { getSenderJid, resolveId, getUser, formatMentions } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderCard } from '../utils/uiFormatter.js';
+
+function getWealthTier(netWorth: number, t: (key: string, def?: string) => string): string {
+    if (netWorth >= 100000000) return t('ui.tier_sovereign', '👑 Sovereign Member');
+    if (netWorth >= 10000000) return t('ui.tier_diamond', '💎 Diamond Member');
+    if (netWorth >= 1000000) return t('ui.tier_gold', '🥇 Gold Member');
+    if (netWorth >= 100000) return t('ui.tier_silver', '🥈 Silver Member');
+    return t('ui.tier_bronze', '🥉 Bronze Member');
+}
 
 const balanceTool: ToolModule = {
     definition: {
@@ -16,7 +25,7 @@ const balanceTool: ToolModule = {
             properties: {}
         }
     },
-    execute: async (args: Record<string, any>, ctx: ToolContext) => {
+    execute: async (_args: Record<string, any>, ctx: ToolContext) => {
         const t = ctx?.t || getTranslator('en');
         const { msg, sock } = ctx;
         const senderJid = getSenderJid(msg, sock);
@@ -47,20 +56,45 @@ const balanceTool: ToolModule = {
         const pushName = !isCheckingOther ? msg.pushName || undefined : undefined;
         const user = await getUser(prisma, queryJid, pushName);
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const userWithBank = await prisma.user.findUnique({
+            where: { id: user.id },
+            include: { bankAccount: true }
+        });
+
+        const walletBalance = Number(user.balance);
+        const bankBalance = userWithBank?.bankAccount ? Number(userWithBank.bankAccount.balance) : 0;
+        const netWorth = walletBalance + bankBalance;
+        const bankAccStr = userWithBank?.bankAccount
+            ? `${userWithBank.bankAccount.accountNumber} (${userWithBank.bankAccount.status})`
+            : t('ui.none_or_unregistered', 'Unregistered');
 
         let displayId = queryJid.split('@')[0];
-        let mentionArray: string[] = [];
+        let mentionArray: string[] = formatMentions(queryJid);
 
         if (isCheckingOther && targetJid) {
             displayId = targetJid.split('@')[0];
-            mentionArray = [targetJid];
+            mentionArray = formatMentions(targetJid);
         }
 
-        let text = `${t('tools.balance.title')}\n\n${t('tools.balance.amount', { amount: formatRupiah(user.balance) })}.\n${t('tools.balance.keep_playing')}`;
-        if (isCheckingOther) {
-            text = `${t('tools.balance.title')}\n\n${t('tools.balance.other_user', { user: displayId, amount: formatRupiah(user.balance) })}`;
-        }
+        const text = renderCard({
+            title: t('tools.balance.financial_balance', 'FINANCIAL BALANCE'),
+            icon: '💰',
+            headerStyle: 'heavy',
+            fields: [
+                { icon: '👤', label: t('ui.account_label', 'Account'), value: `@${displayId}` },
+                { icon: '💵', label: t('ui.currency_wallet', 'Wallet Balance'), value: formatRupiah(walletBalance) },
+                { icon: '🏦', label: t('ui.currency_bank', 'Bank Balance'), value: formatRupiah(bankBalance) },
+                { icon: '💎', label: t('ui.currency_networth', 'Total Net Worth'), value: formatRupiah(netWorth) },
+                { icon: '🏅', label: t('ui.wealth_tier_label', 'Wealth Tier'), value: getWealthTier(netWorth, t) },
+                { icon: '💳', label: t('ui.bank_account_label', 'Bank Account'), value: bankAccStr }
+            ],
+            tips: [
+                t('tools.balance.tip_daily', 'Type .daily to claim free daily coins.'),
+                t('tools.balance.tip_bank', 'Type .bank deposit <amount> to secure funds with 0.5% daily interest.')
+            ]
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         await sock.sendMessage(
             msg.key.remoteJid!,

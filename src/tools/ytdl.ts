@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
+import { renderCard } from '../utils/uiFormatter.js';
 
 const execAsync = promisify(exec);
 
@@ -125,11 +126,24 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         for (const file of downloadedFiles) {
             const ext = path.extname(file).toLowerCase();
             if (['.mp4', '.webm', '.mkv'].includes(ext)) {
+                const videoCaption = renderCard({
+                    title: 'YOUTUBE MEDIA',
+                    icon: '▶️',
+                    headerStyle: 'light',
+                    sections: [
+                        {
+                            items: [
+                                { label: 'Type', value: 'Video' },
+                                { label: 'Status', value: ctx.t('media.ytdl.video_success') }
+                            ]
+                        }
+                    ]
+                });
                 const sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         video: { url: file },
-                        caption: ctx.t('media.ytdl.video_success'),
+                        caption: videoCaption,
                         mentions: senderJid ? [senderJid] : undefined,
                         contextInfo: { isForwarded: true, forwardingScore: 1 }
                     },
@@ -140,11 +154,24 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                     scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'video');
                 }
             } else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+                const imageCaption = renderCard({
+                    title: 'YOUTUBE MEDIA',
+                    icon: '🖼️',
+                    headerStyle: 'light',
+                    sections: [
+                        {
+                            items: [
+                                { label: 'Type', value: 'Image' },
+                                { label: 'Status', value: ctx.t('media.ytdl.image_success') }
+                            ]
+                        }
+                    ]
+                });
                 const sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         image: { url: file },
-                        caption: ctx.t('media.ytdl.image_success'),
+                        caption: imageCaption,
                         mentions: senderJid ? [senderJid] : undefined,
                         contextInfo: { isForwarded: true, forwardingScore: 1 }
                     },

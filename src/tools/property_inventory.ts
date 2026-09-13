@@ -2,6 +2,7 @@ import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
 import { getSenderJid } from '../utils/casino.js';
+import { renderCard, renderAlert, CardSection } from '../utils/uiFormatter.js';
 
 const inventoryTool: ToolModule = {
     definition: {
@@ -37,7 +38,17 @@ const inventoryTool: ToolModule = {
         });
 
         if (inventory.length === 0) {
-            await sock.sendMessage(jid, { text: ctx.t('tools.inventory.empty') }, { quoted: msg });
+            await sock.sendMessage(
+                jid,
+                {
+                    text: renderAlert({
+                        type: 'info',
+                        title: 'INVENTORY VAULT',
+                        message: ctx.t('tools.inventory.empty')
+                    })
+                },
+                { quoted: msg }
+            );
             return;
         }
 
@@ -49,41 +60,55 @@ const inventoryTool: ToolModule = {
             (inv) => inv.itemId === null && inv.item === null && inv.propertyId === null && inv.property === null
         );
 
-        let text = `${ctx.t('tools.inventory.title')}\n\n`;
+        const sections: CardSection[] = [];
 
         if (shopItems.length > 0) {
-            text += `${ctx.t('tools.inventory.items_header')}\n`;
-            shopItems.forEach((inv, index) => {
-                const itemName = inv.item?.name || inv.name || 'Unknown Item';
-                const shortId = inv.item?.shortId ? ` (\`${inv.item.shortId}\`)` : '';
-                const type = inv.item?.type || inv.typeCategory || 'Item';
-                const typeFormatted = type.charAt(0).toUpperCase() + type.slice(1);
-                text += `${index + 1}. *${itemName}*${shortId}\n`;
-                text += `${ctx.t('tools.inventory.quantity_label', { quantity: inv.quantity })}\n`;
-                text += `${ctx.t('tools.inventory.type_label', { type: typeFormatted })}\n\n`;
+            sections.push({
+                title: 'ITEMS & EQUIPMENT',
+                items: shopItems.map((inv) => {
+                    const itemName = inv.item?.name || inv.name || 'Unknown Item';
+                    const shortId = inv.item?.shortId ? ` (${inv.item.shortId})` : '';
+                    const type = inv.item?.type || inv.typeCategory || 'Item';
+                    const typeFormatted = type.charAt(0).toUpperCase() + type.slice(1);
+                    return {
+                        label: `${itemName}${shortId}`,
+                        value: `x${inv.quantity} [${typeFormatted}]`
+                    };
+                })
             });
         }
 
         if (properties.length > 0) {
-            text += `${ctx.t('tools.inventory.properties_header')}\n`;
-            properties.forEach((inv, index) => {
-                const propName = inv.property?.name || inv.name || 'Unknown Property';
-                const originalPrice = inv.originalPrice ? formatRupiah(inv.originalPrice) : 'N/A';
-                text += `${index + 1}. *${propName}*\n`;
-                text += `${ctx.t('tools.inventory.original_value_label', { price: originalPrice })}\n`;
-                text += `${ctx.t('tools.inventory.acquired_label', { date: inv.purchaseDate.toLocaleDateString() })}\n\n`;
+            sections.push({
+                title: 'OWNED PROPERTIES',
+                items: properties.map((inv) => {
+                    const propName = inv.property?.name || inv.name || 'Unknown Property';
+                    const originalPrice = inv.originalPrice ? formatRupiah(inv.originalPrice) : 'N/A';
+                    return {
+                        label: propName,
+                        value: originalPrice
+                    };
+                })
             });
         }
 
         if (legacyItems.length > 0) {
-            text += `${ctx.t('tools.inventory.other_assets_header')}\n`;
-            legacyItems.forEach((inv, index) => {
-                const name = inv.name || 'Asset';
-                text += `${index + 1}. *${name}* (x${inv.quantity})\n\n`;
+            sections.push({
+                title: 'OTHER ASSETS',
+                items: legacyItems.map((inv) => ({
+                    label: inv.name || 'Asset',
+                    value: `x${inv.quantity}`
+                }))
             });
         }
 
-        text += ctx.t('tools.inventory.footer_tip');
+        const text = renderCard({
+            title: 'USER INVENTORY VAULT',
+            icon: '📦',
+            headerStyle: 'light',
+            sections,
+            tip: ctx.t('tools.inventory.footer_tip')
+        });
 
         await sock.sendMessage(jid, { text }, { quoted: msg });
     }

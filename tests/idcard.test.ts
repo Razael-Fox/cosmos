@@ -17,7 +17,7 @@ import { formatMentions, cleanId } from '../src/utils/casino.js';
 import idCardTool from '../src/tools/idcard.js';
 import loanTool from '../src/tools/loan.js';
 import applyLicenseTool from '../src/tools/apply_license.js';
-import applyJobTool from '../src/tools/apply_job.js';
+import jobTool from '../src/tools/job.js';
 
 async function runTests() {
     console.log('--- STARTING ENHANCED VIRTUAL ID CARD TESTS ---');
@@ -99,7 +99,7 @@ async function runTests() {
     const licenseReject = await applyLicenseTool.execute({}, mockCtxUnreg);
     assert.strictEqual(licenseReject, authBefore.message);
 
-    const jobReject = await applyJobTool.execute({ role: 'Developer' }, mockCtxUnreg);
+    const jobReject = await jobTool.execute({ action: 'join', job_name: 'Developer' }, mockCtxUnreg);
     assert.strictEqual(jobReject, authBefore.message);
     console.log('✓ Scenario D (Graceful Rejection) verified successfully.');
 
@@ -190,16 +190,15 @@ async function runTests() {
     );
 
     // Scenario C: Job
-    const jobEmptyRole = await applyJobTool.execute({ role: '' }, mockCtxUnreg);
+    const jobEmptyRole = await jobTool.execute({ action: 'join', target: '' }, mockCtxUnreg);
     assert(
-        typeof jobEmptyRole === 'string' && jobEmptyRole.includes('Please specify the job position'),
+        typeof jobEmptyRole === 'string' && jobEmptyRole.includes('Please specify a job name or ID'),
         'Empty role should be rejected'
     );
-    const jobApprove = await applyJobTool.execute({ role: 'Developer' }, mockCtxUnreg);
+    const jobApprove = await jobTool.execute({ action: 'join', target: 'Office Work' }, mockCtxUnreg);
     assert(
-        typeof jobApprove === 'string' &&
-            jobApprove.includes("contract for 'Developer' has been registered under the name BUDI SANTOSO"),
-        'Job application should populate contract with name and address'
+        typeof jobApprove === 'string' && jobApprove.includes('Office Work'),
+        'Job application should succeed for registered user'
     );
     console.log('✓ Scenarios A, B, C verified successfully.');
 

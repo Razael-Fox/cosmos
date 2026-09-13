@@ -2,6 +2,7 @@ import { ToolModule, ToolContext } from './types.js';
 import { getSessionByChatId, ItemType } from '../utils/roulette.js';
 import { getSenderJid, resolveId } from '../utils/casino.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderHealthGauge } from '../utils/uiFormatter.js';
 
 const useTool: ToolModule = {
     definition: {
@@ -76,7 +77,7 @@ const useTool: ToolModule = {
                 outputMsg = t('games.roulette.used_heal', {
                     player: currentPlayer.pushName,
                     item: itemType === 'COLA' ? 'Cola' : 'Cigarettes',
-                    lives: `${'❤️'.repeat(currentPlayer.hp)}${'🖤'.repeat(5 - currentPlayer.hp)}`
+                    lives: renderHealthGauge(currentPlayer.hp, 5)
                 });
                 break;
             case 'HAND_SAW':

@@ -4,6 +4,7 @@ import { getSenderJid } from '../utils/casino.js';
 import { prisma } from '../db.js';
 import { registerCancellableSession, unregisterCancellableSession } from '../utils/cancellationManager.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderCard } from '../utils/uiFormatter.js';
 
 const createGameTool: ToolModule = {
     definition: {
@@ -91,7 +92,24 @@ const createGameTool: ToolModule = {
             }
         });
 
-        return t('games.roulette.lobby_created', { creator: creator.pushName, sessionId });
+        return renderCard({
+            title: 'BUCKSHOT ROULETTE LOBBY',
+            icon: '🔫',
+            headerStyle: 'bold',
+            subtitle: 'Room successfully created',
+            sections: [
+                {
+                    title: 'LOBBY INFORMATION',
+                    items: [
+                        { label: 'Host', value: `@${creator.pushName}` },
+                        { label: 'Session ID', value: `\`${sessionId}\`` },
+                        { label: 'Status', value: 'Waiting for players (1/5)' },
+                        { label: 'Timeout', value: '30 seconds' }
+                    ]
+                }
+            ],
+            tip: `Type .joingame ${sessionId} to join • Type .cancel to abort`
+        });
     }
 };
 

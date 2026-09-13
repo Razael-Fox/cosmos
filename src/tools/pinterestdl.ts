@@ -6,6 +6,7 @@ import axios from 'axios';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import ffmpeg from 'ffmpeg-static';
+import { renderCard } from '../utils/uiFormatter.js';
 
 const execAsync = promisify(exec);
 
@@ -240,7 +241,21 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             });
         };
 
-        const caption = media.title ? media.title.substring(0, 900) : '';
+        const items: Array<{ label: string; value: string }> = [];
+        if (media.title) items.push({ label: 'Title', value: media.title.substring(0, 900) });
+        const mediaType = media.videos.size > 0 ? 'Video' : 'Image';
+        items.push({ label: 'Type', value: mediaType });
+
+        const caption = renderCard({
+            title: 'PINTEREST MEDIA',
+            icon: '📌',
+            headerStyle: 'light',
+            sections: [
+                {
+                    items
+                }
+            ]
+        });
 
         // Download and send each item
         for (let i = 0; i < allMediaUrls.length; i++) {

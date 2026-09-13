@@ -1,6 +1,7 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
+import { renderCatalogCard, renderAlert } from '../utils/uiFormatter.js';
 
 const propertyCatalogTool: ToolModule = {
     definition: {
@@ -18,19 +19,31 @@ const propertyCatalogTool: ToolModule = {
         });
 
         if (properties.length === 0) {
-            await sock.sendMessage(jid, { text: ctx.t('tools.property_catalog.empty') }, { quoted: msg });
+            await sock.sendMessage(
+                jid,
+                {
+                    text: renderAlert({
+                        type: 'info',
+                        title: 'PROPERTY CATALOG',
+                        message: ctx.t('tools.property_catalog.empty')
+                    })
+                },
+                { quoted: msg }
+            );
             return;
         }
 
-        let text = `${ctx.t('tools.property_catalog.title')}\n\n`;
-        properties.forEach((p, index) => {
-            text += `${index + 1}. *${p.name}*\n`;
-            text += `   Type: ${p.typeCategory}\n`;
-            text += `   Price: ${formatRupiah(Number(p.basePrice))}\n`;
-            text += `   Depreciation: ${p.baseDepreciationRate * 100}%\n\n`;
-        });
-
-        text += ctx.t('tools.property_catalog.buy_tip');
+        const text = renderCatalogCard(
+            'COSMOS PROPERTY CATALOG',
+            '🏬',
+            properties.map((p) => ({
+                title: p.name,
+                subtitle: `Type: ${p.typeCategory} • Depreciation: ${p.baseDepreciationRate * 100}%`,
+                value: formatRupiah(Number(p.basePrice)),
+                badge: 'PROPERTY'
+            })),
+            ctx.t('tools.property_catalog.buy_tip')
+        );
 
         await sock.sendMessage(jid, { text }, { quoted: msg });
     }

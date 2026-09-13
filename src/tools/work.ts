@@ -3,6 +3,7 @@ import { getSenderJid } from '#utils/casino.js';
 import { getTranslator } from '#utils/i18n.js';
 import { formatRupiah } from '#utils/currency.js';
 import { executeWork } from '../services/jobs.js';
+import { renderCard, CardField } from '#utils/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'work',
@@ -30,17 +31,32 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
         return result.error || 'Failed to complete work shift.';
     }
 
-    let text = `${t('tools.work.success_header')}\n\n`;
-    text += `• *Profession:* ${result.jobName}\n`;
-    text += `• *Earnings:* ${formatRupiah(result.payout!)}\n`;
-    text += `• *Economy Multiplier:* ${result.multiplier!.toFixed(2)}x\n`;
-    if (result.varianceDetail) {
-        text += `• *Shift Event:* ${result.varianceDetail}\n`;
-    }
-    text += `• *Current Balance:* ${formatRupiah(result.newBalance!)}\n\n`;
-    text += `_${result.narrative}_`;
+    const fields: CardField[] = [
+        { icon: '👷', label: t('tools.work.profession_label', 'Profession'), value: result.jobName! },
+        { icon: '💵', label: t('tools.work.earnings_label', 'Base Earnings'), value: formatRupiah(result.payout!) },
+        {
+            icon: '📊',
+            label: t('tools.work.multiplier_label', 'Macro Multiplier'),
+            value: `${result.multiplier!.toFixed(2)}x`
+        }
+    ];
 
-    return text;
+    if (result.varianceDetail) {
+        fields.push({ icon: '✨', label: t('tools.work.event_label', 'Shift Event'), value: result.varianceDetail });
+    }
+
+    fields.push(
+        { icon: '💰', label: t('tools.work.net_payout_label', 'Net Payout'), value: formatRupiah(result.payout!) },
+        { icon: '💳', label: t('tools.work.balance_label', 'Current Balance'), value: formatRupiah(result.newBalance!) }
+    );
+
+    return renderCard({
+        title: t('tools.work.voucher_title', 'SHIFT COMPLETION VOUCHER'),
+        icon: '💼',
+        headerStyle: 'light',
+        fields,
+        footer: `${t('tools.work.summary_title', 'Shift Summary:')}\n│ _"${result.narrative}"_`
+    });
 }
 
 const workTool: ToolModule = {

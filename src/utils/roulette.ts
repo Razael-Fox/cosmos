@@ -1,3 +1,5 @@
+import { renderHealthGauge } from './uiFormatter.js';
+
 export type ItemType = 'COLA' | 'MAGNIFYING_GLASS' | 'HAND_SAW' | 'HANDCUFFS' | 'CIGARETTES' | 'INVERTER';
 export type ShellType = 'LIVE' | 'BLANK';
 export type GameStatus = 'LOBBY' | 'PLAYING' | 'FINISHED';
@@ -134,7 +136,7 @@ export function nextTurn(
     } else {
         const inventoryStr =
             nextPlayer.inventory.length > 0 ? nextPlayer.inventory.map((i) => i.replace('_', ' ')).join(', ') : 'Empty';
-        const livesStr = `${'❤️'.repeat(nextPlayer.hp)}${'🖤'.repeat(5 - nextPlayer.hp)}`;
+        const livesStr = renderHealthGauge(nextPlayer.hp, 5);
         const statusStr = nextPlayer.handSawActive ? 'Hand Saw (Damage x2)' : 'None';
         msg += t
             ? t('games.roulette.player_status', {
@@ -142,7 +144,7 @@ export function nextTurn(
                   inventory: inventoryStr,
                   status: statusStr
               })
-            : `❤️ Lives: [${livesStr}]\n🎒 Inventory: ${inventoryStr}\n🔥 *Active Status:* ${statusStr}`;
+            : `❤️ Lives: ${livesStr}\n🎒 Inventory: ${inventoryStr}\n🔥 *Active Status:* ${statusStr}`;
     }
 
     return msg;

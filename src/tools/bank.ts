@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
-import { getSenderJid, cleanId, getUser, formatMentions } from '#utils/casino.js';
+import { getSenderJid, cleanId, getUser } from '#utils/casino.js';
 import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
 import { prisma } from '#db.js';
@@ -13,6 +13,14 @@ import {
     BANK_TRANSFER_FEE
 } from '#services/bankService.js';
 import { getTranslator, getChatLanguage } from '#utils/i18n.js';
+import {
+    renderCard,
+    renderAlert,
+    renderSyntaxError,
+    renderCatalogCard,
+    renderBadge,
+    CatalogItem
+} from '#utils/uiFormatter.js';
 
 export interface PendingTransfer {
     senderAccountNumber: string;
@@ -87,35 +95,53 @@ export async function processBankTransferConfirmation(
     const result = await executeTransfer(pending.senderAccountNumber, pending.targetAccountNumber, pending.amount, t);
 
     if (!result.success) {
-        await sock.sendMessage(chatJid, { text: result.error || 'Transaction failed.' }, { quoted: msg });
+        await sock.sendMessage(
+            chatJid,
+            { text: renderAlert({ type: 'error', message: result.error || 'Transaction failed.' }) },
+            { quoted: msg }
+        );
         return true;
     }
 
     // 1. Reply to sender
-    const senderSuccessMsg = t('tools.bank.transfer_sender_success', {
-        amount: formatRupiah(pending.amount),
-        targetAccount: pending.targetAccountNumber,
-        newBankBalance: formatRupiah(result.newBankBalance ?? 0)
+    const senderSuccessCard = renderAlert({
+        type: 'success',
+        title: 'TRANSFER COMPLETED',
+        message: t('tools.bank.transfer_sender_success', {
+            amount: formatRupiah(pending.amount),
+            targetAccount: pending.targetAccountNumber,
+            newBankBalance: formatRupiah(result.newBankBalance ?? 0)
+        }),
+        details: [
+            `Recipient: ${pending.targetName}`,
+            `Target Account: ${pending.targetAccountNumber}`,
+            `Transfer Amount: ${formatRupiah(pending.amount)}`,
+            `Admin Fee: ${formatRupiah(pending.fee)}`,
+            `Remaining Bank Balance: ${formatRupiah(result.newBankBalance ?? 0)}`
+        ]
     });
-    await sock.sendMessage(chatJid, { text: senderSuccessMsg }, { quoted: msg });
+    await sock.sendMessage(chatJid, { text: senderSuccessCard }, { quoted: msg });
 
-    // 2. Asynchronously notify recipient in background (fire-and-forget, do not delay sender)
-    const targetUserJidRaw = result.targetUserJid;
-    if (targetUserJidRaw) {
+    // 2. Asynchronously notify receiver
+    if (pending.targetUserJid) {
         (async () => {
             try {
-                const targetJids = formatMentions(targetUserJidRaw);
-                const targetJid =
-                    targetJids[0] ||
-                    (targetUserJidRaw.includes('@') ? targetUserJidRaw : `${targetUserJidRaw}@s.whatsapp.net`);
-                const receiverLang = await getChatLanguage(targetJid);
-                const receiverT = getTranslator(receiverLang);
-                const notification = receiverT('tools.bank.transfer_receiver_notification', {
-                    amount: formatRupiah(pending.amount),
-                    senderAccount: pending.senderAccountNumber,
-                    senderName: msg.pushName || pending.senderUserJid.split('@')[0]
+                const targetChatLanguage = await getChatLanguage(pending.targetUserJid);
+                const targetT = getTranslator(targetChatLanguage);
+                const receiverCard = renderAlert({
+                    type: 'success',
+                    title: 'FUNDS RECEIVED',
+                    message: targetT('tools.bank.transfer_receiver_notification', {
+                        amount: formatRupiah(pending.amount),
+                        senderAccount: pending.senderAccountNumber,
+                        senderName: msg.pushName || pending.senderAccountNumber
+                    }),
+                    details: [
+                        `Amount: +${formatRupiah(pending.amount)}`,
+                        `Sender: ${msg.pushName || pending.senderAccountNumber} (\`${pending.senderAccountNumber}\`)`
+                    ]
                 });
-                await sock.sendMessage(targetJid, { text: notification });
+                await sock.sendMessage(pending.targetUserJid, { text: receiverCard });
             } catch (err) {
                 console.error('[Bank] Error sending async recipient notification:', err);
             }
@@ -159,9 +185,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    // Parse arguments from raw text: .bank <subcommand> [params...]
     const parts = rawText.split(/\s+/);
-    // If invoked as .bank, parts[0] is .bank, parts[1] is subcommand
     const subCommand = (parts[1] || args.action || '').toLowerCase();
     const remainingParts = parts.slice(2);
 
@@ -171,10 +195,15 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         case 'open': {
             const result = await registerBankAccount(senderJid, ctx.msg.pushName || undefined, t);
             if (!result.success) {
-                return result.error;
+                return renderAlert({ type: 'error', message: result.error! });
             }
-            return t('tools.bank.register_success', {
-                accountNumber: result.accountNumber
+            return renderAlert({
+                type: 'success',
+                title: 'BANK ACCOUNT REGISTERED',
+                message: t('tools.bank.register_success', {
+                    accountNumber: result.accountNumber
+                }),
+                details: [`Account Number: ${result.accountNumber}`, `Status: ACTIVE`]
             });
         }
 
@@ -187,17 +216,31 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const amount = parseCurrencyAmount(amountInput, user?.balance);
 
             if (amount === null || amount <= 0) {
-                return t('tools.bank.deposit_invalid_amount');
+                return renderSyntaxError(
+                    'bank deposit',
+                    t('tools.bank.deposit_invalid_amount'),
+                    '.bank deposit <amount|all>',
+                    '.bank deposit 500000\n• .bank deposit 1.000.000\n• .bank deposit all',
+                    t
+                );
             }
 
             const result = await depositToBank(senderJid, amount, t);
             if (!result.success) {
-                return result.error;
+                return renderAlert({ type: 'error', message: result.error! });
             }
 
-            return t('tools.bank.deposit_success', {
-                amount: formatRupiah(amount),
-                newBankBalance: formatRupiah(result.newBankBalance ?? 0)
+            return renderAlert({
+                type: 'success',
+                title: 'DEPOSIT SUCCESSFUL',
+                message: t('tools.bank.deposit_success', {
+                    amount: formatRupiah(amount),
+                    newBankBalance: formatRupiah(result.newBankBalance ?? 0)
+                }),
+                details: [
+                    `Deposited Amount: +${formatRupiah(amount)}`,
+                    `New Bank Balance: ${formatRupiah(result.newBankBalance ?? 0)}`
+                ]
             });
         }
 
@@ -210,29 +253,48 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const amount = parseCurrencyAmount(amountInput, bankBalance);
 
             if (amount === null || amount <= 0) {
-                return t('tools.bank.withdrawal_invalid_amount');
+                return renderSyntaxError(
+                    'bank withdraw',
+                    t('tools.bank.withdrawal_invalid_amount'),
+                    '.bank withdraw <amount|all>',
+                    '.bank withdraw 500000\n• .bank withdraw 1.000.000\n• .bank withdraw all',
+                    t
+                );
             }
 
             const result = await withdrawFromBank(senderJid, amount, t);
             if (!result.success) {
-                return result.error;
+                return renderAlert({ type: 'error', message: result.error! });
             }
 
-            return t('tools.bank.withdrawal_success', {
-                amount: formatRupiah(amount),
-                newBankBalance: formatRupiah(result.newBankBalance ?? 0)
+            return renderAlert({
+                type: 'success',
+                title: 'WITHDRAWAL SUCCESSFUL',
+                message: t('tools.bank.withdrawal_success', {
+                    amount: formatRupiah(amount),
+                    newBankBalance: formatRupiah(result.newBankBalance ?? 0)
+                }),
+                details: [
+                    `Withdrawn Cash: +${formatRupiah(amount)}`,
+                    `Remaining Bank Balance: ${formatRupiah(result.newBankBalance ?? 0)}`
+                ]
             });
         }
 
         case 'transfer':
         case 'tf':
         case 'kirim': {
-            // Format: .bank transfer <account_number> <amount>
             const targetAccountInput = remainingParts[0] || args.account || '';
             const amountInput = remainingParts[1] || args.amount || '';
 
             if (!targetAccountInput || !amountInput) {
-                return t('tools.bank.transfer_usage');
+                return renderSyntaxError(
+                    'bank transfer',
+                    t('tools.bank.transfer_usage'),
+                    '.bank transfer <account_number> <amount>',
+                    '.bank transfer 1234567890 500000\n• .bank transfer CCB-123456 1.000.000',
+                    t
+                );
             }
 
             const statement = await getBankStatement(senderJid);
@@ -240,23 +302,26 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const amount = parseCurrencyAmount(amountInput, bankBalance);
 
             if (amount === null || amount <= 0) {
-                return t('tools.bank.transfer_invalid_amount');
+                return renderSyntaxError(
+                    'bank transfer',
+                    t('tools.bank.transfer_invalid_amount'),
+                    '.bank transfer <account_number> <amount>',
+                    '.bank transfer 1234567890 500000\n• .bank transfer CCB-123456 1.000.000',
+                    t
+                );
             }
 
-            // Check if user already has an active pending confirmation
             const cleanedSender = cleanId(senderJid);
             if (getPendingTransfer(cleanedSender, ctx.jid)) {
-                return t('tools.bank.transfer_pending_exists');
+                return renderAlert({ type: 'warning', message: t('tools.bank.transfer_pending_exists') });
             }
 
-            // Validate preconditions
             const validation = await validateTransferPreconditions(senderJid, targetAccountInput, amount, t);
 
             if (!validation.valid || !validation.senderAccount || !validation.targetAccount) {
-                return validation.error;
+                return renderAlert({ type: 'error', message: validation.error! });
             }
 
-            // Save pending transfer
             const pending: PendingTransfer = {
                 senderAccountNumber: validation.senderAccount.accountNumber,
                 senderUserJid: senderJid,
@@ -270,7 +335,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             };
             pendingTransfers.set(cleanedSender, pending);
 
-            // Register into global cancellationManager so typing .cancel aborts the pending transfer
             registerCancellableSession({
                 sessionId: `bank_tf_${cleanedSender}`,
                 feature: 'bank',
@@ -283,13 +347,32 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 }
             });
 
-            // Prompt user for confirmation
-            return t('tools.bank.transfer_confirm_prompt', {
-                amount: formatRupiah(amount),
-                targetAccount: validation.targetAccount.accountNumber,
-                targetName: validation.targetAccount.fullName,
-                fee: formatRupiah(BANK_TRANSFER_FEE)
-            });
+            return [
+                renderCard({
+                    title: 'TRANSFER CONFIRMATION REQUIRED',
+                    icon: '⚠️',
+                    headerStyle: 'light',
+                    fields: [
+                        { icon: '📤', label: 'Recipient', value: validation.targetAccount.fullName },
+                        {
+                            icon: '💳',
+                            label: 'Target Account',
+                            value: `\`${validation.targetAccount.accountNumber}\``
+                        },
+                        { icon: '💵', label: 'Amount', value: formatRupiah(amount) },
+                        { icon: '🏷️', label: 'Admin Fee', value: formatRupiah(BANK_TRANSFER_FEE) },
+                        {
+                            icon: '💰',
+                            label: 'Total Deduction',
+                            value: formatRupiah(amount + BANK_TRANSFER_FEE)
+                        },
+                        { icon: '⏱️', label: 'Timeout', value: '3 Minutes' }
+                    ]
+                }),
+                '',
+                `👉 Type *confirm* (or *konfirmasi*) to execute this transfer.`,
+                `❌ Type *.cancel* at any time to abort.`
+            ].join('\n');
         }
 
         case 'balance':
@@ -300,38 +383,76 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         case 'mutasi': {
             const statement = await getBankStatement(senderJid);
             if (!statement) {
-                return t('tools.bank.account_not_found');
+                return renderAlert({ type: 'warning', message: t('tools.bank.account_not_found') });
             }
 
-            const lines: string[] = [
-                t('tools.bank.statement_header'),
-                t('tools.bank.statement_holder', { fullName: statement.fullName }),
-                t('tools.bank.statement_account', { accountNumber: statement.accountNumber }),
-                t('tools.bank.statement_balance', { bankBalance: formatRupiah(statement.bankBalance) }),
-                t('tools.bank.statement_recent_title')
-            ];
+            const headerCard = renderCard({
+                title: 'COSMOS CENTRAL BANK',
+                icon: '🏦',
+                headerStyle: 'heavy',
+                subtitle: 'Official Financial Statement',
+                fields: [
+                    { icon: '👤', label: 'Account Holder', value: statement.fullName },
+                    { icon: '💳', label: 'Account Number', value: `\`${statement.accountNumber}\`` },
+                    { icon: '🏛️', label: 'Account Status', value: renderBadge(statement.status || 'ACTIVE') },
+                    { icon: '💵', label: 'Vault Balance', value: formatRupiah(statement.bankBalance) },
+                    { icon: '📈', label: 'Compound Rate', value: '0.5% / Daily (Accrues at 00:00 UTC)' }
+                ]
+            });
 
-            if (statement.transactions.length === 0) {
-                lines.push(t('tools.bank.statement_no_transactions'));
-            } else {
-                statement.transactions.forEach((tx, idx) => {
-                    const sign =
-                        tx.type === 'DEPOSIT' || tx.type === 'TRANSFER_IN' || tx.type === 'INTEREST' ? '+' : '-';
-                    const dateStr = new Date(tx.timestamp).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                    });
-                    lines.push(`  ${idx + 1}. [${tx.type}] ${sign}${formatRupiah(tx.amount)} (${dateStr})`);
+            const txItems: CatalogItem[] = statement.transactions.map((tx, idx) => {
+                const isPositive = tx.type === 'DEPOSIT' || tx.type === 'TRANSFER_IN' || tx.type === 'INTEREST';
+                const sign = isPositive ? '+' : '-';
+                const icon =
+                    tx.type === 'DEPOSIT'
+                        ? '🟢'
+                        : tx.type === 'TRANSFER_IN'
+                          ? '🔵'
+                          : tx.type === 'WITHDRAW'
+                            ? '🔴'
+                            : '📈';
+                const dateStr = new Date(tx.timestamp).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
                 });
-            }
+                return {
+                    rank: `${idx + 1}`,
+                    title: `${icon} [${tx.type}] ${sign}${formatRupiah(tx.amount)}`,
+                    subtitle: dateStr
+                };
+            });
 
-            lines.push(t('tools.bank.statement_footer'));
-            return lines.join('\n');
+            const txCard =
+                statement.transactions.length > 0
+                    ? renderCatalogCard(
+                          'RECENT TRANSACTIONS',
+                          '📑',
+                          txItems,
+                          'Transfers require interactive confirmation within 3 minutes.'
+                      )
+                    : renderCatalogCard('RECENT TRANSACTIONS', '📑', [
+                          { title: t('tools.bank.statement_no_transactions') }
+                      ]);
+
+            return `${headerCard}\n\n${txCard}`;
         }
 
         default: {
-            return t('tools.bank.usage');
+            return renderCard({
+                title: 'COSMOS CENTRAL BANK',
+                icon: '🏦',
+                headerStyle: 'heavy',
+                body: [
+                    'Available commands:',
+                    '• *.bank register* - Open a new bank account',
+                    '• *.bank balance* - View account statement & balance',
+                    '• *.bank deposit <amount>* - Deposit cash to bank',
+                    '• *.bank withdraw <amount>* - Withdraw cash from bank',
+                    '• *.bank transfer <account> <amount>* - Transfer to another account'
+                ],
+                tips: ['Transfers require interactive confirmation within 3 minutes.']
+            });
         }
     }
 }

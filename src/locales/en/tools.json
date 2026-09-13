@@ -5,7 +5,18 @@
         "keep_playing": "Keep playing and claim your daily reward!",
         "other_user": "@{{user}} currently has {{amount}}.",
         "no_account": "You don't have an account yet. Use .daily to start.",
-        "owner_only_other": "❌ Only the bot owner can check other users' balances."
+        "owner_only_other": "❌ Only the bot owner can check other users' balances.",
+        "financial_balance": "FINANCIAL BALANCE",
+        "wallet_balance": "Wallet Balance",
+        "bank_balance": "Bank Balance",
+        "net_worth": "Total Net Worth",
+        "wealth_tier": "Wealth Tier",
+        "bank_account": "Bank Account",
+        "unregistered": "Unregistered",
+        "active": "Active",
+        "quick_actions": "Quick Actions:",
+        "tip_daily": "Type .daily to claim free daily coins.",
+        "tip_bank": "Type .bank deposit <amount> to secure funds with 0.5% daily interest."
     },
     "daily": {
         "claimed": "Congratulations! You have claimed your daily reward of {{amount}}.",
@@ -16,7 +27,16 @@
         "minutes_one": "1 minute",
         "minutes_other": "{{count}} minutes",
         "and": " and ",
-        "less_than_minute": "less than a minute"
+        "less_than_minute": "less than a minute",
+        "reward_claimed": "DAILY REWARD CLAIMED",
+        "reward_received": "Reward Received",
+        "streak_label": "Daily Streak",
+        "next_claim": "Next Claim",
+        "cooldown_title": "DAILY REWARD ON COOLDOWN",
+        "cooldown_status": "Already claimed today!",
+        "cooldown_progress": "Cooldown Progress",
+        "tip_multiply": "Use .slot or .coinflip to multiply your daily earnings!",
+        "tip_work": "Work a shift with .work while waiting for your daily reset!"
     },
     "setlang": {
         "usage": "Invalid format. Use: .setlang <id|en>",
@@ -126,7 +146,16 @@
         "ram": "• *RAM:* {{used}} / {{total}} (Free: {{free}})",
         "server_uptime": "• *Server Uptime:* {{uptime}}",
         "bot_uptime": "• *Bot Uptime:* {{uptime}}",
-        "nodejs": "• *Node.js:* {{version}}"
+        "nodejs": "• *Node.js:* {{version}}",
+        "dashboard_title": "COSMOS SYSTEM TELEMETRY",
+        "os_label": "Host OS",
+        "ping_label": "Ping Latency",
+        "server_uptime_label": "Server Uptime",
+        "bot_uptime_label": "Bot Uptime",
+        "nodejs_label": "Node.js",
+        "hardware_title": "HARDWARE PERFORMANCE",
+        "cpu_label": "CPU Model",
+        "ram_label": "RAM Usage"
     },
     "transfer": {
         "usage": "Invalid format. Use: .transfer <user> <amount>",
@@ -192,7 +221,18 @@
         "status_header": "💼 *Cosmos Employment Status*",
         "shift_ready": "🟢 Ready to work (`.work`)",
         "shift_resting": "⏳ Resting (Cooldown: {{remaining}} remaining)",
-        "status_help": "*Commands:*\n• `.job list` - View all available jobs\n• `.job join <ID|Name>` - Apply or switch jobs\n• `.job leave` - Resign from your current position\n• `.work` - Clock in to earn your salary"
+        "status_help": "*Commands:*\n• `.job list` - View all available jobs\n• `.job join <ID|Name>` - Apply or switch jobs\n• `.job leave` - Resign from your current position\n• `.work` - Clock in to earn your salary",
+        "base_pay_label": "Base Pay",
+        "cooldown_label": "Shift Cooldown",
+        "tools_label": "Tools Required",
+        "description_label": "Description",
+        "directory_title": "COSMOS EMPLOYMENT EXCHANGE",
+        "directory_subtitle": "Official Career & Job Catalog",
+        "mandatory_idcard": "Mandatory: Valid Virtual ID Card (.register-id)",
+        "per_day": "day",
+        "per_week": "week",
+        "per_delivery": "delivery",
+        "how_to_join": "How to Join: Type .job join <job_id> (e.g. .job join 1)."
     },
     "work": {
         "not_employed": "You are currently unemployed. Browse available positions with `.job list` and apply with `.job join <ID|Name>`.",
@@ -204,7 +244,16 @@
         "narrative_cooking": "You prepared exquisite restaurant courses during lunch and dinner services, earning {{amount}}.",
         "narrative_gojek": "You completed an on-demand delivery trip, earning {{amount}} (including {{tip}} in customer tips).",
         "narrative_entrepreneur": "Your enterprise concluded its business cycle and distributed {{amount}} in shareholder dividends.",
-        "narrative_default": "You successfully completed your shift as a {{jobName}} and received {{amount}}."
+        "narrative_default": "You successfully completed your shift as a {{jobName}} and received {{amount}}.",
+        "voucher_title": "SHIFT COMPLETION VOUCHER",
+        "profession_label": "Profession",
+        "earnings_label": "Base Earnings",
+        "multiplier_label": "Macro Multiplier",
+        "event_label": "Shift Event",
+        "net_payout_label": "Net Payout",
+        "balance_label": "Current Balance",
+        "summary_title": "Shift Summary:",
+        "next_shift": "Next Shift Cooldown"
     },
     "market": {
         "unavailable": "Economy data is currently unavailable.",
@@ -622,5 +671,43 @@
         "ytdl": {
             "description": "Downloads a video from a specified URL using yt-dlp. Currently supports basic video fetching."
         }
+    },
+    "ui": {
+        "tip_label": "Tip:",
+        "quick_actions": "Quick Actions:",
+        "correct_syntax": "Correct Syntax:",
+        "valid_examples": "Valid Examples:",
+        "cooldown_remaining": "Time Remaining:",
+        "status_active": "Active",
+        "status_frozen": "Frozen",
+        "status_pending": "Pending",
+        "currency_wallet": "Wallet Balance",
+        "currency_bank": "Bank Balance",
+        "currency_networth": "Total Net Worth",
+        "cancel_hint": "Type .cancel to abort this process.",
+        "invalid_syntax_title": "INVALID COMMAND SYNTAX",
+        "issue_label": "Issue",
+        "how_to_join": "How to Join:",
+        "purchase_hint": "Purchase:"
+    },
+    "fevertime": {
+        "title": "FEVER TIME IS ACTIVE!",
+        "subtitle": "Global Win Rate Boosted",
+        "description": "The global win rate has been massively boosted for the next 15 minutes! This is the best time to gamble and win big!",
+        "duration_label": "Duration",
+        "duration_value": "15 Minutes",
+        "status_label": "Status",
+        "status_boosted": "MASSIVE BOOST ACTIVE",
+        "tip": "Use .slot, .coinflip, or .dice to start playing!"
+    },
+    "downloader": {
+        "title": "COSMOS MEDIA DOWNLOADER",
+        "title_label": "Title",
+        "creator_label": "Creator",
+        "duration_label": "Duration",
+        "resolution_label": "Resolution",
+        "size_label": "File Size",
+        "platform_label": "Platform",
+        "footer_tip": "Downloaded via Cosmos High-Speed Pipeline"
     }
 }

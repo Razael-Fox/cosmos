@@ -4,6 +4,7 @@ import { getSenderJid } from '../utils/casino.js';
 import { getUser, parseBet, executeGamble, MIN_BET } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderCard, renderSyntaxError, renderAlert } from '../utils/uiFormatter.js';
 
 const coinflipTool: ToolModule = {
     definition: {
@@ -49,7 +50,13 @@ const coinflipTool: ToolModule = {
         }
 
         if (!guess) {
-            return `❌ ${t('games.coinflip.usage')}`;
+            return renderSyntaxError(
+                'coinflip',
+                t('games.coinflip.usage'),
+                '.coinflip <heads|tails> <bet>',
+                '.coinflip heads 50000\n• .coinflip tails 1.000.000\n• .coinflip heads all',
+                t
+            );
         }
 
         // Remove the guess word to parse the bet
@@ -57,31 +64,48 @@ const coinflipTool: ToolModule = {
         const bet = parseBet(betStr, Number(user.balance));
 
         if (bet === null) {
-            return `❌ ${t('games.coinflip.min_bet', { min: formatRupiah(MIN_BET) })}`;
+            return renderSyntaxError(
+                'coinflip',
+                t('games.coinflip.min_bet', { min: formatRupiah(MIN_BET) }),
+                '.coinflip <heads|tails> <bet>',
+                '.coinflip heads 50000\n• .coinflip tails 1.000.000\n• .coinflip heads all',
+                t
+            );
         }
 
         // Coinflip probabilities: 30% win, 70% lose
         const result = await executeGamble(prisma, senderJid, bet, 2, 30, 70, sock, msg, 0, t);
 
         if (!result.success) {
-            return `❌ ${result.error}`;
+            return renderAlert({ type: 'error', message: result.error! });
         }
 
         const flipped = result.isWin ? guess : guess === 'heads' ? 'tails' : 'heads';
-        const flippedEmoji = flipped === 'heads' ? '🦅 (Heads)' : '🪙 (Tails)';
+        const flippedEmoji = flipped === 'heads' ? '🦅 Heads' : '🪙 Tails';
 
-        const winMsg = result.isWin
-            ? `🎉 ${t('games.coinflip.win_earned', { amount: formatRupiah(result.winAmount) })}`
-            : `💀 ${t('games.coinflip.lose_lost', { amount: formatRupiah(bet) })}`;
+        const text = renderCard({
+            title: 'COINFLIP ARENA',
+            icon: '🪙',
+            headerStyle: 'light',
+            fields: [
+                { icon: '👤', label: 'Your Guess', value: guess.toUpperCase() },
+                { icon: '🎯', label: 'Landed Result', value: flippedEmoji },
+                {
+                    icon: result.isWin ? '🏆' : '💀',
+                    label: 'Match Outcome',
+                    value: result.isWin ? 'Direct Win!' : 'Defeat (Lost)'
+                },
+                { icon: '💵', label: 'Wager Placed', value: formatRupiah(bet) },
+                {
+                    icon: result.isWin ? '📈' : '💸',
+                    label: result.isWin ? 'Payout (2x)' : 'Loss Incurred',
+                    value: result.isWin ? `+${formatRupiah(result.winAmount)}` : `-${formatRupiah(bet)}`
+                },
+                { icon: '💰', label: 'Current Balance', value: formatRupiah(result.newBalance) }
+            ]
+        });
 
-        const text =
-            `${t('games.coinflip.title')}\n\n` +
-            `${t('games.coinflip.guessed', { guess: guess.toUpperCase() })}\n` +
-            `${t('games.coinflip.landed', { result: flippedEmoji })}\n\n` +
-            `${winMsg}\n` +
-            `${t('games.coinflip.current_balance', { balance: formatRupiah(result.newBalance) })}`;
-
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await sock.sendMessage(jid, { text }, { quoted: msg });
     }
 };

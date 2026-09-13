@@ -4,6 +4,9 @@ import { getSenderJid } from '../utils/casino.js';
 import { getUser, parseBet, executeGamble, MIN_BET } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { chance } from '../utils/casino.js';
+import { renderCard, renderSyntaxError, renderAlert } from '../utils/uiFormatter.js';
+
+const DICE_EMOJIS = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
 const diceTool: ToolModule = {
     definition: {
@@ -34,21 +37,33 @@ const diceTool: ToolModule = {
         const guess = match ? parseInt(match[1], 10) : null;
 
         if (!guess) {
-            return ctx.t('games.dice.guess_required');
+            return renderSyntaxError(
+                'dice',
+                ctx.t('games.dice.guess_required'),
+                '.dice <1-6> <bet_amount|all>',
+                '.dice 6 50000\n• .dice 1 1.000.000\n• .dice 3 all',
+                ctx.t
+            );
         }
 
         const betStr = inputStr.replace(new RegExp(`\\b${guess}\\b`), '').trim();
         const bet = parseBet(betStr, Number(user.balance));
 
         if (bet === null) {
-            return ctx.t('games.dice.invalid_bet', { min: formatRupiah(MIN_BET) });
+            return renderSyntaxError(
+                'dice',
+                ctx.t('games.dice.invalid_bet', { min: formatRupiah(MIN_BET) }),
+                '.dice <1-6> <bet_amount|all>',
+                '.dice 6 50000\n• .dice 1 1.000.000\n• .dice 3 all',
+                ctx.t
+            );
         }
 
         // Dice probabilities: 16% win, 84% lose. Multiplier: 5
         const result = await executeGamble(prisma, senderJid, bet, 5, 16, 84, sock, msg, 0, ctx.t);
 
         if (!result.success) {
-            return `❌ ${result.error}`;
+            return renderAlert({ type: 'error', message: result.error! });
         }
 
         let rolled: number;
@@ -59,18 +74,32 @@ const diceTool: ToolModule = {
             rolled = chance.pickone(possible);
         }
 
-        const winMsg = result.isWin
-            ? ctx.t('games.dice.won', { amount: formatRupiah(result.winAmount) })
-            : ctx.t('games.dice.lost', { amount: formatRupiah(bet) });
+        const guessEmoji = `${DICE_EMOJIS[guess - 1]} [ ${guess} ]`;
+        const rollEmoji = `${DICE_EMOJIS[rolled - 1]} [ ${rolled} ]`;
 
-        const text =
-            `${ctx.t('games.dice.title')}\n\n` +
-            `${ctx.t('games.dice.guessed', { guess })}\n` +
-            `${ctx.t('games.dice.rolled', { rolled })}\n\n` +
-            `${winMsg}\n` +
-            `${ctx.t('games.dice.current_balance', { balance: formatRupiah(result.newBalance) })}`;
+        const text = renderCard({
+            title: 'HIGH STAKES DICE ROLL',
+            icon: '🎲',
+            headerStyle: 'light',
+            fields: [
+                { icon: '👤', label: 'Your Guess', value: guessEmoji },
+                { icon: '🤖', label: 'House Roll', value: rollEmoji },
+                {
+                    icon: result.isWin ? '🎯' : '💀',
+                    label: 'Match Result',
+                    value: result.isWin ? 'Direct Hit (Win!)' : 'Missed (Lost)'
+                },
+                { icon: '💵', label: 'Wager', value: formatRupiah(bet) },
+                {
+                    icon: result.isWin ? '📈' : '💸',
+                    label: result.isWin ? 'Payout (5x)' : 'Loss Incurred',
+                    value: result.isWin ? `+${formatRupiah(result.winAmount)}` : `-${formatRupiah(bet)}`
+                },
+                { icon: '💰', label: 'Current Balance', value: formatRupiah(result.newBalance) }
+            ]
+        });
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await sock.sendMessage(jid, { text }, { quoted: msg });
     }
 };

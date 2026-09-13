@@ -8,6 +8,7 @@ import {
 } from '#utils/idCard.js';
 import { generateIdCardImage, fetchUserProfilePic } from '#utils/imageProcessing.js';
 import { getTranslator } from '#utils/i18n.js';
+import { renderAlert } from '../utils/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'idcard',
@@ -93,7 +94,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
 
         if (isUserRegistering(senderJid, ctx.jid)) {
-            return t('utilities.idcard.active_in_progress');
+            return renderAlert({
+                type: 'info',
+                title: 'REGISTRATION IN PROGRESS',
+                message: t('utilities.idcard.active_in_progress')
+            });
         }
 
         const prompt = startRegistrationSession(senderJid, ctx.jid, t);
@@ -104,7 +109,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     // Default: View existing ID Card
     const existing = await getIdCardByUser(senderJid);
     if (!existing) {
-        return t('utilities.idcard.not_registered');
+        return renderAlert({
+            type: 'warning',
+            title: 'IDENTITY NOT FOUND',
+            message: t('utilities.idcard.not_registered')
+        });
     }
 
     try {

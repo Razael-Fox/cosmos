@@ -5,6 +5,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
+import { renderCard } from '../utils/uiFormatter.js';
 
 const execAsync = promisify(exec);
 
@@ -117,8 +118,23 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             baseCaption = baseCaption.substring(0, 900) + '...';
         }
 
-        const slideshowCaption = baseCaption ? baseCaption : '';
-        const mediaCaption = baseCaption ? baseCaption : '';
+        const items: Array<{ label: string; value: string }> = [];
+        if (baseCaption) items.push({ label: 'Title', value: baseCaption });
+        if (data.author?.nickname) items.push({ label: 'Author', value: String(data.author.nickname) });
+        if (data.duration) items.push({ label: 'Duration', value: `${data.duration}s` });
+        if (items.length === 0) items.push({ label: 'Status', value: 'Ready' });
+
+        const mediaCaption = renderCard({
+            title: 'TIKTOK MEDIA',
+            icon: '🎬',
+            headerStyle: 'light',
+            sections: [
+                {
+                    items
+                }
+            ]
+        });
+        const slideshowCaption = mediaCaption;
 
         const downloadFile = async (url: string, ext: string, index: string = ''): Promise<string> => {
             const filepath = path.join(tempDir, `tiktok_${timestamp}_${index}${ext}`);

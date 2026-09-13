@@ -22,17 +22,37 @@ export function normalizeLanguage(lang?: string | null): SupportedLanguage {
     return 'id';
 }
 
-export function getTranslator(lang: string): (key: string, variables?: Record<string, any>) => string {
+export function getTranslator(
+    lang: string
+): (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string {
     const finalLang = normalizeLanguage(lang);
 
-    return (key: string, variables?: Record<string, any>): string => {
+    return (
+        key: string,
+        variablesOrFallback?: Record<string, any> | string,
+        variables?: Record<string, any>
+    ): string => {
+        let vars: Record<string, any> | undefined;
+        let fallback: string | undefined;
+
+        if (typeof variablesOrFallback === 'string') {
+            fallback = variablesOrFallback;
+            vars = variables;
+        } else {
+            vars = variablesOrFallback;
+        }
+
         if (i18n.exists(key, { lng: finalLang })) {
-            return i18n.t(key, { lng: finalLang, ...variables });
+            return i18n.t(key, { lng: finalLang, ...vars });
         }
 
         // If key not found in finalLang, try fallback to 'id' if not already 'id'
         if (finalLang !== 'id' && i18n.exists(key, { lng: 'id' })) {
-            return i18n.t(key, { lng: 'id', ...variables });
+            return i18n.t(key, { lng: 'id', ...vars });
+        }
+
+        if (fallback !== undefined) {
+            return fallback;
         }
 
         // If still not found, handle missing key

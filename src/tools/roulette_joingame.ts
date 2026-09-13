@@ -4,6 +4,7 @@ import { getSenderJid, MIN_BET } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { prisma } from '../db.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderCard } from '../utils/uiFormatter.js';
 
 const joinGameTool: ToolModule = {
     definition: {
@@ -49,7 +50,6 @@ const joinGameTool: ToolModule = {
                 OR: [{ id: senderJid }, { lid: senderJid }]
             }
         });
-        const roundCount = user?.rouletteRounds || 0;
         const actualUserId = user ? user.id : senderJid;
 
         if (session.players.find((p) => p.userId === actualUserId || p.userId === senderJid)) {
@@ -70,32 +70,29 @@ const joinGameTool: ToolModule = {
 
         session.players.push(newPlayer);
 
-        const creator = session.players[0];
-        const creatorData = await prisma.user.findFirst({
-            where: {
-                OR: [{ id: creator.userId }, { lid: creator.userId }]
-            }
-        });
-        const creatorRounds = creatorData?.rouletteRounds || 0;
-
-        let playerList = '';
-        session.players.forEach((p, idx) => {
-            const prefix = idx === 0 ? '👑 ' : '';
-            const rounds = idx === 0 ? creatorRounds : p.userId === actualUserId ? roundCount : 0; // Quick hack to show rounds
-            playerList += `${idx + 1}. ${prefix}@${p.pushName} (${rounds} Rounds)\n`;
-        });
-
         const numPlayers = session.players.length;
-        const betters = session.players.filter((p) => p.betAmount > 0).length;
 
-        return t('games.roulette.joined_broadcast', {
-            player: newPlayer.pushName,
-            count: numPlayers,
-            players: playerList.trim(),
-            pot: formatRupiah(session.potAmount),
-            betters,
-            plural: betters > 1 ? 's' : '',
-            min: formatRupiah(MIN_BET)
+        return renderCard({
+            title: 'BUCKSHOT ROULETTE LOBBY',
+            icon: '🔫',
+            headerStyle: 'bold',
+            sections: [
+                {
+                    title: `ACTIVE ROSTER (${numPlayers}/5 PLAYERS)`,
+                    items: session.players.map((p, idx) => ({
+                        label: `${idx === 0 ? '👑 ' : ''}@${p.pushName}`,
+                        value: p.betAmount > 0 ? formatRupiah(p.betAmount) : 'No Bet'
+                    }))
+                },
+                {
+                    title: 'PRIZE POT',
+                    items: [
+                        { label: 'Current Pot', value: formatRupiah(session.potAmount) },
+                        { label: 'Minimum Bet', value: formatRupiah(MIN_BET) }
+                    ]
+                }
+            ],
+            tip: 'Place bet with .bet <amount> • Host starts with .startgame'
         });
     }
 };

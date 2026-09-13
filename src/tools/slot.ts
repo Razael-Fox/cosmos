@@ -4,6 +4,7 @@ import { getSenderJid } from '../utils/casino.js';
 import { getUser, parseBet, executeGamble, MIN_BET } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { chance } from '../utils/casino.js';
+import { renderCard, renderSyntaxError, renderAlert, CardField } from '../utils/uiFormatter.js';
 
 const SLOT_ITEMS = [
     { symbol: '🍒', multiplier: 2, bonus: 100000, weight: 50 },
@@ -36,12 +37,24 @@ const slotTool: ToolModule = {
 
         const inputStr = String(args.bet || '').trim();
         if (!inputStr) {
-            return ctx.t('games.slot.bet_required');
+            return renderSyntaxError(
+                'slot',
+                ctx.t('games.slot.bet_required'),
+                '.slot <bet_amount|all>',
+                '.slot 50000\n• .slot 1.000.000\n• .slot all',
+                ctx.t
+            );
         }
 
         const bet = parseBet(inputStr, Number(user.balance));
         if (bet === null) {
-            return ctx.t('games.slot.invalid_bet', { min: formatRupiah(MIN_BET) });
+            return renderSyntaxError(
+                'slot',
+                ctx.t('games.slot.invalid_bet', { min: formatRupiah(MIN_BET) }),
+                '.slot <bet_amount|all>',
+                '.slot 50000\n• .slot 1.000.000\n• .slot all',
+                ctx.t
+            );
         }
 
         // Pre-roll the winning symbol to determine the multiplier
@@ -65,10 +78,12 @@ const slotTool: ToolModule = {
         );
 
         if (!result.success) {
-            return `❌ ${result.error}`;
+            return renderAlert({ type: 'error', message: result.error! });
         }
 
-        let slot1, slot2, slot3;
+        let slot1: string;
+        let slot2: string;
+        let slot3: string;
         const symbols = SLOT_ITEMS.map((item) => item.symbol);
 
         if (result.isWin) {
@@ -81,22 +96,42 @@ const slotTool: ToolModule = {
             } while (slot1 === slot2 && slot2 === slot3); // Ensure they don't match
         }
 
-        const winMsg = result.isWin
-            ? ctx.t('games.slot.jackpot', {
-                  symbol: winItem.symbol,
-                  multiplier: winItem.multiplier,
-                  bonus: formatRupiah(winItem.bonus),
-                  amount: formatRupiah(result.winAmount)
-              })
-            : ctx.t('games.slot.lost', { amount: formatRupiah(bet) });
+        const slotBox = [
+            '     ╭───────────────╮',
+            `     │  ${slot1} │ ${slot2} │ ${slot3}  │${result.isWin ? ' ◄ [ JACKPOT ]' : ''}`,
+            '     ╰───────────────╯'
+        ].join('\n');
 
-        const text =
-            `${ctx.t('games.slot.title')}\n\n` +
-            `[ ${slot1} | ${slot2} | ${slot3} ]\n\n` +
-            `${winMsg}\n` +
-            `${ctx.t('games.slot.current_balance', { balance: formatRupiah(result.newBalance) })}`;
+        const fields: CardField[] = [];
+        if (result.isWin) {
+            fields.push(
+                {
+                    icon: '🏆',
+                    label: 'Result',
+                    value: `3x ${winItem.symbol} (${winItem.multiplier}x Multiplier + ${formatRupiah(winItem.bonus)} Bonus)`
+                },
+                { icon: '💵', label: 'Bet Placed', value: formatRupiah(bet) },
+                { icon: '🎉', label: 'Payout Won', value: `+${formatRupiah(result.winAmount)}` },
+                { icon: '💰', label: 'New Balance', value: formatRupiah(result.newBalance) }
+            );
+        } else {
+            fields.push(
+                { icon: '❌', label: 'Result', value: 'No Match (Loss)' },
+                { icon: '💵', label: 'Bet Placed', value: formatRupiah(bet) },
+                { icon: '💸', label: 'Loss Amount', value: `-${formatRupiah(bet)}` },
+                { icon: '💰', label: 'New Balance', value: formatRupiah(result.newBalance) }
+            );
+        }
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const text = renderCard({
+            title: 'COSMOS VEGAS SLOTS',
+            icon: '🎰',
+            headerStyle: 'heavy',
+            body: ['', slotBox, ''],
+            fields
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await sock.sendMessage(jid, { text }, { quoted: msg });
     }
 };

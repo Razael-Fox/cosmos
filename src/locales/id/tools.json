@@ -5,7 +5,18 @@
         "keep_playing": "Terus bermain dan klaim reward harian Anda!",
         "other_user": "@{{user}} saat ini memiliki {{amount}}.",
         "no_account": "Anda belum memiliki akun. Gunakan .daily untuk memulai.",
-        "owner_only_other": "❌ Hanya pemilik bot yang dapat memeriksa saldo pengguna lain."
+        "owner_only_other": "❌ Hanya pemilik bot yang dapat memeriksa saldo pengguna lain.",
+        "financial_balance": "SALDO KEUANGAN",
+        "wallet_balance": "Saldo Dompet",
+        "bank_balance": "Saldo Bank",
+        "net_worth": "Total Kekayaan Bersih",
+        "wealth_tier": "Tingkat Kekayaan",
+        "bank_account": "Rekening Bank",
+        "unregistered": "Belum Terdaftar",
+        "active": "Aktif",
+        "quick_actions": "Aksi Cepat:",
+        "tip_daily": "Ketik .daily untuk mengklaim koin harian gratis.",
+        "tip_bank": "Ketik .bank deposit <jumlah> untuk mengamankan dana dengan bunga harian 0.5%."
     },
     "daily": {
         "claimed": "Selamat! Anda telah mengklaim reward harian sebesar {{amount}}.",
@@ -16,7 +27,16 @@
         "minutes_one": "1 menit",
         "minutes_other": "{{count}} menit",
         "and": " dan ",
-        "less_than_minute": "kurang dari satu menit"
+        "less_than_minute": "kurang dari satu menit",
+        "reward_claimed": "KLAIM HADIAH HARIAN",
+        "reward_received": "Hadiah Diterima",
+        "streak_label": "Runtunan Harian",
+        "next_claim": "Klaim Berikutnya",
+        "cooldown_title": "HADIAH HARIAN SEDANG COOLDOWN",
+        "cooldown_status": "Sudah diklaim hari ini!",
+        "cooldown_progress": "Kemajuan Cooldown",
+        "tip_multiply": "Gunakan .slot atau .coinflip untuk melipatgandakan pendapatan harian Anda!",
+        "tip_work": "Kerjakan shift dengan .work sambil menunggu reset harian Anda!"
     },
     "setlang": {
         "usage": "Format tidak valid. Gunakan: .setlang <id|en>",
@@ -126,7 +146,16 @@
         "ram": "• *RAM:* {{used}} / {{total}} (Bebas: {{free}})",
         "server_uptime": "• *Waktu Aktif Server:* {{uptime}}",
         "bot_uptime": "• *Waktu Aktif Bot:* {{uptime}}",
-        "nodejs": "• *Node.js:* {{version}}"
+        "nodejs": "• *Node.js:* {{version}}",
+        "dashboard_title": "TELEMETRI SISTEM COSMOS",
+        "os_label": "OS Host",
+        "ping_label": "Latensi Ping",
+        "server_uptime_label": "Uptime Server",
+        "bot_uptime_label": "Uptime Bot",
+        "nodejs_label": "Node.js",
+        "hardware_title": "PERFORMA PERANGKAT KERAS",
+        "cpu_label": "Model CPU",
+        "ram_label": "Penggunaan RAM"
     },
     "transfer": {
         "usage": "Format tidak valid. Gunakan: .transfer <user> <jumlah>",
@@ -192,7 +221,18 @@
         "status_header": "💼 *Status Pekerjaan Cosmos*",
         "shift_ready": "🟢 Siap bekerja (`.work`)",
         "shift_resting": "⏳ Istirahat (Cooldown tersisa: {{remaining}})",
-        "status_help": "*Perintah:*\n• `.job list` - Lihat semua pekerjaan yang tersedia\n• `.job join <ID|Nama>` - Lamar atau ganti pekerjaan\n• `.job leave` - Mengundurkan diri dari pekerjaan saat ini\n• `.work` - Masuk kerja dan dapatkan gaji"
+        "status_help": "*Perintah:*\n• `.job list` - Lihat semua pekerjaan yang tersedia\n• `.job join <ID|Nama>` - Lamar atau ganti pekerjaan\n• `.job leave` - Mengundurkan diri dari pekerjaan saat ini\n• `.work` - Masuk kerja dan dapatkan gaji",
+        "base_pay_label": "Gaji Pokok",
+        "cooldown_label": "Cooldown Shift",
+        "tools_label": "Peralatan Diperlukan",
+        "description_label": "Deskripsi",
+        "directory_title": "BURSA TENAGA KERJA COSMOS",
+        "directory_subtitle": "Katalog Karier & Pekerjaan Resmi",
+        "mandatory_idcard": "Wajib: KTP Virtual yang Valid (.register-id)",
+        "per_day": "hari",
+        "per_week": "minggu",
+        "per_delivery": "pengantaran",
+        "how_to_join": "Cara Bergabung: Ketik .job join <job_id> (contoh: .job join 1)."
     },
     "work": {
         "not_employed": "Anda saat ini belum memiliki pekerjaan. Lihat daftar pekerjaan dengan `.job list` dan lamar dengan `.job join <ID|Nama>`.",
@@ -204,7 +244,16 @@
         "narrative_cooking": "Anda memasak hidangan restoran lezat selama layanan makan siang dan malam, memperoleh {{amount}}.",
         "narrative_gojek": "Anda menyelesaikan pesanan pengantaran on-demand, memperoleh {{amount}} (termasuk tip pelanggan sebesar {{tip}}).",
         "narrative_entrepreneur": "Perusahaan Anda menyelesaikan siklus bisnis dan membagikan dividen pemegang saham sebesar {{amount}}.",
-        "narrative_default": "Anda berhasil menyelesaikan shift sebagai {{jobName}} dan menerima {{amount}}."
+        "narrative_default": "Anda berhasil menyelesaikan shift sebagai {{jobName}} dan menerima {{amount}}.",
+        "voucher_title": "BUKTI PENYELESAIAN SHIFT",
+        "profession_label": "Profesi",
+        "earnings_label": "Pendapatan Pokok",
+        "multiplier_label": "Pengali Makro",
+        "event_label": "Peristiwa Shift",
+        "net_payout_label": "Gaji Bersih",
+        "balance_label": "Saldo Saat Ini",
+        "summary_title": "Ringkasan Shift:",
+        "next_shift": "Cooldown Shift Berikutnya"
     },
     "market": {
         "unavailable": "Data ekonomi saat ini tidak tersedia.",
@@ -622,5 +671,43 @@
         "ytdl": {
             "description": "Mengunduh video dari URL yang ditentukan menggunakan yt-dlp."
         }
+    },
+    "ui": {
+        "tip_label": "Tips:",
+        "quick_actions": "Aksi Cepat:",
+        "correct_syntax": "Sintaks Benar:",
+        "valid_examples": "Contoh Valid:",
+        "cooldown_remaining": "Waktu Tersisa:",
+        "status_active": "Aktif",
+        "status_frozen": "Dibekukan",
+        "status_pending": "Menunggu",
+        "currency_wallet": "Saldo Dompet",
+        "currency_bank": "Saldo Bank",
+        "currency_networth": "Total Kekayaan Bersih",
+        "cancel_hint": "Ketik .cancel untuk membatalkan proses ini.",
+        "invalid_syntax_title": "SINTAKS PERINTAH TIDAK VALID",
+        "issue_label": "Kendala",
+        "how_to_join": "Cara Bergabung:",
+        "purchase_hint": "Beli:"
+    },
+    "fevertime": {
+        "title": "FEVER TIME TELAH AKTIF!",
+        "subtitle": "Peluang Kemenangan Global Ditingkatkan",
+        "description": "Peluang menang global telah ditingkatkan secara besar-besaran selama 15 menit ke depan! Ini saat terbaik untuk bertaruh dan menang besar!",
+        "duration_label": "Durasi",
+        "duration_value": "15 Menit",
+        "status_label": "Status",
+        "status_boosted": "BOOST BESAR AKTIF",
+        "tip": "Gunakan .slot, .coinflip, atau .dice untuk mulai bermain!"
+    },
+    "downloader": {
+        "title": "COSMOS MEDIA DOWNLOADER",
+        "title_label": "Judul",
+        "creator_label": "Pembuat",
+        "duration_label": "Durasi",
+        "resolution_label": "Resolusi",
+        "size_label": "Ukuran Berkas",
+        "platform_label": "Platform",
+        "footer_tip": "Diunduh melalui Pipeline Berkecepatan Tinggi Cosmos"
     }
 }

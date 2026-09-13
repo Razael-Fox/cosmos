@@ -1,6 +1,6 @@
 import os from 'os';
 import { ToolDefinition, ToolContext } from './types.js';
-import { getTranslator } from '../utils/i18n.js';
+import { renderCard, renderProgressBar } from '../utils/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'system_info',
@@ -30,7 +30,6 @@ function formatUptime(seconds: number): string {
 }
 
 export async function execute(_args: Record<string, any>, ctx: ToolContext): Promise<string> {
-    const t = ctx?.t || getTranslator('en');
     const systemUptime = formatUptime(os.uptime());
     const botUptime = formatUptime(process.uptime());
     const cpus = os.cpus();
@@ -61,14 +60,46 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
         }
     }
 
-    return (
-        `${t('tools.system_info.title')}\n\n` +
-        `${t('tools.system_info.latency', { latency: latencyStr })}\n` +
-        `${t('tools.system_info.os', { type: os.type(), release: os.release() })}\n` +
-        `${t('tools.system_info.cpu', { model: cpuModel, arch: cpuArch })}\n` +
-        `${t('tools.system_info.ram', { used: usedMem, total: totalMem, free: freeMem })}\n` +
-        `${t('tools.system_info.server_uptime', { uptime: systemUptime })}\n` +
-        `${t('tools.system_info.bot_uptime', { uptime: botUptime })}\n` +
-        `${t('tools.system_info.nodejs', { version: process.version })}`
-    );
+    const totalBytes = os.totalmem();
+    const freeBytes = os.freemem();
+    const usedBytes = totalBytes - freeBytes;
+    const ramPercent = totalBytes > 0 ? (usedBytes / totalBytes) * 100 : 0;
+    const ramGauge = renderProgressBar({
+        current: usedBytes,
+        total: totalBytes,
+        length: 10
+    });
+
+    return renderCard({
+        title: 'SERVER TELEMETRY DASHBOARD',
+        icon: '🖥️',
+        headerStyle: 'light',
+        sections: [
+            {
+                title: 'RUNTIME TELEMETRY',
+                items: [
+                    { label: 'Latency', value: latencyStr },
+                    { label: 'Node.js', value: process.version }
+                ]
+            },
+            {
+                title: 'MEMORY UTILIZATION',
+                items: [
+                    { label: 'Total RAM', value: totalMem },
+                    { label: 'Used RAM', value: usedMem },
+                    { label: 'Free RAM', value: freeMem },
+                    { label: 'Usage Gauge', value: `${ramGauge} ${ramPercent.toFixed(1)}%` }
+                ]
+            },
+            {
+                title: 'HOST ENVIRONMENT',
+                items: [
+                    { label: 'CPU', value: `${cpuModel} (${cpuArch})` },
+                    { label: 'Host OS', value: `${os.type()} ${os.release()}` },
+                    { label: 'Server Uptime', value: systemUptime },
+                    { label: 'Bot Uptime', value: botUptime }
+                ]
+            }
+        ]
+    });
 }

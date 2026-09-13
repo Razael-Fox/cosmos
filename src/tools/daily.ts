@@ -3,6 +3,7 @@ import { prisma } from '../db.js';
 import { getSenderJid, getUser } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderCard, renderProgressBar } from '../utils/uiFormatter.js';
 
 const dailyTool: ToolModule = {
     definition: {
@@ -16,7 +17,7 @@ const dailyTool: ToolModule = {
             properties: {}
         }
     },
-    execute: async (args: Record<string, any>, ctx: ToolContext) => {
+    execute: async (_args: Record<string, any>, ctx: ToolContext) => {
         const t = ctx?.t || getTranslator('en');
         const { msg, sock } = ctx;
         const senderJid = getSenderJid(msg, sock);
@@ -25,9 +26,9 @@ const dailyTool: ToolModule = {
         const user = await getUser(prisma, senderJid, pushName);
 
         const now = new Date();
+        const cooldownMs = 24 * 60 * 60 * 1000;
 
         if (user.lastDailyClaim) {
-            const cooldownMs = 24 * 60 * 60 * 1000;
             const timePassed = now.getTime() - user.lastDailyClaim.getTime();
 
             if (timePassed < cooldownMs) {
@@ -53,13 +54,31 @@ const dailyTool: ToolModule = {
                     timeString = t('tools.daily.less_than_minute');
                 }
 
-                await sock.sendMessage(
-                    msg.key.remoteJid!,
-                    {
-                        text: `⏳ ${t('tools.daily.cooldown', { remaining: timeString })}`
-                    },
-                    { quoted: msg }
-                );
+                const text = renderCard({
+                    title: t('tools.daily.cooldown_title', 'DAILY REWARD ON COOLDOWN'),
+                    icon: '⏳',
+                    headerStyle: 'light',
+                    fields: [
+                        {
+                            icon: '⚠️',
+                            label: t('ui.issue_label', 'Status'),
+                            value: t('tools.daily.cooldown_status', 'Already claimed today!')
+                        },
+                        {
+                            icon: '⏱️',
+                            label: t('ui.cooldown_remaining', 'Time Remaining:'),
+                            value: timeString
+                        },
+                        {
+                            icon: '📊',
+                            label: t('tools.daily.cooldown_progress', 'Cooldown Progress'),
+                            value: `\n   ${renderProgressBar({ current: timePassed, max: cooldownMs })}`
+                        }
+                    ],
+                    tips: [t('tools.daily.tip_work', 'Work a shift with .work while waiting for your daily reset!')]
+                });
+
+                await sock.sendMessage(msg.key.remoteJid!, { text }, { quoted: msg });
                 return;
             }
         }
@@ -73,14 +92,33 @@ const dailyTool: ToolModule = {
             }
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        await sock.sendMessage(
-            msg.key.remoteJid!,
-            {
-                text: `🎉 ${t('tools.daily.claimed', { amount: formatRupiah(reward) })}\n${t('tools.daily.new_balance', { balance: formatRupiah(updatedUser.balance) })}`
-            },
-            { quoted: msg }
-        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const text = renderCard({
+            title: t('tools.daily.reward_claimed', 'DAILY REWARD CLAIMED'),
+            icon: '🎉',
+            headerStyle: 'light',
+            fields: [
+                {
+                    icon: '💰',
+                    label: t('tools.daily.reward_received', 'Reward Received'),
+                    value: `+${formatRupiah(reward)}`
+                },
+                {
+                    icon: '💵',
+                    label: t('tools.work.balance_label', 'New Balance'),
+                    value: formatRupiah(updatedUser.balance)
+                },
+                {
+                    icon: '⏱️',
+                    label: t('tools.daily.next_claim', 'Next Claim'),
+                    value: '24 Hours'
+                }
+            ],
+            tips: [t('tools.daily.tip_multiply', 'Use .slot or .coinflip to multiply your daily earnings!')]
+        });
+
+        await sock.sendMessage(msg.key.remoteJid!, { text }, { quoted: msg });
     }
 };
 

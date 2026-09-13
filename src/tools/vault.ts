@@ -2,6 +2,7 @@ import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { getHouseVault } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
+import { renderCard } from '../utils/uiFormatter.js';
 
 const vaultTool: ToolModule = {
     definition: {
@@ -16,7 +17,7 @@ const vaultTool: ToolModule = {
             properties: {}
         }
     },
-    execute: async (args: Record<string, any>, ctx: ToolContext) => {
+    execute: async (_args: Record<string, any>, ctx: ToolContext) => {
         const { sock, jid } = ctx;
 
         const vault = await getHouseVault(prisma);
@@ -33,13 +34,19 @@ const vaultTool: ToolModule = {
             }
         };
 
-        const text =
-            `${ctx.t('tools.vault.title')}\n\n` +
-            `${ctx.t('tools.vault.income', { income: formatRupiah(vault.income) })}\n` +
-            `${ctx.t('tools.vault.payout', { payout: formatRupiah(vault.payout) })}\n` +
-            `${ctx.t('tools.vault.net_profit', { profit: formatRupiah(vault.netProfit) })}`;
+        const text = renderCard({
+            title: 'HOUSE VAULT STATEMENT',
+            icon: '🏛️',
+            headerStyle: 'heavy',
+            fields: [
+                { icon: '📈', label: 'Total Gross Income', value: formatRupiah(vault.income) },
+                { icon: '📉', label: 'Total Payouts Issued', value: formatRupiah(vault.payout) },
+                { icon: '💎', label: 'Net Profit Margin', value: formatRupiah(vault.netProfit) }
+            ],
+            tips: ['House reserve guarantees instant casino payouts.']
+        });
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await sock.sendMessage(jid, { text }, { quoted: fakeCosmosQuote as any });
     }
 };

@@ -4,6 +4,7 @@ import { getSenderJid, resolveId } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { prisma } from '../db.js';
 import { getTranslator } from '../utils/i18n.js';
+import { renderHealthGauge } from '../utils/uiFormatter.js';
 
 const shootTool: ToolModule = {
     definition: {
@@ -133,7 +134,7 @@ const shootTool: ToolModule = {
                     nextP.inventory.length > 0 ? nextP.inventory.map((i) => i.replace('_', ' ')).join(', ') : 'Empty';
                 outputMsg += t('games.roulette.turn_info', {
                     player: nextP.pushName,
-                    lives: `${'❤️'.repeat(nextP.hp)}${'🖤'.repeat(5 - nextP.hp)}`,
+                    lives: renderHealthGauge(nextP.hp, 5),
                     inventory: inventoryStr
                 });
             }

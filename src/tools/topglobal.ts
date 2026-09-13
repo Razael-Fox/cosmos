@@ -1,6 +1,8 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
+import { formatMentions } from '../utils/casino.js';
+import { renderCard, renderCatalogCard, CatalogItem } from '../utils/uiFormatter.js';
 
 let topGlobalCache: any = null;
 let topGlobalCacheExpiry: number = 0;
@@ -36,24 +38,15 @@ const topGlobalTool: ToolModule = {
 
             const userMap = new Map<string, any>();
 
-            // First pass: Group by JID where possible.
-            // If a row is clearly a LID (lid field is null, but we find another row with lid = this.id)
-            // we will merge it.
             for (const user of allUsers) {
                 if (isRoulette) {
                     if (user.rouletteRounds === 0 && user.rouletteWins === 0) continue;
                 } else {
                     if (user.gamesPlayed === 0 && Number(user.balance) === 10000) continue;
                 }
-
-                // Determine the primary key: use user.lid if we somehow indexed by LID?
-                // Actually, the simplest is to see if user.lid is populated.
-                // If this user has a LID, another row might have id == user.lid.
-                // We'll merge by whatever we can. Let's key by user.id, then in second pass merge LID rows into JID rows.
                 userMap.set(user.id, { ...user });
             }
 
-            // Second pass: Merge stray LID rows into their parent JID rows if both exist
             for (const user of userMap.values()) {
                 if (user.lid && userMap.has(user.lid)) {
                     const strayLid = userMap.get(user.lid);
@@ -62,7 +55,7 @@ const topGlobalTool: ToolModule = {
                     user.rouletteRounds += strayLid.rouletteRounds;
                     if (strayLid.pushName && !user.pushName) user.pushName = strayLid.pushName;
 
-                    userMap.delete(user.lid); // Remove the stray LID row
+                    userMap.delete(user.lid);
                 }
             }
 
@@ -80,74 +73,66 @@ const topGlobalTool: ToolModule = {
             }
         }
 
-        let groupMetadata: any = null;
-        if (jid.endsWith('@g.us')) {
-            try {
-                groupMetadata = await sock.groupMetadata(jid);
-            } catch {
-                // ignore
-            }
-        }
-
-        let text = isRoulette
-            ? `${ctx.t('tools.topglobal.roulette_title')}\n\n`
-            : `${ctx.t('tools.topglobal.casino_title')}\n\n`;
         const topUsersList = isRoulette ? topRouletteCache : topGlobalCache;
-        const mentions: string[] = [];
 
         if (topUsersList.length === 0) {
-            text += ctx.t('tools.topglobal.empty');
-        } else {
-            topUsersList.forEach((user: any, index: number) => {
-                let domain: string;
-
-                // If lid is populated in DB, we know id is JID.
-                // Otherwise, try to find them in the current group for the exact domain.
-                if (user.lid !== null) {
-                    domain = 's.whatsapp.net';
-                } else if (groupMetadata) {
-                    const p = groupMetadata.participants.find(
-                        (x: any) =>
-                            (x.id && x.id.includes(user.id)) || ((x as any).lid && (x as any).lid.includes(user.id))
-                    );
-                    if (p) {
-                        domain = p.id?.includes('@lid') ? 'lid' : 's.whatsapp.net';
-                    } else {
-                        domain = String(user.id).length >= 14 ? 'lid' : 's.whatsapp.net';
-                    }
-                } else {
-                    domain = String(user.id).length >= 14 ? 'lid' : 's.whatsapp.net';
-                }
-
-                mentions.push(`${user.id}@${domain}`);
-
-                const displayName = user.pushName ? ` (${user.pushName})` : '';
-
-                if (isRoulette) {
-                    text +=
-                        ctx.t('tools.topglobal.roulette_entry', {
-                            icon: index === 0 ? '👑' : '💀',
-                            rank: index + 1,
-                            user: user.id,
-                            wins: user.rouletteWins,
-                            matches: user.rouletteRounds
-                        }) + '\n';
-                } else {
-                    text +=
-                        ctx.t('tools.topglobal.casino_entry', {
-                            icon: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎗️',
-                            rank: index + 1,
-                            user: user.id,
-                            name: displayName,
-                            balance: formatRupiah(user.balance)
-                        }) + '\n';
-                }
-            });
+            await sock.sendMessage(jid, { text: ctx.t('tools.topglobal.empty') }, { quoted: msg });
+            return;
         }
 
-        text += `${ctx.t('tools.topglobal.footer')}`;
+        const headerCard = renderCard({
+            title: isRoulette ? 'GLOBAL ROULETTE PODIUM' : 'GLOBAL HIGH ROLLERS',
+            icon: '🏆',
+            headerStyle: 'heavy',
+            fields: [
+                { icon: '📍', label: 'Scope', value: 'Global Leaderboard' },
+                { icon: '👥', label: 'Ranked Players', value: `${topUsersList.length}` }
+            ]
+        });
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const mentions: string[] = [];
+        const items: CatalogItem[] = topUsersList.map((user: any, index: number) => {
+            const medals = ['🥇', '🥈', '🥉', '🎗️'];
+            const medal = index < 3 ? medals[index] : medals[3];
+            const cleanId = user.id.split('@')[0];
+            mentions.push(...formatMentions(user.id));
+            const namePart = user.pushName ? ` (${user.pushName})` : '';
+
+            if (isRoulette) {
+                return {
+                    rank: `${medal} ${index + 1}`,
+                    title: `@${cleanId}${namePart}`,
+                    subtitle: `Wins: ${user.rouletteWins} • Matches: ${user.rouletteRounds}`
+                };
+            } else {
+                const netWorth = Number(user.balance);
+                const tier =
+                    netWorth >= 10000000
+                        ? '💎 Diamond'
+                        : netWorth >= 1000000
+                          ? '🥇 Gold'
+                          : netWorth >= 100000
+                            ? '🥈 Silver'
+                            : '🥉 Bronze';
+                return {
+                    rank: `${medal} ${index + 1}`,
+                    title: `@${cleanId}${namePart}`,
+                    value: `Balance: ${formatRupiah(user.balance)}`,
+                    subtitle: `Tier: ${tier}`
+                };
+            }
+        });
+
+        const listCard = renderCatalogCard(
+            isRoulette ? 'GLOBAL ROULETTE CHAMPIONS' : 'TOP GLOBAL BILLIONAIRES',
+            '👑',
+            items,
+            'Wager in .roulette or invest in .properties to climb the ranks!'
+        );
+
+        const text = `${headerCard}\n\n${listCard}`;
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await sock.sendMessage(jid, { text, mentions }, { quoted: msg });
     }
 };
