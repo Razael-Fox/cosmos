@@ -112,25 +112,39 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const matches = outputText.match(/@(\d+)/g);
         const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
 
-        await ctx.sock.sendMessage(
-            ctx.jid,
-            {
-                text: outputText,
-                contextInfo: {
-                    externalAdReply: {
-                        title: t('tools.menu.banner_title'),
-                        body: t('tools.menu.banner_body'),
-                        mediaType: 1, // IMAGE
-                        thumbnail: bannerBuffer,
-                        renderLargerThumbnail: true, // Baileys hero banner attribute
-                        sourceUrl: 'https://github.com/razaelmahasaputra/cosmos',
-                        mediaUrl: 'https://files.catbox.moe/hygluw.png'
-                    },
-                    mentionedJid: mentions
-                }
-            },
-            { quoted: ctx.msg }
-        );
+        try {
+            await ctx.sock.sendMessage(
+                ctx.jid,
+                {
+                    text: outputText,
+                    contextInfo: {
+                        externalAdReply: {
+                            title: t('tools.menu.banner_title'),
+                            body: t('tools.menu.banner_body'),
+                            mediaType: 1, // IMAGE
+                            thumbnail: bannerBuffer,
+                            renderLargerThumbnail: true, // Baileys hero banner attribute
+                            sourceUrl: 'https://github.com/razaelmahasaputra/cosmos',
+                            mediaUrl: 'https://files.catbox.moe/hygluw.png'
+                        },
+                        mentionedJid: mentions
+                    }
+                },
+                { quoted: ctx.msg }
+            );
+        } catch (error) {
+            console.error('[HelpTool] Failed to send menu with externalAdReply, falling back to plain text:', error);
+            await ctx.sock.sendMessage(
+                ctx.jid,
+                {
+                    text: outputText,
+                    contextInfo: {
+                        mentionedJid: mentions
+                    }
+                },
+                { quoted: ctx.msg }
+            );
+        }
         return undefined; // Prevents message handler echo
     }
 

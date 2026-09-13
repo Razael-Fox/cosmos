@@ -35,6 +35,11 @@ export function getMenuBannerBuffer(customPath?: string): Buffer {
         if (fs.existsSync(bannerPath)) {
             const stats = fs.statSync(bannerPath);
             if (stats.size > 0) {
+                if (stats.size > 70 * 1024) {
+                    console.warn(
+                        `[MenuAssets] Warning: Menu banner at ${bannerPath} is ${(stats.size / 1024).toFixed(1)} KB. WhatsApp inline thumbnails should be under 70 KB to prevent message delivery drops.`
+                    );
+                }
                 const buf = fs.readFileSync(bannerPath);
                 if (!customPath) cachedBannerBuffer = buf;
                 return buf;
