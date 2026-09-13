@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 let cachedBannerBuffer: Buffer | null = null;
+let cachedBannerMtime: number = 0;
 
 // Minimal 1x1 transparent PNG fallback buffer
 const MINIMAL_PNG_FALLBACK = Buffer.from(
@@ -14,6 +16,31 @@ const MINIMAL_PNG_FALLBACK = Buffer.from(
  */
 export function resetMenuBannerCache(): void {
     cachedBannerBuffer = null;
+    cachedBannerMtime = 0;
+}
+
+/**
+ * Resolves an asset file path by checking process.cwd() and module root.
+ */
+function resolveAssetPath(fileName: string, customPath?: string): string {
+    if (customPath) return customPath;
+
+    const cwdCandidate = path.resolve(process.cwd(), 'assets', fileName);
+    if (fs.existsSync(cwdCandidate)) {
+        return cwdCandidate;
+    }
+
+    try {
+        const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+        const relativeCandidate = path.resolve(moduleDir, '../../assets', fileName);
+        if (fs.existsSync(relativeCandidate)) {
+            return relativeCandidate;
+        }
+    } catch {
+        // Ignore fallback resolution errors
+    }
+
+    return cwdCandidate;
 }
 
 /**
@@ -24,24 +51,29 @@ export function resetMenuBannerCache(): void {
  * @returns Buffer containing the image data.
  */
 export function getMenuBannerBuffer(customPath?: string): Buffer {
-    if (cachedBannerBuffer && !customPath) {
-        return cachedBannerBuffer;
-    }
-
-    const bannerPath = customPath || path.resolve(process.cwd(), 'assets', 'menu_banner.png');
-    const placeholderPath = path.resolve(process.cwd(), 'assets', 'menu_banner.placeholder.png');
+    const bannerPath = resolveAssetPath('menu_banner.png', customPath);
+    const placeholderPath = resolveAssetPath('menu_banner.placeholder.png');
 
     try {
         if (fs.existsSync(bannerPath)) {
             const stats = fs.statSync(bannerPath);
             if (stats.size > 0) {
+                // Return cached buffer if mtime has not changed
+                if (!customPath && cachedBannerBuffer && cachedBannerMtime === stats.mtimeMs) {
+                    return cachedBannerBuffer;
+                }
+
                 if (stats.size > 70 * 1024) {
                     console.warn(
                         `[MenuAssets] Warning: Menu banner at ${bannerPath} is ${(stats.size / 1024).toFixed(1)} KB. WhatsApp inline thumbnails should be under 70 KB to prevent message delivery drops.`
                     );
                 }
+
                 const buf = fs.readFileSync(bannerPath);
-                if (!customPath) cachedBannerBuffer = buf;
+                if (!customPath) {
+                    cachedBannerBuffer = buf;
+                    cachedBannerMtime = stats.mtimeMs;
+                }
                 return buf;
             }
         }
@@ -49,14 +81,15 @@ export function getMenuBannerBuffer(customPath?: string): Buffer {
         console.warn(`[MenuAssets] Warning: Failed to read banner from ${bannerPath}:`, err);
     }
 
-    // Fallback to placeholder asset
+    // Fallback to placeholder asset (do not cache permanently so banner can recover when available)
     try {
         if (fs.existsSync(placeholderPath)) {
             const stats = fs.statSync(placeholderPath);
             if (stats.size > 0) {
-                const buf = fs.readFileSync(placeholderPath);
-                if (!customPath) cachedBannerBuffer = buf;
-                return buf;
+                console.warn(
+                    `[MenuAssets] Notice: Custom banner not found or empty at ${bannerPath}. Using placeholder: ${placeholderPath}`
+                );
+                return fs.readFileSync(placeholderPath);
             }
         }
     } catch (err) {
@@ -64,6 +97,5 @@ export function getMenuBannerBuffer(customPath?: string): Buffer {
     }
 
     // Ultimate fallback to minimal 1x1 base64 PNG
-    if (!customPath) cachedBannerBuffer = MINIMAL_PNG_FALLBACK;
     return MINIMAL_PNG_FALLBACK;
 }

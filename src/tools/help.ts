@@ -124,8 +124,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                             mediaType: 1, // IMAGE
                             thumbnail: bannerBuffer,
                             renderLargerThumbnail: true, // Baileys hero banner attribute
-                            sourceUrl: 'https://github.com/razaelmahasaputra/cosmos',
-                            mediaUrl: 'https://files.catbox.moe/hygluw.png'
+                            sourceUrl: 'https://github.com/razaelmahasaputra/cosmos'
                         },
                         mentionedJid: mentions
                     }
