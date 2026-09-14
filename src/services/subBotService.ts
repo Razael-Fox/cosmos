@@ -68,6 +68,14 @@ export function abortPairing(phoneNumber: string): boolean {
     activeConnections.delete(`sub_${clean}`);
     unregisterCancellableSession(`subbot_pair_${clean}`);
     pendingPairings.delete(clean);
+
+    try {
+        const subPrisma = getPrismaClient(`sub_${clean}`);
+        subPrisma.whatsAppAuth.deleteMany().catch(() => {});
+    } catch {
+        /* ignore */
+    }
+
     return true;
 }
 
@@ -83,6 +91,11 @@ export async function requestPairing(
     const cleanNumber = getCleanNumber(targetNumber);
     if (!cleanNumber || cleanNumber.length < 8) {
         return '❌ Invalid phone number format. Please provide international format (e.g. 628123456789).';
+    }
+
+    const primaryNumber = getCleanNumber(process.env.BOT_PHONE_NUMBER || '');
+    if (primaryNumber && cleanNumber === primaryNumber) {
+        return t('tools.subbot.cannot_pair_self');
     }
 
     if (isSubBotActive(cleanNumber)) {
@@ -102,8 +115,13 @@ export async function requestPairing(
         fs.mkdirSync(botDir, { recursive: true });
     }
 
-    // Ensure database and schema are initialized
-    getPrismaClient(`sub_${cleanNumber}`);
+    // Ensure database and schema are initialized and clear previous stale credentials
+    const subPrisma = getPrismaClient(`sub_${cleanNumber}`);
+    try {
+        await subPrisma.whatsAppAuth.deleteMany();
+    } catch {
+        /* ignore */
+    }
 
     const pairingSession: PairingSession = {
         phoneNumber: cleanNumber,
@@ -148,7 +166,6 @@ export async function requestPairing(
         sessionId: `sub_${cleanNumber}`,
         phoneNumber: cleanNumber,
         pairingMethod: method,
-        disableReconnect: true,
         isPairingMode: true,
         isAborted: () => !pendingPairings.has(cleanNumber),
         onPairingCode: async (formattedCode: string) => {

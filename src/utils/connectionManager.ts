@@ -195,6 +195,11 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                 } else {
                     console.log(`[Connection] [${sessionId}] Sub-bot logged out. Dereferencing and cleaning up...`);
                     try {
+                        await getPrismaClient(sessionId).whatsAppAuth.deleteMany();
+                    } catch (e) {
+                        console.error(`[${sessionId}] Error clearing whatsAppAuth:`, e);
+                    }
+                    try {
                         await disconnectPrismaClient(sessionId);
                     } catch (e) {
                         console.error(`[${sessionId}] Error disconnecting prisma:`, e);
@@ -205,12 +210,20 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             if (onClosed) onClosed(isLoggedOut);
 
             if (shouldReconnect && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                if (isAborted?.()) {
+                    console.log(`[Connection] [${sessionId}] Session aborted. Skipping reconnect.`);
+                    return;
+                }
                 reconnectAttempts++;
                 const reconnectDelay = RECONNECT_BASE_DELAY_MS * Math.min(reconnectAttempts, 5);
                 console.log(
                     `[Connection] [${sessionId}] Reconnecting in ${reconnectDelay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
                 );
                 await delay(reconnectDelay);
+                if (isAborted?.()) {
+                    console.log(`[Connection] [${sessionId}] Session aborted during delay. Skipping reconnect.`);
+                    return;
+                }
                 connectToWhatsApp(options);
             } else if (shouldReconnect) {
                 console.error(

@@ -791,6 +791,7 @@
         "delete_success": "Your sub-bot database and configuration have been deleted.",
         "anti_recursion_title": "ACTION RESTRICTED",
         "anti_recursion_desc": "Sub-bots cannot spawn secondary sub-bots. Please use the parent bot to pair new devices.",
+        "cannot_pair_self": "The primary bot phone number cannot be linked as a sub-bot.",
         "admin_only_list": "Only the primary bot administrator can inspect all connected sub-bots."
     },
     "config": {

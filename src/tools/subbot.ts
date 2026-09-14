@@ -72,8 +72,24 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             });
         }
 
-        const targetNumber = parts[1] || senderClean;
-        const methodArg = parts[2]?.toLowerCase();
+        let targetNumber = parts[1] || senderClean;
+        let methodArg = parts[2]?.toLowerCase();
+
+        if (targetNumber === 'qr' || targetNumber === 'code') {
+            methodArg = targetNumber;
+            targetNumber = senderClean;
+        }
+
+        const cleanTarget = getCleanNumber(targetNumber);
+        if (primaryAdmin && cleanTarget === primaryAdmin) {
+            return renderCard({
+                title: ctx.t('tools.subbot.anti_recursion_title'),
+                icon: '⛔',
+                headerStyle: 'heavy',
+                body: ctx.t('tools.subbot.cannot_pair_self')
+            });
+        }
+
         const method: 'code' | 'qr' = methodArg === 'qr' ? 'qr' : 'code';
 
         const result = await requestPairing(targetNumber, method, senderJid, ctx.jid, ctx.sock, ctx.msg, ctx.t);

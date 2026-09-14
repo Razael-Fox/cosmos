@@ -791,6 +791,7 @@
         "delete_success": "Basis data dan konfigurasi sub-bot Anda telah dihapus secara permanen.",
         "anti_recursion_title": "TINDAKAN DIBATASI",
         "anti_recursion_desc": "Sub-bot tidak dapat menautkan sub-bot turunan. Silakan gunakan bot utama untuk menautkan perangkat baru.",
+        "cannot_pair_self": "Nomor telepon bot utama tidak dapat ditautkan sebagai sub-bot.",
         "admin_only_list": "Hanya administrator bot utama yang dapat memeriksa seluruh daftar sub-bot."
     },
     "config": {
