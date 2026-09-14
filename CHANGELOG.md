@@ -11,6 +11,36 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-08] - 2026-09-14
+
+### Added
+
+- **Cosmos Sub-Bot Multi-Device Architecture (Jadibot System) (`src/services/subBotService.ts`, `src/tools/subbot.ts`, `tests/subbot.test.ts`):**
+    - Autonomous multi-session sub-bot architecture enabling users to link their personal WhatsApp numbers as independent sub-bot instances (`.subbot pair <phone> <code|qr>`).
+    - Dual pairing modes supporting 8-digit text pairing codes (120s TTL) and dynamic QR code image generation (60s TTL) using `qrcode`.
+    - Integrated pairing cancellation with `.cancel` via `cancellationManager` with in-flight socket cleanup preventing dangling background connections.
+    - Anti-recursion protection guard preventing sub-bots from spawning secondary sub-bots.
+    - Isolated per-bot directory storage (`database/{phoneNumber}/`) with independent SQLite databases and `config.json`.
+    - Programmatic schema DDL bootstrapping (`ensureDatabaseSchema`) for all 23 database models using `better-sqlite3` to guarantee schema integrity in Android Termux / PRoot environments.
+    - Baileys lifecycle hardening in `connectionManager.ts`: strictly isolating `process.exit(1)` to `sessionId === 'default'`, allowing sub-bot disconnects and logouts without terminating the parent process.
+    - Startup staggered reconnection loop in `src/index.ts` with 3000ms intervals between sub-bot activations.
+    - Economic update (FOREX) broadcast suppression based on sub-bot feature configuration.
+
+- **Dynamic Sub-Bot Configuration System (`src/services/subBotConfigService.ts`, `src/tools/config.ts`):**
+    - Granular feature toggling for 13 system modules (`casino`, `bank`, `loan`, `jobs`, `shop`, `property`, `downloaders`, `autodl`, `autosticker`, `autocorrection`, `offlineAi`, `forexAnnouncement`, `stt`).
+    - Sub-bot operating mode configuration (`public` vs `self` / owner-only mode).
+    - Custom bot name, prefix, and default language customization.
+    - Hierarchical API key resolution (`src/utils/apiKeyResolver.ts`) resolving custom keys for Groq, OpenRouter, and EODHD with parent environment fallbacks and key fingerprint caching.
+    - Credential masking (`gsk_••••••••9aB2`) and public group security alert warnings.
+    - 4-tier language resolution hierarchy (`WhitelistedGroup -> User -> SubBot config -> 'id'`).
+
+- **Full Bilingual Localization & Automated Test Suite:**
+    - 100% symmetrical translation keys in `src/locales/en/tools.json` and `src/locales/id/tools.json` for sub-bot management and configuration tools.
+    - Comprehensive unit & integration test suite in `tests/subbot.test.ts` covering all 8 test cases.
+    - New agent skill `subbot-multidevice-architecture` and Rule U in `AGENTS.md`.
+
+---
+
 ## [RF-2609-07] - 2026-09-13
 
 ### Fixed
