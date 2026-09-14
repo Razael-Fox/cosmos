@@ -11,8 +11,8 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export function getLocalesDir(): string {
     const distPath = path.resolve(process.cwd(), 'dist', 'locales');
     const srcPath = path.resolve(process.cwd(), 'src', 'locales');
-    if (fs.existsSync(path.join(distPath, 'id', 'core.json'))) return distPath;
     if (fs.existsSync(path.join(srcPath, 'id', 'core.json'))) return srcPath;
+    if (fs.existsSync(path.join(distPath, 'id', 'core.json'))) return distPath;
     if (fs.existsSync(srcPath)) return srcPath;
     return distPath;
 }

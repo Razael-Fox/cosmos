@@ -708,6 +708,12 @@
         },
         "ytdl": {
             "description": "Mengunduh video dari URL yang ditentukan menggunakan yt-dlp."
+        },
+        "subbot": {
+            "description": "Menghubungkan dan mengelola nomor WhatsApp Anda sendiri sebagai instance sub-bot otonom."
+        },
+        "config": {
+            "description": "Melihat dan menyesuaikan konfigurasi fitur internal serta kunci API sub-bot Anda."
         }
     },
     "ui": {
@@ -747,5 +753,68 @@
         "size_label": "Ukuran Berkas",
         "platform_label": "Platform",
         "footer_tip": "Diunduh melalui Pipeline Berkecepatan Tinggi Cosmos"
+    },
+    "subbot": {
+        "dashboard_title": "MANAJEMEN SUB-BOT",
+        "pairing_title": "PENYAMBUNGAN SUB-BOT",
+        "pairing_method_code": "Kode Tautan Teks",
+        "pairing_method_qr": "Pindai Kode QR",
+        "code_label": "Kode Tautan",
+        "target_number": "Nomor Tujuan",
+        "expires_in": "Kedaluwarsa Dalam",
+        "instructions_title": "Panduan Menautkan",
+        "instruction_1": "Buka WhatsApp di ponsel Anda",
+        "instruction_2": "Buka Pengaturan > Perangkat Tertaut",
+        "instruction_3": "Ketuk 'Tautkan Perangkat' lalu pilih 'Tautkan dengan nomor telepon saja'",
+        "instruction_4": "Masukkan 8 digit kode tautan di atas",
+        "qr_instruction": "Pindai kode QR ini dalam 60 detik melalui WhatsApp > Perangkat Tertaut > Tautkan Perangkat.",
+        "code_instruction": "Masukkan 8 digit kode ini di WhatsApp > Perangkat Tertaut > Tautkan dengan nomor telepon.",
+        "cancel_tip": "Ketik .cancel kapan saja untuk membatalkan proses penautan.",
+        "pairing_success": "Selamat! Sub-bot Anda kini aktif dan telah terhubung.",
+        "pairing_cancelled": "Proses penautan sub-bot telah dibatalkan.",
+        "pairing_timeout": "Sesi penautan kedaluwarsa. Silakan minta kode atau QR baru.",
+        "status_title": "STATUS SUB-BOT",
+        "device_number": "Nomor Perangkat",
+        "status_label": "Status",
+        "mode_label": "Mode Operasi",
+        "mode_public": "Bot Publik",
+        "mode_self": "Self-Bot (Khusus Pemilik)",
+        "uptime_label": "Waktu Aktif",
+        "handled_msgs": "Pesan Ditangani",
+        "commands_run": "Perintah Dijalankan",
+        "memory_usage": "Penggunaan Memori",
+        "already_active": "Sub-bot untuk nomor +{{number}} sudah aktif.",
+        "already_pairing": "Anda sudah memiliki sesi penautan yang sedang berjalan. Kirim .cancel untuk membatalkan.",
+        "max_slots_reached": "Seluruh slot sub-bot saat ini penuh ({{current}}/{{max}}). Silakan coba lagi nanti.",
+        "stop_success": "Sub-bot Anda (+{{number}}) telah dihentikan. Gunakan .subbot start untuk mengaktifkan kembali.",
+        "start_success": "Sub-bot Anda (+{{number}}) sedang menyambung kembali...",
+        "delete_success": "Basis data dan konfigurasi sub-bot Anda telah dihapus secara permanen.",
+        "anti_recursion_title": "TINDAKAN DIBATASI",
+        "anti_recursion_desc": "Sub-bot tidak dapat menautkan sub-bot turunan. Silakan gunakan bot utama untuk menautkan perangkat baru.",
+        "admin_only_list": "Hanya administrator bot utama yang dapat memeriksa seluruh daftar sub-bot."
+    },
+    "config": {
+        "dashboard_title": "KONFIGURASI SUB-BOT",
+        "device_label": "Nomor Perangkat",
+        "name_label": "Nama Bot",
+        "prefix_label": "Awalan Perintah",
+        "mode_label": "Mode Operasi",
+        "lang_label": "Bahasa Utama",
+        "internal_features": "Fitur Internal",
+        "api_integrations": "Kunci API & Integrasi",
+        "feature_toggled": "Fitur '{{feature}}' telah di-{{status}}.",
+        "feature_not_found": "Fitur '{{feature}}' tidak dikenali. Fitur yang valid: {{list}}",
+        "status_enabled": "AKTIF",
+        "status_disabled": "NONAKTIF",
+        "mode_updated": "Mode operasi sub-bot diubah ke: {{mode}}.",
+        "prefix_updated": "Awalan perintah diubah ke: '{{prefix}}'.",
+        "name_updated": "Nama bot diubah ke: '{{name}}'.",
+        "lang_updated": "Bahasa utama sub-bot diubah ke: '{{lang}}'.",
+        "reset_success": "Konfigurasi sub-bot telah dikembalikan ke pengaturan awal.",
+        "api_key_updated": "Kunci API untuk layanan '{{service}}' berhasil diperbarui ({{masked}}).",
+        "api_key_cleared": "Kunci API untuk layanan '{{service}}' dihapus. Kembali menggunakan fallback bot utama.",
+        "api_key_invalid": "Format kunci API tidak valid untuk layanan '{{service}}'.",
+        "api_key_security_warning": "⚠️ Peringatan Keamanan: Demi privasi dan perlindungan kredensial Anda, harap hapus pesan yang memuat kunci API teks biasa, dan lakukan konfigurasi kunci via obrolan pribadi (DM).",
+        "not_owner": "Hanya pemilik sub-bot yang dapat memodifikasi konfigurasi sub-bot ini."
     }
 }

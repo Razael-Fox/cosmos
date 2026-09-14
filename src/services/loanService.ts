@@ -1,14 +1,10 @@
 import { prisma } from '#db.js';
 import { formatRupiah } from '#utils/currency.js';
 import { getBankAccountByUser } from '#services/bankService.js';
-import Groq from 'groq-sdk';
 import cron from 'node-cron';
 import dotenv from 'dotenv';
+import { getGroqClient } from '#utils/apiKeyResolver.js';
 dotenv.config();
-
-function getGroqClient(): Groq {
-    return new Groq({ apiKey: process.env.GROQ_API_KEY });
-}
 
 export interface CreditProfile {
     userId: string;

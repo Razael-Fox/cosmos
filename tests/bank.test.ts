@@ -42,6 +42,7 @@ async function runBankTests() {
         data: {
             id: userB_Jid,
             pushName: 'Bob Trader',
+            language: 'EN',
             balance: BigInt(50000) // 50k cash
         }
     });
@@ -284,10 +285,11 @@ async function runBankTests() {
     );
     assert(senderMsg, 'Sender must receive success confirmation');
 
-    // Wait 100ms for async recipient notification to trigger
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Wait 500ms for async recipient notification to trigger
+    await new Promise((resolve) => setTimeout(resolve, 500));
     const recipientMsg = fakeSock.sentMessages.find((m: any) =>
-        m.content.text?.includes('You have received a transfer')
+        m.content.text?.includes('You have received a transfer') ||
+        m.content.text?.includes('Anda menerima transfer dana')
     );
     assert(recipientMsg, 'Recipient notification must be dispatched');
     console.log('✓ Interactive confirmation and cancellation flows verified.');

@@ -1,10 +1,10 @@
-import { Groq } from 'groq-sdk';
 import { WASocket, WAMessage, downloadContentFromMessage } from '@whiskeysockets/baileys';
 import dotenv from 'dotenv';
 import { isGroupWhitelisted } from '#db.js';
 import { addMessageToHistory, getConversationContext } from '#utils/aiHistory.js';
 import toolsHandler from '#tools/handler.js';
 import { getTranslator } from '#utils/i18n.js';
+import { getGroqClient } from '#utils/apiKeyResolver.js';
 
 dotenv.config();
 
@@ -25,14 +25,6 @@ export function toggleOfflineAi(): boolean {
 
 export function isOfflineAiEnabled(): boolean {
     return isGlobalOfflineAiEnabled;
-}
-
-let groqClient: Groq | null = null;
-function getGroqClient(): Groq {
-    if (!groqClient) {
-        groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    }
-    return groqClient;
 }
 
 export async function handleOfflineAiResponder(

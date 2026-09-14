@@ -60,6 +60,10 @@ async function startSystem(): Promise<void> {
         sessionId: 'default',
         phoneNumber
     });
+
+    // Automatically reconnect existing paired sub-bots with staggered intervals
+    const { initSubBots } = await import('#services/subBotService.js');
+    initSubBots();
 }
 
 startSystem();

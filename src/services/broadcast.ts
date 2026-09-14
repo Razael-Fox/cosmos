@@ -17,4 +17,11 @@ export async function broadcastEconomicUpdate(sock: WASocket, multiplier: number
     for (const group of groups) {
         await sock.sendMessage(group.jid, { text: message });
     }
+
+    try {
+        const { broadcastSubBotForex } = await import('#services/subBotService.js');
+        await broadcastSubBotForex(multiplier, reasoning, rate);
+    } catch (err) {
+        console.error('[FOREX Broadcast] Error broadcasting to sub-bots:', err);
+    }
 }

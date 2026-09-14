@@ -708,6 +708,12 @@
         },
         "ytdl": {
             "description": "Downloads a video from a specified URL using yt-dlp. Currently supports basic video fetching."
+        },
+        "subbot": {
+            "description": "Pair and manage your own WhatsApp number as an autonomous sub-bot instance."
+        },
+        "config": {
+            "description": "View and customize your sub-bot internal feature configuration and API keys."
         }
     },
     "ui": {
@@ -747,5 +753,68 @@
         "size_label": "File Size",
         "platform_label": "Platform",
         "footer_tip": "Downloaded via Cosmos High-Speed Pipeline"
+    },
+    "subbot": {
+        "dashboard_title": "SUB-BOT MANAGEMENT",
+        "pairing_title": "SUB-BOT PAIRING",
+        "pairing_method_code": "Text Pairing Code",
+        "pairing_method_qr": "QR Code Scan",
+        "code_label": "Pairing Code",
+        "target_number": "Target Number",
+        "expires_in": "Expires In",
+        "instructions_title": "Instructions",
+        "instruction_1": "Open WhatsApp on your phone",
+        "instruction_2": "Go to Settings > Linked Devices",
+        "instruction_3": "Tap 'Link a Device' and choose 'Link with phone number instead'",
+        "instruction_4": "Enter the 8-digit pairing code above",
+        "qr_instruction": "Scan this QR code within 60 seconds using WhatsApp > Linked Devices > Link a Device.",
+        "code_instruction": "Enter this 8-digit code in WhatsApp > Linked Devices > Link with phone number.",
+        "cancel_tip": "Type .cancel at any time to abort the pairing session.",
+        "pairing_success": "Congratulations! Your sub-bot is now active and connected.",
+        "pairing_cancelled": "Sub-bot pairing process has been cancelled.",
+        "pairing_timeout": "Pairing session expired. Please request a new code or QR.",
+        "status_title": "SUB-BOT STATUS",
+        "device_number": "Device Number",
+        "status_label": "Status",
+        "mode_label": "Operating Mode",
+        "mode_public": "Public Bot",
+        "mode_self": "Self-Bot (Owner Only)",
+        "uptime_label": "Uptime",
+        "handled_msgs": "Handled Messages",
+        "commands_run": "Commands Run",
+        "memory_usage": "Memory Usage",
+        "already_active": "Sub-bot for number +{{number}} is already active.",
+        "already_pairing": "You already have an active pairing session in progress. Send .cancel to abort.",
+        "max_slots_reached": "All sub-bot slots are currently occupied ({{current}}/{{max}}). Please try again later.",
+        "stop_success": "Your sub-bot (+{{number}}) has been stopped. Use .subbot start to reactivate.",
+        "start_success": "Your sub-bot (+{{number}}) is reconnecting...",
+        "delete_success": "Your sub-bot database and configuration have been deleted.",
+        "anti_recursion_title": "ACTION RESTRICTED",
+        "anti_recursion_desc": "Sub-bots cannot spawn secondary sub-bots. Please use the parent bot to pair new devices.",
+        "admin_only_list": "Only the primary bot administrator can inspect all connected sub-bots."
+    },
+    "config": {
+        "dashboard_title": "SUB-BOT CONFIGURATION",
+        "device_label": "Device Number",
+        "name_label": "Bot Name",
+        "prefix_label": "Command Prefix",
+        "mode_label": "Operating Mode",
+        "lang_label": "Default Language",
+        "internal_features": "Internal Features",
+        "api_integrations": "API Keys & Integrations",
+        "feature_toggled": "Feature '{{feature}}' has been {{status}}.",
+        "feature_not_found": "Feature '{{feature}}' is not recognized. Valid features: {{list}}",
+        "status_enabled": "ENABLED",
+        "status_disabled": "DISABLED",
+        "mode_updated": "Sub-bot operating mode set to: {{mode}}.",
+        "prefix_updated": "Command prefix updated to: '{{prefix}}'.",
+        "name_updated": "Bot name updated to: '{{name}}'.",
+        "lang_updated": "Default sub-bot language updated to: '{{lang}}'.",
+        "reset_success": "Sub-bot configuration has been reset to defaults.",
+        "api_key_updated": "API key for service '{{service}}' successfully updated ({{masked}}).",
+        "api_key_cleared": "API key for service '{{service}}' cleared. Reverted to parent bot fallback.",
+        "api_key_invalid": "Invalid API key format for service '{{service}}'.",
+        "api_key_security_warning": "⚠️ Security Alert: For privacy and protection of your credentials, please delete the message containing your plaintext API key, and configure keys via private chat (DM).",
+        "not_owner": "Only the sub-bot owner can modify this sub-bot's configuration."
     }
 }

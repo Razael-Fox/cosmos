@@ -1,5 +1,5 @@
 import { jidNormalizedUser, WASocket, WAMessage } from '@whiskeysockets/baileys';
-import { addGroup, isGroupWhitelisted, prisma } from '#db.js';
+import { addGroup, isGroupWhitelisted, prisma, dbContext } from '#db.js';
 import toolsHandler from '#tools/handler.js';
 import { isAutoStickerEnabled } from '#utils/autoSticker.js';
 import { isAutoCorrectionEnabled, analyzeAndCorrectText } from '#utils/autoCorrection.js';
@@ -12,6 +12,63 @@ import { processLoanConfirmation } from '#tools/loan.js';
 import { formatMentions } from '#utils/casino.js';
 import { hasCancellableSession, cancelActiveSession } from '#utils/cancellationManager.js';
 import { getTranslator } from '#utils/i18n.js';
+import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
+
+function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
+    const name = toolName.toLowerCase();
+    if (
+        [
+            'balance',
+            'daily',
+            'coinflip',
+            'dice',
+            'slot',
+            'vault',
+            'fevertime',
+            'top',
+            'topglobal',
+            'addbalance',
+            'joingame',
+            'shoot'
+        ].includes(name)
+    ) {
+        return 'casino';
+    }
+    if (['bank', 'transfer'].includes(name)) {
+        return 'bank';
+    }
+    if (['loan'].includes(name)) {
+        return 'loan';
+    }
+    if (['job', 'work', 'apply_license'].includes(name)) {
+        return 'jobs';
+    }
+    if (['shop', 'buy', 'inventory'].includes(name)) {
+        return 'shop';
+    }
+    if (['property', 'realestate', 'catalog', 'sell'].includes(name)) {
+        return 'property';
+    }
+    if (['play', 'playlyrics', 'stoplyrics', 'tiktokdl', 'pinterestdl', 'telegramdl', 'ytdl'].includes(name)) {
+        return 'downloaders';
+    }
+    if (['autodl'].includes(name)) {
+        return 'autodl';
+    }
+    if (['togglesticker', 'stoptogglesticker', 'sticker_maker'].includes(name)) {
+        return 'autosticker';
+    }
+    if (['toggleautocorrection', 'startautocorrection', 'stopautocorrection'].includes(name)) {
+        return 'autocorrection';
+    }
+    if (['toggleofflineai'].includes(name)) {
+        return 'offlineAi';
+    }
+    if (['stt'].includes(name)) {
+        return 'stt';
+    }
+    return null;
+}
 
 function getUnwrappedMessage(m: any): any {
     if (!m) return null;
@@ -133,21 +190,35 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
     const senderRaw = senderJidDb || senderLidDb || '';
 
+    const sessionStore = dbContext.getStore();
+    const currentSessionId = sessionStore?.sessionId || 'default';
+    const isSubBot = currentSessionId !== 'default';
+    const subBotNumber = isSubBot ? currentSessionId.replace(/^sub_/, '') : null;
+    const subBotConfig = subBotNumber ? loadConfig(subBotNumber) : null;
+
+    const subBotOwnerRaw = subBotConfig ? cleanId(subBotConfig.ownerJid) : null;
     const isOwner =
         Boolean(msg.key.fromMe) ||
         (botRawJid !== null && senderRaw === botRawJid) ||
         (botRawLid !== null && senderRaw === botRawLid) ||
+        (subBotOwnerRaw !== null && senderRaw === subBotOwnerRaw) ||
         (ownerNumber !== null && senderRaw === ownerNumber);
 
-    // Resolve chat language preference
-    let chatLang = 'id';
+    // If sub-bot is operating in self-bot mode, only the owner can interact
+    if (isSubBot && subBotConfig?.mode === 'self' && !isOwner) {
+        return;
+    }
+
+    // Resolve chat language preference (Hierarchy: Group -> User -> SubBot Default -> id)
+    let chatLang: string | null = null;
     try {
         if (jid.endsWith('@g.us')) {
             const group = await prisma.whitelistedGroup.findUnique({ where: { jid } });
             if (group?.language) {
                 chatLang = group.language.toLowerCase();
             }
-        } else {
+        }
+        if (!chatLang) {
             let user = senderJidDb
                 ? await prisma.user.findFirst({
                       where: { OR: [{ id: senderJidDb }, { lid: senderJidDb }] }
@@ -163,7 +234,14 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             }
         }
     } catch {
-        /* fallback to id */
+        /* fallback to default */
+    }
+
+    if (!chatLang && subBotConfig?.language) {
+        chatLang = subBotConfig.language.toLowerCase();
+    }
+    if (!chatLang) {
+        chatLang = 'id';
     }
 
     const t = getTranslator(chatLang);
@@ -239,7 +317,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         if (handledLoanConfirm) return;
     }
 
-    if (trimmedText.startsWith('.') || isPlayReply) {
+    const activePrefix = subBotConfig?.prefix || '.';
+    const startsWithActivePrefix = trimmedText.startsWith(activePrefix);
+    const startsWithDot = trimmedText.startsWith('.');
+    const isCommand = startsWithActivePrefix || startsWithDot || isPlayReply;
+
+    if (isCommand) {
         let commandName: string;
         let argsStr: string;
 
@@ -248,8 +331,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             argsStr = trimmedText;
         } else {
             const parts = trimmedText.split(/\s+/);
-            commandName = parts[0];
-            argsStr = trimmedText.substring(commandName.length).trim();
+            let rawCmd = parts[0];
+            if (startsWithActivePrefix && activePrefix !== '.') {
+                rawCmd = '.' + rawCmd.slice(activePrefix.length);
+            }
+            commandName = rawCmd;
+            argsStr = trimmedText.substring(parts[0].length).trim();
         }
 
         if (commandName === '.addgroup' || commandName === '.addwhitelist') {
@@ -273,6 +360,17 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
         const tool = toolsHandler.getTool(commandName);
         if (tool) {
+            // Check sub-bot feature toggles
+            if (isSubBot && subBotNumber) {
+                const reqFeature = getRequiredFeatureForTool(tool.definition?.name || '');
+                if (reqFeature && !isFeatureEnabled(subBotNumber, reqFeature)) {
+                    console.log(
+                        `[FeatureGate] Sub-bot +${subBotNumber} has feature '${reqFeature}' disabled. Rejecting command '${commandName}'.`
+                    );
+                    return;
+                }
+            }
+
             // Check owner permission constraints
             const isOwnerOnly = tool.definition?.owner === true;
             if (isOwnerOnly && !isOwner) {
@@ -374,14 +472,21 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
     // Offline AI Responder
     if (!isOwner) {
-        const handled = await handleOfflineAiResponder(sock, msg, jid, text, chatLang);
-        if (handled) return;
+        if (!isSubBot || isFeatureEnabled(subBotNumber!, 'offlineAi')) {
+            const handled = await handleOfflineAiResponder(sock, msg, jid, text, chatLang);
+            if (handled) return;
+        }
     }
 
     // Auto-correct processing for owner's sent text messages
-    if (isOwner && Boolean(msg.key.fromMe) && isAutoCorrectionEnabled(jid)) {
+    if (
+        isOwner &&
+        Boolean(msg.key.fromMe) &&
+        (!isSubBot || isFeatureEnabled(subBotNumber!, 'autocorrection')) &&
+        isAutoCorrectionEnabled(jid)
+    ) {
         const msgId = msg.key.id;
-        if (msgId && trimmedText.length > 1 && !trimmedText.startsWith('.')) {
+        if (msgId && trimmedText.length > 1 && !isCommand) {
             try {
                 const corrected = await analyzeAndCorrectText(trimmedText);
                 if (corrected && corrected !== trimmedText) {
@@ -401,14 +506,16 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         msg.key.fromMe &&
         ((text && (text.startsWith('✅') || text.startsWith('⏳') || text.startsWith('❌'))) || false); // we will evaluate isQuotingCommand properly below
 
-    if (!isBotResponseStr && trimmedText && !trimmedText.startsWith('.')) {
-        if (jid.endsWith('@g.us') && !isOwner) {
-            const whitelisted = await isGroupWhitelisted(jid);
-            if (whitelisted) {
+    if (!isBotResponseStr && trimmedText && !isCommand) {
+        if (!isSubBot || isFeatureEnabled(subBotNumber!, 'autodl')) {
+            if (jid.endsWith('@g.us') && !isOwner) {
+                const whitelisted = await isGroupWhitelisted(jid);
+                if (whitelisted) {
+                    await processAutoDl(sock, msg, jid, trimmedText);
+                }
+            } else {
                 await processAutoDl(sock, msg, jid, trimmedText);
             }
-        } else {
-            await processAutoDl(sock, msg, jid, trimmedText);
         }
     }
 
@@ -423,14 +530,21 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
         if (qMsg) {
             const qText = qMsg.conversation || qMsg.extendedTextMessage?.text || '';
-            if (qText.trim().startsWith('.')) isQuotingCommand = true;
+            if (qText.trim().startsWith('.') || (activePrefix !== '.' && qText.trim().startsWith(activePrefix))) {
+                isQuotingCommand = true;
+            }
         }
     }
 
     const isBotResponse =
         msg.key.fromMe &&
         ((text && (text.startsWith('✅') || text.startsWith('⏳') || text.startsWith('❌'))) || isQuotingCommand);
-    if (!isBotResponse && isAutoStickerEnabled(jid) && hasDirectMedia(msg.message)) {
+    if (
+        !isBotResponse &&
+        (!isSubBot || isFeatureEnabled(subBotNumber!, 'autosticker')) &&
+        isAutoStickerEnabled(jid) &&
+        hasDirectMedia(msg.message)
+    ) {
         if (jid.endsWith('@g.us') && !isOwner) {
             const whitelisted = await isGroupWhitelisted(jid);
             if (!whitelisted) return;

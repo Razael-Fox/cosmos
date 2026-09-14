@@ -4,7 +4,7 @@ import { handleMessage } from '#handlers/message.js';
 import { cacheMessage, getCachedMessage, markMessageProcessed } from '#utils/messageCache.js';
 import { usePrismaAuthState } from '#utils/prismaAuthState.js';
 import { initActiveSessions } from '#utils/sessionStore.js';
-import { dbContext, getPrismaClient } from '#db.js';
+import { dbContext, getPrismaClient, disconnectPrismaClient } from '#db.js';
 
 const logger = pino({ level: 'debug' });
 const MAX_RECONNECT_ATTEMPTS = 15;
@@ -17,23 +17,29 @@ function delay(ms: number): Promise<void> {
 export interface ConnectOptions {
     sessionId: string;
     phoneNumber?: string;
+    pairingMethod?: 'code' | 'qr';
     onPairingCode?: (code: string) => void;
+    onQRCode?: (qr: string) => void;
     onConnected?: () => void;
     onClosed?: (isLoggedOut: boolean) => void;
     disableReconnect?: boolean;
     isPairingMode?: boolean;
+    isAborted?: () => boolean;
 }
 
 export const activeConnections = new Map<string, ReturnType<typeof makeWASocket>>();
 
 export async function connectToWhatsApp(options: ConnectOptions): Promise<void> {
-    const { sessionId, phoneNumber, onPairingCode, onConnected, onClosed } = options;
+    const { sessionId, phoneNumber, onPairingCode, onConnected, onClosed, isAborted } = options;
     let connectionOpenTimeSec = 0;
     let reconnectAttempts = 0;
 
     const authState = await usePrismaAuthState(sessionId);
+    if (isAborted?.()) return;
+
     const { state, saveCreds } = authState;
     const { version } = await fetchLatestBaileysVersion();
+    if (isAborted?.()) return;
 
     const sock = makeWASocket({
         version,
@@ -67,6 +73,15 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             return undefined;
         }
     });
+
+    if (isAborted?.()) {
+        try {
+            sock.end(undefined);
+        } catch {
+            /* ignore */
+        }
+        return;
+    }
 
     const originalSendMessage = sock.sendMessage.bind(sock);
     sock.sendMessage = (async (...args: Parameters<typeof originalSendMessage>) => {
@@ -113,32 +128,38 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             }
             if (onConnected) onConnected();
         }
-        if (update.qr && pendingPairing && !sock.authState.creds.registered && !pairingRequested && phoneNumber) {
-            pairingRequested = true;
-            try {
-                console.log(`[Pairing] [${sessionId}] Requesting pairing code for ${phoneNumber}...`);
-                await delay(3000); // Add delay to ensure notification is triggered
-                const code = await sock.requestPairingCode(phoneNumber);
-                const formattedCode = code.match(/.{1,4}/g)?.join('-') || code;
-                if (onPairingCode) {
-                    onPairingCode(formattedCode);
-                } else {
-                    const msg = [
-                        '',
-                        '╔══════════════════════════════════════╗',
-                        '║         PAIRING CODE                 ║',
-                        `║     ${formattedCode.padEnd(34)}║`,
-                        '╚══════════════════════════════════════╝',
-                        '',
-                        `[Pairing] [${sessionId}] Enter this code in WhatsApp > Linked Devices > Pair a device`,
-                        ''
-                    ].join('\n');
-                    console.log(msg);
-                    console.error(msg);
+        if (update.qr && pendingPairing && !sock.authState.creds.registered) {
+            if (options.pairingMethod === 'qr') {
+                if (options.onQRCode) {
+                    options.onQRCode(update.qr);
                 }
-            } catch (err) {
-                console.error(`[Pairing] [${sessionId}] Failed to request pairing code:`, err);
-                pairingRequested = false;
+            } else if (!pairingRequested && phoneNumber) {
+                pairingRequested = true;
+                try {
+                    console.log(`[Pairing] [${sessionId}] Requesting pairing code for ${phoneNumber}...`);
+                    await delay(3000); // Add delay to ensure notification is triggered
+                    const code = await sock.requestPairingCode(phoneNumber);
+                    const formattedCode = code.match(/.{1,4}/g)?.join('-') || code;
+                    if (onPairingCode) {
+                        onPairingCode(formattedCode);
+                    } else {
+                        const msg = [
+                            '',
+                            '╔══════════════════════════════════════╗',
+                            '║         PAIRING CODE                 ║',
+                            `║     ${formattedCode.padEnd(34)}║`,
+                            '╚══════════════════════════════════════╝',
+                            '',
+                            `[Pairing] [${sessionId}] Enter this code in WhatsApp > Linked Devices > Pair a device`,
+                            ''
+                        ].join('\n');
+                        console.log(msg);
+                        console.error(msg);
+                    }
+                } catch (err) {
+                    console.error(`[Pairing] [${sessionId}] Failed to request pairing code:`, err);
+                    pairingRequested = false;
+                }
             }
         }
         if (connection === 'close') {
@@ -160,16 +181,25 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             }
 
             if (isLoggedOut) {
-                console.log(`[Connection] [${sessionId}] Logged out. Clearing credentials...`);
-                try {
-                    await getPrismaClient(sessionId).whatsAppAuth.deleteMany();
+                console.log(`[Connection] [${sessionId}] Logged out.`);
+                if (sessionId === 'default') {
                     console.log(
-                        `[Connection] [${sessionId}] Credentials cleared. Exiting to allow restart & re-pair...`
+                        `[Connection] [${sessionId}] Default bot logged out. Clearing credentials and exiting...`
                     );
-                } catch (e) {
-                    console.error('Failed to clear credentials', e);
+                    try {
+                        await getPrismaClient(sessionId).whatsAppAuth.deleteMany();
+                    } catch (e) {
+                        console.error('Failed to clear credentials', e);
+                    }
+                    process.exit(1);
+                } else {
+                    console.log(`[Connection] [${sessionId}] Sub-bot logged out. Dereferencing and cleaning up...`);
+                    try {
+                        await disconnectPrismaClient(sessionId);
+                    } catch (e) {
+                        console.error(`[${sessionId}] Error disconnecting prisma:`, e);
+                    }
                 }
-                process.exit(1);
             }
 
             if (onClosed) onClosed(isLoggedOut);

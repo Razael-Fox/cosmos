@@ -1,13 +1,10 @@
 import { downloadContentFromMessage, WAMessage } from '@whiskeysockets/baileys';
-import { Groq, toFile } from 'groq-sdk';
+import { toFile } from 'groq-sdk';
 import dotenv from 'dotenv';
 import { ToolDefinition, ToolContext } from './types.js';
+import { getGroqClient } from '#utils/apiKeyResolver.js';
 
 dotenv.config();
-
-function getGroqClient(): Groq {
-    return new Groq({ apiKey: process.env.GROQ_API_KEY });
-}
 
 export const definition: ToolDefinition = {
     name: 'stt',
