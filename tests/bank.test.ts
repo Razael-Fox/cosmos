@@ -287,9 +287,10 @@ async function runBankTests() {
 
     // Wait 500ms for async recipient notification to trigger
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const recipientMsg = fakeSock.sentMessages.find((m: any) =>
-        m.content.text?.includes('You have received a transfer') ||
-        m.content.text?.includes('Anda menerima transfer dana')
+    const recipientMsg = fakeSock.sentMessages.find(
+        (m: any) =>
+            m.content.text?.includes('You have received a transfer') ||
+            m.content.text?.includes('Anda menerima transfer dana')
     );
     assert(recipientMsg, 'Recipient notification must be dispatched');
     console.log('✓ Interactive confirmation and cancellation flows verified.');

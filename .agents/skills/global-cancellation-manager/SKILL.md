@@ -106,12 +106,19 @@ unregisterCancellableSession(`roulette_${sessionId}`);
 - **Di callback `onCancel`:** Hentikan `clearTimeout(session.timeoutId)`, kembalikan saldo seluruh pemain yang sudah menaruh taruhan ke database, hapus dari `gameSessions`, dan kembalikan pesan pembatalan.
 - **Saat game dimulai / waktu habis:** Panggil `unregisterCancellableSession` agar host tidak membatalkan game yang sudah berjalan.
 
+### Kasus C: Inisialisasi Resource Asinkron In-Flight (contoh: Sub-Bot Pairing Socket)
+
+- **Saat proses dimulai:** Daftarkan ke `registerCancellableSession` dan teruskan callback `isAborted: () => !pendingPairings.has(key)` ke pembuat koneksi asinkron.
+- **Pencegahan Zombie Resource:** Operasi asinkron (seperti Baileys `makeWASocket` atau unduhan besar) yang memakan waktu beberapa detik berpotensi selesai **setelah** pengguna mengetik `.cancel`. Dengan memeriksa `isAborted()`, soket yang baru saja tercipta langsung dimatikan (`sock.end()`) sehingga tidak meninggalkan koneksi background yang menggantung (_dangling socket_).
+- **Di callback `onCancel`:** Hentikan timer timeout, matikan soket dari referensi sementara maupun map koneksi aktif, dan hapus sesi dari registry.
+
 ---
 
 ## 5. Yang Wajib & Yang Dilarang (Do's & Don'ts)
 
 - ✅ **WAJIB:** Gunakan bahasa Inggris formal (_Formal English_) untuk seluruh string balasan pembatalan.
 - ✅ **WAJIB:** Bersihkan semua side-effect (seperti timeout `setTimeout`, saldo yang di-lock, atau in-memory map) di dalam handler `onCancel`.
+- ✅ **WAJIB:** Sediakan proteksi pembatalan in-flight (`isAborted`) pada operasi asinkron berat agar tidak meninggalkan koneksi/proses liar di background.
 - ✅ **WAJIB:** Isolasi sesi berdasarkan pasangan `userJid` dan `chatJid` agar pembatalan pengguna di grup A tidak memengaruhi sesi miliknya di chat pribadi (DM) atau sesi pengguna lain di grup yang sama.
 - ❌ **DILARANG:** Membuat keyword cancel tersendiri secara hardcoded (seperti hanya memeriksa `msg === 'batal'` di dalam tool lokal tanpa mendaftarkannya ke `cancellationManager`).
 - ❌ **DILARANG:** Memanggil `sock.sendMessage` ganda jika `onCancel` sudah mengembalikan string (string yang dikembalikan akan otomatis dikirim oleh tool executor atau message router).

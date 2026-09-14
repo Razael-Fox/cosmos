@@ -31,12 +31,13 @@ Cosmos menggunakan **`i18next`** sebagai mesin translasi utama dengan struktur m
 
 ## 2. Aturan & Pola Baku (Core Guidelines)
 
-### A. Penanganan Aset Build (`copy-locales.ts`)
+### A. Penanganan Aset Build & Prioritas Resolusi Direktori (`copy-locales.ts`)
 
 `tsc` hanya mengompilasi file TypeScript (`.ts` -> `.js`) dan mengabaikan file `.json`. Oleh karena itu:
 
-- **Build Synchronization**: Script `pnpm build` dikonfigurasi menjalankan `tsc && tsx scripts/copy-locales.ts`.
-- **Runtime Fallback**: Fungsi `getLocalesDir()` di `src/locales/i18n.config.ts` memeriksa keberadaan file JSON nyata (`path.join(distPath, 'id', 'core.json')`). Jika file JSON tidak ditemukan di folder `dist/`, sistem otomatis fallback membaca direktori `src/locales`.
+- **Build Synchronization**: Script `pnpm build` dikonfigurasi menjalankan `tsc && tsx scripts/copy-locales.ts` untuk menyalin `src/locales` ke `dist/locales`.
+- **Development Priority Rule**: Pada fungsi `getLocalesDir()` di `src/locales/i18n.config.ts`, sistem **WAJIB** memeriksa keberadaan direktori `src/locales` terlebih dahulu sebelum `dist/locales`. Hal ini mencegah bug terjemahan hilang (_missing translation keys_) saat menjalankan perintah pengembangan atau test suite (`pnpm dev`, `tsx tests/...`) di mana file JSON di `dist/locales` mungkin belum diperbarui dari kompilasi sebelumnya.
+- **Production Fallback**: Jika `src/locales` tidak ditemukan (misal pada distribusi produksi mandiri), sistem otomatis fallback membaca direktori `dist/locales`.
 
 ### B. Deteksi Missing Key yang Aman (`i18n.exists`)
 
