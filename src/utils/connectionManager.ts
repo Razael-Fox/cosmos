@@ -94,7 +94,8 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
 
     activeConnections.set(sessionId, sock);
 
-    const pendingPairing = !sock.authState.creds.registered;
+    const isPairingMode = !!options.isPairingMode;
+    const pendingPairing = isPairingMode && !sock.authState.creds.registered;
     let pairingRequested = false;
 
     if (pendingPairing) {
@@ -128,7 +129,7 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             }
             if (onConnected) onConnected();
         }
-        if (update.qr && pendingPairing && !sock.authState.creds.registered) {
+        if (update.qr && isPairingMode && !sock.authState.creds.registered) {
             if (options.pairingMethod === 'qr') {
                 if (options.onQRCode) {
                     options.onQRCode(update.qr);
@@ -167,7 +168,11 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             const errorCode = lastDisconnectError?.output?.statusCode || lastDisconnectError?.code;
             const errorMessage = lastDisconnectError?.message || 'Unknown Reason';
             const isLoggedOut = errorCode === DisconnectReason.loggedOut;
-            const shouldReconnect = (!isLoggedOut || pendingPairing) && !options.disableReconnect;
+            const isPairedSuccess = !!sock.authState.creds.registered;
+
+            const shouldReconnect = isPairingMode
+                ? isPairedSuccess && !options.disableReconnect
+                : !isLoggedOut && !options.disableReconnect;
 
             console.log(
                 `[Connection] [${sessionId}] Closed (Reason: ${errorMessage}, Code: ${errorCode}). Reconnecting: ${shouldReconnect}`

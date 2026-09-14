@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
+import Database from 'better-sqlite3';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { activeConnections, connectToWhatsApp } from '#utils/connectionManager.js';
 import { getPrismaClient, disconnectPrismaClient } from '#db.js';
@@ -278,6 +279,24 @@ export async function stopSubBot(phoneNumber: string): Promise<boolean> {
     return false;
 }
 
+export function isSubBotRegistered(phoneNumber: string): boolean {
+    const clean = getCleanNumber(phoneNumber);
+    const dbPath = path.resolve(process.cwd(), 'database', clean, 'database.sqlite');
+    if (!fs.existsSync(dbPath)) return false;
+
+    try {
+        const db = new Database(dbPath, { readonly: true });
+        const row = db.prepare('SELECT value FROM "WhatsAppAuth" WHERE id = ?').get(`sub_${clean}_creds.json`) as
+            { value: string } | undefined;
+        db.close();
+        if (!row || !row.value) return false;
+        const creds = JSON.parse(row.value);
+        return creds?.registered === true;
+    } catch {
+        return false;
+    }
+}
+
 export async function startSubBot(phoneNumber: string): Promise<boolean> {
     const clean = getCleanNumber(phoneNumber);
     const sessionId = `sub_${clean}`;
@@ -285,6 +304,11 @@ export async function startSubBot(phoneNumber: string): Promise<boolean> {
 
     const botDir = path.resolve(process.cwd(), 'database', clean);
     if (!fs.existsSync(botDir)) return false;
+
+    if (!isSubBotRegistered(clean)) {
+        console.warn(`[SubBot] Cannot start sub-bot +${clean}: Not registered or pairing incomplete.`);
+        return false;
+    }
 
     connectToWhatsApp({
         sessionId,
@@ -393,9 +417,12 @@ export function initSubBots(): void {
 
     try {
         const entries = fs.readdirSync(dbDir, { withFileTypes: true });
-        const subBotNumbers = entries.filter((e) => e.isDirectory() && /^\d+$/.test(e.name)).map((e) => e.name);
+        const subBotNumbers = entries
+            .filter((e) => e.isDirectory() && /^\d+$/.test(e.name))
+            .map((e) => e.name)
+            .filter((num) => isSubBotRegistered(num));
 
-        console.log(`[SubBot] Discovered ${subBotNumbers.length} existing sub-bots on disk.`);
+        console.log(`[SubBot] Discovered ${subBotNumbers.length} registered sub-bots on disk.`);
         for (let i = 0; i < subBotNumbers.length; i++) {
             const num = subBotNumbers[i];
             setTimeout(() => {
