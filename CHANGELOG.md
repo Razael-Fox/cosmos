@@ -11,6 +11,23 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-10] - 2026-09-15
+
+### Added
+
+- **Google Pixel 9a Asset (`src/seed_item.ts`, `src/seed_property.ts`):**
+    - Added `Google Pixel 9a` (`pixel9a`) equipment item to the shop catalog at Rp7.999.000, positioned as the affordable Android alternative to `iPhone`.
+    - Added `Google Pixel 9a` to the property catalog (`Electronics`, 3% depreciation) at Rp7.999.000, consistent with the $499 US MSRP.
+
+### Changed
+
+- **Economy Price Refresh to 2025–2026 Market Rates (`src/seed_item.ts`, `src/seed_property.ts`, `src/services/jobs.ts`):**
+    - Shop catalog: Gorengan Rp2.000 → Rp2.500, Yakult Rp2.500 → Rp3.000, Tolak Angin Rp3.500 → Rp5.000, Indomie Goreng Rp3.500 → Rp4.000, Bambu Runcing Rp15.000 → Rp25.000, Sandal Swallow Rp12.000 → Rp18.000, Sarung BHS Rp500.000 → Rp650.000, Pickaxe Rp50.000 → Rp85.000, MacBook Rp15.000.000 → Rp17.999.000, iPhone Rp12.000.000 → Rp12.499.000, Driver's License Rp100.000 → Rp120.000.
+    - Property catalog: Honda Scoopy Motorcycle Rp23.100.000 → Rp23.681.000, Rolex Submariner Watch Rp150.000.000 → Rp185.000.000, iPhone 15 Pro Max Rp25.000.000 → Rp19.999.000, MacBook Pro M3 Max Rp65.000.000 → Rp59.999.000, Bali Beach Villa Rp2.500.000.000 → Rp4.250.000.000.
+    - Synced the duplicated `seedDefaultJobs` item prices in `src/services/jobs.ts` so job seeding no longer overwrites the refreshed shop prices.
+
+---
+
 ## [RF-2609-09] - 2026-09-15
 
 ### Fixed
@@ -389,7 +406,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-09...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-10...HEAD
+[RF-2609-10]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-09...RF-2609-10
 [RF-2609-09]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-08...RF-2609-09
 [RF-2609-08]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-07...RF-2609-08
 [RF-2609-07]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-06...RF-2609-07
