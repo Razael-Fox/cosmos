@@ -7,19 +7,19 @@ async function main() {
         {
             name: 'Honda Scoopy Motorcycle',
             typeCategory: 'Vehicle',
-            basePrice: 23100000,
+            basePrice: 23681000,
             baseDepreciationRate: 0.02
         },
         {
             name: 'Rolex Submariner Watch',
             typeCategory: 'Luxury',
-            basePrice: 150000000,
+            basePrice: 185000000,
             baseDepreciationRate: 0.01
         },
         {
             name: 'iPhone 15 Pro Max',
             typeCategory: 'Electronics',
-            basePrice: 25000000,
+            basePrice: 19999000,
             baseDepreciationRate: 0.03
         },
         {
@@ -31,13 +31,13 @@ async function main() {
         {
             name: 'MacBook Pro M3 Max',
             typeCategory: 'Electronics',
-            basePrice: 65000000,
+            basePrice: 59999000,
             baseDepreciationRate: 0.02
         },
         {
             name: 'Bali Beach Villa',
             typeCategory: 'Real Estate',
-            basePrice: 2500000000,
+            basePrice: 4250000000,
             baseDepreciationRate: 0.01
         }
     ];

@@ -6,7 +6,7 @@ export const INITIAL_ITEMS = [
         shortId: 'gorengan',
         description: 'Authentic Indonesian fried snacks. Restores 1.5 health.',
         type: 'consumable',
-        price: BigInt(2000),
+        price: BigInt(2500),
         isAvailable: true
     },
     {
@@ -14,7 +14,7 @@ export const INITIAL_ITEMS = [
         shortId: 'yakult',
         description: 'A probiotic dairy drink. Restores 2.5 health.',
         type: 'consumable',
-        price: BigInt(2500),
+        price: BigInt(3000),
         isAvailable: true
     },
     {
@@ -22,7 +22,7 @@ export const INITIAL_ITEMS = [
         shortId: 'tolakangin',
         description: 'Herbal remedy to cure debuffs and restore 5 health.',
         type: 'consumable',
-        price: BigInt(3500),
+        price: BigInt(5000),
         isAvailable: true
     },
     {
@@ -30,7 +30,7 @@ export const INITIAL_ITEMS = [
         shortId: 'indomie',
         description: 'The ultimate comfort food. Restores 10 health.',
         type: 'consumable',
-        price: BigInt(3500),
+        price: BigInt(4000),
         isAvailable: true
     },
     {
@@ -38,7 +38,7 @@ export const INITIAL_ITEMS = [
         shortId: 'bambu',
         description: 'A traditional bamboo spear for combat.',
         type: 'equipment',
-        price: BigInt(15000),
+        price: BigInt(25000),
         isAvailable: true
     },
     {
@@ -46,7 +46,7 @@ export const INITIAL_ITEMS = [
         shortId: 'swallow',
         description: 'Legendary rubber sandals. Good for defense.',
         type: 'equipment',
-        price: BigInt(12000),
+        price: BigInt(18000),
         isAvailable: true
     },
     {
@@ -54,7 +54,7 @@ export const INITIAL_ITEMS = [
         shortId: 'sarung',
         description: 'A high-quality woven sarong, perfect for flexing.',
         type: 'collectible',
-        price: BigInt(500000),
+        price: BigInt(650000),
         isAvailable: true
     },
     {
@@ -62,7 +62,7 @@ export const INITIAL_ITEMS = [
         shortId: 'pickaxe',
         description: 'A sturdy mining pickaxe required to mine coal, iron, gold, and diamonds.',
         type: 'equipment',
-        price: BigInt(50000),
+        price: BigInt(85000),
         isAvailable: true
     },
     {
@@ -70,7 +70,7 @@ export const INITIAL_ITEMS = [
         shortId: 'macbook',
         description: 'A high-performance laptop required for office work and technology ventures.',
         type: 'equipment',
-        price: BigInt(15000000),
+        price: BigInt(17999000),
         isAvailable: true
     },
     {
@@ -78,7 +78,7 @@ export const INITIAL_ITEMS = [
         shortId: 'iphone',
         description: 'A premium mobile smartphone suitable for running digital enterprises.',
         type: 'equipment',
-        price: BigInt(12000000),
+        price: BigInt(12499000),
         isAvailable: true
     },
     {
@@ -94,7 +94,7 @@ export const INITIAL_ITEMS = [
         shortId: 'driver_license',
         description: 'An official driver license required for taxi and commercial transport work.',
         type: 'equipment',
-        price: BigInt(100000),
+        price: BigInt(120000),
         isAvailable: true
     }
 ];

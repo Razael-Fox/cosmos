@@ -92,28 +92,28 @@ export async function seedDefaultJobs(): Promise<void> {
             shortId: 'pickaxe',
             name: 'Pickaxe',
             description: 'A sturdy mining pickaxe required to mine coal, iron, gold, and diamonds.',
-            price: BigInt(50000),
+            price: BigInt(85000),
             type: 'equipment'
         },
         {
             shortId: 'macbook',
             name: 'MacBook',
             description: 'A high-performance laptop required for office work and technology ventures.',
-            price: BigInt(15000000),
+            price: BigInt(17999000),
             type: 'equipment'
         },
         {
             shortId: 'iphone',
             name: 'iPhone',
             description: 'A premium mobile smartphone suitable for running digital enterprises.',
-            price: BigInt(12000000),
+            price: BigInt(12499000),
             type: 'equipment'
         },
         {
             shortId: 'driver_license',
             name: "Driver's License",
             description: 'An official driver license required for taxi and commercial transport work.',
-            price: BigInt(100000),
+            price: BigInt(120000),
             type: 'equipment'
         }
     ];
