@@ -114,7 +114,7 @@ export async function executeGamble(
     try {
         return await prisma.$transaction(async (tx) => {
             const user = await tx.user.findFirst({ where: { OR: [{ id: jid }, { lid: jid }] } });
-            if (!user) throw new Error('User not found');
+            if (!user) throw new Error(t ? t('utilities.casino.user_not_found') : 'User not found');
 
             if (Number(user.balance) < bet) {
                 return {

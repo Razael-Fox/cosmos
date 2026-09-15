@@ -237,10 +237,10 @@ export function renderSyntaxError(
         return res === key ? fallback : res;
     };
 
-    const title = resolve('ui.invalid_syntax_title', 'INVALID COMMAND SYNTAX');
-    const issueLabel = resolve('ui.issue_label', 'Issue');
-    const syntaxLabel = resolve('ui.correct_syntax', 'Correct Syntax:');
-    const exampleLabel = resolve('ui.valid_examples', 'Valid Examples:');
+    const title = resolve('tools.ui.invalid_syntax_title', 'INVALID COMMAND SYNTAX');
+    const issueLabel = resolve('tools.ui.issue_label', 'Issue');
+    const syntaxLabel = resolve('tools.ui.correct_syntax', 'Correct Syntax:');
+    const exampleLabel = resolve('tools.ui.valid_examples', 'Valid Examples:');
 
     const lines: string[] = [
         `╭───「 ❌ *${title}* 」`,

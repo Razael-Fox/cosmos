@@ -574,7 +574,10 @@
         "info_tip": "_Maintain active transactions, property holdings, and timely repayments to boost your credit score._",
         "reminder_5_days": "Your loan payment is due in 5 days. Please ensure you have sufficient funds in your bank account to avoid penalties and asset seizure.",
         "overdue_blocked": "Notice: You have failed to repay your loan by the due date. Your bank account has been temporarily restricted from further transactions until the outstanding balance of {{amount}} is resolved.",
-        "seizure_notification": "Your outstanding debt of {{amount}} has triggered an automatic asset seizure. The system has confiscated the following assets to clear the balance: {{assetsList}}. Your bank account restrictions have been lifted."
+        "seizure_notification": "Your outstanding debt of {{amount}} has triggered an automatic asset seizure. The system has confiscated the following assets to clear the balance: {{assetsList}}. Your bank account restrictions have been lifted.",
+        "disbursement_failed": "Loan disbursement transaction failed.",
+        "repay_failed": "Repayment failed.",
+        "legacy_approved": "Identity verification successful. A loan of {{amount}} has been approved and registered under NIK: {{nik}}."
     },
     "commands": {
         "addbalance": {
@@ -774,7 +777,16 @@
         "invalid_syntax_title": "INVALID COMMAND SYNTAX",
         "issue_label": "Issue",
         "how_to_join": "How to Join:",
-        "purchase_hint": "Purchase:"
+        "purchase_hint": "Purchase:",
+        "account_label": "Account",
+        "bank_account_label": "Bank Account",
+        "wealth_tier_label": "Wealth Tier",
+        "none_or_unregistered": "Unregistered",
+        "tier_bronze": "🥉 Bronze Member",
+        "tier_silver": "🥈 Silver Member",
+        "tier_gold": "🥇 Gold Member",
+        "tier_diamond": "💎 Diamond Member",
+        "tier_sovereign": "👑 Sovereign Member"
     },
     "fevertime": {
         "title": "FEVER TIME IS ACTIVE!",
@@ -834,7 +846,10 @@
         "anti_recursion_title": "ACTION RESTRICTED",
         "anti_recursion_desc": "Sub-bots cannot spawn secondary sub-bots. Please use the parent bot to pair new devices.",
         "cannot_pair_self": "The primary bot phone number cannot be linked as a sub-bot.",
-        "admin_only_list": "Only the primary bot administrator can inspect all connected sub-bots."
+        "admin_only_list": "Only the primary bot administrator can inspect all connected sub-bots.",
+        "not_active": "Sub-bot +{{number}} is not currently active.",
+        "already_active_or_missing": "Sub-bot +{{number}} is already active or missing database files.",
+        "empty_list": "No sub-bot instances configured on this host."
     },
     "config": {
         "dashboard_title": "SUB-BOT CONFIGURATION",
@@ -858,6 +873,12 @@
         "api_key_cleared": "API key for service '{{service}}' cleared. Reverted to parent bot fallback.",
         "api_key_invalid": "Invalid API key format for service '{{service}}'.",
         "api_key_security_warning": "⚠️ Security Alert: For privacy and protection of your credentials, please delete the message containing your plaintext API key, and configure keys via private chat (DM).",
-        "not_owner": "Only the sub-bot owner can modify this sub-bot's configuration."
+        "not_owner": "Only the sub-bot owner can modify this sub-bot's configuration.",
+        "api_invalid_service": "Valid services: groq, openrouter, eodhd. Example: .config api groq <key> or .config api groq clear",
+        "api_usage": "Usage: .config api {{service}} <key|clear>",
+        "mode_invalid": "Invalid mode. Use: .config mode public OR .config mode self",
+        "prefix_invalid": "Invalid prefix. Please provide 1-3 characters (e.g. .config prefix !)",
+        "name_required": "Please provide a bot name (e.g. .config name Jarvis)",
+        "lang_invalid": "Invalid language. Use: .config lang id OR .config lang en"
     }
 }

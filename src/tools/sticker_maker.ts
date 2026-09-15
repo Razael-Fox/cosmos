@@ -47,9 +47,14 @@ async function getFFmpegPath(): Promise<string | null> {
 const ALLOWED_FORMATS = ['mp4', 'gif', 'mov', 'webm', 'avi', 'mkv', '3gp'];
 const FORMAT_REGEX = /^[a-zA-Z0-9]+$/;
 
-export async function convertVideoToSticker(buffer: Buffer, format: string): Promise<Buffer> {
+export async function convertVideoToSticker(
+    buffer: Buffer,
+    format: string,
+    t?: (key: string, vars?: Record<string, any>) => string
+): Promise<Buffer> {
+    const tr = t ?? ((key: string) => key);
     if (!FORMAT_REGEX.test(format) || !ALLOWED_FORMATS.includes(format.toLowerCase())) {
-        throw new Error('Media format is not supported or invalid.');
+        throw new Error(tr('media.sticker.invalid_format'));
     }
 
     const tempDir = os.tmpdir();
@@ -59,7 +64,7 @@ export async function convertVideoToSticker(buffer: Buffer, format: string): Pro
         await fs.promises.writeFile(inputPath, buffer);
         const ffmpegCmd = await getFFmpegPath();
         if (!ffmpegCmd) {
-            throw new Error('FFmpeg not found on system.');
+            throw new Error(tr('media.sticker.ffmpeg_missing'));
         }
 
         const qualities = [65, 40, 25];
@@ -89,7 +94,7 @@ export async function convertVideoToSticker(buffer: Buffer, format: string): Pro
         }
 
         if (!outputBuffer) {
-            throw new Error('Failed to process video into a sticker.');
+            throw new Error(tr('media.sticker.process_failed'));
         }
 
         return outputBuffer;
@@ -126,16 +131,18 @@ export async function sendStickerFromBuffer(
     jid: string,
     webpBuffer: Buffer,
     quotedMsg: WAMessage | null | undefined,
-    mentions?: string[]
+    mentions?: string[],
+    t?: (key: string, vars?: Record<string, any>) => string
 ): Promise<any> {
+    const tr = t ?? ((key: string) => key);
     // Validate WebP header (RIFF....WEBP)
     if (webpBuffer.length < 12) {
-        throw new Error(`Buffer is too small (${webpBuffer.length} bytes), not a valid WebP file.`);
+        throw new Error(tr('media.sticker.invalid_webp_small', { size: webpBuffer.length }));
     }
     const riffHeader = webpBuffer.subarray(0, 4).toString('ascii');
     const webpMagic = webpBuffer.subarray(8, 12).toString('ascii');
     if (riffHeader !== 'RIFF' || webpMagic !== 'WEBP') {
-        throw new Error(`Buffer is not a valid WebP format. Header: ${riffHeader}, Magic: ${webpMagic}`);
+        throw new Error(tr('media.sticker.invalid_webp_header'));
     }
 
     console.log(`[Sticker] WebP buffer valid, size: ${webpBuffer.length} bytes`);
@@ -289,7 +296,8 @@ export async function execute(_: Record<string, any>, ctx: ToolContext): Promise
                     ctx.jid,
                     webpBuffer,
                     ctx.msg,
-                    senderJid ? [senderJid] : undefined
+                    senderJid ? [senderJid] : undefined,
+                    ctx.t
                 );
                 await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
                 return null;
@@ -325,13 +333,14 @@ export async function execute(_: Record<string, any>, ctx: ToolContext): Promise
 
             const ffmpegCmd = await getFFmpegPath();
             if (ffmpegCmd) {
-                const webpBuffer = await convertVideoToSticker(buffer, ext);
+                const webpBuffer = await convertVideoToSticker(buffer, ext, ctx.t);
                 await sendStickerFromBuffer(
                     ctx.sock,
                     ctx.jid,
                     webpBuffer,
                     ctx.msg,
-                    senderJid ? [senderJid] : undefined
+                    senderJid ? [senderJid] : undefined,
+                    ctx.t
                 );
                 await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
                 return null;
@@ -342,7 +351,8 @@ export async function execute(_: Record<string, any>, ctx: ToolContext): Promise
                     ctx.jid,
                     webpBuffer,
                     ctx.msg,
-                    senderJid ? [senderJid] : undefined
+                    senderJid ? [senderJid] : undefined,
+                    ctx.t
                 );
                 await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
                 return null;

@@ -276,7 +276,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         lowerText === 'abort';
 
     if (senderRaw && isCancelKeyword && hasCancellableSession(senderRaw, jid)) {
-        const cancelMsg = await cancelActiveSession(senderRaw, jid, sock, msg);
+        const cancelMsg = await cancelActiveSession(senderRaw, jid, sock, msg, t);
         if (cancelMsg && typeof cancelMsg === 'string' && cancelMsg.trim().length > 0) {
             await sock.sendMessage(jid, { text: cancelMsg }, { quoted: msg });
         }

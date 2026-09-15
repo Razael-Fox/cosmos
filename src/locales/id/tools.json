@@ -574,7 +574,10 @@
         "info_tip": "_Pertahankan transaksi aktif, kepemilikan properti, dan pembayaran tepat waktu untuk meningkatkan skor kredit Anda._",
         "reminder_5_days": "Pembayaran pinjaman Anda jatuh tempo dalam 5 hari. Harap pastikan saldo rekening bank Anda mencukupi untuk menghindari penalti dan penyitaan aset.",
         "overdue_blocked": "Pemberitahuan: Anda belum melunasi pinjaman hingga tanggal jatuh tempo. Rekening bank Anda telah dibekukan sementara dari transaksi lanjutan sampai sisa tagihan sebesar {{amount}} diselesaikan.",
-        "seizure_notification": "Tagihan terutang Anda sebesar {{amount}} telah memicu penyitaan aset otomatis. Sistem telah menyita aset berikut untuk melunasi tagihan: {{assetsList}}. Pembekuan rekening bank Anda telah dicabut."
+        "seizure_notification": "Tagihan terutang Anda sebesar {{amount}} telah memicu penyitaan aset otomatis. Sistem telah menyita aset berikut untuk melunasi tagihan: {{assetsList}}. Pembekuan rekening bank Anda telah dicabut.",
+        "disbursement_failed": "Transaksi pencairan pinjaman gagal.",
+        "repay_failed": "Pembayaran pinjaman gagal.",
+        "legacy_approved": "Verifikasi identitas berhasil. Pinjaman sebesar {{amount}} telah disetujui dan didaftarkan dengan NIK: {{nik}}."
     },
     "commands": {
         "addbalance": {
@@ -774,7 +777,16 @@
         "invalid_syntax_title": "SINTAKS PERINTAH TIDAK VALID",
         "issue_label": "Kendala",
         "how_to_join": "Cara Bergabung:",
-        "purchase_hint": "Beli:"
+        "purchase_hint": "Beli:",
+        "account_label": "Akun",
+        "bank_account_label": "Rekening Bank",
+        "wealth_tier_label": "Tingkat Kekayaan",
+        "none_or_unregistered": "Belum Terdaftar",
+        "tier_bronze": "🥉 Anggota Perunggu",
+        "tier_silver": "🥈 Anggota Perak",
+        "tier_gold": "🥇 Anggota Emas",
+        "tier_diamond": "💎 Anggota Berlian",
+        "tier_sovereign": "👑 Anggota Sovereign"
     },
     "fevertime": {
         "title": "FEVER TIME TELAH AKTIF!",
@@ -834,7 +846,10 @@
         "anti_recursion_title": "TINDAKAN DIBATASI",
         "anti_recursion_desc": "Sub-bot tidak dapat menautkan sub-bot turunan. Silakan gunakan bot utama untuk menautkan perangkat baru.",
         "cannot_pair_self": "Nomor telepon bot utama tidak dapat ditautkan sebagai sub-bot.",
-        "admin_only_list": "Hanya administrator bot utama yang dapat memeriksa seluruh daftar sub-bot."
+        "admin_only_list": "Hanya administrator bot utama yang dapat memeriksa seluruh daftar sub-bot.",
+        "not_active": "Sub-bot +{{number}} saat ini tidak aktif.",
+        "already_active_or_missing": "Sub-bot +{{number}} sudah aktif atau file basis datanya tidak ditemukan.",
+        "empty_list": "Belum ada instansi sub-bot yang dikonfigurasi pada host ini."
     },
     "config": {
         "dashboard_title": "KONFIGURASI SUB-BOT",
@@ -858,6 +873,12 @@
         "api_key_cleared": "Kunci API untuk layanan '{{service}}' dihapus. Kembali menggunakan fallback bot utama.",
         "api_key_invalid": "Format kunci API tidak valid untuk layanan '{{service}}'.",
         "api_key_security_warning": "⚠️ Peringatan Keamanan: Demi privasi dan perlindungan kredensial Anda, harap hapus pesan yang memuat kunci API teks biasa, dan lakukan konfigurasi kunci via obrolan pribadi (DM).",
-        "not_owner": "Hanya pemilik sub-bot yang dapat memodifikasi konfigurasi sub-bot ini."
+        "not_owner": "Hanya pemilik sub-bot yang dapat memodifikasi konfigurasi sub-bot ini.",
+        "api_invalid_service": "Layanan valid: groq, openrouter, eodhd. Contoh: .config api groq <key> atau .config api groq clear",
+        "api_usage": "Penggunaan: .config api {{service}} <key|clear>",
+        "mode_invalid": "Mode tidak valid. Gunakan: .config mode public ATAU .config mode self",
+        "prefix_invalid": "Awalan tidak valid. Harap berikan 1-3 karakter (contoh: .config prefix !)",
+        "name_required": "Harap berikan nama bot (contoh: .config name Jarvis)",
+        "lang_invalid": "Bahasa tidak valid. Gunakan: .config lang id ATAU .config lang en"
     }
 }

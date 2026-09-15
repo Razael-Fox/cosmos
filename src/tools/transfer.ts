@@ -62,7 +62,7 @@ const transferTool: ToolModule = {
             await prisma.$transaction(async (tx) => {
                 const sender = await tx.user.findUnique({ where: { id: user.id } });
                 if (!sender || Number(sender.balance) < amount) {
-                    throw new Error('Insufficient balance');
+                    throw new Error(t('tools.transfer.insufficient', { balance: formatRupiah(user.balance) }));
                 }
 
                 const targetUser = await getUser(tx as any, cleanTargetJid);

@@ -48,7 +48,7 @@ export function resolveApiKey(service: SupportedApiService, subBotNumber?: strin
 export function getGroqClient(subBotNumber?: string): Groq {
     const key = resolveApiKey('groq', subBotNumber);
     if (!key) {
-        throw new Error('Groq API key is not configured (neither custom sub-bot key nor parent GROQ_API_KEY).');
+        throw new Error('Groq API key is not configured.');
     }
 
     if (!groqClientPool.has(key)) {

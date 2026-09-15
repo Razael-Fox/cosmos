@@ -98,7 +98,8 @@ export async function cancelActiveSession(
     userJid: string,
     chatJid: string,
     sock: any,
-    msg: any
+    msg: any,
+    t?: (key: string, vars?: Record<string, any>) => string
 ): Promise<string | null> {
     const session = findCancellableSession(userJid, chatJid);
     if (!session) {
@@ -113,9 +114,15 @@ export async function cancelActiveSession(
         if (typeof result === 'string') {
             return result;
         }
+        if (t) {
+            return t('utilities.cancellation.session_cancelled', { feature: session.description || session.feature });
+        }
         return `The active ${session.description || session.feature} operation has been successfully cancelled.`;
     } catch (err) {
         console.error(`[CancellationManager] Error during onCancel for ${session.sessionId}:`, err);
+        if (t) {
+            return t('utilities.cancellation.cancel_failed', { error: (err as Error).message });
+        }
         return `Failed to cleanly cancel the operation: ${(err as Error).message}`;
     }
 }

@@ -88,11 +88,13 @@ export async function getTelegramClient(): Promise<TelegramClient> {
 
     const credentials = getApiCredentials();
     if (!credentials) {
-        throw new Error('TELEGRAM_API_ID and TELEGRAM_API_HASH are not configured.');
+        const { getTranslator } = await import('./i18n.js');
+        throw new Error(getTranslator('en')('utilities.telegram.not_configured'));
     }
     const savedSession = loadSavedSession();
     if (!savedSession) {
-        throw new Error('No Telegram session found. Run "pnpm tgpair" to pair the dummy account first.');
+        const { getTranslator } = await import('./i18n.js');
+        throw new Error(getTranslator('en')('utilities.telegram.no_session'));
     }
 
     const client = new TelegramClient(new StringSession(savedSession), credentials.apiId, credentials.apiHash, {
@@ -102,7 +104,8 @@ export async function getTelegramClient(): Promise<TelegramClient> {
     clientConnectPromise = (async () => {
         await client.connect();
         if (!(await client.isUserAuthorized())) {
-            throw new Error('The stored Telegram session is no longer authorized. Run "pnpm tgpair" again.');
+            const { getTranslator } = await import('./i18n.js');
+            throw new Error(getTranslator('en')('utilities.telegram.session_expired'));
         }
         console.log('[TelegramClient] Dummy account connected.');
         clientInstance = client;
@@ -237,7 +240,8 @@ export async function joinChatViaInvite(inviteHash: string): Promise<JoinedChatI
             return { chatId: String(chat.id), title: chat.title || null };
         }
     }
-    throw new Error('The invitation was accepted but the chat information could not be resolved.');
+    const { getTranslator } = await import('./i18n.js');
+    throw new Error(getTranslator('en')('utilities.telegram.resolve_failed'));
 }
 
 /** Resolves the display title of a registered private chat id, when accessible. */

@@ -5,18 +5,36 @@
         "success": "The media has been successfully downloaded.",
         "failed": "Failed to download media from YouTube: {{error}}",
         "video_success": "✅ The video has been successfully downloaded.",
-        "image_success": "✅ The image has been successfully downloaded."
+        "image_success": "✅ The image has been successfully downloaded.",
+        "card_title": "YOUTUBE MEDIA",
+        "label_type": "Type",
+        "value_video": "Video",
+        "value_image": "Image"
     },
     "tiktokdl": {
         "invalid_url": "The provided TikTok URL is invalid.",
         "downloading": "Downloading TikTok video...",
-        "failed": "Failed to download video from TikTok: {{error}}"
+        "failed": "Failed to download video from TikTok: {{error}}",
+        "card_title": "TIKTOK MEDIA",
+        "label_title": "Title",
+        "label_author": "Author",
+        "label_duration": "Duration",
+        "label_status": "Status",
+        "value_ready": "Ready",
+        "api_error": "TikTok API error: {{message}}",
+        "unknown_error": "Unknown error"
     },
     "sticker": {
         "reply_media": "Reply to an image or video with .sticker to create a sticker.",
         "processing": "Processing sticker...",
         "success": "Sticker created successfully!",
-        "failed": "Failed to create sticker: {{error}}"
+        "failed": "Failed to create sticker: {{error}}",
+        "invalid_format": "Media format is not supported or invalid.",
+        "ffmpeg_missing": "FFmpeg not found on system.",
+        "process_failed": "Failed to process video into a sticker.",
+        "invalid_webp_small": "Sticker buffer is too small ({{size}} bytes) and is not a valid WebP file.",
+        "invalid_webp_header": "Sticker buffer is not a valid WebP format.",
+        "queue_full": "Sticker processing queue is full. Please try again in a few moments."
     },
     "telegramdl": {
         "invalid_url": "Error: Please provide a valid Telegram post link (for example https://t.me/channel/123).",

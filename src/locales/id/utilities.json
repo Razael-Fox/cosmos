@@ -34,14 +34,17 @@
         "step_occupation_invalid": "Harap berikan pekerjaan yang valid (minimal 2 karakter).",
         "processing_card": "⏳ Semua data berhasil dikumpulkan. Memproses kartu identitas virtual Anda...",
         "issued_caption": "✅ Kartu Identitas Virtual Anda telah berhasil diterbitkan! Anda sekarang dapat menggunakan ID ini untuk mengajukan pinjaman bank atau perizinan di masa mendatang.\n\n*NIK:* {{nik}}\n*Nama Lengkap:* {{fullName}}\n*Tanggal Lahir:* {{dob}}\n*Jenis Kelamin:* {{gender}}\n*Kewarganegaraan:* {{citizenship}}\n*Berlaku Hingga:* {{validUntil}}",
-        "error_generating": "❌ Terjadi kesalahan saat membuat Kartu Identitas Virtual Anda. Silakan coba lagi nanti."
+        "error_generating": "❌ Terjadi kesalahan saat membuat Kartu Identitas Virtual Anda. Silakan coba lagi nanti.",
+        "valid_lifetime": "SEUMUR HIDUP",
+        "status_single": "BELUM KAWIN"
     },
     "casino": {
         "processing": "Harap tunggu, transaksi sedang diproses.",
         "insufficient_balance": "Saldo tidak mencukupi. Saldo Anda: {{balance}}",
         "min_bet": "Taruhan minimum adalah {{min}}.",
         "max_bet": "Taruhan maksimum adalah {{max}}.",
-        "cooldown": "Harap tunggu {{seconds}} detik lagi sebelum memasang taruhan lagi."
+        "cooldown": "Harap tunggu {{seconds}} detik lagi sebelum memasang taruhan lagi.",
+        "user_not_found": "Pengguna tidak ditemukan."
     },
     "autosticker": {
         "enabled": "✨ *Auto Sticker Maker DIAKTIFKAN* untuk obrolan ini.\n\nSetiap foto, video, atau GIF yang dikirim di obrolan ini akan secara otomatis diubah menjadi stiker.\n\nKetik *.stoptogglesticker* (atau *.stopautosticker* / *.stoptgls*) untuk menonaktifkan.",
@@ -64,6 +67,21 @@
     },
     "cancellation": {
         "session_cancelled": "Sesi '{{feature}}' telah dibatalkan.",
-        "refund": "Taruhan sebesar {{amount}} telah dikembalikan ke saldo Anda."
+        "refund": "Taruhan sebesar {{amount}} telah dikembalikan ke saldo Anda.",
+        "cancel_failed": "Gagal membatalkan operasi dengan bersih: {{error}}"
+    },
+    "telegram": {
+        "not_configured": "TELEGRAM_API_ID dan TELEGRAM_API_HASH belum dikonfigurasi.",
+        "no_session": "Sesi Telegram tidak ditemukan. Harap tautkan akun dummy terlebih dahulu.",
+        "session_expired": "Sesi Telegram yang tersimpan sudah tidak valid. Harap tautkan ulang akun dummy.",
+        "resolve_failed": "Undangan diterima tetapi informasi obrolan tidak dapat ditemukan."
+    },
+    "apikey": {
+        "groq_missing": "Kunci API Groq belum dikonfigurasi."
+    },
+    "system": {
+        "unknown_reason": "Alasan Tidak Diketahui",
+        "eodhd_missing": "EODHD_API_KEY belum dikonfigurasi.",
+        "eodhd_invalid": "Kurs yang diterima dari penyedia data pasar tidak valid."
     }
 }

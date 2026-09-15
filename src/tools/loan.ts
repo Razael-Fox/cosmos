@@ -95,11 +95,7 @@ export async function processLoanConfirmation(
     );
 
     if (!result.success || !result.dueDate) {
-        await sock.sendMessage(
-            chatJid,
-            { text: result.error || 'Loan disbursement transaction failed.' },
-            { quoted: msg }
-        );
+        await sock.sendMessage(chatJid, { text: result.error || t('tools.loan.disbursement_failed') }, { quoted: msg });
         return true;
     }
 
@@ -201,7 +197,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const rawAmt = args.amount || parts[1] || '';
             const parsedAmt = parseCurrencyAmount(rawAmt);
             if (parsedAmt && parsedAmt > 0) {
-                return `Identity verification successful. A loan of ${formatRupiah(parsedAmt)} has been approved and registered under NIK: ${auth.idCard.nik}.`;
+                return t('tools.loan.legacy_approved', {
+                    amount: formatRupiah(parsedAmt),
+                    nik: auth.idCard.nik
+                });
             }
             return t('tools.loan.no_bank_account');
         }
@@ -252,10 +251,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             if (activeAssessments.has(cleanedSender)) {
-                return (
-                    t('tools.loan.assessment_in_progress') ||
-                    'A loan assessment is already in progress for your account. Please wait a moment.'
-                );
+                return t('tools.loan.assessment_in_progress');
             }
             activeAssessments.add(cleanedSender);
 
@@ -430,7 +426,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                         requiredAmount: formatRupiah(paymentToExecute)
                     });
                 }
-                return result.error || 'Repayment failed.';
+                return t('tools.loan.repay_failed');
             }
 
             return renderAlert({

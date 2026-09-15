@@ -128,12 +128,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (action === 'api') {
         const service = parts[1]?.toLowerCase() as 'groq' | 'openrouter' | 'eodhd';
         if (!['groq', 'openrouter', 'eodhd'].includes(service)) {
-            return `Valid services: groq, openrouter, eodhd. Example: .config api groq <key> or .config api groq clear`;
+            return ctx.t('tools.config.api_invalid_service');
         }
 
         const key = parts[2];
         if (!key) {
-            return `Usage: .config api ${service} <key|clear>`;
+            return ctx.t('tools.config.api_usage', { service });
         }
 
         let reply: string;
@@ -155,7 +155,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (action === 'mode') {
         const mode = parts[1]?.toLowerCase();
         if (mode !== 'public' && mode !== 'self') {
-            return 'Invalid mode. Use: .config mode public OR .config mode self';
+            return ctx.t('tools.config.mode_invalid');
         }
         setMode(targetNumber, mode);
         return ctx.t('tools.config.mode_updated', { mode: mode.toUpperCase() });
@@ -164,7 +164,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (action === 'prefix') {
         const prefix = parts[1];
         if (!prefix || prefix.length > 3) {
-            return 'Invalid prefix. Please provide 1-3 characters (e.g. .config prefix !)';
+            return ctx.t('tools.config.prefix_invalid');
         }
         setPrefix(targetNumber, prefix);
         return ctx.t('tools.config.prefix_updated', { prefix });
@@ -173,7 +173,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (action === 'name') {
         const name = parts.slice(1).join(' ').trim();
         if (!name) {
-            return 'Please provide a bot name (e.g. .config name Jarvis)';
+            return ctx.t('tools.config.name_required');
         }
         setName(targetNumber, name);
         return ctx.t('tools.config.name_updated', { name });
@@ -182,7 +182,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (action === 'lang' || action === 'language') {
         const lang = parts[1]?.toLowerCase() as 'id' | 'en';
         if (lang !== 'id' && lang !== 'en') {
-            return 'Invalid language. Use: .config lang id OR .config lang en';
+            return ctx.t('tools.config.lang_invalid');
         }
         setLanguage(targetNumber, lang);
         return ctx.t('tools.config.lang_updated', { lang: lang.toUpperCase() });

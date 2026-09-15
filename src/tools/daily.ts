@@ -61,12 +61,12 @@ const dailyTool: ToolModule = {
                     fields: [
                         {
                             icon: '⚠️',
-                            label: t('ui.issue_label', 'Status'),
+                            label: t('tools.ui.issue_label', 'Issue'),
                             value: t('tools.daily.cooldown_status', 'Already claimed today!')
                         },
                         {
                             icon: '⏱️',
-                            label: t('ui.cooldown_remaining', 'Time Remaining:'),
+                            label: t('tools.ui.cooldown_remaining', 'Time Remaining:'),
                             value: timeString
                         },
                         {

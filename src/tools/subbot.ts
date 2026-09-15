@@ -150,7 +150,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         if (stopped) {
             return ctx.t('tools.subbot.stop_success', { number: targetNumber });
         }
-        return `Sub-bot +${targetNumber} is not currently active.`;
+        return ctx.t('tools.subbot.not_active', { number: targetNumber });
     }
 
     if (action === 'start') {
@@ -174,7 +174,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         if (started) {
             return ctx.t('tools.subbot.start_success', { number: targetNumber });
         }
-        return `Sub-bot +${targetNumber} is already active or missing database files.`;
+        return ctx.t('tools.subbot.already_active_or_missing', { number: targetNumber });
     }
 
     if (action === 'delete') {
@@ -206,7 +206,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
         const list = listAllSubBots();
         if (list.length === 0) {
-            return 'No sub-bot instances configured on this host.';
+            return ctx.t('tools.subbot.empty_list');
         }
 
         const items = list.map((b, idx) => ({

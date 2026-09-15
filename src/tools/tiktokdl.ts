@@ -109,7 +109,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl)}`;
         const res = await axios.get(apiUrl, { timeout: 15000 });
         if (res.data.code !== 0 || !res.data.data) {
-            throw new Error(`tikwm API error: ${res.data.msg || 'Unknown error'}`);
+            const apiMessage = res.data.msg || ctx.t('media.tiktokdl.unknown_error');
+            throw new Error(ctx.t('media.tiktokdl.api_error', { message: apiMessage }));
         }
 
         const data = res.data.data;
@@ -119,13 +120,22 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
 
         const items: Array<{ label: string; value: string }> = [];
-        if (baseCaption) items.push({ label: 'Title', value: baseCaption });
-        if (data.author?.nickname) items.push({ label: 'Author', value: String(data.author.nickname) });
-        if (data.duration) items.push({ label: 'Duration', value: `${data.duration}s` });
-        if (items.length === 0) items.push({ label: 'Status', value: 'Ready' });
+        if (baseCaption) items.push({ label: ctx.t('media.tiktokdl.label_title'), value: baseCaption });
+        if (data.author?.nickname)
+            items.push({ label: ctx.t('media.tiktokdl.label_author'), value: String(data.author.nickname) });
+        if (data.duration)
+            items.push({
+                label: ctx.t('media.tiktokdl.label_duration'),
+                value: `${data.duration}s`
+            });
+        if (items.length === 0)
+            items.push({
+                label: ctx.t('media.tiktokdl.label_status'),
+                value: ctx.t('media.tiktokdl.value_ready')
+            });
 
         const mediaCaption = renderCard({
-            title: 'TIKTOK MEDIA',
+            title: ctx.t('media.tiktokdl.card_title'),
             icon: '🎬',
             headerStyle: 'light',
             sections: [

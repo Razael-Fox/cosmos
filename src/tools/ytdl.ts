@@ -127,14 +127,17 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const ext = path.extname(file).toLowerCase();
             if (['.mp4', '.webm', '.mkv'].includes(ext)) {
                 const videoCaption = renderCard({
-                    title: 'YOUTUBE MEDIA',
+                    title: ctx.t('media.ytdl.card_title'),
                     icon: '▶️',
                     headerStyle: 'light',
                     sections: [
                         {
                             items: [
-                                { label: 'Type', value: 'Video' },
-                                { label: 'Status', value: ctx.t('media.ytdl.video_success') }
+                                { label: ctx.t('media.ytdl.label_type'), value: ctx.t('media.ytdl.value_video') },
+                                {
+                                    label: ctx.t('media.tiktokdl.label_status'),
+                                    value: ctx.t('media.ytdl.video_success')
+                                }
                             ]
                         }
                     ]
@@ -155,14 +158,17 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 }
             } else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
                 const imageCaption = renderCard({
-                    title: 'YOUTUBE MEDIA',
+                    title: ctx.t('media.ytdl.card_title'),
                     icon: '🖼️',
                     headerStyle: 'light',
                     sections: [
                         {
                             items: [
-                                { label: 'Type', value: 'Image' },
-                                { label: 'Status', value: ctx.t('media.ytdl.image_success') }
+                                { label: ctx.t('media.ytdl.label_type'), value: ctx.t('media.ytdl.value_image') },
+                                {
+                                    label: ctx.t('media.tiktokdl.label_status'),
+                                    value: ctx.t('media.ytdl.image_success')
+                                }
                             ]
                         }
                     ]

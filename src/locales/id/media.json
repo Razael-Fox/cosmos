@@ -5,18 +5,36 @@
         "success": "Media berhasil diunduh.",
         "failed": "Gagal mengunduh media dari YouTube: {{error}}",
         "video_success": "✅ Video berhasil diunduh.",
-        "image_success": "✅ Gambar berhasil diunduh."
+        "image_success": "✅ Gambar berhasil diunduh.",
+        "card_title": "MEDIA YOUTUBE",
+        "label_type": "Tipe",
+        "value_video": "Video",
+        "value_image": "Gambar"
     },
     "tiktokdl": {
         "invalid_url": "URL TikTok yang diberikan tidak valid.",
         "downloading": "Mengunduh video TikTok...",
-        "failed": "Gagal mengunduh video TikTok: {{error}}"
+        "failed": "Gagal mengunduh video TikTok: {{error}}",
+        "card_title": "MEDIA TIKTOK",
+        "label_title": "Judul",
+        "label_author": "Pembuat",
+        "label_duration": "Durasi",
+        "label_status": "Status",
+        "value_ready": "Siap",
+        "api_error": "Kesalahan API TikTok: {{message}}",
+        "unknown_error": "Kesalahan tidak diketahui"
     },
     "sticker": {
         "reply_media": "Balas gambar atau video dengan .sticker untuk membuat stiker.",
         "processing": "Memproses stiker...",
         "success": "Stiker berhasil dibuat!",
-        "failed": "Gagal membuat stiker: {{error}}"
+        "failed": "Gagal membuat stiker: {{error}}",
+        "invalid_format": "Format media tidak didukung atau tidak valid.",
+        "ffmpeg_missing": "FFmpeg tidak ditemukan pada sistem.",
+        "process_failed": "Gagal memproses video menjadi stiker.",
+        "invalid_webp_small": "Buffer stiker terlalu kecil ({{size}} bita) dan bukan file WebP yang valid.",
+        "invalid_webp_header": "Buffer stiker bukan format WebP yang valid.",
+        "queue_full": "Antrean pemrosesan stiker sedang penuh. Silakan coba lagi dalam beberapa saat."
     },
     "telegramdl": {
         "invalid_url": "Kesalahan: Silakan masukkan tautan posting Telegram yang valid (misalnya https://t.me/channel/123).",

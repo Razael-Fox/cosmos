@@ -34,14 +34,17 @@
         "step_occupation_invalid": "Please provide a valid occupation (at least 2 characters).",
         "processing_card": "⏳ All data collected successfully. Processing your virtual ID card...",
         "issued_caption": "✅ Your Virtual ID Card has been successfully issued! You can now use this ID to apply for future banking loans or licenses.\n\n*NIK:* {{nik}}\n*Full Name:* {{fullName}}\n*Date of Birth:* {{dob}}\n*Gender:* {{gender}}\n*Citizenship:* {{citizenship}}\n*Valid Until:* {{validUntil}}",
-        "error_generating": "❌ An error occurred while generating your Virtual ID Card. Please try again later."
+        "error_generating": "❌ An error occurred while generating your Virtual ID Card. Please try again later.",
+        "valid_lifetime": "LIFETIME",
+        "status_single": "SINGLE"
     },
     "casino": {
         "processing": "Please wait, transaction is being processed.",
         "insufficient_balance": "Insufficient balance. Your balance: {{balance}}",
         "min_bet": "Minimum bet is {{min}}.",
         "max_bet": "Maximum bet is {{max}}.",
-        "cooldown": "Please wait {{seconds}} more seconds before betting again."
+        "cooldown": "Please wait {{seconds}} more seconds before betting again.",
+        "user_not_found": "User not found."
     },
     "autosticker": {
         "enabled": "✨ *Auto Sticker Maker ACTIVATED* for this chat.\n\nEvery photo, video, or GIF sent in this chat will automatically be converted into a sticker.\n\nType *.stoptogglesticker* (or *.stopautosticker* / *.stoptgls*) to disable.",
@@ -64,6 +67,21 @@
     },
     "cancellation": {
         "session_cancelled": "The '{{feature}}' session has been cancelled.",
-        "refund": "Your bet of {{amount}} has been refunded to your balance."
+        "refund": "Your bet of {{amount}} has been refunded to your balance.",
+        "cancel_failed": "Failed to cleanly cancel the operation: {{error}}"
+    },
+    "telegram": {
+        "not_configured": "TELEGRAM_API_ID and TELEGRAM_API_HASH are not configured.",
+        "no_session": "No Telegram session found. Please pair the dummy account first.",
+        "session_expired": "The stored Telegram session is no longer authorized. Please pair the dummy account again.",
+        "resolve_failed": "The invitation was accepted but the chat information could not be resolved."
+    },
+    "apikey": {
+        "groq_missing": "Groq API key is not configured."
+    },
+    "system": {
+        "unknown_reason": "Unknown Reason",
+        "eodhd_missing": "EODHD_API_KEY is not configured.",
+        "eodhd_invalid": "Invalid rate received from market data provider."
     }
 }

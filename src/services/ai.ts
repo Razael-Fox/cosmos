@@ -21,7 +21,7 @@ export async function analyzeEconomyWithAI(currentRate: number, sock?: any) {
             {
                 role: 'system',
                 content:
-                    'You are an economic AI for a bot. Use the Native Function Calling API. DILARANG KERAS mengetik tag XML seperti <function=...> secara manual di dalam teks balasan Anda! All output strings must be in formal English.'
+                    'You are an economic analysis AI for a messaging bot. You must use the Native Function Calling API exclusively. Strictly refrain from emitting manual XML-style tags such as <function=...> inside any textual response. All output strings must be written in formal English.'
             },
             {
                 role: 'user',

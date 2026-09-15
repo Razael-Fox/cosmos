@@ -14,7 +14,8 @@ class StickerQueue {
      */
     async add<T>(task: () => Promise<T>): Promise<T> {
         if (this.queue.length >= this.maxQueueSize) {
-            throw new Error('Failed: Sticker processing queue is full. Please try again in a few moments.');
+            const { getTranslator } = await import('./i18n.js');
+            throw new Error(getTranslator('en')('media.sticker.queue_full'));
         }
         return new Promise<T>((resolve, reject) => {
             this.queue.push({ task, resolve, reject });

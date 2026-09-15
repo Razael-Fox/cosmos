@@ -29,7 +29,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         return t('core.sender_identity_error');
     }
 
-    const cancelled = await cancelActiveSession(senderJid, ctx.jid, ctx.sock, ctx.msg);
+    const cancelled = await cancelActiveSession(senderJid, ctx.jid, ctx.sock, ctx.msg, t);
     if (cancelled) {
         return cancelled;
     }
