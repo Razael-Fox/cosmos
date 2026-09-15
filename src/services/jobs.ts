@@ -5,6 +5,27 @@ import { JobCatalog } from '../generated/prisma/client.js';
 
 export const ENTREPRENEUR_INITIAL_INVESTMENT = 250000;
 
+type TranslateFn = (key: string, varsOrFallback?: Record<string, any> | string, vars?: Record<string, any>) => string;
+
+function getLocalizedJobName(t: TranslateFn, name: string): string {
+    switch (name) {
+        case 'Mining':
+            return t('tools.job.name_mining', 'Mining');
+        case 'Office Work':
+            return t('tools.job.name_office', 'Office Work');
+        case 'Taxi Driving':
+            return t('tools.job.name_taxi', 'Taxi Driving');
+        case 'Cooking':
+            return t('tools.job.name_cooking', 'Cooking');
+        case 'Gojek':
+            return t('tools.job.name_gojek', 'Gojek');
+        case 'Entrepreneurship':
+            return t('tools.job.name_entrepreneur', 'Entrepreneurship');
+        default:
+            return name;
+    }
+}
+
 export interface DefaultJobConfig {
     name: string;
     description: string;
@@ -298,7 +319,7 @@ export interface ApplyJobResult {
 export async function applyForJob(
     userJidOrLid: string,
     jobQuery: string | number,
-    t: (key: string, args?: Record<string, any>) => string
+    t: TranslateFn
 ): Promise<ApplyJobResult> {
     // 1. Check Virtual ID Card
     const auth = await requireIdCard(userJidOrLid, t);
@@ -334,7 +355,7 @@ export async function applyForJob(
     if (user.currentJobId === job.id) {
         return {
             success: false,
-            error: t('tools.job.already_employed', { jobName: job.name })
+            error: t('tools.job.already_employed', { jobName: getLocalizedJobName(t, job.name) })
         };
     }
 
@@ -440,10 +461,7 @@ export interface ResignJobResult {
 /**
  * Resigns from the current job.
  */
-export async function resignJob(
-    userJidOrLid: string,
-    t: (key: string, args?: Record<string, any>) => string
-): Promise<ResignJobResult> {
+export async function resignJob(userJidOrLid: string, t: TranslateFn): Promise<ResignJobResult> {
     const user = await prisma.user.findFirst({
         where: { OR: [{ id: userJidOrLid }, { lid: userJidOrLid }] },
         include: { currentJob: true }
@@ -494,10 +512,7 @@ export interface WorkResult {
 /**
  * Executes a work shift for the user.
  */
-export async function executeWork(
-    userJidOrLid: string,
-    t: (key: string, args?: Record<string, any>) => string
-): Promise<WorkResult> {
+export async function executeWork(userJidOrLid: string, t: TranslateFn): Promise<WorkResult> {
     // 1. Check Virtual ID Card
     const auth = await requireIdCard(userJidOrLid, t);
     if (!auth.authorized || !auth.idCard) {
@@ -573,21 +588,21 @@ export async function executeWork(
         let oreBase: number;
 
         if (roll < 10) {
-            oreName = 'Diamond';
+            oreName = t('tools.work.ore_diamond', 'Diamond');
             oreBase = 666666;
-            varianceDetail = '💎 Diamond Vein Discovered! High-tier yield.';
+            varianceDetail = t('tools.work.variance_mining_diamond');
         } else if (roll < 30) {
-            oreName = 'Gold';
+            oreName = t('tools.work.ore_gold', 'Gold');
             oreBase = 333333;
-            varianceDetail = '🪙 Gold Deposit Mined! Premium yield.';
+            varianceDetail = t('tools.work.variance_mining_gold');
         } else if (roll < 60) {
-            oreName = 'Coal';
+            oreName = t('tools.work.ore_coal', 'Coal');
             oreBase = 233333;
-            varianceDetail = '⛏️ Rich Coal Seam Extracted! Standard yield.';
+            varianceDetail = t('tools.work.variance_mining_coal');
         } else {
-            oreName = 'Iron';
+            oreName = t('tools.work.ore_iron', 'Iron');
             oreBase = 166666;
-            varianceDetail = '🔩 Iron Ore Excavated! Basic yield.';
+            varianceDetail = t('tools.work.variance_mining_iron');
         }
 
         baseAmount = oreBase;
@@ -631,16 +646,16 @@ export async function executeWork(
 
         if (roll < 15) {
             factor = 1.8;
-            varianceDetail = '📈 Market Boom! Outstanding business dividend.';
+            varianceDetail = t('tools.work.variance_entre_boom');
         } else if (roll < 80) {
             factor = 1.0 + Math.random() * 0.3; // 1.0 - 1.3
-            varianceDetail = '📊 Steady Operations. Healthy dividend distribution.';
+            varianceDetail = t('tools.work.variance_entre_steady');
         } else if (roll < 95) {
             factor = 0.4;
-            varianceDetail = '📉 Sluggish Market. Reduced quarterly dividend.';
+            varianceDetail = t('tools.work.variance_entre_lean');
         } else {
             factor = 0;
-            varianceDetail = '⚠️ Market Deficit. Operational costs broke even; no dividend paid.';
+            varianceDetail = t('tools.work.variance_entre_deficit');
         }
 
         baseAmount = Math.round(Number(job.baseSalary) * factor);
@@ -651,7 +666,7 @@ export async function executeWork(
     } else {
         payout = Math.max(1, Math.round(baseAmount * multiplier));
         narrative = t('tools.work.narrative_default', {
-            jobName: job.name,
+            jobName: getLocalizedJobName(t, job.name),
             amount: formatRupiah(payout)
         });
     }

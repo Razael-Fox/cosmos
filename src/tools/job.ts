@@ -42,6 +42,44 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         return t('core.sender_identity_error');
     }
 
+    const getLocalizedJobName = (name: string): string => {
+        switch (name) {
+            case 'Mining':
+                return t('tools.job.name_mining', 'Mining');
+            case 'Office Work':
+                return t('tools.job.name_office', 'Office Work');
+            case 'Taxi Driving':
+                return t('tools.job.name_taxi', 'Taxi Driving');
+            case 'Cooking':
+                return t('tools.job.name_cooking', 'Cooking');
+            case 'Gojek':
+                return t('tools.job.name_gojek', 'Gojek');
+            case 'Entrepreneurship':
+                return t('tools.job.name_entrepreneur', 'Entrepreneurship');
+            default:
+                return name;
+        }
+    };
+
+    const getLocalizedJobDescription = (name: string, fallback: string): string => {
+        switch (name) {
+            case 'Mining':
+                return t('tools.job.desc_mining', fallback);
+            case 'Office Work':
+                return t('tools.job.desc_office', fallback);
+            case 'Taxi Driving':
+                return t('tools.job.desc_taxi', fallback);
+            case 'Cooking':
+                return t('tools.job.desc_cooking', fallback);
+            case 'Gojek':
+                return t('tools.job.desc_gojek', fallback);
+            case 'Entrepreneurship':
+                return t('tools.job.desc_entrepreneur', fallback);
+            default:
+                return fallback;
+        }
+    };
+
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
     const parts = rawText.split(/\s+/);
     const subCommand = (parts[1] || args.action || '').toLowerCase();
@@ -56,10 +94,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
         const result = await applyForJob(senderJid, applyTarget, t);
         if (!result.success) {
-            return result.error || 'Failed to apply for job.';
+            return result.error || t('tools.job.apply_failed');
         }
         let msg = t('tools.job.join_success', {
-            jobName: result.job!.name,
+            jobName: getLocalizedJobName(result.job!.name),
             salary: formatRupiah(Number(result.job!.baseSalary)),
             cooldown: formatRemainingTime(result.job!.cooldownMinutes * 60)
         });
@@ -86,12 +124,17 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             });
 
             const items: CatalogItem[] = jobs.map((j) => {
-                const reqs: string[] = ['ID Card'];
-                if (j.name === 'Mining') reqs.push('Pickaxe');
-                else if (j.name === 'Office Work') reqs.push('MacBook');
-                else if (j.name === 'Taxi Driving') reqs.push("Driver's License");
+                const reqs: string[] = [t('tools.job.req_idcard', 'ID Card')];
+                if (j.name === 'Mining') reqs.push(t('tools.job.req_pickaxe', 'Pickaxe'));
+                else if (j.name === 'Office Work') reqs.push(t('tools.job.req_macbook', 'MacBook'));
+                else if (j.name === 'Taxi Driving') reqs.push(t('tools.job.req_license', "Driver's License"));
                 else if (j.name === 'Entrepreneurship') {
-                    reqs.push('MacBook or iPhone', `Capital: ${formatRupiah(ENTREPRENEUR_INITIAL_INVESTMENT)}`);
+                    reqs.push(
+                        t('tools.job.req_entre_device', 'MacBook or iPhone'),
+                        t('tools.job.req_capital', {
+                            amount: formatRupiah(ENTREPRENEUR_INITIAL_INVESTMENT)
+                        })
+                    );
                 }
 
                 let cycle = t('tools.job.per_day', 'day');
@@ -101,18 +144,18 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 const basePayStr = `${t('tools.job.base_pay_label', 'Base Pay')}: ${formatRupiah(Number(j.baseSalary))} / ${cycle}`;
                 const cooldownStr = `${t('tools.job.cooldown_label', 'Shift Cooldown')}: ${formatRemainingTime(j.cooldownMinutes * 60)}`;
                 const toolsStr = `${t('tools.job.tools_label', 'Tools')}: ${reqs.join(', ')}`;
-                const descStr = `_${j.description}_`;
+                const descStr = `_${getLocalizedJobDescription(j.name, j.description)}_`;
 
                 return {
                     rank: `${j.id}`,
-                    title: j.name,
+                    title: getLocalizedJobName(j.name),
                     value: `💵 ${basePayStr} • ⏱️ ${cooldownStr}`,
                     subtitle: `📦 ${toolsStr}\n│    📝 ${descStr}`
                 };
             });
 
             const catalogCard = renderCatalogCard(
-                'AVAILABLE CAREER PATHS',
+                t('tools.job.catalog_title', 'AVAILABLE CAREER PATHS'),
                 '📋',
                 items,
                 t('tools.job.how_to_join', 'Type .job join <job_id> (e.g. .job join 1).')
@@ -130,11 +173,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
             const result = await applyForJob(senderJid, query, t);
             if (!result.success) {
-                return result.error || 'Failed to apply for job.';
+                return result.error || t('tools.job.apply_failed');
             }
 
             let msg = t('tools.job.join_success', {
-                jobName: result.job!.name,
+                jobName: getLocalizedJobName(result.job!.name),
                 salary: formatRupiah(Number(result.job!.baseSalary)),
                 cooldown: formatRemainingTime(result.job!.cooldownMinutes * 60)
             });
@@ -152,10 +195,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         case 'keluar': {
             const result = await resignJob(senderJid, t);
             if (!result.success) {
-                return result.error || 'Failed to resign from job.';
+                return result.error || t('tools.job.resign_failed');
             }
             return t('tools.job.resign_success', {
-                jobName: result.previousJobName || 'your position'
+                jobName: result.previousJobName
+                    ? getLocalizedJobName(result.previousJobName)
+                    : t('tools.job.your_position', 'your position')
             });
         }
 
@@ -163,11 +208,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const status = await getUserJobStatus(senderJid);
             if (!status || !status.currentJob) {
                 return renderCard({
-                    title: 'CAREER STATUS: UNEMPLOYED',
+                    title: t('tools.job.status_unemployed_title', 'CAREER STATUS: UNEMPLOYED'),
                     icon: '💼',
                     headerStyle: 'light',
                     body: t('tools.job.status_unemployed', 'You do not currently hold a job position.'),
-                    tips: ['.job list - View all available jobs', '.job join <ID|Name> - Apply or switch jobs']
+                    tips: [t('tools.job.tip_unemployed_list'), t('tools.job.tip_unemployed_join')]
                 });
             }
 
@@ -183,11 +228,15 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             else if (job.cooldownMinutes <= 60) cycle = t('tools.job.per_delivery', 'delivery');
 
             return renderCard({
-                title: 'COSMOS EMPLOYMENT STATUS',
+                title: t('tools.job.status_employed_title', 'COSMOS EMPLOYMENT STATUS'),
                 icon: '💼',
                 headerStyle: 'heavy',
                 fields: [
-                    { icon: '👷', label: t('tools.work.profession_label', 'Profession'), value: `*${job.name}*` },
+                    {
+                        icon: '👷',
+                        label: t('tools.work.profession_label', 'Profession'),
+                        value: `*${getLocalizedJobName(job.name)}*`
+                    },
                     {
                         icon: '💵',
                         label: t('tools.job.base_pay_label', 'Base Pay'),
@@ -198,14 +247,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                         label: t('tools.job.cooldown_label', 'Shift Cooldown'),
                         value: formatRemainingTime(job.cooldownMinutes * 60)
                     },
-                    { icon: '🚦', label: 'Shift Status', value: shiftStatus },
+                    { icon: '🚦', label: t('tools.job.shift_status_label', 'Shift Status'), value: shiftStatus },
                     {
                         icon: '📝',
                         label: t('tools.job.description_label', 'Description'),
-                        value: `_${job.description}_`
+                        value: `_${getLocalizedJobDescription(job.name, job.description)}_`
                     }
                 ],
-                tips: ['.work - Clock in to earn your salary', '.job leave - Resign from your current position']
+                tips: [t('tools.job.tip_employed_work'), t('tools.job.tip_employed_leave')]
             });
         }
     }

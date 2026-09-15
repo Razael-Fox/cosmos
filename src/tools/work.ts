@@ -28,11 +28,34 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
 
     const result = await executeWork(senderJid, t);
     if (!result.success) {
-        return result.error || 'Failed to complete work shift.';
+        return result.error || t('tools.work.work_failed', 'Failed to complete work shift.');
     }
 
+    const getLocalizedJobName = (name: string): string => {
+        switch (name) {
+            case 'Mining':
+                return t('tools.job.name_mining', 'Mining');
+            case 'Office Work':
+                return t('tools.job.name_office', 'Office Work');
+            case 'Taxi Driving':
+                return t('tools.job.name_taxi', 'Taxi Driving');
+            case 'Cooking':
+                return t('tools.job.name_cooking', 'Cooking');
+            case 'Gojek':
+                return t('tools.job.name_gojek', 'Gojek');
+            case 'Entrepreneurship':
+                return t('tools.job.name_entrepreneur', 'Entrepreneurship');
+            default:
+                return name;
+        }
+    };
+
     const fields: CardField[] = [
-        { icon: '👷', label: t('tools.work.profession_label', 'Profession'), value: result.jobName! },
+        {
+            icon: '👷',
+            label: t('tools.work.profession_label', 'Profession'),
+            value: getLocalizedJobName(result.jobName!)
+        },
         { icon: '💵', label: t('tools.work.earnings_label', 'Base Earnings'), value: formatRupiah(result.payout!) },
         {
             icon: '📊',
