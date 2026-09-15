@@ -104,3 +104,6 @@ storage/transaction/*
 # Markdown files
 ISSUE*.md
 REVIEW.md
+
+# Website (standalone Next.js project with its own git repo + Vercel deployment)
+website/
