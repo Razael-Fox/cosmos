@@ -9,7 +9,7 @@ import { startLoanSchedulerCron } from '#services/loanService.js';
 import { connectToWhatsApp, activeConnections } from '#utils/connectionManager.js';
 import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.js';
 import { seedItems } from '#seed_item.js';
-import { prisma } from '#db.js';
+import { seedProperties } from '#seed_property.js';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -28,15 +28,15 @@ async function startSystem(): Promise<void> {
     await toolsHandler.loadTools();
     await loadAutoDlSettings();
 
-    // Ensure initial shop items are seeded if not present
+    // Sync shop items and property catalog on every startup so new
+    // entries and price updates reach existing databases (both seeders
+    // are idempotent and safe to re-run).
     try {
-        const itemCount = await prisma.item.count();
-        if (itemCount === 0) {
-            console.log('[System] Initializing shop items in database...');
-            await seedItems();
-        }
+        console.log('[System] Syncing shop items and property catalog...');
+        await seedItems();
+        await seedProperties();
     } catch (err) {
-        console.error('[System] Error checking/seeding shop items:', err);
+        console.error('[System] Error syncing shop items and property catalog:', err);
     }
 
     // Connect the Telegram dummy account in the background when it has been paired,
