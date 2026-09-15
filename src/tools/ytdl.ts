@@ -8,6 +8,9 @@ import { renderCard } from '../utils/uiFormatter.js';
 
 const execAsync = promisify(exec);
 
+// WhatsApp media upload limit. Files larger than this are rejected after download.
+const MAX_FILESIZE_BYTES = 15 * 1024 * 1024;
+
 export const definition: ToolDefinition = {
     name: 'ytdl',
     title: 'YouTube Downloader',
@@ -83,19 +86,35 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const cookiesArg = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : '';
 
         // Limit the filesize to 15MB to ensure it can be sent via WhatsApp.
+        // Note: use filesize_approx because YouTube SABR-only streams often lack an
+        // exact filesize, which makes [filesize<15M] match nothing. Enforce the real
+        // limit with a post-download stat check below.
         const ffmpegLoc = ffmpeg ? `--ffmpeg-location "${ffmpeg}"` : '';
         const baseCommand = `"${ytdlpPath}" --js-runtimes node ${cookiesArg} ${ffmpegLoc} --extractor-args "youtube:player_client=android,web"`;
 
         let downloadedFiles: string[] = [];
         try {
             // Note: Instagram carousels and other multi-media posts will output multiple lines.
-            const vidCommand = `${baseCommand} -S "vcodec:h264,acodec:m4a" -f "bestvideo[filesize<15M]+bestaudio/best[filesize<15M]" --merge-output-format mp4 -o "${outTemplate}" "${targetUrl}" --print after_move:filepath`;
+            const vidCommand = `${baseCommand} -S "vcodec:h264,acodec:m4a" -f "bestvideo[filesize_approx<15M]+bestaudio/best[filesize_approx<15M]/best" --merge-output-format mp4 -o "${outTemplate}" "${targetUrl}" --print after_move:filepath`;
             const { stdout } = await execAsync(vidCommand);
             downloadedFiles = stdout
                 .trim()
                 .split('\n')
                 .filter((line) => line.trim() !== '' && fs.existsSync(line.trim()))
-                .map((l) => l.trim());
+                .map((l) => l.trim())
+                .filter((file) => {
+                    try {
+                        if (fs.statSync(file).size > MAX_FILESIZE_BYTES) {
+                            console.error(`[YTDL Tool] Downloaded file exceeds size limit (${file})`);
+                            console.log(`[YTDL Tool] Downloaded file exceeds size limit (${file})`);
+                            fs.unlinkSync(file);
+                            return false;
+                        }
+                        return true;
+                    } catch {
+                        return false;
+                    }
+                });
         } catch (e) {
             console.error('[YTDL Tool] Media download failed:', e);
         }
@@ -105,13 +124,26 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             // Fallback for audio-only
             try {
                 const audTemplate = path.join(storagePath, `ytdl_${timestamp}_audio.%(ext)s`);
-                const audCommand = `${baseCommand} -f "bestaudio[filesize<15M]/bestaudio" --extract-audio --audio-format mp3 -o "${audTemplate}" "${targetUrl}" --print after_move:filepath`;
+                const audCommand = `${baseCommand} -f "bestaudio[filesize_approx<15M]/bestaudio/best" --extract-audio --audio-format mp3 -o "${audTemplate}" "${targetUrl}" --print after_move:filepath`;
                 const { stdout } = await execAsync(audCommand);
                 const outputLines = stdout
                     .trim()
                     .split('\n')
                     .filter((line) => line.trim() !== '' && fs.existsSync(line.trim()));
-                if (outputLines.length > 0) downloadedAudioOnly = outputLines[outputLines.length - 1].trim();
+                if (outputLines.length > 0) {
+                    const candidate = outputLines[outputLines.length - 1].trim();
+                    try {
+                        if (fs.statSync(candidate).size > MAX_FILESIZE_BYTES) {
+                            console.error(`[YTDL Tool] Downloaded audio exceeds size limit (${candidate})`);
+                            console.log(`[YTDL Tool] Downloaded audio exceeds size limit (${candidate})`);
+                            fs.unlinkSync(candidate);
+                        } else {
+                            downloadedAudioOnly = candidate;
+                        }
+                    } catch {
+                        // Ignore stat failures; treat as no download.
+                    }
+                }
             } catch (e) {
                 console.error('[YTDL Tool] Audio download failed:', e);
             }
