@@ -11,6 +11,30 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-09] - 2026-09-15
+
+### Fixed
+
+- **Sub-Bot Pairing Handshake & Boot Guard (`src/services/subBotService.ts`, `src/utils/connectionManager.ts`):**
+    - Fixed pairing code request loop triggering repeated handshake reconnects during sub-bot pairing.
+    - Fixed startup routine booting unregistered sub-bot instances without valid database files.
+
+- **Job & Career System Localization (`src/services/jobs.ts`, `src/tools/job.ts`, `src/tools/work.ts`):**
+    - Eliminated hardcoded English strings across the job application, employment status, and work shift flows.
+    - Added symmetrical `en`/`id` translation keys for apply/resign failures, career status titles, shift labels, catalog headers, job names/descriptions, ore names, and mining/entrepreneur shift variance narratives.
+
+- **Global i18n Hardcoded-Strings Sweep (`src/tools/`, `src/utils/`, `src/services/`, `src/handlers/`):**
+    - Fixed invalid bare `ui.*` translation keys (no such namespace exists) in `balance.ts`, `daily.ts`, and `uiFormatter.ts` by routing to `tools.ui.*`; added missing `tools.ui` account, wealth-tier, and membership-tier labels in both languages.
+    - Replaced hardcoded user-facing literals with `ctx.t` keys in `config.ts` (API/mode/prefix/name/language validation), `loan.ts` (disbursement/repayment/assessment fallbacks), `subbot.ts` (stop/start/empty-list states), and `transfer.ts` (in-transaction insufficient-balance error).
+    - Localized TikTok (`card_title`, label/value tokens, API error) and YouTube (`card_title`, type labels) downloader caption cards in `tiktokdl.ts` and `ytdl.ts`.
+    - Routed sticker pipeline errors (`invalid_format`, `ffmpeg_missing`, `process_failed`, WebP validation, queue-full) through `media.sticker` keys in `sticker_maker.ts` and `stickerQueue.ts`.
+    - Localized cancellation fallback messages with language-aware `t` passthrough from `cancel.ts` and `handlers/message.ts` into `cancellationManager.ts`.
+    - Sourced Telegram client, API key, and casino `User not found` errors from `utilities.telegram`, `utilities.apikey`, and `utilities.casino` keys.
+    - Rewrote the `services/ai.ts` economic-analysis system prompt in Formal English (removed mixed Indonesian instruction) per output-string standards.
+    - Verified zero unresolved `t()` keys codebase-wide; `validate:i18n` reports full `id`/`en` symmetry.
+
+---
+
 ## [RF-2609-08] - 2026-09-14
 
 ### Added
@@ -365,7 +389,9 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-07...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-09...HEAD
+[RF-2609-09]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-08...RF-2609-09
+[RF-2609-08]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-07...RF-2609-08
 [RF-2609-07]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-06...RF-2609-07
 [RF-2609-06]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-05...RF-2609-06
 [RF-2609-05]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-04...RF-2609-05
