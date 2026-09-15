@@ -82,6 +82,14 @@ export const INITIAL_ITEMS = [
         isAvailable: true
     },
     {
+        name: 'Google Pixel 9a',
+        shortId: 'pixel9a',
+        description: 'An affordable Android smartphone suitable for running digital enterprises.',
+        type: 'equipment',
+        price: BigInt(7999000),
+        isAvailable: true
+    },
+    {
         name: "Driver's License",
         shortId: 'driver_license',
         description: 'An official driver license required for taxi and commercial transport work.',

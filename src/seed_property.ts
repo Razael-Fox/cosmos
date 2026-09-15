@@ -23,6 +23,12 @@ async function main() {
             baseDepreciationRate: 0.03
         },
         {
+            name: 'Google Pixel 9a',
+            typeCategory: 'Electronics',
+            basePrice: 7999000,
+            baseDepreciationRate: 0.03
+        },
+        {
             name: 'MacBook Pro M3 Max',
             typeCategory: 'Electronics',
             basePrice: 65000000,
