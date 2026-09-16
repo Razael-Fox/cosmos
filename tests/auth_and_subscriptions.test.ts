@@ -243,48 +243,47 @@ describe('Auth & Subscriptions System Endpoints', () => {
         assert.strictEqual(payment.amount, BigInt(10000));
     });
 
-    it('sub-bot pairing checks whitelisted state, binds owner, and enforces quota limits', async () => {
+    it('sub-bot pairing requires the live bot engine and never issues fabricated codes', async () => {
         const subBotPhone1 = '628999111001';
         const subBotPhone2 = '628999111002';
 
-        // Pair sub-bot 1 with code
+        // No bot engine socket in test env -> 503 BOT_OFFLINE (never a fabricated code)
         const resPair1 = await app.inject({
             method: 'POST',
             url: '/api/v1/subbots/pair',
             headers: { authorization: `Bearer ${userToken}` },
             payload: { phone: subBotPhone1, method: 'code' }
         });
-        assert.strictEqual(resPair1.statusCode, 200);
-        assert.match(resPair1.json().pairingCode, /^[0-9A-F]{4}-[0-9A-F]{4}$/);
+        assert.strictEqual(resPair1.statusCode, 503);
+        assert.strictEqual(resPair1.json().error, 'BOT_OFFLINE');
 
-        // Pair sub-bot 2 with qr
+        // QR method also requires the bot engine
         const resPair2 = await app.inject({
             method: 'POST',
             url: '/api/v1/subbots/pair',
             headers: { authorization: `Bearer ${userToken}` },
             payload: { phone: subBotPhone2, method: 'qr' }
         });
-        assert.strictEqual(resPair2.statusCode, 200);
-        assert.ok(resPair2.json().qrCode);
+        assert.strictEqual(resPair2.statusCode, 503);
+        assert.strictEqual(resPair2.json().error, 'BOT_OFFLINE');
 
-        // List subbots
+        // List subbots (failed attempts must not leave phantom records)
         const resList = await app.inject({
             method: 'GET',
             url: '/api/v1/subbots/list',
             headers: { authorization: `Bearer ${userToken}` }
         });
         assert.strictEqual(resList.statusCode, 200);
-        const bots = resList.json() as Array<{ id: string; ownerJid: string }>;
-        assert.ok(bots.some((b) => b.id === subBotPhone1 && b.ownerJid === testJid));
-        assert.ok(bots.some((b) => b.id === subBotPhone2 && b.ownerJid === testJid));
+        const bots = resList.json() as Array<{ id: string; ownerJid: string; status: string }>;
+        assert.ok(!bots.some((b) => b.id === subBotPhone1));
+        assert.ok(!bots.some((b) => b.id === subBotPhone2));
 
-        // Delete paired subbot
+        // Delete a non-existent subbot -> 404
         const resDel = await app.inject({
             method: 'DELETE',
             url: `/api/v1/subbots/${subBotPhone1}`,
             headers: { authorization: `Bearer ${userToken}` }
         });
-        assert.strictEqual(resDel.statusCode, 200);
-        assert.strictEqual(resDel.json().success, true);
+        assert.strictEqual(resDel.statusCode, 404);
     });
 });

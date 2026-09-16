@@ -1,9 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
-import crypto from 'crypto';
 import { prisma } from '../db.js';
 import { authenticateJwt } from '../middleware/authenticate.js';
 import { deviceValidationPreHandler } from '../middleware/deviceValidation.js';
 import { QuotaService, executeWithUserLock } from '../services/quotaService.js';
+import { requestSubBotPairViaIpc } from '../services/ipcClient.js';
 
 export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
     // GET /api/v1/subbots/list
@@ -73,37 +73,72 @@ export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
                 });
             }
 
-            // Record or update subbot instance
+            const method = body.method === 'qr' ? 'qr' : 'code';
+            const expiresIn = 120; // 2 minutes pairing expiry
+
+            // Request a genuine Baileys pairing credential from the bot engine.
+            let ipcRes;
+            try {
+                ipcRes = await requestSubBotPairViaIpc(cleanPhone, method, userId);
+            } catch (err) {
+                console.error('[SubBot] IPC pairing request failed:', err);
+                return reply.status(503).send({
+                    error: 'BOT_OFFLINE',
+                    message: 'Bot engine is unreachable. Please try again shortly.'
+                });
+            }
+
+            if (ipcRes.status === 503 || ipcRes.status === 504 || ipcRes.status === 502) {
+                return reply.status(503).send({
+                    error: 'BOT_OFFLINE',
+                    message: 'Bot engine is unreachable. Please try again shortly.'
+                });
+            }
+
+            if (ipcRes.status !== 200) {
+                const botError = (ipcRes.data as { error?: string } | undefined)?.error || 'PAIRING_FAILED';
+                return reply.status(ipcRes.status === 401 ? 500 : ipcRes.status).send({
+                    error: botError,
+                    message: 'Sub-bot pairing could not be started.'
+                });
+            }
+
+            const pairData = ipcRes.data as { pairingCode?: string; qrCode?: string };
+            const credential = method === 'code' ? pairData.pairingCode : pairData.qrCode;
+            if (!credential) {
+                return reply.status(500).send({
+                    error: 'PAIRING_FAILED',
+                    message:
+                        method === 'code'
+                            ? 'Bot engine did not return a pairing code.'
+                            : 'Bot engine did not return a QR payload.'
+                });
+            }
+
+            // Record pairing attempt (bot flips to ACTIVE on link)
             await prisma.subBotInstance.upsert({
                 where: { id: cleanPhone },
                 update: {
                     ownerJid: userId,
-                    status: 'ACTIVE'
+                    status: 'PAIRING'
                 },
                 create: {
                     id: cleanPhone,
                     ownerJid: userId,
                     customPrefix: '.',
-                    status: 'ACTIVE'
+                    status: 'PAIRING'
                 }
             });
 
-            const method = body.method === 'qr' ? 'qr' : 'code';
-            const expiresIn = 120; // 2 minutes pairing expiry
-
             if (method === 'code') {
-                // Generate 8-character pairing code format: XXXX-XXXX
-                const raw = crypto.randomBytes(4).toString('hex').toUpperCase();
-                const pairingCode = `${raw.slice(0, 4)}-${raw.slice(4, 8)}`;
                 return reply.send({
-                    pairingCode,
+                    pairingCode: credential,
                     expiresIn
                 });
             } else {
-                const rawQr = `2@${crypto.randomBytes(24).toString('base64')},${crypto.randomBytes(32).toString('base64')},${crypto.randomBytes(32).toString('base64')}`;
                 return reply.send({
-                    qrCode: rawQr,
-                    expiresIn
+                    qrCode: credential,
+                    expiresIn: 60
                 });
             }
         });

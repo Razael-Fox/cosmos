@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../db.js';
 import { subscribeAuthStatus } from '../services/authEventBus.js';
 import { processDeviceValidation } from '../middleware/deviceValidation.js';
+import { getSubBotPairingStateViaIpc } from '../services/ipcClient.js';
 
 export const wsRoutes: FastifyPluginAsync = async (fastify) => {
     // GET /ws/auth/status?session=<regSessionId>
@@ -126,15 +127,73 @@ export const wsRoutes: FastifyPluginAsync = async (fastify) => {
             })
         );
 
+        let isClosed = false;
+        const deadline = Date.now() + 135000; // Slightly beyond the 120s code TTL
+
+        const cleanup = () => {
+            if (isClosed) return;
+            isClosed = true;
+            clearInterval(keepAlive);
+            clearInterval(statusPoll);
+            try {
+                socket.close();
+            } catch {
+                /* ignore */
+            }
+        };
+
+        // Poll the bot engine for pairing progress and relay it to the client.
+        const statusPoll = setInterval(async () => {
+            if (isClosed) return;
+            if (Date.now() > deadline) {
+                try {
+                    socket.send(
+                        JSON.stringify({
+                            event: 'error',
+                            message: 'Pairing session expired. Please request a new code.'
+                        })
+                    );
+                } catch {
+                    /* ignore */
+                }
+                cleanup();
+                return;
+            }
+            try {
+                const res = await getSubBotPairingStateViaIpc(phone);
+                const state = (res.data as { state?: string } | undefined)?.state;
+                if (state === 'ACTIVE') {
+                    socket.send(
+                        JSON.stringify({
+                            event: 'PAIRED',
+                            status: 'ACTIVE',
+                            message: `Sub-bot +${phone} linked successfully.`
+                        })
+                    );
+                    cleanup();
+                } else if (state === 'IDLE') {
+                    socket.send(
+                        JSON.stringify({
+                            event: 'error',
+                            message: 'Pairing session ended before linking. Please try again.'
+                        })
+                    );
+                    cleanup();
+                }
+            } catch (err) {
+                console.error('[WS Pairing] Status poll failed:', err);
+            }
+        }, 2000);
+
         const keepAlive = setInterval(() => {
             try {
                 socket.send(JSON.stringify({ event: 'ping', timestamp: Date.now() }));
             } catch {
-                clearInterval(keepAlive);
+                cleanup();
             }
         }, 15000);
 
-        socket.on('close', () => clearInterval(keepAlive));
-        socket.on('error', () => clearInterval(keepAlive));
+        socket.on('close', cleanup);
+        socket.on('error', cleanup);
     });
 };

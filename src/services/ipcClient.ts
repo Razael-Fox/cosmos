@@ -9,7 +9,8 @@ export interface IpcResponse<T = unknown> {
 export function sendIpcCommand<T = unknown>(
     targetPath: string,
     body: Record<string, unknown> = {},
-    socketPath: string = config.BOT_IPC_SOCKET
+    socketPath: string = config.BOT_IPC_SOCKET,
+    timeoutMs: number = 4000
 ): Promise<IpcResponse<T>> {
     const secret = config.INTERNAL_IPC_SECRET;
 
@@ -23,7 +24,7 @@ export function sendIpcCommand<T = unknown>(
                 client.destroy();
                 resolve({ status: 504, data: { error: 'IPC_TIMEOUT' } as T });
             }
-        }, 4000);
+        }, timeoutMs);
 
         client.on('connect', () => {
             client.write(`${JSON.stringify({ path: targetPath, secret, body })}\n`);
@@ -98,4 +99,37 @@ export async function notifySubscriptionActivatedViaIpc(
 
 export async function checkBotHealthViaIpc(): Promise<IpcResponse<{ ok: boolean; connections?: number }>> {
     return sendIpcCommand<{ ok: boolean; connections?: number }>('/internal/health');
+}
+
+export interface SubBotPairIpcData {
+    pairingCode?: string;
+    qrCode?: string;
+    error?: string;
+}
+
+/**
+ * Requests a genuine Baileys pairing credential from the bot engine.
+ * Real code issuance requires socket connect plus version fetch, so this
+ * allows up to 90 seconds for the bot to respond.
+ */
+export async function requestSubBotPairViaIpc(
+    phone: string,
+    method: 'code' | 'qr',
+    requesterJid: string
+): Promise<IpcResponse<SubBotPairIpcData>> {
+    return sendIpcCommand<SubBotPairIpcData>(
+        '/internal/subbots/pair',
+        { phone, method, requesterJid },
+        config.BOT_IPC_SOCKET,
+        90000
+    );
+}
+
+export interface SubBotStatusIpcData {
+    state?: 'ACTIVE' | 'PAIRING' | 'IDLE';
+    error?: string;
+}
+
+export async function getSubBotPairingStateViaIpc(phone: string): Promise<IpcResponse<SubBotStatusIpcData>> {
+    return sendIpcCommand<SubBotStatusIpcData>('/internal/subbots/status', { phone }, config.BOT_IPC_SOCKET, 8000);
 }
