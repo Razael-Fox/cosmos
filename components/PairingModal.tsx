@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   X,
   QrCode,
@@ -42,6 +43,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
 
   // Full clean phone number
   const cleanPhone = `${selectedCountryCode}${localNumber.replace(/\D/g, '')}`;
@@ -54,6 +56,23 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
     }, 1000);
     return () => clearInterval(interval);
   }, [timeLeft]);
+
+  // Render raw Baileys QR payloads as scannable images.
+  // qrImageUrl is reset alongside qrCodeData at every call site below.
+  useEffect(() => {
+    if (!qrCodeData || qrCodeData.startsWith('data:')) return;
+    let cancelled = false;
+    QRCode.toDataURL(qrCodeData, { width: 384, margin: 2 })
+      .then((url) => {
+        if (!cancelled) setQrImageUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrImageUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrCodeData]);
 
   // WebSocket for pairing updates
   useEffect(() => {
@@ -90,6 +109,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
     setErrorMsg(null);
     setPairingCode(null);
     setQrCodeData(null);
+    setQrImageUrl(null);
 
     try {
       const res = await pairSubBot({
@@ -104,9 +124,8 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
         setQrCodeData(res.qrCode);
         setTimeLeft(res.expiresIn || 60);
       } else {
-        // Mock fallback if pairing code generated locally
-        setPairingCode('COSMOS-88');
-        setTimeLeft(180);
+        // The backend must return a genuine credential; never fabricate one.
+        setErrorMsg(t.pairingModal.errorNoCredential);
       }
     } catch (err: unknown) {
       const errorObj = err as { data?: { code?: string }; status?: number; message?: string };
@@ -177,6 +196,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                   setMethod('code');
                   setPairingCode(null);
                   setQrCodeData(null);
+                  setQrImageUrl(null);
                 }}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
                   method === 'code'
@@ -193,6 +213,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                   setMethod('qr');
                   setPairingCode(null);
                   setQrCodeData(null);
+                  setQrImageUrl(null);
                 }}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
                   method === 'qr'
@@ -310,13 +331,13 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                   {t.pairingModal.qrHelp}
                 </p>
                 <div className="p-4 bg-white rounded-2xl border border-border shadow-sm flex items-center justify-center min-h-[220px] min-w-[220px]">
-                  {qrCodeData?.startsWith('data:') ? (
+                  {qrImageUrl || qrCodeData?.startsWith('data:') ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={qrCodeData} alt="WhatsApp QR Code" className="w-48 h-48" />
+                    <img src={qrImageUrl || qrCodeData || ''} alt="WhatsApp QR Code" className="w-48 h-48" />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-zinc-600">
                       <QrCode className="w-36 h-36" />
-                      <span className="text-xs font-mono">{qrCodeData || 'Menunggu sinyal QR...'}</span>
+                      <span className="text-xs font-mono">{t.pairingModal.qrRendering}</span>
                     </div>
                   )}
                 </div>

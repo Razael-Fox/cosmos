@@ -247,6 +247,8 @@ const rawDictionary = {
       close: 'Tutup',
       loading: 'Menghubungkan ke engine Baileys...',
       errorQuota: 'Kuota sub-bot Anda telah habis. Silakan upgrade paket langganan Anda.',
+      errorNoCredential: 'Engine bot tidak mengembalikan kredensial pairing. Silakan coba lagi.',
+      qrRendering: 'Merender QR Code...',
     },
     sales: {
       prefillMsg:
@@ -502,6 +504,8 @@ const rawDictionary = {
       close: 'Close',
       loading: 'Connecting to Baileys engine...',
       errorQuota: 'Sub-bot quota exceeded for your subscription plan. Please upgrade first.',
+      errorNoCredential: 'Bot engine did not return pairing credentials. Please try again.',
+      qrRendering: 'Rendering QR code...',
     },
     sales: {
       prefillMsg:
