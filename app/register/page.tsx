@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,7 +15,7 @@ import {
 import { useTranslation } from '@/lib/i18n';
 import { registerInverted, registerDirect } from '@/lib/api';
 import type { RegisterInvertedResponse } from '@/lib/types';
-import { Turnstile } from '@/components/Turnstile';
+import { Turnstile, type TurnstileRef } from '@/components/Turnstile';
 import { InvertedVerifyDialog } from '@/components/InvertedVerifyDialog';
 import { DirectOtpModal } from '@/components/DirectOtpModal';
 
@@ -28,6 +28,15 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileRef>(null);
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -91,6 +100,8 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t.common.error;
       setErrorMsg(msg);
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -267,7 +278,11 @@ export default function RegisterPage() {
 
             {/* Cloudflare Turnstile */}
             <div className="pt-2">
-              <Turnstile onVerify={(token) => setTurnstileToken(token)} />
+              <Turnstile
+                ref={turnstileRef}
+                onVerify={handleTurnstileVerify}
+                onExpire={handleTurnstileExpire}
+              />
             </div>
 
             {errorMsg && (

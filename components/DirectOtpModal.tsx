@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, CircleNotch, X, ShieldCheck } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
@@ -29,6 +29,14 @@ export function DirectOtpModal({
   const [showResendTurnstile, setShowResendTurnstile] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const handleTurnstileVerify = useCallback((tok: string) => {
+    setTurnstileToken(tok);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -167,9 +175,8 @@ export function DirectOtpModal({
           <div className="p-3 bg-muted/40 rounded-xl border border-border flex flex-col items-center gap-2">
             <p className="text-xs text-muted-foreground">{t.auth.turnstileRequired}</p>
             <Turnstile
-              onVerify={(tok) => {
-                setTurnstileToken(tok);
-              }}
+              onVerify={handleTurnstileVerify}
+              onExpire={handleTurnstileExpire}
             />
           </div>
         )}
