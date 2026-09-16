@@ -59,6 +59,7 @@ RUN mkdir -p /app/bot /app/storage /app/config /app/storage/logs /app/storage/au
 
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/dist ./bot/dist
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/package.json ./bot/package.json
+COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/node_modules ./bot/node_modules
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/prisma ./bot/prisma
 COPY docker/nginx.conf /app/config/nginx.conf
 COPY docker/ecosystem.config.cjs /app/config/ecosystem.config.cjs
