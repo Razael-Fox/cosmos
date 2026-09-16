@@ -134,7 +134,6 @@ export function ensureDatabaseSchema(dbPath: string): void {
             );
             CREATE INDEX IF NOT EXISTS "OtpVerification_phoneNumber_purpose_isUsed_idx" ON "OtpVerification"("phoneNumber", "purpose", "isUsed");
             CREATE INDEX IF NOT EXISTS "OtpVerification_regSessionId_idx" ON "OtpVerification"("regSessionId");
-            CREATE INDEX IF NOT EXISTS "OtpVerification_lookupHash_idx" ON "OtpVerification"("lookupHash");
 
             CREATE TABLE IF NOT EXISTS "WebSession" (
                 "id" TEXT NOT NULL PRIMARY KEY,
@@ -206,6 +205,11 @@ export function ensureDatabaseSchema(dbPath: string): void {
         ensureColumnExists(db, 'User', 'lastLoginIp', 'TEXT');
         ensureColumnExists(db, 'User', 'lastLoginAt', 'DATETIME');
         ensureColumnExists(db, 'OtpVerification', 'lookupHash', 'TEXT');
+        try {
+            db.exec(`CREATE INDEX IF NOT EXISTS "OtpVerification_lookupHash_idx" ON "OtpVerification"("lookupHash")`);
+        } catch {
+            /* ignore index errors */
+        }
         ensureColumnExists(db, 'WhitelistedGroup', 'ownerJid', 'TEXT');
         ensureColumnExists(db, 'WhitelistedGroup', 'createdAt', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
     } catch (err) {
