@@ -133,6 +133,7 @@ export function ensureDatabaseSchema(dbPath: string): void {
                 "userJid" TEXT,
                 "codeHash" TEXT NOT NULL,
                 "salt" TEXT NOT NULL,
+                "lookupHash" TEXT,
                 "metadata" TEXT,
                 "regSessionId" TEXT,
                 "purpose" TEXT NOT NULL DEFAULT 'REGISTRATION',
@@ -145,6 +146,7 @@ export function ensureDatabaseSchema(dbPath: string): void {
             );
             CREATE UNIQUE INDEX IF NOT EXISTS "OtpVerification_regSessionId_key" ON "OtpVerification"("regSessionId");
             CREATE INDEX IF NOT EXISTS "OtpVerification_phone_purpose_used_idx" ON "OtpVerification"("phoneNumber", "purpose", "isUsed");
+            CREATE INDEX IF NOT EXISTS "OtpVerification_lookupHash_idx" ON "OtpVerification"("lookupHash");
 
             CREATE TABLE IF NOT EXISTS "WebSession" (
                 "id" TEXT NOT NULL PRIMARY KEY,
@@ -391,6 +393,7 @@ export function ensureDatabaseSchema(dbPath: string): void {
             PRAGMA busy_timeout = 5000;
             PRAGMA synchronous = NORMAL;
         `);
+        ensureColumnExists(db, 'OtpVerification', 'lookupHash', 'TEXT');
         ensureColumnExists(db, 'User', 'email', 'TEXT');
         ensureColumnExists(db, 'User', 'passwordHash', 'TEXT');
         ensureColumnExists(db, 'User', 'isWhitelisted', 'BOOLEAN NOT NULL DEFAULT false');

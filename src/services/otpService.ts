@@ -26,6 +26,20 @@ export function hashOtp(code: string, salt: string): string {
     return crypto.createHmac('sha256', otpSecret()).update(`${salt}:${code}`).digest('hex');
 }
 
+export function normalizeToken(token: string): string {
+    return token.trim().toUpperCase();
+}
+
+/**
+ * Deterministic, indexed lookup key for O(1) record retrieval.
+ * Uses HMAC with the server OTP secret (not plain SHA-256) so the value is
+ * not brute-forceable from a database dump alone. The per-record salted
+ * `codeHash` remains the actual verifier via timing-safe comparison.
+ */
+export function tokenLookupHash(token: string): string {
+    return crypto.createHmac('sha256', otpSecret()).update(normalizeToken(token)).digest('hex');
+}
+
 export function timingSafeStringCompare(a: string, b: string): boolean {
     const aHash = crypto.createHash('sha256').update(a).digest();
     const bHash = crypto.createHash('sha256').update(b).digest();
@@ -64,6 +78,7 @@ export async function createDirectOtp(
             userJid: options.userJid ?? null,
             codeHash: hash,
             salt,
+            lookupHash: tokenLookupHash(code),
             metadata: options.metadata ? JSON.stringify(options.metadata) : null,
             regSessionId: options.regSessionId ?? null,
             purpose: options.purpose ?? 'REGISTRATION',
@@ -89,6 +104,7 @@ export async function createInvertedVerification(
             userJid: null,
             codeHash: hashOtp(token, salt),
             salt,
+            lookupHash: tokenLookupHash(token),
             metadata: metadata ? JSON.stringify(metadata) : null,
             regSessionId,
             purpose: 'INVERTED_REGISTRATION',
@@ -117,49 +133,83 @@ export async function verifyOtp(id: string, code: string): Promise<{ ok: boolean
     return { ok: true };
 }
 
+export interface VerifyInvertedRecord {
+    id: string;
+    phoneNumber: string;
+    metadata: Record<string, unknown> | null;
+    regSessionId: string | null;
+    attempts: number;
+    maxAttempts: number;
+    expiresAt: Date;
+}
+
 /** Timing-safe inverted token verification used by the `.verify` command. */
-export async function verifyInvertedToken(token: string): Promise<{
-    ok: boolean;
-    reason?: string;
-    record?: {
+export async function verifyInvertedToken(
+    token: string
+): Promise<{ ok: boolean; reason?: string; record?: VerifyInvertedRecord }> {
+    const normalized = normalizeToken(token);
+    // O(1) indexed lookup instead of loading every pending record into memory.
+    const indexed = await prisma.otpVerification.findFirst({
+        where: { purpose: 'INVERTED_REGISTRATION', isUsed: false, lookupHash: tokenLookupHash(normalized) }
+    });
+    if (indexed) return toInvertedMatch(indexed, normalized);
+
+    // Bounded fallback for rows created before `lookupHash` existed (unverifiable
+    // via index). That set only shrinks — no new null rows are written — and every
+    // member expires within 30 minutes of deploy. Matched rows are backfilled.
+    const legacy = await prisma.otpVerification.findMany({
+        where: { purpose: 'INVERTED_REGISTRATION', isUsed: false, lookupHash: null }
+    });
+    for (const record of legacy) {
+        const expected = hashOtp(normalized, record.salt);
+        if (!timingSafeStringCompare(expected, record.codeHash)) continue;
+        await prisma.otpVerification
+            .update({ where: { id: record.id }, data: { lookupHash: tokenLookupHash(normalized) } })
+            .catch((err) => console.error('[OTP] Failed to backfill lookupHash:', err));
+        return toInvertedMatch(record, normalized);
+    }
+    return { ok: false, reason: 'NOT_FOUND' };
+}
+
+function toInvertedMatch(
+    record: {
         id: string;
         phoneNumber: string;
-        metadata: Record<string, unknown> | null;
+        metadata: string | null;
         regSessionId: string | null;
         attempts: number;
         maxAttempts: number;
         expiresAt: Date;
-    };
-}> {
-    const normalized = token.trim().toUpperCase();
-    const candidates = await prisma.otpVerification.findMany({
-        where: { purpose: 'INVERTED_REGISTRATION', isUsed: false }
-    });
-    for (const record of candidates) {
-        const expected = hashOtp(normalized, record.salt);
-        if (!timingSafeStringCompare(expected, record.codeHash)) continue;
-        if (record.expiresAt.getTime() < Date.now()) return { ok: false, reason: 'EXPIRED' };
-        if (record.attempts >= record.maxAttempts) return { ok: false, reason: 'LOCKED' };
-        let metadata: Record<string, unknown> | null;
-        try {
-            metadata = record.metadata ? (JSON.parse(record.metadata) as Record<string, unknown>) : null;
-        } catch {
-            metadata = null;
-        }
-        return {
-            ok: true,
-            record: {
-                id: record.id,
-                phoneNumber: record.phoneNumber,
-                metadata,
-                regSessionId: record.regSessionId,
-                attempts: record.attempts,
-                maxAttempts: record.maxAttempts,
-                expiresAt: record.expiresAt
-            }
-        };
+        codeHash: string;
+        salt: string;
+    },
+    normalized: string
+): { ok: boolean; reason?: string; record?: VerifyInvertedRecord } {
+    // The salted codeHash remains the actual verifier; the index only locates.
+    if (!timingSafeStringCompare(hashOtp(normalized, record.salt), record.codeHash)) {
+        console.error('[OTP] Indexed lookupHash matched but codeHash mismatched (data corruption).');
+        return { ok: false, reason: 'NOT_FOUND' };
     }
-    return { ok: false, reason: 'NOT_FOUND' };
+    if (record.expiresAt.getTime() < Date.now()) return { ok: false, reason: 'EXPIRED' };
+    if (record.attempts >= record.maxAttempts) return { ok: false, reason: 'LOCKED' };
+    let metadata: Record<string, unknown> | null;
+    try {
+        metadata = record.metadata ? (JSON.parse(record.metadata) as Record<string, unknown>) : null;
+    } catch {
+        metadata = null;
+    }
+    return {
+        ok: true,
+        record: {
+            id: record.id,
+            phoneNumber: record.phoneNumber,
+            metadata,
+            regSessionId: record.regSessionId,
+            attempts: record.attempts,
+            maxAttempts: record.maxAttempts,
+            expiresAt: record.expiresAt
+        }
+    };
 }
 
 /**
