@@ -109,6 +109,40 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             }
             return { status: 200, data: { ok: true } };
         }
+        case '/internal/subbots/pair': {
+            const phone = String(body.phone || '').replace(/\D/g, '');
+            const method = body.method === 'qr' ? 'qr' : 'code';
+            const requesterJid = String(body.requesterJid || '');
+            if (!phone || phone.length < 8 || !requesterJid) {
+                return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+            }
+            try {
+                const { requestPairingHeadless } = await import('./subBotService.js');
+                const result = await requestPairingHeadless(phone, method, requesterJid);
+                if (!result.ok) {
+                    return { status: 409, data: { error: result.error || 'PAIRING_FAILED' } };
+                }
+                console.log(`[IPC] Sub-bot pairing started for +${phone} (method=${method}).`);
+                return {
+                    status: 200,
+                    data: method === 'code' ? { pairingCode: result.code } : { qrCode: result.qr }
+                };
+            } catch (err) {
+                console.error('[IPC] Sub-bot pairing failed:', err);
+                return { status: 500, data: { error: 'PAIRING_FAILED' } };
+            }
+        }
+        case '/internal/subbots/status': {
+            const phone = String(body.phone || '').replace(/\D/g, '');
+            if (!phone) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+            try {
+                const { getSubBotPairingState } = await import('./subBotService.js');
+                return { status: 200, data: { state: getSubBotPairingState(phone) } };
+            } catch (err) {
+                console.error('[IPC] Sub-bot status check failed:', err);
+                return { status: 500, data: { error: 'STATUS_FAILED' } };
+            }
+        }
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };
         }
