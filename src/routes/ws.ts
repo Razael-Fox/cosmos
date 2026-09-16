@@ -146,6 +146,9 @@ export const wsRoutes: FastifyPluginAsync = async (fastify) => {
         const statusPoll = setInterval(async () => {
             if (isClosed) return;
             if (Date.now() > deadline) {
+                await prisma.subBotInstance
+                    .deleteMany({ where: { id: phone, ownerJid: userJid, status: 'PAIRING' } })
+                    .catch(() => null);
                 try {
                     socket.send(
                         JSON.stringify({
@@ -172,6 +175,9 @@ export const wsRoutes: FastifyPluginAsync = async (fastify) => {
                     );
                     cleanup();
                 } else if (state === 'IDLE') {
+                    await prisma.subBotInstance
+                        .deleteMany({ where: { id: phone, ownerJid: userJid, status: 'PAIRING' } })
+                        .catch(() => null);
                     socket.send(
                         JSON.stringify({
                             event: 'error',
