@@ -1,7 +1,11 @@
 # syntax=docker/dockerfile:1.4
 # Cosmos all-in-one single-container image (Bot + API + Web + Nginx + cloudflared).
-# Branches `website` and `api` are mounted via build contexts / worktrees; when absent
-# only the bot engine stage is packaged and the remaining services no-op gracefully.
+# NOTE: Only the Bot Engine (main branch) is packaged here. The `website` and `api`
+# branches are NOT build inputs: Dockerfile COPY instructions fail the entire build
+# when their source path is absent, so optional branch stages must not be declared
+# until those branches actually land (a trailing `|| true` on RUN cannot save a
+# failed COPY). The entrypoint prunes un-packaged services from the PM2 config at
+# container start, so a bot-only image supervises bot + nginx (+ tunnel) gracefully.
 
 ARG NODE_VERSION=22-bookworm-slim
 
@@ -11,31 +15,17 @@ ARG NODE_VERSION=22-bookworm-slim
 FROM node:${NODE_VERSION} AS builder-bot
 RUN corepack enable
 WORKDIR /build/bot
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 COPY src ./src
 COPY scripts ./scripts
+# NOTE: src/generated/prisma is gitignored, so the client must be generated here.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile && pnpm build
+    pnpm install --frozen-lockfile && pnpm exec prisma generate && pnpm build
 
 # -------------------------------------------------------------
-# Stage 2: Build Web Portal (website branch, optional)
-# -------------------------------------------------------------
-FROM node:${NODE_VERSION} AS builder-website
-WORKDIR /build/website
-COPY .worktrees/website/package.json ./package.json
-RUN echo "website context is optional; skipping when worktree is absent" && ls -la || true
-
-# -------------------------------------------------------------
-# Stage 3: Build API Gateway (api branch, optional)
-# -------------------------------------------------------------
-FROM node:${NODE_VERSION} AS builder-api
-WORKDIR /build/api
-COPY .worktrees/api/package.json ./package.json
-RUN echo "api context is optional; skipping when worktree is absent" && ls -la || true
-
-# -------------------------------------------------------------
-# Stage 4: Hardened Production Runner (Non-Root User: cosmos)
+# Stage 2: Hardened Production Runner (Non-Root User: cosmos)
 # -------------------------------------------------------------
 FROM node:${NODE_VERSION}
 ENV NODE_ENV=production
@@ -63,6 +53,7 @@ COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/node_modules ./bot/node
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/prisma ./bot/prisma
 COPY docker/nginx.conf /app/config/nginx.conf
 COPY docker/ecosystem.config.cjs /app/config/ecosystem.config.cjs
+COPY docker/prune-ecosystem.cjs /app/config/prune-ecosystem.cjs
 COPY docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && chown cosmos:cosmos /app/config/* /app/entrypoint.sh
 
