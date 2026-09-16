@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Lock, User, CircleNotch, Sparkle, ArrowRight } from '@phosphor-icons/react';
+import { Lock, User, CircleNotch, ArrowRight } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { login } from '@/lib/api';
 
@@ -40,8 +41,15 @@ export default function LoginPage() {
     <div className="flex flex-1 items-center justify-center py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-card/50 to-background">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-primary text-primary-foreground shadow-md">
-            <Sparkle className="w-6 h-6" weight="fill" />
+          <div className="inline-flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="Cosmos Logo"
+              width={56}
+              height={56}
+              className="w-14 h-14 rounded-2xl object-contain shadow-md"
+              priority
+            />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             {t.auth.loginTitle}

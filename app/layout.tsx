@@ -30,6 +30,13 @@ export const metadata: Metadata = {
   title: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
   description:
     "Autonomous multi-device WhatsApp bot platform, group automations, tiered quotas, and secure Cloudflare tunnel architecture.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png" }],
+  },
 };
 
 export default function RootLayout({

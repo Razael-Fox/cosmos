@@ -2,13 +2,13 @@
 
 import React, { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   Globe,
   SignOut,
   List,
   X,
-  Sparkle,
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { clearStoredToken } from '@/lib/api';
@@ -59,9 +59,14 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-            <Sparkle className="w-5 h-5" weight="fill" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Cosmos Logo"
+            width={36}
+            height={36}
+            className="w-9 h-9 rounded-xl object-contain shadow-xs group-hover:scale-105 transition-transform"
+            priority
+          />
           <div className="flex flex-col">
             <span className="font-heading font-extrabold text-lg tracking-tight text-foreground">
               {t.nav.brand}

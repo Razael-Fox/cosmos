@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   WhatsappLogo,
   Lock,
   User,
   EnvelopeSimple,
   CircleNotch,
-  Sparkle,
   ShieldCheck,
   Lightning,
 } from '@phosphor-icons/react';
@@ -101,8 +101,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-primary text-primary-foreground shadow-md">
-            <Sparkle className="w-6 h-6" weight="fill" />
+          <div className="inline-flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="Cosmos Logo"
+              width={56}
+              height={56}
+              className="w-14 h-14 rounded-2xl object-contain shadow-md"
+              priority
+            />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             {t.auth.registerTitle}

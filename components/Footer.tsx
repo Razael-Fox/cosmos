@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Sparkle, WhatsappLogo, ShieldCheck, GithubLogo } from '@phosphor-icons/react';
+import Image from 'next/image';
+import { WhatsappLogo, ShieldCheck, GithubLogo } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 
 export function Footer() {
@@ -15,9 +16,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-3 md:col-span-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                <Sparkle className="w-4 h-4" weight="fill" />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Cosmos Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-lg object-contain shadow-xs"
+              />
               <span className="font-heading font-extrabold text-lg tracking-tight text-foreground">
                 {t.nav.brand}
               </span>
