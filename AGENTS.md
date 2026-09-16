@@ -166,3 +166,23 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 - **Proteksi Race Condition Pairing & Pembatalan Asinkron:** Karena inisialisasi socket Baileys bersifat asinkron (menunggu `fetchLatestBaileysVersion` & `usePrismaAuthState`), pembuatan koneksi wajib memvalidasi flag `isAborted()` sebelum dan sesaat setelah socket diinisialisasi. Saat pengguna mengetik `.cancel`, fungsi `abortPairing` wajib membersihkan timer dan memutus socket baik dari referensi sementara (`tempSock`) maupun dari `activeConnections`.
 - **Resolusi Kunci API Bertingkat & Masking Kredensial:** Seluruh konsumsi AI pada sub-bot wajib menyelesaikan API key dengan urutan `Sub-Bot Custom Key -> Parent Bot Fallback`. Tampilan kunci API wajib disamarkan (`gsk_••••••••9aB2`) dan wajib menyertakan peringatan keamanan jika dikonfigurasi melalui grup publik.
 - **Anti-Recursion Guard & 4-Tier Language Resolution:** Sub-bot dilarang keras memicu _pairing_ untuk membuat sub-bot sekunder (_anti-recursion_). Resolusi bahasa pesan wajib mematuhi hierarki 4 tingkat: `WhitelistedGroup -> User -> SubBot config -> 'id'`. Rujuk panduan lengkap di `.agents/skills/subbot-multidevice-architecture/SKILL.md`.
+
+### V. Arsitektur Produksi Kontainer Tunggal (Single-Container Production Standards)
+
+- **Multi-Stage Containerization:** Cosmos memaketkan 3 aplikasi mandiri (WhatsApp Bot di `main`, Fastify API Gateway di `api`, dan Next.js Web Portal di `website`) ke dalam satu kontainer Docker produksi `cosmos-all-in-one` yang disupervisi oleh PM2 dan Nginx non-root.
+- **Non-Root & Unprivileged Nginx:** Runner Docker wajib berjalan di bawah user non-root `cosmos` (UID 1001). Nginx wajib menggunakan direktori sementara `/tmp/*` (`client_body_temp_path`, dll.) dan direktif `user` di level root Nginx dilarang digunakan.
+- **Next.js Standalone Loopback Binding:** Pada PM2 runtime, service `cosmos-web` **WAJIB** mengekspor `HOSTNAME: '0.0.0.0'` agar server standalone Next.js mengikat ke loopback kontainer dan dapat diakses oleh reverse proxy Nginx (`127.0.0.1:3000`).
+- **Cloudflare Ingress & Turnstile:** Akses publik dikelola melalui Cloudflare Tunnel outbound (`cloudflared --url http://127.0.0.1:80`). Variabel frontend `NEXT_PUBLIC_TURNSTILE_SITE_KEY` wajib diinjeksikan via Docker build argument (`ARG`), sedangkan secret backend `CLOUDFLARE_TURNSTILE_SECRET_KEY` diinjeksikan saat runtime via `.env`. Rujuk panduan lengkap di `.agents/skills/single-container-production-deployment/SKILL.md`.
+
+### W. Presedensi Migrasi Programmatic DDL SQLite (SQLite Schema Migration Precedence Standards)
+
+- **Aturan Urutan DDL Wajib:** Dilarang mendeklarasikan `CREATE INDEX` untuk kolom migrasi baru di dalam blok SQL awal sebelum kolom tersebut dijamin keberadaannya. Pada database yang sudah ada sebelumnya, `CREATE TABLE IF NOT EXISTS` tidak akan dieksekusi sehingga pembuatan indeks akan langsung melempar error fatal `no such column` dan memutus seluruh migrasi.
+- **3-Phase Execution:** Urutan eksekusi migrasi programmatic `better-sqlite3` wajib mengikuti:
+    1. `CREATE TABLE IF NOT EXISTS` (hanya kolom & indeks bawaan).
+    2. `ensureColumnExists(db, table, column, def)` untuk setiap kolom tambahan bertahap.
+    3. `CREATE INDEX IF NOT EXISTS` dibungkus dalam blok `try/catch` mandiri setelah penambahan kolom berhasil.
+- **Dual-Maintenance Simetris:** Setiap perubahan skema SQLite wajib diperbarui secara simetris di kedua file driver: `src/db.ts` (Bot) dan `.worktrees/api/src/db.ts` (API Gateway). Rujuk panduan lengkap di `.agents/skills/sqlite-schema-migration-precedence/SKILL.md`.
+
+### X. Isolasi Worktree pada Tooling Linter & Formatter (Worktree Tooling Isolation Standards)
+
+- **Worktree Exclusion:** Direktori git worktree (misal: `.worktrees/**`) **WAJIB** diabaikan secara eksplisit pada konfigurasi ESLint (`eslint.config.js`), Prettier (`.prettierignore`), dan Git (`.gitignore`) di level root. Hal ini wajib dilakukan guna mencegah konflik parser atau bentrok dependensi plugin (seperti `eslint-plugin-react` vs ESLint flat config) yang berasal dari branch proyek frontend/API lain.
