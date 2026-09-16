@@ -45,8 +45,15 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
 
-  // Full clean phone number
-  const cleanPhone = `${selectedCountryCode}${localNumber.replace(/\D/g, '')}`;
+  // Full clean phone number. Tolerates users pasting the full international
+  // number (with country code) or a local number with trunk prefix 0:
+  // the country code is prepended exactly once and a leading 0 is dropped.
+  const digitsOnly = localNumber.replace(/\D/g, '');
+  const withoutCountry = digitsOnly.startsWith(selectedCountryCode)
+    ? digitsOnly.slice(selectedCountryCode.length)
+    : digitsOnly;
+  const withoutTrunk = withoutCountry.startsWith('0') ? withoutCountry.slice(1) : withoutCountry;
+  const cleanPhone = `${selectedCountryCode}${withoutTrunk}`;
 
   // Countdown timer
   useEffect(() => {
