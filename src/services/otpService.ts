@@ -121,30 +121,61 @@ export async function verifyOtp(id: string, code: string): Promise<{ ok: boolean
 export async function verifyInvertedToken(token: string): Promise<{
     ok: boolean;
     reason?: string;
-    record?: { id: string; phoneNumber: string; metadata: Record<string, unknown> | null; regSessionId: string | null };
+    record?: {
+        id: string;
+        phoneNumber: string;
+        metadata: Record<string, unknown> | null;
+        regSessionId: string | null;
+        attempts: number;
+        maxAttempts: number;
+        expiresAt: Date;
+    };
 }> {
     const normalized = token.trim().toUpperCase();
     const candidates = await prisma.otpVerification.findMany({
         where: { purpose: 'INVERTED_REGISTRATION', isUsed: false }
     });
     for (const record of candidates) {
-        if (record.expiresAt.getTime() < Date.now()) continue;
-        if (record.attempts >= record.maxAttempts) continue;
         const expected = hashOtp(normalized, record.salt);
-        if (timingSafeStringCompare(expected, record.codeHash)) {
-            let metadata: Record<string, unknown> | null;
-            try {
-                metadata = record.metadata ? (JSON.parse(record.metadata) as Record<string, unknown>) : null;
-            } catch {
-                metadata = null;
-            }
-            return {
-                ok: true,
-                record: { id: record.id, phoneNumber: record.phoneNumber, metadata, regSessionId: record.regSessionId }
-            };
+        if (!timingSafeStringCompare(expected, record.codeHash)) continue;
+        if (record.expiresAt.getTime() < Date.now()) return { ok: false, reason: 'EXPIRED' };
+        if (record.attempts >= record.maxAttempts) return { ok: false, reason: 'LOCKED' };
+        let metadata: Record<string, unknown> | null;
+        try {
+            metadata = record.metadata ? (JSON.parse(record.metadata) as Record<string, unknown>) : null;
+        } catch {
+            metadata = null;
         }
+        return {
+            ok: true,
+            record: {
+                id: record.id,
+                phoneNumber: record.phoneNumber,
+                metadata,
+                regSessionId: record.regSessionId,
+                attempts: record.attempts,
+                maxAttempts: record.maxAttempts,
+                expiresAt: record.expiresAt
+            }
+        };
     }
     return { ok: false, reason: 'NOT_FOUND' };
+}
+
+/**
+ * Records a failed inverted-verification attempt (unknown token or sender mismatch).
+ * Burns one attempt on the matched record so tokens cannot be probed indefinitely;
+ * once `attempts >= maxAttempts` the record is locked and ignored by verification.
+ */
+export async function registerInvertedMismatch(id: string): Promise<void> {
+    try {
+        await prisma.otpVerification.update({
+            where: { id },
+            data: { attempts: { increment: 1 } }
+        });
+    } catch (err) {
+        console.error('[OTP] Failed to record inverted verification attempt:', err);
+    }
 }
 
 export function verifyAdminKey(providedHeader?: string): boolean {

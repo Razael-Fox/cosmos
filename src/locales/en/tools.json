@@ -894,7 +894,9 @@
         "usage": "Invalid format. Use: .verify <TOKEN>",
         "invalid": "Invalid or expired verification token. Please request a new registration link.",
         "success": "Registration Verified! Your account has been whitelisted successfully.",
-        "activated": "Account verified and whitelisted successfully."
+        "activated": "Account verified and whitelisted successfully.",
+        "sender_mismatch": "This verification token was not issued for your WhatsApp number. Please send .verify from the same number you registered with on the web portal.",
+        "locked": "This verification token has been locked after too many failed attempts. Please request a new registration link."
     },
     "sub": {
         "usage": "Invalid format. Use: .sub add <phone> <tier: free|subsidized|partner> <days>",

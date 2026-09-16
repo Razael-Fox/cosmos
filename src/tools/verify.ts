@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext } from './types.js';
-import { getSenderJid } from '#utils/casino.js';
+import { getSenderJid, cleanId } from '#utils/casino.js';
 import { prisma } from '#db.js';
-import { verifyInvertedToken } from '#services/otpService.js';
+import { verifyInvertedToken, registerInvertedMismatch } from '#services/otpService.js';
 import { sendIpcCommand } from '#services/ipcServer.js';
 
 export const definition: ToolDefinition = {
@@ -32,13 +32,24 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     const result = await verifyInvertedToken(token);
     if (!result.ok || !result.record) {
+        if (result.reason === 'LOCKED') return ctx.t('tools.verify.locked');
         return ctx.t('tools.verify.invalid');
     }
 
     const { phoneNumber, metadata, regSessionId } = result.record;
+
+    // Sender binding: the WhatsApp number sending `.verify` must match the phone number
+    // stored at registration time. Without this, anyone guessing a token could whitelist
+    // (or burn) another user's pending registration.
+    const senderDigits = cleanId(getSenderJid(ctx.msg)).replace(/\D/g, '');
+    if (!senderDigits || senderDigits !== phoneNumber) {
+        await registerInvertedMismatch(result.record.id);
+        console.log(`[Verify] Sender mismatch for token verification (expected ending ${phoneNumber.slice(-4)}).`);
+        return ctx.t('tools.verify.sender_mismatch');
+    }
+
     const jid = canonicalJid(phoneNumber);
     const meta = (metadata ?? {}) as { passwordHash?: string; username?: string; email?: string };
-    void getSenderJid(ctx.msg);
 
     // Atomic activation: mark OTP used, upsert whitelisted user, ensure default FREE subscription.
     await prisma.$transaction([
