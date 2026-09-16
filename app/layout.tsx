@@ -13,7 +13,7 @@ const nunitoSansHeading = Nunito_Sans({
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-dm-sans",
 });
 
 const geistSans = Geist({
@@ -45,7 +45,6 @@ export default function RootLayout({
         "antialiased",
         geistSans.variable,
         geistMono.variable,
-        "font-sans",
         dmSans.variable,
         nunitoSansHeading.variable
       )}
