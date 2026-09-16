@@ -511,9 +511,20 @@ export const prisma = new Proxy(defaultClient, {
 
 export async function addGroup(jid: string, ownerJid?: string | null): Promise<boolean> {
     try {
+        // The ownerJid foreign key requires a User row; a user whose first-ever
+        // interaction is `.addgroup` has none yet, so ensure it (P2003 otherwise).
+        if (ownerJid) {
+            await prisma.user.upsert({
+                where: { id: ownerJid },
+                update: {},
+                create: { id: ownerJid }
+            });
+        }
+        // Ownership is create-only: an existing row's ownerJid is never overwritten,
+        // so re-adding an already-whitelisted group cannot hijack its ownership.
         await prisma.whitelistedGroup.upsert({
             where: { jid },
-            update: ownerJid ? { ownerJid } : {},
+            update: {},
             create: { jid, ownerJid: ownerJid ?? null }
         });
         return true;

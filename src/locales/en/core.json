@@ -16,5 +16,6 @@
     "owner_only_private": "This command can only be used by the bot owner in private chats.",
     "not_in_group": "This command can only be used in a group chat.",
     "sender_identity_error": "Could not determine your sender identity.",
-    "tool_execution_error": "Sorry, there was an error executing {{tool}}."
+    "tool_execution_error": "Sorry, there was an error executing {{tool}}.",
+    "group_already_whitelisted": "This group is already whitelisted."
 }

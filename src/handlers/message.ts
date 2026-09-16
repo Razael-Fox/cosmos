@@ -348,6 +348,13 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             }
             const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
             const senderIdentity = senderJidDb || senderLidDb || '';
+            // Re-adding must never transfer ownership: whoever whitelisted first keeps it,
+            // whether that was the bot owner (global entry) or another user.
+            const alreadyWhitelisted = await prisma.whitelistedGroup.findUnique({ where: { jid } });
+            if (alreadyWhitelisted) {
+                await sock.sendMessage(jid, { text: t('core.group_already_whitelisted') }, { quoted: msg });
+                return;
+            }
             if (isOwner) {
                 const success = await addGroup(jid, null);
                 if (success) {
@@ -362,8 +369,18 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     const check = await QuotaService.canAddGroup(senderIdentity, false);
                     if (!check.allowed) return check;
                     const ok = await addGroup(jid, senderIdentity);
-                    return ok ? check : null;
+                    if (!ok) return null;
+                    // Close the race: a concurrent adder may have won the row first.
+                    const row = await prisma.whitelistedGroup.findUnique({ where: { jid } });
+                    if ((row as { ownerJid?: string | null } | null)?.ownerJid !== senderIdentity) {
+                        return { already: true as const };
+                    }
+                    return check;
                 });
+                if (result && 'already' in result) {
+                    await sock.sendMessage(jid, { text: t('core.group_already_whitelisted') }, { quoted: msg });
+                    return;
+                }
                 if (!result || !result.allowed) {
                     const reason = result?.reason ?? '';
                     const tierLabel = result?.tier ?? 'FREE';
