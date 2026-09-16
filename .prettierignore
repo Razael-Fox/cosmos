@@ -2,3 +2,4 @@ logs-*.json
 auth_info_baileys/
 node_modules/
 package-lock.json
+.worktrees/

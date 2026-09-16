@@ -50,7 +50,8 @@ const apps = [
         node_args: '--max-old-space-size=192',
         env: {
             NODE_ENV: 'production',
-            PORT: '3000'
+            PORT: '3000',
+            HOSTNAME: '0.0.0.0'
         },
         max_memory_restart: '220M',
         restart_delay: 3000,
