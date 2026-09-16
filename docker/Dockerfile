@@ -46,6 +46,19 @@ COPY .worktrees/website/public ./public
 COPY .worktrees/website/app ./app
 COPY .worktrees/website/components ./components
 COPY .worktrees/website/lib ./lib
+
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"
+ARG NEXT_PUBLIC_SITE_URL="https://cosmos.razael-fox.my.id"
+ARG NEXT_PUBLIC_API_URL="https://cosmos.razael-fox.my.id"
+ARG NEXT_PUBLIC_BOT_NUMBER=""
+ARG NEXT_PUBLIC_SALES_NUMBER=""
+
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_BOT_NUMBER=$NEXT_PUBLIC_BOT_NUMBER \
+    NEXT_PUBLIC_SALES_NUMBER=$NEXT_PUBLIC_SALES_NUMBER
+
 RUN pnpm config set package-import-method copy && \
     pnpm install --frozen-lockfile && \
     pnpm build

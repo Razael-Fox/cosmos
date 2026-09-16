@@ -3,6 +3,12 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile
+            args:
+                NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+                NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://cosmos.razael-fox.my.id}
+                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://cosmos.razael-fox.my.id}
+                NEXT_PUBLIC_BOT_NUMBER: ${BOT_PHONE_NUMBER:-}
+                NEXT_PUBLIC_SALES_NUMBER: ${SALES_PHONE_NUMBER:-}
         image: cosmos-all-in-one:latest
         container_name: cosmos-all-in-one
         restart: unless-stopped
