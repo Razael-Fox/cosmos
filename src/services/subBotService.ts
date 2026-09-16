@@ -35,6 +35,22 @@ export function isSubBotActive(phoneNumber: string): boolean {
     return activeConnections.has(`sub_${clean}`);
 }
 
+/**
+ * True link state: a socket entry alone is not enough, because
+ * `connectToWhatsApp` registers pairing-mode sockets before the device
+ * authorizes them. Only a registered credential means linked.
+ */
+export function isSubBotLinked(phoneNumber: string): boolean {
+    const clean = getCleanNumber(phoneNumber);
+    const sock = activeConnections.get(`sub_${clean}`);
+    if (!sock) return false;
+    try {
+        return sock.authState.creds.registered === true;
+    } catch {
+        return false;
+    }
+}
+
 export function hasPendingPairing(phoneNumber: string): boolean {
     const clean = getCleanNumber(phoneNumber);
     return pendingPairings.has(clean);
@@ -478,7 +494,7 @@ export async function requestPairingHeadless(
  * device authorization), or IDLE (no session).
  */
 export function getSubBotPairingState(phoneNumber: string): 'ACTIVE' | 'PAIRING' | 'IDLE' {
-    if (isSubBotActive(phoneNumber)) return 'ACTIVE';
+    if (isSubBotLinked(phoneNumber)) return 'ACTIVE';
     if (hasPendingPairing(phoneNumber)) return 'PAIRING';
     return 'IDLE';
 }
