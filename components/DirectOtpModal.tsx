@@ -38,6 +38,10 @@ export function DirectOtpModal({
     setTurnstileToken(null);
   }, []);
 
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
+
   useEffect(() => {
     if (timeLeft <= 0) return;
     const interval = setInterval(() => {
@@ -177,6 +181,7 @@ export function DirectOtpModal({
             <Turnstile
               onVerify={handleTurnstileVerify}
               onExpire={handleTurnstileExpire}
+              onError={handleTurnstileError}
             />
           </div>
         )}

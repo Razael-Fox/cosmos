@@ -38,6 +38,10 @@ export default function RegisterPage() {
     setTurnstileToken(null);
   }, []);
 
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
+
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -282,6 +286,7 @@ export default function RegisterPage() {
                 ref={turnstileRef}
                 onVerify={handleTurnstileVerify}
                 onExpire={handleTurnstileExpire}
+                onError={handleTurnstileError}
               />
             </div>
 
