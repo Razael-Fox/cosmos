@@ -87,6 +87,7 @@ dist/
 # Local SQLite Database
 storage/*.sqlite
 storage/*.sqlite-journal
+storage/.telegram-backup-hash
 
 # Telegram dummy-account session (credentials - never commit)
 storage/telegram_session.txt
