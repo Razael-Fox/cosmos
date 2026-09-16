@@ -53,7 +53,6 @@ COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/node_modules ./bot/node
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/prisma ./bot/prisma
 COPY docker/nginx.conf /app/config/nginx.conf
 COPY docker/ecosystem.config.cjs /app/config/ecosystem.config.cjs
-COPY docker/prune-ecosystem.cjs /app/config/prune-ecosystem.cjs
 COPY docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && chown cosmos:cosmos /app/config/* /app/entrypoint.sh
 

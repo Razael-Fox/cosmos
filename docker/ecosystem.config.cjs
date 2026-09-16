@@ -1,5 +1,8 @@
 /* eslint-disable no-undef */
 // Isolated PM2 runtime config: environment variables are strictly scoped per process.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const fs = require('fs');
+
 const apps = [
     {
         name: 'cosmos-bot',
@@ -77,4 +80,22 @@ if (process.env.CLOUDFLARE_TUNNEL_TOKEN) {
     });
 }
 
-module.exports = { apps };
+// Drop apps whose entry scripts were not packaged into the image under `main`
+// (`/app/api` and `/app/website` only exist once the `api` / `website` branches
+// land). Without this, PM2 restart-loops the missing services every few seconds.
+function scriptPackaged(app) {
+    // Bare binary names (nginx, cloudflared: no path separator, no extension).
+    if (!app.script.includes('/') && !app.script.includes('.')) return true;
+    const cwd = app.cwd || '/app';
+    const entry = app.script.startsWith('/') ? app.script : `${cwd}/${app.script}`;
+    let ok;
+    try {
+        ok = fs.existsSync(entry);
+    } catch {
+        ok = false;
+    }
+    if (!ok) console.log(`[PM2] Skipping unavailable service: ${app.name} (${entry} not packaged)`);
+    return ok;
+}
+
+module.exports = { apps: apps.filter(scriptPackaged) };

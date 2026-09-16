@@ -19,16 +19,4 @@ else
   echo "[Entrypoint] CLOUDFLARE_TUNNEL_TOKEN is empty; running without tunnel (direct ingress)."
 fi
 
-# Prune supervised services whose artifacts were not packaged (e.g. bot-only image
-# without the website/api branch builds) so PM2 does not restart-loop them.
-if [ "${1:-}" = "pm2-runtime" ]; then
-  for arg in "$@"; do
-    if [ "$arg" = "/app/config/ecosystem.config.cjs" ]; then
-      node /app/config/prune-ecosystem.cjs
-      set -- pm2-runtime /tmp/ecosystem.runtime.cjs
-      break
-    fi
-  done
-fi
-
 exec "$@"
