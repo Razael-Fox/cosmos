@@ -110,3 +110,7 @@ REVIEW.md
 website/
 .worktrees/
 
+# SQLite WAL and SHM temporary files
+*.sqlite-wal
+*.sqlite-shm
+

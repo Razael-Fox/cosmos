@@ -74,7 +74,11 @@ if (process.env.CLOUDFLARE_TUNNEL_TOKEN) {
     apps.push({
         name: 'cosmos-tunnel',
         script: 'cloudflared',
-        args: 'tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN',
+        args: `tunnel --no-autoupdate run --token ${process.env.CLOUDFLARE_TUNNEL_TOKEN} --url http://127.0.0.1:80`,
+        env: {
+            TUNNEL_TOKEN: process.env.CLOUDFLARE_TUNNEL_TOKEN,
+            TUNNEL_URL: 'http://127.0.0.1:80'
+        },
         restart_delay: 5000,
         merge_logs: true,
         time: true
