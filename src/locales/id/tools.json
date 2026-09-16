@@ -759,6 +759,15 @@
         },
         "config": {
             "description": "Melihat dan menyesuaikan konfigurasi fitur internal serta kunci API sub-bot Anda."
+        },
+        "verify": {
+            "description": "Verifikasi akun Cosmos yang masuk whitelist dengan token WhatsApp terbalik."
+        },
+        "myplan": {
+            "description": "Lihat tingkat langganan Cosmos aktif dan penggunaan kuota Anda."
+        },
+        "sub": {
+            "description": "Kelola langganan Cosmos. Admin: .sub add <phone> <tier> <days>."
         }
     },
     "ui": {
@@ -880,5 +889,16 @@
         "prefix_invalid": "Awalan tidak valid. Harap berikan 1-3 karakter (contoh: .config prefix !)",
         "name_required": "Harap berikan nama bot (contoh: .config name Jarvis)",
         "lang_invalid": "Bahasa tidak valid. Gunakan: .config lang id ATAU .config lang en"
+    },
+    "verify": {
+        "usage": "Format tidak valid. Gunakan: .verify <TOKEN>",
+        "invalid": "Token verifikasi tidak valid atau kedaluwarsa. Silakan minta tautan pendaftaran baru.",
+        "success": "Registrasi Terverifikasi! Akun Anda telah berhasil masuk whitelist.",
+        "activated": "Akun berhasil diverifikasi dan masuk whitelist."
+    },
+    "sub": {
+        "usage": "Format tidak valid. Gunakan: .sub add <phone> <tier: free|subsidized|partner> <days>",
+        "activated": "Langganan diaktifkan: {tier} untuk +{user} ({days} hari, berlaku hingga {validUntil}).",
+        "failed": "Gagal mengaktifkan langganan. Silakan coba lagi nanti."
     }
 }

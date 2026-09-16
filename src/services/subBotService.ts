@@ -112,6 +112,25 @@ export async function requestPairing(
         return t('tools.subbot.max_slots_reached', { current: activeConnections.size, max: MAX_SUB_BOTS });
     }
 
+    try {
+        const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
+        const { isOwnerId } = await import('#utils/owner.js');
+        const privileged = isOwnerId(userJid);
+        const check = await executeWithUserLock(userJid, () => QuotaService.canPairSubBot(userJid, privileged));
+        if (!check.allowed) {
+            return (
+                `⚠️ *Sub-Bot Quota Reached!*\n\n` +
+                `Tier: ${check.tier} Plan\n` +
+                `Active Sub-Bots: ${check.current} / ${check.max} instances\n\n` +
+                `To pair a new sub-bot:\n` +
+                `1. Disconnect an existing sub-bot using: .subbot stop <phone>\n` +
+                `2. Upgrade to the Partner Tier (up to 12 sub-bots): https://razael-fox.my.id/pricing`
+            );
+        }
+    } catch (err) {
+        console.error('[SubBot] Quota check failed, allowing pairing to proceed:', err);
+    }
+
     const botDir = path.resolve(process.cwd(), 'database', cleanNumber);
     if (!fs.existsSync(botDir)) {
         fs.mkdirSync(botDir, { recursive: true });
@@ -240,6 +259,22 @@ export async function requestPairing(
             unregisterCancellableSession(`subbot_pair_${cleanNumber}`);
             subBotStartTimes.set(cleanNumber, Date.now());
 
+            try {
+                await subPrisma.$executeRawUnsafe(`SELECT 1`);
+            } catch {
+                /* ignore */
+            }
+            try {
+                const defaultPrisma = getPrismaClient('default');
+                await defaultPrisma.subBotInstance.upsert({
+                    where: { id: cleanNumber },
+                    update: { ownerJid: userJid, status: 'ACTIVE' },
+                    create: { id: cleanNumber, ownerJid: userJid, status: 'ACTIVE' }
+                });
+            } catch (err) {
+                console.error('[SubBot] Failed to track SubBotInstance ownership:', err);
+            }
+
             loadConfig(cleanNumber);
 
             const successCard = renderCard({
@@ -329,6 +364,12 @@ export async function startSubBot(phoneNumber: string): Promise<boolean> {
 export async function deleteSubBot(phoneNumber: string): Promise<boolean> {
     const clean = getCleanNumber(phoneNumber);
     await stopSubBot(clean);
+    try {
+        const defaultPrisma = getPrismaClient('default');
+        await defaultPrisma.subBotInstance.delete({ where: { id: clean } }).catch(() => {});
+    } catch {
+        /* ignore */
+    }
     clearConfigCache(clean);
 
     const botDir = path.resolve(process.cwd(), 'database', clean);

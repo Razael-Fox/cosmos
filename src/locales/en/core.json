@@ -5,6 +5,8 @@
     "error_database": "Database error occurred. Please try again.",
     "group_add_success": "Group successfully whitelisted!",
     "group_add_failed": "Failed to add group to the database.",
+    "group_not_whitelisted": "This group is not currently whitelisted.",
+    "group_remove_success": "Group has been removed from the whitelist, freeing one quota slot.",
     "unauthorized": "You are not authorized to use this command.",
     "unknown_error": "An unexpected error occurred.",
     "command_disabled": "This command is currently disabled.",

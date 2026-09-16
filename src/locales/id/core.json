@@ -5,6 +5,8 @@
     "error_database": "Terjadi kesalahan pada database. Silakan coba lagi nanti.",
     "group_add_success": "Grup berhasil ditambahkan ke whitelist!",
     "group_add_failed": "Gagal menambahkan grup ke database.",
+    "group_not_whitelisted": "Grup ini saat ini tidak ada dalam whitelist.",
+    "group_remove_success": "Grup telah dihapus dari whitelist, membebaskan satu slot kuota.",
     "unauthorized": "Anda tidak memiliki izin untuk menggunakan perintah ini.",
     "unknown_error": "Terjadi kesalahan yang tidak terduga.",
     "command_disabled": "Perintah ini sedang dinonaktifkan.",

@@ -25,6 +25,26 @@ startBankInterestCron();
 // Start scheduled loan monitoring & 5-day reminders (hourly)
 startLoanSchedulerCron(() => activeConnections.get('default'));
 
+// Start secure Bot IPC server (Unix Domain Socket) for API Gateway orchestration.
+try {
+    const { startIpcServer } = await import('#services/ipcServer.js');
+    startIpcServer();
+} catch (err) {
+    console.error('[System] Failed to start IPC server:', err);
+}
+
+// Daily subscription expiry reconciliation (00:00 UTC) with graceful downgrade.
+try {
+    const { default: cron } = await import('node-cron');
+    const { reconcileSubscriptions } = await import('#services/subscriptionChecker.js');
+    cron.schedule('0 0 * * *', () => {
+        reconcileSubscriptions().catch((err) => console.error('[Subscriptions] Reconciliation failed:', err));
+    });
+    console.log('[System] Subscription expiry checker scheduled (daily 00:00 UTC).');
+} catch (err) {
+    console.error('[System] Failed to schedule subscription checker:', err);
+}
+
 async function startSystem(): Promise<void> {
     await toolsHandler.loadTools();
     await loadAutoDlSettings();

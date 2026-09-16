@@ -759,6 +759,15 @@
         },
         "config": {
             "description": "View and customize your sub-bot internal feature configuration and API keys."
+        },
+        "verify": {
+            "description": "Verify your whitelisted Cosmos account with an inverted WhatsApp token."
+        },
+        "myplan": {
+            "description": "View your active Cosmos subscription tier and quota usage."
+        },
+        "sub": {
+            "description": "Manage Cosmos subscriptions. Admin: .sub add <phone> <tier> <days>."
         }
     },
     "ui": {
@@ -880,5 +889,16 @@
         "prefix_invalid": "Invalid prefix. Please provide 1-3 characters (e.g. .config prefix !)",
         "name_required": "Please provide a bot name (e.g. .config name Jarvis)",
         "lang_invalid": "Invalid language. Use: .config lang id OR .config lang en"
+    },
+    "verify": {
+        "usage": "Invalid format. Use: .verify <TOKEN>",
+        "invalid": "Invalid or expired verification token. Please request a new registration link.",
+        "success": "Registration Verified! Your account has been whitelisted successfully.",
+        "activated": "Account verified and whitelisted successfully."
+    },
+    "sub": {
+        "usage": "Invalid format. Use: .sub add <phone> <tier: free|subsidized|partner> <days>",
+        "activated": "Subscription activated: {tier} for +{user} ({days} days, valid until {validUntil}).",
+        "failed": "Failed to activate subscription. Please try again later."
     }
 }

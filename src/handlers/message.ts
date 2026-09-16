@@ -341,20 +341,78 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
 
         if (commandName === '.addgroup' || commandName === '.addwhitelist') {
-            if (!isOwner) {
-                await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
-                return;
-            }
             console.log('Command executed', { command: '.addgroup', jid });
             if (!jid.endsWith('@g.us')) {
                 await sock.sendMessage(jid, { text: t('core.group_only') });
                 return;
             }
-            const success = await addGroup(jid);
-            if (success) {
+            const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
+            const senderIdentity = senderJidDb || senderLidDb || '';
+            if (isOwner) {
+                const success = await addGroup(jid, null);
+                if (success) {
+                    await sock.sendMessage(jid, { text: t('core.group_add_success') });
+                } else {
+                    await sock.sendMessage(jid, { text: t('core.group_add_failed') });
+                }
+                return;
+            }
+            try {
+                const result = await executeWithUserLock(senderIdentity, async () => {
+                    const check = await QuotaService.canAddGroup(senderIdentity, false);
+                    if (!check.allowed) return check;
+                    const ok = await addGroup(jid, senderIdentity);
+                    return ok ? check : null;
+                });
+                if (!result || !result.allowed) {
+                    const reason = result?.reason ?? '';
+                    const tierLabel = result?.tier ?? 'FREE';
+                    await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+                                `⚠️ *Whitelist Limit Reached!*\n\n` +
+                                `Tier: ${tierLabel} Plan\n` +
+                                `${reason}\n\n` +
+                                `To add more groups:\n` +
+                                `1. Remove an inactive group using: .delgroup\n` +
+                                `2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing`
+                        },
+                        { quoted: msg }
+                    );
+                    return;
+                }
                 await sock.sendMessage(jid, { text: t('core.group_add_success') });
-            } else {
-                await sock.sendMessage(jid, { text: t('core.group_add_failed') });
+            } catch (err) {
+                console.error('[Quota] .addgroup failed:', err);
+                await sock.sendMessage(jid, { text: t('core.group_add_failed') }, { quoted: msg });
+            }
+            return;
+        }
+
+        if (commandName === '.delgroup' || commandName === '.removewhitelist') {
+            console.log('Command executed', { command: '.delgroup', jid });
+            if (!jid.endsWith('@g.us')) {
+                await sock.sendMessage(jid, { text: t('core.group_only') });
+                return;
+            }
+            const senderIdentity = senderJidDb || senderLidDb || '';
+            try {
+                const group = await prisma.whitelistedGroup.findUnique({ where: { jid } });
+                if (!group) {
+                    await sock.sendMessage(jid, { text: t('core.group_not_whitelisted') }, { quoted: msg });
+                    return;
+                }
+                const groupOwner = (group as { ownerJid?: string | null }).ownerJid ?? null;
+                if (!isOwner && groupOwner !== senderIdentity) {
+                    await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
+                    return;
+                }
+                await prisma.whitelistedGroup.delete({ where: { jid } });
+                await sock.sendMessage(jid, { text: t('core.group_remove_success') }, { quoted: msg });
+            } catch (err) {
+                console.error('[Quota] .delgroup failed:', err);
+                await sock.sendMessage(jid, { text: t('core.group_add_failed') }, { quoted: msg });
             }
             return;
         }

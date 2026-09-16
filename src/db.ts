@@ -24,8 +24,12 @@ export function ensureDatabaseSchema(dbPath: string): void {
 
             CREATE TABLE IF NOT EXISTS "WhitelistedGroup" (
                 "jid" TEXT NOT NULL PRIMARY KEY,
-                "language" TEXT NOT NULL DEFAULT 'ID'
+                "language" TEXT NOT NULL DEFAULT 'ID',
+                "ownerJid" TEXT,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "WhitelistedGroup_ownerJid_fkey" FOREIGN KEY ("ownerJid") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
             );
+            CREATE INDEX IF NOT EXISTS "WhitelistedGroup_ownerJid_idx" ON "WhitelistedGroup"("ownerJid");
 
             CREATE TABLE IF NOT EXISTS "TelegramPrivateChat" (
                 "chatId" TEXT NOT NULL PRIMARY KEY,
@@ -87,11 +91,130 @@ export function ensureDatabaseSchema(dbPath: string): void {
             );
             CREATE UNIQUE INDEX IF NOT EXISTS "JobCatalog_name_key" ON "JobCatalog"("name");
 
+            CREATE TABLE IF NOT EXISTS "Subscription" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "userId" TEXT NOT NULL,
+                "tier" TEXT NOT NULL DEFAULT 'FREE',
+                "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+                "maxSubBots" INTEGER NOT NULL DEFAULT 2,
+                "maxGroups" INTEGER NOT NULL DEFAULT 5,
+                "customPrefix" BOOLEAN NOT NULL DEFAULT false,
+                "startedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "expiresAt" DATETIME,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "Subscription_userId_key" ON "Subscription"("userId");
+
+            CREATE TABLE IF NOT EXISTS "PaymentTransaction" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "subscriptionId" TEXT NOT NULL,
+                "userId" TEXT NOT NULL,
+                "tier" TEXT NOT NULL,
+                "amount" BIGINT NOT NULL,
+                "status" TEXT NOT NULL DEFAULT 'PAID',
+                "paymentMethod" TEXT NOT NULL DEFAULT 'MANUAL_WHATSAPP',
+                "confirmedBy" TEXT,
+                "orderRef" TEXT,
+                "notes" TEXT,
+                "paidAt" DATETIME DEFAULT CURRENT_TIMESTAMP,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "PaymentTransaction_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT "PaymentTransaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "PaymentTransaction_orderRef_key" ON "PaymentTransaction"("orderRef");
+            CREATE INDEX IF NOT EXISTS "PaymentTransaction_userId_idx" ON "PaymentTransaction"("userId");
+            CREATE INDEX IF NOT EXISTS "PaymentTransaction_status_idx" ON "PaymentTransaction"("status");
+
+            CREATE TABLE IF NOT EXISTS "OtpVerification" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "phoneNumber" TEXT NOT NULL,
+                "userJid" TEXT,
+                "codeHash" TEXT NOT NULL,
+                "salt" TEXT NOT NULL,
+                "metadata" TEXT,
+                "regSessionId" TEXT,
+                "purpose" TEXT NOT NULL DEFAULT 'REGISTRATION',
+                "attempts" INTEGER NOT NULL DEFAULT 0,
+                "maxAttempts" INTEGER NOT NULL DEFAULT 3,
+                "expiresAt" DATETIME NOT NULL,
+                "isUsed" BOOLEAN NOT NULL DEFAULT false,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "OtpVerification_userJid_fkey" FOREIGN KEY ("userJid") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "OtpVerification_regSessionId_key" ON "OtpVerification"("regSessionId");
+            CREATE INDEX IF NOT EXISTS "OtpVerification_phone_purpose_used_idx" ON "OtpVerification"("phoneNumber", "purpose", "isUsed");
+
+            CREATE TABLE IF NOT EXISTS "WebSession" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "userId" TEXT NOT NULL,
+                "tokenHash" TEXT NOT NULL,
+                "ipAddress" TEXT,
+                "userAgent" TEXT,
+                "expiresAt" DATETIME NOT NULL,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "WebSession_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "WebSession_tokenHash_key" ON "WebSession"("tokenHash");
+            CREATE INDEX IF NOT EXISTS "WebSession_userId_idx" ON "WebSession"("userId");
+
+            CREATE TABLE IF NOT EXISTS "UserDevice" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "userId" TEXT NOT NULL,
+                "deviceTokenHash" TEXT NOT NULL,
+                "lastIpAddress" TEXT NOT NULL,
+                "userAgent" TEXT NOT NULL,
+                "deviceType" TEXT,
+                "browser" TEXT,
+                "os" TEXT,
+                "country" TEXT,
+                "city" TEXT,
+                "isTrusted" BOOLEAN NOT NULL DEFAULT false,
+                "firstSeenAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "lastSeenAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "UserDevice_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "UserDevice_userId_deviceTokenHash_key" ON "UserDevice"("userId", "deviceTokenHash");
+            CREATE INDEX IF NOT EXISTS "UserDevice_lastIpAddress_idx" ON "UserDevice"("lastIpAddress");
+
+            CREATE TABLE IF NOT EXISTS "UserIpAccessLog" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "userId" TEXT,
+                "ipAddress" TEXT NOT NULL,
+                "country" TEXT,
+                "userAgent" TEXT,
+                "action" TEXT NOT NULL,
+                "status" TEXT NOT NULL,
+                "details" TEXT,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "UserIpAccessLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS "UserIpAccessLog_ip_created_idx" ON "UserIpAccessLog"("ipAddress", "createdAt");
+
+            CREATE TABLE IF NOT EXISTS "SubBotInstance" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "ownerJid" TEXT NOT NULL,
+                "customPrefix" TEXT NOT NULL DEFAULT '.',
+                "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "SubBotInstance_ownerJid_fkey" FOREIGN KEY ("ownerJid") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS "SubBotInstance_ownerJid_idx" ON "SubBotInstance"("ownerJid");
+
             CREATE TABLE IF NOT EXISTS "User" (
                 "id" TEXT NOT NULL PRIMARY KEY,
                 "lid" TEXT,
                 "pushName" TEXT,
                 "username" TEXT,
+                "email" TEXT,
+                "passwordHash" TEXT,
+                "isWhitelisted" BOOLEAN NOT NULL DEFAULT false,
+                "lastLoginIp" TEXT,
+                "lastLoginAt" DATETIME,
                 "language" TEXT NOT NULL DEFAULT 'ID',
                 "balance" BIGINT NOT NULL DEFAULT 10000,
                 "lastDailyClaim" DATETIME,
@@ -263,11 +386,38 @@ export function ensureDatabaseSchema(dbPath: string): void {
             );
             CREATE INDEX IF NOT EXISTS "LoanReminder_loanId_idx" ON "LoanReminder"("loanId");
             CREATE INDEX IF NOT EXISTS "LoanReminder_remindAt_sent_idx" ON "LoanReminder"("remindAt", "sent");
+
+            PRAGMA journal_mode = WAL;
+            PRAGMA busy_timeout = 5000;
+            PRAGMA synchronous = NORMAL;
         `);
+        ensureColumnExists(db, 'User', 'email', 'TEXT');
+        ensureColumnExists(db, 'User', 'passwordHash', 'TEXT');
+        ensureColumnExists(db, 'User', 'isWhitelisted', 'BOOLEAN NOT NULL DEFAULT false');
+        ensureColumnExists(db, 'User', 'lastLoginIp', 'TEXT');
+        ensureColumnExists(db, 'User', 'lastLoginAt', 'DATETIME');
+        ensureColumnExists(db, 'WhitelistedGroup', 'ownerJid', 'TEXT');
+        ensureColumnExists(db, 'WhitelistedGroup', 'createdAt', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+        try {
+            db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email")`);
+        } catch {
+            /* ignore duplicate index errors on legacy data */
+        }
     } catch (err) {
         console.error(`[DB] Error ensuring database schema at ${dbPath}:`, err);
     } finally {
         db.close();
+    }
+}
+
+function ensureColumnExists(db: Database.Database, table: string, column: string, definition: string): void {
+    try {
+        const cols = db.prepare(`PRAGMA table_info("${table}")`).all() as Array<{ name: string }>;
+        if (!cols.some((c) => c.name === column)) {
+            db.exec(`ALTER TABLE "${table}" ADD COLUMN "${column}" ${definition}`);
+        }
+    } catch {
+        /* ignore migration errors for fresh databases */
     }
 }
 
@@ -359,16 +509,25 @@ export const prisma = new Proxy(defaultClient, {
     }
 });
 
-export async function addGroup(jid: string): Promise<boolean> {
+export async function addGroup(jid: string, ownerJid?: string | null): Promise<boolean> {
     try {
         await prisma.whitelistedGroup.upsert({
             where: { jid },
-            update: {},
-            create: { jid }
+            update: ownerJid ? { ownerJid } : {},
+            create: { jid, ownerJid: ownerJid ?? null }
         });
         return true;
     } catch (err) {
         console.error('Error adding group:', err);
+        return false;
+    }
+}
+
+export async function removeGroup(jid: string): Promise<boolean> {
+    try {
+        await prisma.whitelistedGroup.delete({ where: { jid } });
+        return true;
+    } catch {
         return false;
     }
 }
