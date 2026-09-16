@@ -1,79 +1,34 @@
-import dns from 'dns';
-import dotenv from 'dotenv';
-import { loadAutoDlSettings } from '#utils/autodl.js';
-import toolsHandler from '#tools/handler.js';
+import { buildApp } from './app.js';
+import { config } from './config.js';
+import { prisma } from './db.js';
 
-import { startAutoBackup } from '#utils/backup.js';
-import { startBankInterestCron } from '#services/bankService.js';
-import { startLoanSchedulerCron } from '#services/loanService.js';
-import { connectToWhatsApp, activeConnections } from '#utils/connectionManager.js';
-import { isDefaultSessionRegistered, promptBotPhoneNumber, promptPairingMethod } from '#utils/startupPrompt.js';
-import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.js';
-import { seedItems } from '#seed_item.js';
-import { seedProperties } from '#seed_property.js';
+const app = buildApp();
 
-dns.setDefaultResultOrder('ipv4first');
-
-dotenv.config();
-
-// Start auto backup (on startup and daily at 00:00 WIB)
-startAutoBackup();
-
-// Start scheduled daily bank interest distribution (daily at 00:00 WIB)
-startBankInterestCron();
-
-// Start scheduled loan monitoring & 5-day reminders (hourly)
-startLoanSchedulerCron(() => activeConnections.get('default'));
-
-async function startSystem(): Promise<void> {
-    await toolsHandler.loadTools();
-    await loadAutoDlSettings();
-
-    // Sync shop items and property catalog on every startup so new
-    // entries and price updates reach existing databases (both seeders
-    // are idempotent and safe to re-run).
+async function start(): Promise<void> {
     try {
-        console.log('[System] Syncing shop items and property catalog...');
-        await seedItems();
-        await seedProperties();
+        await app.listen({ port: config.PORT, host: config.HOST });
+        console.log(`[Cosmos API] Gateway listening at http://${config.HOST}:${config.PORT}`);
     } catch (err) {
-        console.error('[System] Error syncing shop items and property catalog:', err);
+        app.log.error(err);
+        process.exit(1);
     }
-
-    // Connect the Telegram dummy account in the background when it has been paired,
-    // so private group content can be proxied.
-    if (isTelegramConfigured()) {
-        getTelegramClient()
-            .then(() => console.log('[System] Telegram dummy account ready for private media proxying.'))
-            .catch((err) => console.error('[System] Telegram dummy account failed to connect:', err));
-    } else {
-        console.log('[System] Telegram dummy account is not configured; private content proxying is disabled.');
-    }
-
-    console.log('[System] Checking default session credentials...');
-    const isRegistered = await isDefaultSessionRegistered();
-    if (isRegistered) {
-        // Connect default bot silently with the existing registered session
-        connectToWhatsApp({
-            sessionId: 'default'
-        });
-    } else {
-        console.log('[System] No registered session found. Pairing is required.');
-        const botNumber = await promptBotPhoneNumber();
-        const pairingMethod = await promptPairingMethod();
-
-        // Connect default bot in pairing mode with runtime-selected values
-        connectToWhatsApp({
-            sessionId: 'default',
-            phoneNumber: botNumber,
-            pairingMethod,
-            isPairingMode: true
-        });
-    }
-
-    // Automatically reconnect existing paired sub-bots with staggered intervals
-    const { initSubBots } = await import('#services/subBotService.js');
-    initSubBots();
 }
 
-startSystem();
+// Graceful shutdown handling
+const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
+for (const signal of signals) {
+    process.on(signal, async () => {
+        console.log(`[Cosmos API] Received ${signal}, closing server gracefully...`);
+        try {
+            await app.close();
+            await prisma.$disconnect();
+            console.log('[Cosmos API] Shutdown complete.');
+            process.exit(0);
+        } catch (err) {
+            console.error('[Cosmos API] Error during shutdown:', err);
+            process.exit(1);
+        }
+    });
+}
+
+start();

@@ -24,8 +24,157 @@ enum Language {
 }
 
 model WhitelistedGroup {
-  jid      String   @id
-  language Language @default(ID)
+  jid       String   @id
+  language  Language @default(ID)
+  ownerJid  String?
+  owner     User?    @relation(fields: [ownerJid], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([ownerJid])
+}
+
+enum SubscriptionTier {
+  FREE
+  SUBSIDIZED
+  PARTNER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  GRACE_PERIOD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}
+
+model Subscription {
+  id           String             @id @default(cuid())
+  userId       String             @unique
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier         SubscriptionTier   @default(FREE)
+  status       SubscriptionStatus @default(ACTIVE)
+  maxSubBots   Int                @default(2)
+  maxGroups    Int                @default(5)
+  customPrefix Boolean            @default(false)
+  startedAt    DateTime           @default(now())
+  expiresAt    DateTime?
+  updatedAt    DateTime           @updatedAt
+
+  payments PaymentTransaction[]
+}
+
+model PaymentTransaction {
+  id             String           @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier           SubscriptionTier
+  amount         BigInt
+  status         PaymentStatus    @default(PAID)
+  paymentMethod  String           @default("MANUAL_WHATSAPP")
+  confirmedBy    String?
+  orderRef       String?          @unique
+  notes          String?
+  paidAt         DateTime?        @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OtpVerification {
+  id           String   @id @default(cuid())
+  phoneNumber  String
+  userJid      String?
+  user         User?    @relation(fields: [userJid], references: [id], onDelete: Cascade)
+  codeHash     String
+  salt         String
+  lookupHash   String?
+  metadata     String?
+  regSessionId String?  @unique
+  purpose      String   @default("REGISTRATION")
+  attempts     Int      @default(0)
+  maxAttempts  Int      @default(3)
+  expiresAt    DateTime
+  isUsed       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([phoneNumber, purpose, isUsed])
+  @@index([regSessionId])
+  @@index([lookupHash])
+}
+
+model WebSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model UserDevice {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceTokenHash String
+  lastIpAddress   String
+  userAgent       String
+  deviceType      String?
+  browser         String?
+  os              String?
+  country         String?
+  city            String?
+  isTrusted       Boolean  @default(false)
+  firstSeenAt     DateTime @default(now())
+  lastSeenAt      DateTime @default(now()) @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, deviceTokenHash])
+  @@index([userId, isTrusted])
+  @@index([lastIpAddress])
+}
+
+model UserIpAccessLog {
+  id        String  @id @default(cuid())
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String
+  country   String?
+  userAgent String?
+  action    String
+  status    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([ipAddress, createdAt])
+  @@index([action, status])
+}
+
+model SubBotInstance {
+  id           String   @id
+  ownerJid     String
+  owner        User     @relation(fields: [ownerJid], references: [id], onDelete: Cascade)
+  customPrefix String   @default(".")
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([ownerJid])
 }
 
 model TelegramPrivateChat {
@@ -86,6 +235,11 @@ model User {
   lid            String?   @unique // Local Identifier (LID)
   pushName       String? // Display Name / Nama Profil WhatsApp
   username       String?   @unique // Username baru WhatsApp (contoh: razael123)
+  email          String?   @unique
+  passwordHash   String?
+  isWhitelisted  Boolean   @default(false)
+  lastLoginIp    String?
+  lastLoginAt    DateTime?
   language       Language  @default(ID)
   balance        BigInt    @default(10000) // Starterpack 10,000 Rp
   lastDailyClaim DateTime?
@@ -112,6 +266,14 @@ model User {
   bankAccount          BankAccount?
   loans                Loan[]
   activities           ActivityLog[]
+  subscription         Subscription?
+  payments             PaymentTransaction[]
+  webSessions          WebSession[]
+  otpRecords           OtpVerification[]
+  whitelistedGroups    WhitelistedGroup[]
+  subBots              SubBotInstance[]
+  devices              UserDevice[]
+  ipAccessLogs         UserIpAccessLog[]
 }
 
 model JobCatalog {

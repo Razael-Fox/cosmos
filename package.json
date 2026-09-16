@@ -1,70 +1,32 @@
 {
-    "name": "cosmos",
+    "name": "cosmos-api",
     "version": "RF-2609-10",
-    "description": "A modern, enterprise-grade WhatsApp Bot framework",
-    "repository": {
-        "type": "git",
-        "url": "git@github.com:razaelmahasaputra/cosmos.git"
-    },
-    "main": "src/index.ts",
+    "description": "Cosmos API Gateway (Fastify REST + WebSocket, auth, pairing orchestration, subscriptions)",
     "type": "module",
-    "imports": {
-        "#*": "./dist/*"
-    },
+    "main": "dist/index.ts",
     "scripts": {
-        "dev": "tsx src/index.ts",
-        "pair": "tsx src/pair.ts",
-        "tgpair": "tsx src/tgpair.ts",
+        "dev": "tsx watch src/index.ts",
         "start": "node dist/index.js",
-        "start:bg": "./start.sh",
-        "stop:bg": "./stop.sh",
-        "status:bg": "./status.sh",
-        "pm2:start": "pm2 start ecosystem.config.cjs",
-        "pm2:stop": "pm2 stop ecosystem.config.cjs",
-        "pm2:restart": "pm2 restart ecosystem.config.cjs",
-        "pm2:logs": "pm2 logs",
-        "build": "tsc && tsx scripts/copy-locales.ts",
+        "build": "tsc",
         "typecheck": "tsc --noEmit",
         "lint": "eslint .",
         "format": "prettier --write .",
-        "validate:i18n": "tsx scripts/validate-i18n.ts",
-        "release:pre": "tsx scripts/release.ts"
+        "test": "tsx --test tests/**/*.test.ts"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
     "dependencies": {
-        "@img/sharp-wasm32": "^0.35.3",
+        "@fastify/cors": "^10.0.2",
+        "@fastify/jwt": "^9.0.4",
+        "@fastify/websocket": "^11.0.2",
         "@prisma/adapter-better-sqlite3": "^7.9.0",
         "@prisma/client": "^7.9.0",
-        "@whiskeysockets/baileys": "7.0.0-rc14",
-        "axios": "^1.18.1",
         "better-sqlite3": "^12.11.1",
-        "chance": "^1.1.13",
         "dotenv": "^17.4.2",
-        "form-data": "^4.0.6",
-        "groq-sdk": "^1.3.0",
-        "i18next": "^26.4.2",
-        "i18next-fs-backend": "^2.6.7",
-        "jsonrepair": "^3.15.0",
-        "node-cron": "^4.6.0",
-        "opentype.js": "^2.0.0",
-        "pino": "^10.3.1",
-        "qrcode": "^1.5.4",
-        "qrcode-terminal": "^0.12.0",
-        "sharp": "^0.35.3",
-        "telegram": "^2.26.22"
+        "fastify": "^5.2.1"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@types/better-sqlite3": "^7.6.13",
-        "@types/chance": "^1.1.8",
-        "@types/form-data": "^2.5.2",
         "@types/node": "^22.13.4",
-        "@types/node-cron": "^3.0.11",
-        "@types/opentype.js": "^1.3.10",
-        "@types/qrcode": "^1.5.6",
-        "@types/qrcode-terminal": "^0.12.2",
         "eslint": "^10.6.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.6",
@@ -73,8 +35,5 @@
         "tsx": "^4.19.3",
         "typescript": "^5.7.3",
         "typescript-eslint": "^8.24.1"
-    },
-    "optionalDependencies": {
-        "ffmpeg-static": "^5.2.0"
     }
 }
