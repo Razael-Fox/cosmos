@@ -1,20 +1,19 @@
 import dotenv from 'dotenv';
 import { connectToWhatsApp } from '#utils/connectionManager.js';
+import { promptBotPhoneNumber, promptPairingMethod } from '#utils/startupPrompt.js';
 
 dotenv.config();
 
 async function startPairing(): Promise<void> {
-    const phoneNumber = process.env.BOT_PHONE_NUMBER;
-    if (!phoneNumber) {
-        console.error('BOT_PHONE_NUMBER is not set in .env');
-        process.exit(1);
-    }
-
     console.log('Starting pairing process...');
+
+    const phoneNumber = await promptBotPhoneNumber();
+    const pairingMethod = await promptPairingMethod();
 
     connectToWhatsApp({
         sessionId: 'default',
         phoneNumber,
+        pairingMethod,
         isPairingMode: true,
         onConnected: () => {
             console.log('Successfully paired and connected!');

@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
+import { getPrimaryOwnerNumber } from '#utils/owner.js';
 import {
     requestPairing,
     stopSubBot,
@@ -59,7 +60,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const senderClean = cleanId(senderJid);
     const store = dbContext.getStore();
     const currentSessionId = store?.sessionId || 'default';
-    const primaryAdmin = cleanId(process.env.BOT_PHONE_NUMBER);
+    const primaryAdmin = getPrimaryOwnerNumber() ? cleanId(getPrimaryOwnerNumber()) : '';
 
     // Anti-recursion guard: sub-bots cannot pair new sub-bots
     if (action === 'pair') {

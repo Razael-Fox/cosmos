@@ -67,7 +67,16 @@ Create a `.env` file in the root directory:
 # ==========================================
 # WhatsApp Bot Configuration (Required)
 # ==========================================
+# Bot device number (optional fallback for non-interactive runtimes).
+# On interactive startup with no registered session, the bot prompts for this number.
 BOT_PHONE_NUMBER="6281234567890"
+
+# Privileged owner numbers (comma-separated for multiple owners).
+# Owner-gated commands succeed only from these numbers or the bot device itself.
+OWNER_PHONE_NUMBER="6281234567890"
+
+# Pairing method for non-interactive runtimes: code | qr (default: code).
+PAIRING_METHOD="code"
 
 # ==========================================
 # Groq AI Configuration (Required)
@@ -138,7 +147,29 @@ Before starting the bot for the first time, pair your WhatsApp account to genera
 pnpm pair
 ```
 
-Follow the prompt in your terminal and enter the 8-digit pairing code in your WhatsApp app (**Linked Devices > Link a device > Link with phone number instead**).
+You will be prompted for the bot device number and the pairing method (pairing code or QR code).
+Enter the 8-digit pairing code in your WhatsApp app (**Linked Devices > Link a device > Link with phone number instead**),
+or scan the QR code rendered in the terminal.
+
+Alternatively, start the bot directly; when no registered session exists it prompts for the same values:
+
+```bash
+pnpm dev
+```
+
+```
+[System] Checking default session credentials...
+[System] No registered session found. Pairing is required.
+Enter the bot WhatsApp number (country code without + or spaces, e.g. 628123456789):
+Select the pairing method:
+  1) Pairing code (8-digit code entered in WhatsApp > Linked Devices)
+  2) QR code (scan from terminal)
+Enter choice [1/2] (default: 1):
+```
+
+When a registered session already exists, the bot connects silently without any prompt.
+For non-interactive hosts without stdin (for example Pterodactyl), set `BOT_PHONE_NUMBER` and `PAIRING_METHOD` in `.env`
+and grant privileges via `OWNER_PHONE_NUMBER` (comma-separated for multiple owners).
 
 _(Optional)_ If you plan to proxy media from Telegram channels, link your Telegram account as well:
 

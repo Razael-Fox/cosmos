@@ -12,6 +12,7 @@ import { processLoanConfirmation } from '#tools/loan.js';
 import { formatMentions } from '#utils/casino.js';
 import { hasCancellableSession, cancelActiveSession } from '#utils/cancellationManager.js';
 import { getTranslator } from '#utils/i18n.js';
+import { getOwnerNumbers } from '#utils/owner.js';
 import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
@@ -125,11 +126,11 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         msg.message.videoMessage?.caption ||
         '';
 
-    // Detect if sender is owner (supports JID, LID, device JID, and BOT_PHONE_NUMBER)
+    // Detect if sender is owner (supports JID, LID, device JID, and OWNER_PHONE_NUMBER)
     const cleanId = (idStr?: string | null) => (idStr ? idStr.split(':')[0].split('@')[0] : null);
     const botRawJid = cleanId(sock.user?.id);
     const botRawLid = cleanId((sock.user as any)?.lid);
-    const ownerNumber = cleanId(process.env.BOT_PHONE_NUMBER);
+    const ownerNumbers = getOwnerNumbers();
 
     const getJidAndLid = () => {
         if (msg.key.fromMe) {
@@ -202,7 +203,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         (botRawJid !== null && senderRaw === botRawJid) ||
         (botRawLid !== null && senderRaw === botRawLid) ||
         (subBotOwnerRaw !== null && senderRaw === subBotOwnerRaw) ||
-        (ownerNumber !== null && senderRaw === ownerNumber);
+        (senderRaw !== '' && ownerNumbers.includes(senderRaw));
 
     // If sub-bot is operating in self-bot mode, only the owner can interact
     if (isSubBot && subBotConfig?.mode === 'self' && !isOwner) {

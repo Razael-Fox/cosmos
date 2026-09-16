@@ -4,6 +4,7 @@ import { getSenderJid, resolveId, getUser, formatMentions } from '../utils/casin
 import { formatRupiah } from '../utils/currency.js';
 import { getTranslator } from '../utils/i18n.js';
 import { renderCard } from '../utils/uiFormatter.js';
+import { getOwnerNumbers } from '../utils/owner.js';
 
 function getWealthTier(netWorth: number, t: (key: string, def?: string) => string): string {
     if (netWorth >= 100000000) return t('tools.ui.tier_sovereign', '👑 Sovereign Member');
@@ -37,9 +38,9 @@ const balanceTool: ToolModule = {
         let isCheckingOther = false;
 
         if (targetJid && targetJid !== senderJid) {
-            const ownerNumber = process.env.BOT_PHONE_NUMBER ? process.env.BOT_PHONE_NUMBER.trim() : null;
+            const ownerNumbers = getOwnerNumbers();
             const senderRaw = senderJid ? senderJid.split(':')[0].split('@')[0] : null;
-            const isOwner = Boolean(msg.key.fromMe) || (ownerNumber !== null && senderRaw === ownerNumber);
+            const isOwner = Boolean(msg.key.fromMe) || (senderRaw !== null && ownerNumbers.includes(senderRaw));
 
             if (!isOwner) {
                 await sock.sendMessage(

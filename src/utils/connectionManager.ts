@@ -1,5 +1,6 @@
 import { makeWASocket, DisconnectReason, Browsers, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import pino from 'pino';
+import qrcode from 'qrcode-terminal';
 import { handleMessage } from '#handlers/message.js';
 import { cacheMessage, getCachedMessage, markMessageProcessed } from '#utils/messageCache.js';
 import { usePrismaAuthState } from '#utils/prismaAuthState.js';
@@ -131,6 +132,8 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
         }
         if (update.qr && isPairingMode && !sock.authState.creds.registered) {
             if (options.pairingMethod === 'qr') {
+                console.log(`[Pairing] [${sessionId}] Scan the QR code below with WhatsApp > Linked Devices:`);
+                qrcode.generate(update.qr, { small: true });
                 if (options.onQRCode) {
                     options.onQRCode(update.qr);
                 }

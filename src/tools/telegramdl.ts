@@ -13,6 +13,7 @@ import {
 } from '#utils/telegramClient.js';
 import { isTelegramChatRegistered, findTelegramChatByInviteLink } from '#db.js';
 import { sendTelegramBotNotification } from '#utils/backup.js';
+import { getPrimaryOwnerNumber } from '#utils/owner.js';
 
 const execAsync = promisify(exec);
 
@@ -45,7 +46,7 @@ function extractTelegramUrl(text: string): string | null {
 }
 
 function getOwnerJid(): string | null {
-    const ownerNumber = process.env.BOT_PHONE_NUMBER?.trim();
+    const ownerNumber = getPrimaryOwnerNumber();
     return ownerNumber ? `${ownerNumber}@s.whatsapp.net` : null;
 }
 

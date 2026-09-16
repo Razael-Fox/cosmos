@@ -7,6 +7,7 @@ import { startAutoBackup } from '#utils/backup.js';
 import { startBankInterestCron } from '#services/bankService.js';
 import { startLoanSchedulerCron } from '#services/loanService.js';
 import { connectToWhatsApp, activeConnections } from '#utils/connectionManager.js';
+import { isDefaultSessionRegistered, promptBotPhoneNumber, promptPairingMethod } from '#utils/startupPrompt.js';
 import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.js';
 import { seedItems } from '#seed_item.js';
 import { seedProperties } from '#seed_property.js';
@@ -49,17 +50,26 @@ async function startSystem(): Promise<void> {
         console.log('[System] Telegram dummy account is not configured; private content proxying is disabled.');
     }
 
-    const phoneNumber = process.env.BOT_PHONE_NUMBER;
-    if (!phoneNumber) {
-        console.error('BOT_PHONE_NUMBER is not set in .env');
-        process.exit(1);
-    }
+    console.log('[System] Checking default session credentials...');
+    const isRegistered = await isDefaultSessionRegistered();
+    if (isRegistered) {
+        // Connect default bot silently with the existing registered session
+        connectToWhatsApp({
+            sessionId: 'default'
+        });
+    } else {
+        console.log('[System] No registered session found. Pairing is required.');
+        const botNumber = await promptBotPhoneNumber();
+        const pairingMethod = await promptPairingMethod();
 
-    // Connect default bot
-    connectToWhatsApp({
-        sessionId: 'default',
-        phoneNumber
-    });
+        // Connect default bot in pairing mode with runtime-selected values
+        connectToWhatsApp({
+            sessionId: 'default',
+            phoneNumber: botNumber,
+            pairingMethod,
+            isPairingMode: true
+        });
+    }
 
     // Automatically reconnect existing paired sub-bots with staggered intervals
     const { initSubBots } = await import('#services/subBotService.js');

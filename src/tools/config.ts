@@ -12,6 +12,7 @@ import {
     SubBotFeatures
 } from '#services/subBotConfigService.js';
 import { maskApiKey } from '#utils/apiKeyResolver.js';
+import { getPrimaryOwnerNumber } from '#utils/owner.js';
 import { dbContext } from '#db.js';
 import { renderCard } from '#utils/uiFormatter.js';
 import dotenv from 'dotenv';
@@ -95,7 +96,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const senderClean = cleanId(senderJid);
     const store = dbContext.getStore();
     const currentSessionId = store?.sessionId || 'default';
-    const primaryAdmin = cleanId(process.env.BOT_PHONE_NUMBER);
+    const primaryAdmin = getPrimaryOwnerNumber() ? cleanId(getPrimaryOwnerNumber()) : '';
 
     // Target sub-bot number resolution
     const targetNumber = currentSessionId !== 'default' ? currentSessionId.replace(/^sub_/, '') : senderClean;

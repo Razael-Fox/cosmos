@@ -1,6 +1,7 @@
 import { ToolDefinition, ToolContext } from './types.js';
 import { setAutoDl, isAutoDlEnabled } from '#utils/autodl.js';
 import { getTranslator } from '#utils/i18n.js';
+import { getOwnerNumbers } from '#utils/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'autodl',
@@ -60,11 +61,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     // Check if called in a private chat (not a group)
     if (!jid.endsWith('@g.us')) {
-        const ownerNumber = process.env.BOT_PHONE_NUMBER
-            ? process.env.BOT_PHONE_NUMBER.split(':')[0].split('@')[0].trim()
-            : null;
+        const ownerNumbers = getOwnerNumbers();
         const senderRaw = jid.split(':')[0].split('@')[0];
-        const isOwner = Boolean(ctx.msg.key.fromMe) || (ownerNumber !== null && senderRaw === ownerNumber);
+        const isOwner = Boolean(ctx.msg.key.fromMe) || ownerNumbers.includes(senderRaw);
         if (!isOwner) {
             return '❌ ' + t('core.owner_only_private');
         }
@@ -81,11 +80,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
         }
 
-        const ownerNumber = process.env.BOT_PHONE_NUMBER
-            ? process.env.BOT_PHONE_NUMBER.split(':')[0].split('@')[0]
-            : null;
+        const ownerNumbers = getOwnerNumbers();
         const senderRaw = senderJid ? senderJid.split(':')[0].split('@')[0] : null;
-        const isOwner = Boolean(ctx.msg.key.fromMe) || (ownerNumber !== null && senderRaw === ownerNumber);
+        const isOwner = Boolean(ctx.msg.key.fromMe) || (senderRaw !== null && ownerNumbers.includes(senderRaw));
 
         if (!isAdmin && !isOwner) {
             return '❌ ' + t('core.admin_or_owner');

@@ -9,6 +9,7 @@ import { registerCancellableSession, unregisterCancellableSession } from '#utils
 import { loadConfig, clearConfigCache, isFeatureEnabled } from '#services/subBotConfigService.js';
 import { renderCard } from '#utils/uiFormatter.js';
 import { formatRupiah } from '#utils/currency.js';
+import { getPrimaryOwnerNumber } from '#utils/owner.js';
 
 export const MAX_SUB_BOTS = 50;
 
@@ -94,7 +95,7 @@ export async function requestPairing(
         return '❌ Invalid phone number format. Please provide international format (e.g. 628123456789).';
     }
 
-    const primaryNumber = getCleanNumber(process.env.BOT_PHONE_NUMBER || '');
+    const primaryNumber = getPrimaryOwnerNumber() || '';
     if (primaryNumber && cleanNumber === primaryNumber) {
         return t('tools.subbot.cannot_pair_self');
     }

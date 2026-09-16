@@ -11,6 +11,7 @@ import {
     formatNotFound
 } from '../utils/menuFormatter.js';
 import { cleanId, formatMentions } from '../utils/casino.js';
+import { getOwnerNumbers } from '../utils/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'help',
@@ -59,9 +60,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     // Determine bot owner identity
-    const ownerNumber = process.env.BOT_PHONE_NUMBER ? cleanId(process.env.BOT_PHONE_NUMBER) : null;
+    const ownerNumbers = getOwnerNumbers();
     const senderRaw = cleanId(ctx?.msg?.key?.participant || ctx?.msg?.key?.remoteJid);
-    const isOwner = Boolean(ctx?.msg?.key?.fromMe) || (ownerNumber !== null && senderRaw === ownerNumber);
+    const isOwner = Boolean(ctx?.msg?.key?.fromMe) || ownerNumbers.includes(senderRaw);
 
     // Calculate response speed/latency
     const msgTimestamp = ctx?.msg?.messageTimestamp ? Number(ctx.msg.messageTimestamp) * 1000 : 0;

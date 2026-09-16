@@ -1,6 +1,7 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { prisma } from '../db.js';
 import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, getTranslator } from '../utils/i18n.js';
+import { getOwnerNumbers } from '../utils/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'setgrouplang',
@@ -30,10 +31,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     // Check if sender is admin or owner
     let isAdmin = false;
     const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
-    const ownerNumber = process.env.BOT_PHONE_NUMBER ? process.env.BOT_PHONE_NUMBER.split(':')[0].split('@')[0] : null;
+    const ownerNumbers = getOwnerNumbers();
     const senderRaw = senderJid ? senderJid.split(':')[0].split('@')[0] : null;
 
-    if (ownerNumber && senderRaw === ownerNumber) {
+    if (senderRaw !== null && ownerNumbers.includes(senderRaw)) {
         isAdmin = true;
     } else if (ctx.msg.key.fromMe) {
         isAdmin = true;
