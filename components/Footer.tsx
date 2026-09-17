@@ -21,7 +21,7 @@ export function Footer() {
                 alt="Cosmos Logo"
                 width={32}
                 height={32}
-                className="w-8 h-8 rounded-lg object-contain shadow-xs"
+                className="w-8 h-8 object-contain"
               />
               <span className="font-heading font-extrabold text-lg tracking-tight text-foreground">
                 {t.nav.brand}

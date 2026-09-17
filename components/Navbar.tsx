@@ -64,7 +64,7 @@ export function Navbar() {
             alt="Cosmos Logo"
             width={36}
             height={36}
-            className="w-9 h-9 rounded-xl object-contain shadow-xs group-hover:scale-105 transition-transform"
+            className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
             priority
           />
           <div className="flex flex-col">
