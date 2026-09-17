@@ -312,7 +312,7 @@ const rawDictionary = {
     hero: {
       title: 'WhatsApp bots for business and personal use',
       subtitle:
-        'Manage your WhatsApp bot ecosystem, group automations, virtual banking ledgers, and autonomous multi-device sub-bots with high-speed, secure infrastructure.',
+        'Access WhatsApp bots with smart and advanced features that keep up with the latest technology, suitable for both business and personal use.',
       ctaRegister: 'Get Started Free',
       ctaPricing: 'View Pricing Plans',
       ctaTitle: 'Ready to Launch Your WhatsApp Bot?',
