@@ -112,19 +112,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
 
         try {
+            // DIAGNOSTIC: plain-text menu without externalAdReply card.
             await ctx.sock.sendMessage(
                 ctx.jid,
                 {
                     text: outputText,
                     contextInfo: {
-                        externalAdReply: {
-                            title: t('tools.menu.banner_title'),
-                            body: t('tools.menu.banner_body'),
-                            mediaType: 1, // IMAGE
-                            renderLargerThumbnail: true // Baileys hero banner attribute
-                            // NOTE: thumbnail intentionally omitted (diagnostic bisection).
-                            // sourceUrl intentionally omitted (see comment retained in history).
-                        },
                         mentionedJid: mentions
                     }
                 },
