@@ -143,6 +143,18 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 return { status: 500, data: { error: 'STATUS_FAILED' } };
             }
         }
+        case '/internal/subbots/delete': {
+            const phone = String(body.phone || '').replace(/\D/g, '');
+            if (!phone) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+            try {
+                const { deleteSubBot } = await import('./subBotService.js');
+                await deleteSubBot(phone);
+                return { status: 200, data: { ok: true } };
+            } catch (err) {
+                console.error('[IPC] Sub-bot deletion failed:', err);
+                return { status: 500, data: { error: 'DELETE_FAILED' } };
+            }
+        }
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };
         }

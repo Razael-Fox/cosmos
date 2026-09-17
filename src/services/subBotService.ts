@@ -75,6 +75,17 @@ export function abortPairing(phoneNumber: string): boolean {
     if (session.timeoutTimer) {
         clearTimeout(session.timeoutTimer);
     }
+
+    // Guard: Do not wipe credentials or terminate socket if session is already linked or registered!
+    if (isSubBotLinked(clean) || isSubBotRegistered(clean)) {
+        console.log(
+            `[SubBot] Pairing session for +${clean} has already linked/registered. Clearing pairing state without deleting auth.`
+        );
+        pendingPairings.delete(clean);
+        unregisterCancellableSession(`subbot_pair_${clean}`);
+        return false;
+    }
+
     const sock = session.tempSock || activeConnections.get(`sub_${clean}`);
     if (sock) {
         try {
@@ -184,6 +195,14 @@ export async function requestPairing(
     const ttlSeconds = method === 'code' ? 120 : 60;
     pairingSession.timeoutTimer = setTimeout(async () => {
         if (pendingPairings.has(cleanNumber)) {
+            if (isSubBotLinked(cleanNumber) || isSubBotRegistered(cleanNumber)) {
+                console.log(
+                    `[SubBot] Pairing for +${cleanNumber} already linked/registered. Clearing pairing registry.`
+                );
+                pendingPairings.delete(cleanNumber);
+                unregisterCancellableSession(`subbot_pair_${cleanNumber}`);
+                return;
+            }
             abortPairing(cleanNumber);
             try {
                 await parentSock.sendMessage(
@@ -204,7 +223,12 @@ export async function requestPairing(
         phoneNumber: cleanNumber,
         pairingMethod: method,
         isPairingMode: true,
-        isAborted: () => !pendingPairings.has(cleanNumber),
+        isAborted: () => {
+            if (isSubBotLinked(cleanNumber) || isSubBotRegistered(cleanNumber)) {
+                return false;
+            }
+            return !pendingPairings.has(cleanNumber);
+        },
         onPairingCode: async (formattedCode: string) => {
             if (method !== 'code' || pairingCardSent) return;
             pairingCardSent = true;
@@ -406,6 +430,14 @@ export async function requestPairingHeadless(
     const ttlSeconds = method === 'code' ? 120 : 60;
     pairingSession.timeoutTimer = setTimeout(() => {
         if (pendingPairings.has(cleanNumber)) {
+            if (isSubBotLinked(cleanNumber) || isSubBotRegistered(cleanNumber)) {
+                console.log(
+                    `[SubBot] Headless pairing for +${cleanNumber} already linked/registered. Clearing pairing registry.`
+                );
+                pendingPairings.delete(cleanNumber);
+                unregisterCancellableSession(`subbot_pair_${cleanNumber}`);
+                return;
+            }
             console.log(`[SubBot] Headless pairing for +${cleanNumber} timed out, aborting.`);
             abortPairing(cleanNumber);
         }
@@ -422,7 +454,12 @@ export async function requestPairingHeadless(
         phoneNumber: cleanNumber,
         pairingMethod: method,
         isPairingMode: true,
-        isAborted: () => !pendingPairings.has(cleanNumber),
+        isAborted: () => {
+            if (isSubBotLinked(cleanNumber) || isSubBotRegistered(cleanNumber)) {
+                return false;
+            }
+            return !pendingPairings.has(cleanNumber);
+        },
         onPairingCode: async (formattedCode: string) => {
             if (method !== 'code' || credentialSent) return;
             credentialSent = true;
@@ -494,7 +531,7 @@ export async function requestPairingHeadless(
  * device authorization), or IDLE (no session).
  */
 export function getSubBotPairingState(phoneNumber: string): 'ACTIVE' | 'PAIRING' | 'IDLE' {
-    if (isSubBotLinked(phoneNumber)) return 'ACTIVE';
+    if (isSubBotLinked(phoneNumber) || isSubBotRegistered(phoneNumber)) return 'ACTIVE';
     if (hasPendingPairing(phoneNumber)) return 'PAIRING';
     return 'IDLE';
 }

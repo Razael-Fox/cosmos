@@ -15,6 +15,9 @@ export function ensureDatabaseSchema(dbPath: string): void {
     const db = new Database(dbPath);
     try {
         db.pragma('foreign_keys = ON');
+        db.pragma('journal_mode = WAL');
+        db.pragma('busy_timeout = 5000');
+        db.pragma('synchronous = NORMAL');
         db.exec(`
             CREATE TABLE IF NOT EXISTS "WhatsAppAuth" (
                 "id" TEXT NOT NULL PRIMARY KEY,
@@ -434,7 +437,11 @@ export function getPrismaClient(sessionId: string = 'default'): PrismaClient {
     let targetDbPath: string;
 
     if (sessionId === 'default') {
-        targetDbPath = process.env.DATABASE_URL?.replace('file:', '') || './storage/database.sqlite';
+        let dbUrl = process.env.DATABASE_URL?.replace('file:', '') || './storage/database.sqlite';
+        if (dbUrl.startsWith('/app/storage') && !fs.existsSync('/app')) {
+            dbUrl = path.resolve(process.cwd(), 'storage', 'database.sqlite');
+        }
+        targetDbPath = dbUrl;
         const parsed = path.parse(targetDbPath);
         if (!fs.existsSync(parsed.dir)) {
             fs.mkdirSync(parsed.dir, { recursive: true });
@@ -451,9 +458,11 @@ export function getPrismaClient(sessionId: string = 'default'): PrismaClient {
         targetDbPath = path.join(botDir, 'database.sqlite');
 
         if (!fs.existsSync(targetDbPath)) {
-            const templateDb =
-                process.env.DATABASE_URL?.replace('file:', '') ||
-                path.resolve(process.cwd(), 'storage', 'database.sqlite');
+            let defaultDbUrl = process.env.DATABASE_URL?.replace('file:', '') || './storage/database.sqlite';
+            if (defaultDbUrl.startsWith('/app/storage') && !fs.existsSync('/app')) {
+                defaultDbUrl = path.resolve(process.cwd(), 'storage', 'database.sqlite');
+            }
+            const templateDb = defaultDbUrl;
             if (fs.existsSync(templateDb)) {
                 fs.copyFileSync(templateDb, targetDbPath);
                 try {

@@ -116,6 +116,10 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             console.log(`[Connection] [${sessionId}] Opened`);
             reconnectAttempts = 0;
             connectionOpenTimeSec = Math.floor(Date.now() / 1000);
+            if (options.isPairingMode) {
+                options.isPairingMode = false;
+                options.isAborted = undefined;
+            }
             if (sessionId === 'default') {
                 await initActiveSessions();
 
@@ -170,8 +174,16 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             const lastDisconnectError = lastDisconnect?.error as any;
             const errorCode = lastDisconnectError?.output?.statusCode || lastDisconnectError?.code;
             const errorMessage = lastDisconnectError?.message || 'Unknown Reason';
-            const isLoggedOut = errorCode === DisconnectReason.loggedOut;
+            const isConflict =
+                errorCode === DisconnectReason.connectionReplaced ||
+                (typeof errorMessage === 'string' && errorMessage.toLowerCase().includes('conflict'));
+            const isLoggedOut = errorCode === DisconnectReason.loggedOut && !isConflict;
             const isPairedSuccess = !!sock.authState.creds.registered;
+
+            if (isPairedSuccess) {
+                options.isPairingMode = false;
+                options.isAborted = undefined;
+            }
 
             const shouldReconnect = isPairingMode
                 ? isPairedSuccess && !options.disableReconnect
@@ -213,13 +225,17 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                         console.error(`[${sessionId}] Error disconnecting prisma:`, e);
                     }
                 }
+            } else if (isConflict) {
+                console.warn(
+                    `[Connection] [${sessionId}] Stream conflict detected (Code: ${errorCode}, Reason: ${errorMessage}). Retaining credentials.`
+                );
             }
 
             if (onClosed) onClosed(isLoggedOut);
 
             if (shouldReconnect && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                if (isAborted?.()) {
-                    console.log(`[Connection] [${sessionId}] Session aborted. Skipping reconnect.`);
+                if (!isPairedSuccess && isAborted?.()) {
+                    console.log(`[Connection] [${sessionId}] Session aborted during pairing. Skipping reconnect.`);
                     return;
                 }
                 reconnectAttempts++;
@@ -228,7 +244,7 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                     `[Connection] [${sessionId}] Reconnecting in ${reconnectDelay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
                 );
                 await delay(reconnectDelay);
-                if (isAborted?.()) {
+                if (!isPairedSuccess && isAborted?.()) {
                     console.log(`[Connection] [${sessionId}] Session aborted during delay. Skipping reconnect.`);
                     return;
                 }
@@ -241,7 +257,14 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
         }
     });
 
-    sock.ev.on('creds.update', saveCreds);
+    sock.ev.on('creds.update', async () => {
+        await saveCreds();
+        if (options.isPairingMode && sock.authState?.creds?.registered) {
+            console.log(`[Pairing] [${sessionId}] Device registration confirmed. Exiting pairing mode.`);
+            options.isPairingMode = false;
+            options.isAborted = undefined;
+        }
+    });
 
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
         console.log(`[DEBUG] [${sessionId}] messages.upsert type: ${type}, count: ${messages.length}`);
