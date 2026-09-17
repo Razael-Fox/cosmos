@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-  Sparkle,
   ArrowRight,
   ShieldCheck,
   WhatsappLogo,
@@ -24,12 +23,6 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 md:py-24 border-b border-border bg-gradient-to-b from-background via-card to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center gap-8">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary text-secondary-foreground border border-border text-xs font-semibold shadow-xs animate-in fade-in duration-300">
-            <Sparkle className="w-3.5 h-3.5 text-primary" weight="fill" />
-            <span>{t.hero.badge}</span>
-          </div>
-
           {/* Title & Subtitle */}
           <div className="max-w-3xl space-y-4">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground font-heading leading-[1.15]">

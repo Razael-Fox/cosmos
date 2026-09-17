@@ -20,7 +20,6 @@ const rawDictionary = {
       language: 'Bahasa',
     },
     hero: {
-      badge: 'v2.0 Telah Rilis • Multi-Device & Autonomous Sub-Bot',
       title: 'Platform WhatsApp Bot Cerdas & Multi-Device Tanpa Batas',
       subtitle:
         'Kelola ekosistem WhatsApp bot, otomasi grup, integrasi perbankan virtual, dan sub-bot multi-device otonom dengan infrastruktur aman berkecepatan tinggi.',
@@ -311,7 +310,6 @@ const rawDictionary = {
       language: 'Language',
     },
     hero: {
-      badge: 'v2.0 Released • Multi-Device & Autonomous Sub-Bot',
       title: 'Smart, Scalable & Multi-Device WhatsApp Bot Platform',
       subtitle:
         'Manage your WhatsApp bot ecosystem, group automations, virtual banking ledgers, and autonomous multi-device sub-bots with high-speed, secure infrastructure.',
