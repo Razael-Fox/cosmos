@@ -196,3 +196,9 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 - **Samakan Image:** Setelah `docker compose build`, **WAJIB** membandingkan ID image kontainer berjalan vs `cosmos-all-in-one:latest` (`docker inspect` vs `docker images --no-trunc`) dan menjalankan `docker compose up -d` bila berbeda sebelum mengklaim perbaikan sudah live.
 - **Bukti di Bundle Berjalan:** Keberadaan perbaikan wajib dibuktikan dengan `grep` string literal di `/app/website/.next/`, `/app/bot/dist`, atau `/app/api/dist` **di dalam kontainer yang berjalan**, plus cek `pm2 list` dan `curl` ke rute terkait. Rujuk panduan di `.agents/skills/container-deploy-verification/SKILL.md`.
+
+### AA. Rebuild & Redeploy Otomatis Setiap Perubahan Kode (Mandatory Container Rebuild on Code Changes)
+
+- **Selalu Build + Deploy:** Setiap ada perubahan kode pada salah satu dari tiga aplikasi (Bot Engine di root, API Gateway di `.worktrees/api`, Web Portal di `.worktrees/website`) yang ditujukan untuk produksi, AI Agent **WAJIB** menuntaskannya sampai live: verifikasi per worktree (`typecheck` + `lint` + `build` + test bila ada) → commit lokal → `docker compose build cosmos-all-in-one` → `docker compose up -d` → verifikasi sesuai Aturan Z. Dilarang berhenti hanya pada commit.
+- **Pengecualian Docs-Only:** Perubahan yang tidak masuk image Docker (`.agents/skills/*`, `*.md`/AGENTS.md, `.env` yang di-gitignore) tidak memerlukan rebuild — kecuali `.env` mengubah variabel `NEXT_PUBLIC_*` (bake-time), maka rebuild **tetap wajib**.
+- **Cek Disk Dulu:** Sebelum build, cek `df -h /` dan `docker system df`; bila sempit, jalankan `docker builder prune -f` terlebih dahulu (build berikutnya full dan lambat). Kegagalan khas: `failed to extract layer ... no space left on device`.
