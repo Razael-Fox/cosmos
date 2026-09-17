@@ -23,4 +23,4 @@ services:
         # NAT VPS: no inbound ports required when using Cloudflare Tunnel (outbound QUIC only).
         # Expose port 80 locally for host-network debugging.
         ports:
-            - '127.0.0.1:8080:80'
+            - '8080:80'
