@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
+import { getMenuBannerBuffer } from '../utils/menuAssets.js';
 import menuService from '../services/menuService.js';
 import {
     formatDashboardHeader,
@@ -112,17 +113,25 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
 
         try {
-            // DIAGNOSTIC: plain-text menu without externalAdReply card.
+            // Hero banner as a real photo attachment (not an externalAdReply thumbnail:
+            // some clients silently drop cards, while image messages render everywhere).
+            // Captions are capped at 1024 chars, so the banner carries a short caption
+            // and the full menu follows as a plain-text message.
+            const bannerBuffer = getMenuBannerBuffer();
             await ctx.sock.sendMessage(
                 ctx.jid,
                 {
-                    text: outputText,
-                    contextInfo: {
-                        mentionedJid: mentions
-                    }
+                    image: bannerBuffer,
+                    caption: `${t('tools.menu.banner_title')}\n${t('tools.menu.banner_body')}`
                 },
                 { quoted: ctx.msg }
             );
+            await ctx.sock.sendMessage(ctx.jid, {
+                text: outputText,
+                contextInfo: {
+                    mentionedJid: mentions
+                }
+            });
         } catch (error) {
             console.error('[HelpTool] Failed to send menu with externalAdReply, falling back to plain text:', error);
             await ctx.sock.sendMessage(
