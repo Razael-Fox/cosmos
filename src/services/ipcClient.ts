@@ -133,3 +133,7 @@ export interface SubBotStatusIpcData {
 export async function getSubBotPairingStateViaIpc(phone: string): Promise<IpcResponse<SubBotStatusIpcData>> {
     return sendIpcCommand<SubBotStatusIpcData>('/internal/subbots/status', { phone }, config.BOT_IPC_SOCKET, 8000);
 }
+
+export async function deleteSubBotViaIpc(phone: string): Promise<IpcResponse<{ ok?: boolean }>> {
+    return sendIpcCommand<{ ok?: boolean }>('/internal/subbots/delete', { phone }, config.BOT_IPC_SOCKET, 8000);
+}

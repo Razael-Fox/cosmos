@@ -175,6 +175,18 @@ export const wsRoutes: FastifyPluginAsync = async (fastify) => {
                     );
                     cleanup();
                 } else if (state === 'IDLE') {
+                    const inst = await prisma.subBotInstance.findUnique({ where: { id: phone } });
+                    if (inst?.status === 'ACTIVE') {
+                        socket.send(
+                            JSON.stringify({
+                                event: 'PAIRED',
+                                status: 'ACTIVE',
+                                message: `Sub-bot +${phone} linked successfully.`
+                            })
+                        );
+                        cleanup();
+                        return;
+                    }
                     await prisma.subBotInstance
                         .deleteMany({ where: { id: phone, ownerJid: userJid, status: 'PAIRING' } })
                         .catch(() => null);

@@ -3,7 +3,7 @@ import { prisma } from '../db.js';
 import { authenticateJwt } from '../middleware/authenticate.js';
 import { deviceValidationPreHandler } from '../middleware/deviceValidation.js';
 import { QuotaService, executeWithUserLock } from '../services/quotaService.js';
-import { requestSubBotPairViaIpc } from '../services/ipcClient.js';
+import { requestSubBotPairViaIpc, deleteSubBotViaIpc } from '../services/ipcClient.js';
 
 export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
     // GET /api/v1/subbots/list
@@ -179,6 +179,12 @@ export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
         await prisma.subBotInstance.delete({
             where: { id: cleanPhone }
         });
+
+        try {
+            await deleteSubBotViaIpc(cleanPhone);
+        } catch (err) {
+            console.error(`[SubBot] Failed to notify bot engine of deletion (+${cleanPhone}):`, err);
+        }
 
         return reply.send({ success: true });
     });
