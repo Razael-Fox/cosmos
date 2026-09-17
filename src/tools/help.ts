@@ -1,6 +1,5 @@
 import { ToolDefinition, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
-import { getMenuBannerBuffer } from '../utils/menuAssets.js';
 import menuService from '../services/menuService.js';
 import {
     formatDashboardHeader,
@@ -109,7 +108,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     // Send via Baileys with larger hero banner if socket is available
     if (ctx?.sock && typeof ctx.sock.sendMessage === 'function') {
-        const bannerBuffer = getMenuBannerBuffer();
         const matches = outputText.match(/@(\d+)/g);
         const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
 
@@ -123,13 +121,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                             title: t('tools.menu.banner_title'),
                             body: t('tools.menu.banner_body'),
                             mediaType: 1, // IMAGE
-                            thumbnail: bannerBuffer,
                             renderLargerThumbnail: true // Baileys hero banner attribute
-                            // NOTE: sourceUrl intentionally omitted. When present, WhatsApp
-                            // clients treat the card as a live link preview and overwrite the
-                            // static thumbnail with fetched OpenGraph data (or a fallback
-                            // placeholder when the fetch yields no image), which breaks the
-                            // hero banner and can prevent the message from rendering.
+                            // NOTE: thumbnail intentionally omitted (diagnostic bisection).
+                            // sourceUrl intentionally omitted (see comment retained in history).
                         },
                         mentionedJid: mentions
                     }
