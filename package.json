@@ -28,7 +28,13 @@
         "lint": "eslint .",
         "format": "prettier --write .",
         "validate:i18n": "tsx scripts/validate-i18n.ts",
-        "release:pre": "tsx scripts/release.ts"
+        "release:pre": "tsx scripts/release.ts",
+        "docker:build": "docker compose build cosmos-all-in-one",
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose down",
+        "docker:logs": "docker logs cosmos-all-in-one --tail 100",
+        "docker:status": "docker inspect cosmos-all-in-one --format 'running: {{.Image}}' && docker images --no-trunc cosmos-all-in-one:latest --format 'latest:  {{.ID}}' && docker exec cosmos-all-in-one /usr/local/bin/pm2 list",
+        "docker:deploy": "./scripts/docker-deploy.sh"
     },
     "keywords": [],
     "author": "",
