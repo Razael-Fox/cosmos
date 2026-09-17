@@ -115,23 +115,37 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         try {
             // Hero banner as a real photo attachment (not an externalAdReply thumbnail:
             // some clients silently drop cards, while image messages render everywhere).
-            // Captions are capped at 1024 chars, so the banner carries a short caption
-            // and the full menu follows as a plain-text message.
+            // WhatsApp caps image captions at 1024 chars: short menus ride as the photo
+            // caption in a single message, longer ones fall back to photo + text.
             const bannerBuffer = getMenuBannerBuffer();
-            await ctx.sock.sendMessage(
-                ctx.jid,
-                {
-                    image: bannerBuffer,
-                    caption: `${t('tools.menu.banner_title')}\n${t('tools.menu.banner_body')}`
-                },
-                { quoted: ctx.msg }
-            );
-            await ctx.sock.sendMessage(ctx.jid, {
-                text: outputText,
-                contextInfo: {
-                    mentionedJid: mentions
-                }
-            });
+            if (outputText.length <= 1024) {
+                await ctx.sock.sendMessage(
+                    ctx.jid,
+                    {
+                        image: bannerBuffer,
+                        caption: outputText,
+                        contextInfo: {
+                            mentionedJid: mentions
+                        }
+                    },
+                    { quoted: ctx.msg }
+                );
+            } else {
+                await ctx.sock.sendMessage(
+                    ctx.jid,
+                    {
+                        image: bannerBuffer,
+                        caption: `${t('tools.menu.banner_title')}\n${t('tools.menu.banner_body')}`
+                    },
+                    { quoted: ctx.msg }
+                );
+                await ctx.sock.sendMessage(ctx.jid, {
+                    text: outputText,
+                    contextInfo: {
+                        mentionedJid: mentions
+                    }
+                });
+            }
         } catch (error) {
             console.error('[HelpTool] Failed to send menu with externalAdReply, falling back to plain text:', error);
             await ctx.sock.sendMessage(
