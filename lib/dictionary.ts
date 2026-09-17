@@ -310,7 +310,7 @@ const rawDictionary = {
       language: 'Language',
     },
     hero: {
-      title: 'Smart, Scalable & Multi-Device WhatsApp Bot Platform',
+      title: 'WhatsApp bots for business and personal use',
       subtitle:
         'Manage your WhatsApp bot ecosystem, group automations, virtual banking ledgers, and autonomous multi-device sub-bots with high-speed, secure infrastructure.',
       ctaRegister: 'Get Started Free',
