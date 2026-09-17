@@ -14,6 +14,7 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 COPY src ./src
 COPY scripts ./scripts
+COPY assets ./assets
 RUN pnpm config set package-import-method copy && \
     pnpm install --frozen-lockfile && \
     pnpm exec prisma generate && \
@@ -92,6 +93,7 @@ COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/dist ./bot/dist
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/package.json ./bot/package.json
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/node_modules ./bot/node_modules
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/prisma ./bot/prisma
+COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/assets ./bot/assets
 
 # Package API Gateway
 COPY --from=builder-api --chown=cosmos:cosmos /build/api/dist ./api/dist
