@@ -51,7 +51,7 @@ function resolveAssetPath(fileName: string, customPath?: string): string {
  * @returns Buffer containing the image data.
  */
 export function getMenuBannerBuffer(customPath?: string): Buffer {
-    const bannerPath = resolveAssetPath('menu_banner.png', customPath);
+    const bannerPath = resolveAssetPath('menu_banner.jpg', customPath);
     const placeholderPath = resolveAssetPath('menu_banner.placeholder.png');
 
     try {
