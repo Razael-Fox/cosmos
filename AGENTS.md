@@ -186,3 +186,13 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 ### X. Isolasi Worktree pada Tooling Linter & Formatter (Worktree Tooling Isolation Standards)
 
 - **Worktree Exclusion:** Direktori git worktree (misal: `.worktrees/**`) **WAJIB** diabaikan secara eksplisit pada konfigurasi ESLint (`eslint.config.js`), Prettier (`.prettierignore`), dan Git (`.gitignore`) di level root. Hal ini wajib dilakukan guna mencegah konflik parser atau bentrok dependensi plugin (seperti `eslint-plugin-react` vs ESLint flat config) yang berasal dari branch proyek frontend/API lain.
+
+### Y. Larangan Kredensial Fabrikasi (No Fabricated Credentials Standards)
+
+- **Kredensial Real Saja:** API/website **DILARANG** mengembalikan kredensial hasil `crypto.randomBytes`, mock hardcode (`'COSMOS-88'`), atau SVG/QR palsu untuk operasi yang hanya bisa diterbitkan oleh engine (pairing code Baileys, QR login). Saat engine tidak terjangkau, kembalikan `503 BOT_OFFLINE`.
+- **Bridge IPC Wajib:** Aksi web yang membutuhkan socket hidup (pairing sub-bot, pengiriman pesan) **WAJIB** diteruskan ke bot via socket IPC Unix mengikuti pola `sendIpcCommand` + handler `/internal/...`, dengan timeout yang diukur per operasi. Rujuk panduan di `.agents/skills/web-bot-ipc-bridge/SKILL.md`.
+
+### Z. Verifikasi Deploy Kontainer (Container Deploy Verification Standards)
+
+- **Samakan Image:** Setelah `docker compose build`, **WAJIB** membandingkan ID image kontainer berjalan vs `cosmos-all-in-one:latest` (`docker inspect` vs `docker images --no-trunc`) dan menjalankan `docker compose up -d` bila berbeda sebelum mengklaim perbaikan sudah live.
+- **Bukti di Bundle Berjalan:** Keberadaan perbaikan wajib dibuktikan dengan `grep` string literal di `/app/website/.next/`, `/app/bot/dist`, atau `/app/api/dist` **di dalam kontainer yang berjalan**, plus cek `pm2 list` dan `curl` ke rute terkait. Rujuk panduan di `.agents/skills/container-deploy-verification/SKILL.md`.
