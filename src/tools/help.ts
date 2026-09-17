@@ -124,8 +124,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                             body: t('tools.menu.banner_body'),
                             mediaType: 1, // IMAGE
                             thumbnail: bannerBuffer,
-                            renderLargerThumbnail: true, // Baileys hero banner attribute
-                            sourceUrl: 'https://github.com/razaelmahasaputra/cosmos'
+                            renderLargerThumbnail: true // Baileys hero banner attribute
+                            // NOTE: sourceUrl intentionally omitted. When present, WhatsApp
+                            // clients treat the card as a live link preview and overwrite the
+                            // static thumbnail with fetched OpenGraph data (or a fallback
+                            // placeholder when the fetch yields no image), which breaks the
+                            // hero banner and can prevent the message from rendering.
                         },
                         mentionedJid: mentions
                     }
