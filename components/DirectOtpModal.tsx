@@ -94,7 +94,7 @@ export function DirectOtpModal({
       setResendCooldown(60);
       setShowResendTurnstile(false);
       setTurnstileToken(null);
-      setSuccessMsg('OTP baru telah dikirimkan ke WhatsApp Anda.');
+      setSuccessMsg(t.directOtp.resent);
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t.common.error;
@@ -105,7 +105,12 @@ export function DirectOtpModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.directOtp.title}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+    >
       <div className="w-full max-w-md rounded-2xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
         <button
           onClick={onClose}
@@ -140,6 +145,8 @@ export function DirectOtpModal({
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               placeholder={t.directOtp.otpPlaceholder}
               autoFocus
+              autoComplete="one-time-code"
+              inputMode="numeric"
               className="w-full tracking-[0.4em] text-center text-2xl font-mono py-3 px-4 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all font-semibold"
             />
           </div>
@@ -164,13 +171,13 @@ export function DirectOtpModal({
         </form>
 
         {errorMsg && (
-          <div className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+          <div role="alert" className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
             {errorMsg}
           </div>
         )}
 
         {successMsg && (
-          <div className="p-3 text-xs text-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+          <div role="status" className="p-3 text-xs text-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
             {successMsg}
           </div>
         )}
@@ -189,7 +196,7 @@ export function DirectOtpModal({
         <div className="flex items-center justify-between pt-2 border-t border-border text-xs text-muted-foreground">
           <span>
             {timeLeft > 0 ? (
-              `Kedaluwarsa: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`
+              `${t.directOtp.expiresInLabel} ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`
             ) : (
               <span className="text-destructive font-medium">{t.directOtp.expired}</span>
             )}
@@ -206,7 +213,7 @@ export function DirectOtpModal({
               disabled={isResending}
               className="text-primary hover:underline font-semibold"
             >
-              {isResending ? 'Mengirim...' : t.directOtp.resendBtn}
+              {isResending ? t.directOtp.resending : t.directOtp.resendBtn}
             </button>
           )}
         </div>

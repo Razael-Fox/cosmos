@@ -10,6 +10,7 @@ const rawDictionary = {
     nav: {
       brand: 'Cosmos',
       tagline: 'WhatsApp & Multi-Device Bot Platform',
+      portalBadge: 'Multi-Device Portal',
       home: 'Beranda',
       pricing: 'Harga & Paket',
       dashboard: 'Dashboard',
@@ -25,6 +26,9 @@ const rawDictionary = {
         'Kelola ekosistem WhatsApp bot, otomasi grup, integrasi perbankan virtual, dan sub-bot multi-device otonom dengan infrastruktur aman berkecepatan tinggi.',
       ctaRegister: 'Mulai Sekarang — Gratis',
       ctaPricing: 'Lihat Paket Langganan',
+      ctaTitle: 'Siap Menjalankan Bot WhatsApp Anda?',
+      ctaDesc:
+        'Daftarkan nomor WhatsApp sekarang melalui verifikasi aman bebas banned, dan mulai tautkan sub-bot dalam hitungan menit.',
       feature1Title: 'Sub-Bot Multi-Device',
       feature1Desc: 'Hubungkan nomor WhatsApp pribadi sebagai sub-bot mandiri dengan pairing code atau scan QR.',
       feature2Title: 'Verifikasi Anti-Banned',
@@ -60,6 +64,7 @@ const rawDictionary = {
       periodMonth: '/ bulan',
       included: 'Fitur yang disertakan:',
       popular: 'Paling Populer',
+      activePlan: 'Paket Aktif Anda',
       manualFlowNotice: 'Pembayaran manual langsung via WhatsApp ke Sales Rep menggunakan QRIS / Transfer Bank.',
       free: {
         name: 'Free',
@@ -134,6 +139,14 @@ const rawDictionary = {
       noAccount: 'Belum punya akun? Daftar sekarang',
       loading: 'Memproses...',
       orDivider: 'atau',
+      invalidPhone: 'Masukkan nomor WhatsApp yang valid.',
+      passwordMinLength: 'Kata sandi minimal 6 karakter.',
+      passwordMismatch: 'Konfirmasi kata sandi tidak cocok.',
+      loginFailed: 'Login gagal. Periksa kembali akun dan kata sandi Anda.',
+      invertedInfo:
+        'Anda mengirim pesan verifikasi ke bot terlebih dahulu, sehingga WhatsApp memvalidasi interaksi sebagai pesan organik.',
+      directInfo:
+        'Bot akan mengirimkan kode OTP 6-digit ke nomor WhatsApp Anda. Dibatasi 5 kali per 15 menit.',
     },
     invertedVerify: {
       title: 'Verifikasi Kepemilikan WhatsApp',
@@ -154,16 +167,26 @@ const rawDictionary = {
     directOtp: {
       title: 'Masukkan Kode OTP WhatsApp',
       subtitle: 'Kode verifikasi 6-digit telah dikirimkan ke nomor WhatsApp Anda.',
-      otpLabel: 'Kode OTP (6 Angka)',
-      otpPlaceholder: '123456',
+      otpLabel: 'Kode OTP (6 Angka)',      otpPlaceholder: '123456',
       verifyBtn: 'Verifikasi & Masuk',
       resendBtn: 'Kirim Ulang OTP',
       resendCountdown: 'Kirim ulang dalam',
       expired: 'Kode kedaluwarsa. Silakan minta kode baru.',
       invalid: 'Kode OTP salah. Periksa kembali pesan di WhatsApp Anda.',
+      expiresInLabel: 'Kedaluwarsa:',
+      resending: 'Mengirim...',
+      resent: 'OTP baru telah dikirimkan ke WhatsApp Anda.',
     },
     dashboard: {
       welcome: 'Selamat Datang,',
+      overviewLabel: 'Portal Overview',
+      headerSubtitle:
+        'Kelola sub-bot multi-device, pantau kuota paket, dan atur perizinan grup WhatsApp Anda.',
+      validUntilPrefix: 'Berlaku hingga:',
+      usedSuffix: 'Terpakai',
+      botsSlotsLeft: 'Tersedia {count} slot sub-bot lagi pada paket Anda.',
+      groupsSlotsLeft: 'Tersedia {count} slot whitelist grup lagi.',
+      addGroupDesc: 'Masukkan Group JID WhatsApp yang ingin diizinkan merespon bot.',
       whitelistActive: 'Akun Terverifikasi (Whitelisted)',
       whitelistPending: 'Menunggu Verifikasi WhatsApp',
       planCard: {
@@ -249,6 +272,7 @@ const rawDictionary = {
       errorQuota: 'Kuota sub-bot Anda telah habis. Silakan upgrade paket langganan Anda.',
       errorNoCredential: 'Engine bot tidak mengembalikan kredensial pairing. Silakan coba lagi.',
       qrRendering: 'Merender QR Code...',
+      waitingAuth: 'Menunggu otorisasi koneksi dari WhatsApp...',
     },
     sales: {
       prefillMsg:
@@ -261,12 +285,23 @@ const rawDictionary = {
       copied: 'Berhasil disalin!',
       networkError: 'Koneksi ke server terputus. Pastikan server API aktif.',
     },
+    footer: {
+      description:
+        'Solusi terpadu otomatisasi WhatsApp bot, multi-device sub-bot, serta infrastruktur andal terlindungi Cloudflare.',
+      navHeading: 'Navigasi',
+      securityHeading: 'Keamanan & Akun',
+      noteAntiSpam: 'Inverted Verification Anti-Spam',
+      noteVps: 'LXC NAT VPS Support',
+      rights: 'All rights reserved.',
+      branch: 'Branch: website • Next.js 16 + React 19',
+    },
   },
 
   en: {
     nav: {
       brand: 'Cosmos',
       tagline: 'WhatsApp & Multi-Device Bot Platform',
+      portalBadge: 'Multi-Device Portal',
       home: 'Home',
       pricing: 'Pricing',
       dashboard: 'Dashboard',
@@ -282,6 +317,9 @@ const rawDictionary = {
         'Manage your WhatsApp bot ecosystem, group automations, virtual banking ledgers, and autonomous multi-device sub-bots with high-speed, secure infrastructure.',
       ctaRegister: 'Get Started Free',
       ctaPricing: 'View Pricing Plans',
+      ctaTitle: 'Ready to Launch Your WhatsApp Bot?',
+      ctaDesc:
+        'Register your WhatsApp number now via secure ban-free verification, and start linking sub-bots within minutes.',
       feature1Title: 'Multi-Device Sub-Bots',
       feature1Desc: 'Link your personal WhatsApp number as an autonomous sub-bot using pairing code or QR scan.',
       feature2Title: 'Anti-Banned Verification',
@@ -317,6 +355,7 @@ const rawDictionary = {
       periodMonth: '/ month',
       included: 'Included features:',
       popular: 'Most Popular',
+      activePlan: 'Your Current Plan',
       manualFlowNotice: 'Direct manual payment via WhatsApp to Sales Rep using QRIS / Bank Transfer.',
       free: {
         name: 'Free',
@@ -391,6 +430,14 @@ const rawDictionary = {
       noAccount: "Don't have an account? Register now",
       loading: 'Processing...',
       orDivider: 'or',
+      invalidPhone: 'Please enter a valid WhatsApp number.',
+      passwordMinLength: 'Password must be at least 6 characters.',
+      passwordMismatch: 'Password confirmation does not match.',
+      loginFailed: 'Login failed. Please check your account and password.',
+      invertedInfo:
+        'You send the verification message to the bot first, so WhatsApp validates the interaction as an organic message.',
+      directInfo:
+        'The bot will send a 6-digit OTP code to your WhatsApp number. Limited to 5 requests per 15 minutes.',
     },
     invertedVerify: {
       title: 'Verify WhatsApp Ownership',
@@ -418,9 +465,20 @@ const rawDictionary = {
       resendCountdown: 'Resend available in',
       expired: 'Code expired. Please request a new one.',
       invalid: 'Invalid OTP code. Please check your WhatsApp messages.',
+      expiresInLabel: 'Expires:',
+      resending: 'Sending...',
+      resent: 'A new OTP has been sent to your WhatsApp.',
     },
     dashboard: {
       welcome: 'Welcome back,',
+      overviewLabel: 'Portal Overview',
+      headerSubtitle:
+        'Manage multi-device sub-bots, monitor plan quotas, and control your WhatsApp group permissions.',
+      validUntilPrefix: 'Valid until:',
+      usedSuffix: 'Used',
+      botsSlotsLeft: '{count} more sub-bot slots available on your plan.',
+      groupsSlotsLeft: '{count} more group whitelist slots available.',
+      addGroupDesc: 'Enter the WhatsApp Group JID authorized to respond to the bot.',
       whitelistActive: 'Verified Account (Whitelisted)',
       whitelistPending: 'Pending WhatsApp Verification',
       planCard: {
@@ -506,6 +564,7 @@ const rawDictionary = {
       errorQuota: 'Sub-bot quota exceeded for your subscription plan. Please upgrade first.',
       errorNoCredential: 'Bot engine did not return pairing credentials. Please try again.',
       qrRendering: 'Rendering QR code...',
+      waitingAuth: 'Waiting for connection authorization from WhatsApp...',
     },
     sales: {
       prefillMsg:
@@ -517,6 +576,16 @@ const rawDictionary = {
       close: 'Close',
       copied: 'Copied to clipboard!',
       networkError: 'Unable to reach API server. Please ensure the backend is active.',
+    },
+    footer: {
+      description:
+        'Unified WhatsApp bot automation, multi-device sub-bots, and reliable Cloudflare-protected infrastructure.',
+      navHeading: 'Navigation',
+      securityHeading: 'Security & Account',
+      noteAntiSpam: 'Inverted Verification Anti-Spam',
+      noteVps: 'LXC NAT VPS Support',
+      rights: 'All rights reserved.',
+      branch: 'Branch: website • Next.js 16 + React 19',
     },
   },
 };

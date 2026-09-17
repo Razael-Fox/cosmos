@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, DM_Sans, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ),
+  title: {
+    default: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+    template: "%s • Cosmos",
+  },
   description:
     "Autonomous multi-device WhatsApp bot platform, group automations, tiered quotas, and secure Cloudflare tunnel architecture.",
   icons: {
@@ -37,6 +43,31 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-icon.png" }],
   },
+  openGraph: {
+    type: "website",
+    title: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+    description:
+      "Manage WhatsApp bot ecosystems, group automations, virtual banking, and autonomous multi-device sub-bots.",
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "Cosmos Logo" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+    description:
+      "Autonomous multi-device WhatsApp bot platform with secure verification and tiered quotas.",
+    images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default function RootLayout({

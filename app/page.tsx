@@ -184,10 +184,10 @@ export default function HomePage() {
         <div className="rounded-3xl bg-primary text-primary-foreground p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-2 text-center md:text-left">
             <h2 className="text-2xl sm:text-3xl font-bold font-heading">
-              Siap Menjalankan Bot WhatsApp Anda?
+              {t.hero.ctaTitle}
             </h2>
             <p className="text-sm text-primary-foreground/80 max-w-md">
-              Daftarkan nomor WhatsApp sekarang melalui verifikasi aman bebas banned, dan mulai tautkan sub-bot dalam hitungan menit.
+              {t.hero.ctaDesc}
             </p>
           </div>
           <Link

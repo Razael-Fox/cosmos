@@ -72,17 +72,18 @@ export function Navbar() {
               {t.nav.brand}
             </span>
             <span className="text-[10px] -mt-1 text-muted-foreground font-mono hidden sm:inline-block">
-              Multi-Device Portal
+              {t.nav.portalBadge}
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav aria-label="Primary" className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
+              aria-current={pathname === link.href ? 'page' : undefined}
               className={`text-sm font-medium transition-colors hover:text-foreground ${
                 pathname === link.href ? 'text-primary font-semibold' : 'text-muted-foreground'
               }`}
@@ -100,6 +101,7 @@ export function Navbar() {
             onClick={toggleLanguage}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             title="Ganti Bahasa / Switch Language"
+            aria-label="Ganti Bahasa / Switch Language"
           >
             <Globe className="w-4 h-4" />
             <span>{language.toUpperCase()}</span>
@@ -146,6 +148,7 @@ export function Navbar() {
             type="button"
             onClick={toggleLanguage}
             className="px-2 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground"
+            aria-label="Ganti Bahasa / Switch Language"
           >
             {language.toUpperCase()}
           </button>
@@ -154,6 +157,8 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-muted-foreground hover:text-foreground"
             aria-label="Toggle Menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav-drawer"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <List className="w-6 h-6" />}
           </button>
@@ -162,7 +167,7 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-border bg-card p-4 space-y-3">
+        <div id="mobile-nav-drawer" className="md:hidden border-b border-border bg-card p-4 space-y-3">
           {navLinks.map((link) => (
             <Link
               key={link.href}

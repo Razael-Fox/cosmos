@@ -59,17 +59,17 @@ export default function RegisterPage() {
     setErrorMsg(null);
 
     if (!cleanPhone || cleanPhone.length < 9) {
-      setErrorMsg('Masukkan nomor WhatsApp yang valid.');
+      setErrorMsg(t.auth.invalidPhone);
       return;
     }
 
     if (password && password.length < 6) {
-      setErrorMsg('Kata sandi minimal 6 karakter.');
+      setErrorMsg(t.auth.passwordMinLength);
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorMsg('Konfirmasi kata sandi tidak cocok.');
+      setErrorMsg(t.auth.passwordMismatch);
       return;
     }
 
@@ -147,9 +147,10 @@ export default function RegisterPage() {
                 ? 'bg-card text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
+            aria-pressed={mode === 'inverted'}
           >
             <WhatsappLogo className="w-4 h-4 text-emerald-600" weight="fill" />
-            <span>Mode WhatsApp (Aman)</span>
+            <span>{t.auth.invertedTab}</span>
           </button>
           <button
             type="button"
@@ -162,9 +163,10 @@ export default function RegisterPage() {
                 ? 'bg-card text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
+            aria-pressed={mode === 'direct'}
           >
             <Lightning className="w-4 h-4 text-amber-500" weight="fill" />
-            <span>Mode OTP Langsung</span>
+            <span>{t.auth.directTab}</span>
           </button>
         </div>
 
@@ -174,15 +176,14 @@ export default function RegisterPage() {
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs flex items-start gap-2.5">
               <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" weight="bold" />
               <span>
-                <strong>Zero Ban Risk:</strong> Anda mengirim pesan verifikasi ke bot terlebih dahulu,
-                sehingga WhatsApp memvalidasi interaksi sebagai pesan organik.
+                <strong>Zero Ban Risk:</strong> {t.auth.invertedInfo}
               </span>
             </div>
           ) : (
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
               <Lightning className="w-4 h-4 shrink-0 mt-0.5" weight="fill" />
               <span>
-                Bot akan mengirimkan kode OTP 6-digit ke nomor WhatsApp Anda. Dibatasi 5 kali per 15 menit.
+                {t.auth.directInfo}
               </span>
             </div>
           )}
@@ -202,6 +203,8 @@ export default function RegisterPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder={t.auth.phonePlaceholder}
+                  autoComplete="tel"
+                  inputMode="tel"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
@@ -221,6 +224,7 @@ export default function RegisterPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder={t.auth.usernamePlaceholder}
+                  autoComplete="username"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
@@ -239,6 +243,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t.auth.emailPlaceholder}
+                  autoComplete="email"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
@@ -257,6 +262,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t.auth.passwordPlaceholder}
+                  autoComplete="new-password"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
@@ -275,6 +281,7 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={t.auth.passwordPlaceholder}
+                  autoComplete="new-password"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
@@ -291,7 +298,7 @@ export default function RegisterPage() {
             </div>
 
             {errorMsg && (
-              <div className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div role="alert" className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium">
                 {errorMsg}
               </div>
             )}

@@ -99,8 +99,9 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
         {plans.map((plan) => {
           const isCurrent = currentTier === plan.id;
           return (
-            <div
+            <article
               key={plan.id}
+              aria-label={`${plan.name} plan`}
               className={`rounded-3xl p-8 flex flex-col justify-between transition-all relative ${
                 plan.isPopular
                   ? 'bg-card border-2 border-primary shadow-xl scale-[1.02]'
@@ -152,8 +153,11 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
 
               <div className="pt-8">
                 {isCurrent ? (
-                  <div className="w-full py-3 px-4 rounded-xl bg-muted text-center text-sm font-semibold text-muted-foreground border border-border">
-                    Paket Aktif Anda
+                  <div
+                    role="status"
+                    className="w-full py-3 px-4 rounded-xl bg-muted text-center text-sm font-semibold text-muted-foreground border border-border"
+                  >
+                    {t.pricing.activePlan}
                   </div>
                 ) : plan.href ? (
                   <a
@@ -181,7 +185,7 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
                   </button>
                 )}
               </div>
-            </div>
+            </article>
           );
         })}
       </div>

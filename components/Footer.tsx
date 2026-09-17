@@ -28,8 +28,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground max-w-sm">
-              {t.nav.tagline}. Solusi terpadu otomatisasi WhatsApp bot, multi-device sub-bot,
-              serta infrastruktur andal terlindungi Cloudflare.
+              {t.nav.tagline}. {t.footer.description}
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
@@ -58,7 +57,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground">Navigasi</p>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">{t.footer.navHeading}</h2>
             <ul className="space-y-1.5 text-xs text-muted-foreground">
               <li>
                 <Link href="/" className="hover:text-foreground transition-colors">
@@ -79,7 +78,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground">Keamanan & Akun</p>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">{t.footer.securityHeading}</h2>
             <ul className="space-y-1.5 text-xs text-muted-foreground">
               <li>
                 <Link href="/register" className="hover:text-foreground transition-colors">
@@ -92,18 +91,18 @@ export function Footer() {
                 </Link>
               </li>
               <li className="text-[11px] text-muted-foreground/80">
-                Inverted Verification Anti-Spam
+                {t.footer.noteAntiSpam}
               </li>
               <li className="text-[11px] text-muted-foreground/80">
-                LXC NAT VPS Support
+                {t.footer.noteVps}
               </li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Cosmos Ecosystem. All rights reserved.</p>
-          <p className="font-mono text-[11px]">Branch: website • Next.js 16 + React 19</p>
+          <p>© {new Date().getFullYear()} Cosmos Ecosystem. {t.footer.rights}</p>
+          <p className="font-mono text-[11px]">{t.footer.branch}</p>
         </div>
       </div>
     </footer>

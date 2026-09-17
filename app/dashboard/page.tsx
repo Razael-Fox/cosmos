@@ -31,8 +31,9 @@ import type {
 import { PairingModal } from '@/components/PairingModal';
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
+  const dateLocale = language === 'id' ? 'id-ID' : 'en-US';
 
   const [isLoading, setIsLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionStatusResponse | null>(null);
@@ -193,7 +194,7 @@ export default function DashboardPage() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              Portal Overview
+              {t.dashboard.overviewLabel}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
               <ShieldCheck className="w-3.5 h-3.5" weight="bold" />
@@ -204,7 +205,7 @@ export default function DashboardPage() {
             {t.dashboard.welcome} Portal Member
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Kelola sub-bot multi-device, pantau kuota paket, dan atur perizinan grup WhatsApp Anda.
+            {t.dashboard.headerSubtitle}
           </p>
         </div>
 
@@ -221,7 +222,10 @@ export default function DashboardPage() {
       </div>
 
       {errorMsg && (
-        <div className="p-4 rounded-2xl bg-destructive/10 text-destructive text-sm font-medium border border-destructive/20">
+        <div
+          role="alert"
+          className="p-4 rounded-2xl bg-destructive/10 text-destructive text-sm font-medium border border-destructive/20"
+        >
           {errorMsg}
         </div>
       )}
@@ -250,7 +254,7 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               {subscription?.expiresAt
-                ? `Berlaku hingga: ${new Date(subscription.expiresAt).toLocaleDateString('id-ID')}`
+                ? `${t.dashboard.validUntilPrefix} ${new Date(subscription.expiresAt).toLocaleDateString(dateLocale)}`
                 : t.dashboard.planCard.perpetual}
             </p>
           </div>
@@ -288,12 +292,19 @@ export default function DashboardPage() {
                 {currentBotsCount} <span className="text-sm font-normal text-muted-foreground">/ {maxBots}</span>
               </span>
               <span className="text-xs font-semibold text-muted-foreground">
-                {Math.round((currentBotsCount / maxBots) * 100)}% Terpakai
+                {Math.round((currentBotsCount / maxBots) * 100)}% {t.dashboard.usedSuffix}
               </span>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={currentBotsCount}
+              aria-valuemin={0}
+              aria-valuemax={maxBots}
+              aria-label={t.dashboard.planCard.subBotsQuota}
+            >
               <div
                 className="h-full bg-emerald-500 rounded-full transition-all"
                 style={{ width: `${Math.min(100, (currentBotsCount / maxBots) * 100)}%` }}
@@ -302,7 +313,7 @@ export default function DashboardPage() {
           </div>
 
           <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-            Tersedia {Math.max(0, maxBots - currentBotsCount)} slot sub-bot lagi pada paket Anda.
+            {t.dashboard.botsSlotsLeft.replace('{count}', String(Math.max(0, maxBots - currentBotsCount)))}
           </p>
         </div>
 
@@ -323,12 +334,19 @@ export default function DashboardPage() {
                 {currentGroupsCount} <span className="text-sm font-normal text-muted-foreground">/ {maxGroups}</span>
               </span>
               <span className="text-xs font-semibold text-muted-foreground">
-                {Math.round((currentGroupsCount / maxGroups) * 100)}% Terpakai
+                {Math.round((currentGroupsCount / maxGroups) * 100)}% {t.dashboard.usedSuffix}
               </span>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={currentGroupsCount}
+              aria-valuemin={0}
+              aria-valuemax={maxGroups}
+              aria-label={t.dashboard.planCard.groupsQuota}
+            >
               <div
                 className="h-full bg-indigo-500 rounded-full transition-all"
                 style={{ width: `${Math.min(100, (currentGroupsCount / maxGroups) * 100)}%` }}
@@ -337,7 +355,7 @@ export default function DashboardPage() {
           </div>
 
           <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-            Tersedia {Math.max(0, maxGroups - currentGroupsCount)} slot whitelist grup lagi.
+            {t.dashboard.groupsSlotsLeft.replace('{count}', String(Math.max(0, maxGroups - currentGroupsCount)))}
           </p>
         </div>
       </div>
@@ -388,11 +406,11 @@ export default function DashboardPage() {
               <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                    <th className="p-4">{t.dashboard.subbotsCard.phoneCol}</th>
-                    <th className="p-4">{t.dashboard.subbotsCard.prefixCol}</th>
-                    <th className="p-4">{t.dashboard.subbotsCard.statusCol}</th>
-                    <th className="p-4">{t.dashboard.subbotsCard.createdCol}</th>
-                    <th className="p-4 text-right">{t.dashboard.subbotsCard.actionsCol}</th>
+                    <th scope="col" className="p-4">{t.dashboard.subbotsCard.phoneCol}</th>
+                    <th scope="col" className="p-4">{t.dashboard.subbotsCard.prefixCol}</th>
+                    <th scope="col" className="p-4">{t.dashboard.subbotsCard.statusCol}</th>
+                    <th scope="col" className="p-4">{t.dashboard.subbotsCard.createdCol}</th>
+                    <th scope="col" className="p-4 text-right">{t.dashboard.subbotsCard.actionsCol}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -422,7 +440,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="p-4 text-xs text-muted-foreground">
-                        {new Date(bot.createdAt).toLocaleDateString('id-ID')}
+                        {new Date(bot.createdAt).toLocaleDateString(dateLocale)}
                       </td>
                       <td className="p-4 text-right">
                         <button
@@ -430,6 +448,7 @@ export default function DashboardPage() {
                           onClick={() => handleDeleteSubBot(bot.id)}
                           className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           title={t.dashboard.subbotsCard.deleteBtn}
+                          aria-label={t.dashboard.subbotsCard.deleteBtn}
                         >
                           <Trash className="w-4 h-4" />
                         </button>
@@ -489,9 +508,9 @@ export default function DashboardPage() {
               <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                    <th className="p-4">{t.dashboard.groupsCard.jidCol}</th>
-                    <th className="p-4">{t.dashboard.groupsCard.addedCol}</th>
-                    <th className="p-4 text-right">{t.dashboard.groupsCard.actionCol}</th>
+                    <th scope="col" className="p-4">{t.dashboard.groupsCard.jidCol}</th>
+                    <th scope="col" className="p-4">{t.dashboard.groupsCard.addedCol}</th>
+                    <th scope="col" className="p-4 text-right">{t.dashboard.groupsCard.actionCol}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -501,7 +520,7 @@ export default function DashboardPage() {
                         {grp.jid}
                       </td>
                       <td className="p-4 text-xs text-muted-foreground">
-                        {new Date(grp.createdAt).toLocaleDateString('id-ID')}
+                        {new Date(grp.createdAt).toLocaleDateString(dateLocale)}
                       </td>
                       <td className="p-4 text-right">
                         <button
@@ -509,6 +528,7 @@ export default function DashboardPage() {
                           onClick={() => handleDeleteGroup(grp.jid)}
                           className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           title={t.dashboard.groupsCard.deleteBtn}
+                          aria-label={t.dashboard.groupsCard.deleteBtn}
                         >
                           <Trash className="w-4 h-4" />
                         </button>
@@ -532,14 +552,19 @@ export default function DashboardPage() {
 
       {/* Add Whitelist Group Modal */}
       {showAddGroupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.dashboard.groupsCard.addModalTitle}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+        >
           <div className="w-full max-w-md rounded-2xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-5">
             <div className="space-y-1">
               <h3 className="text-xl font-bold font-heading text-foreground">
                 {t.dashboard.groupsCard.addModalTitle}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Masukkan Group JID WhatsApp yang ingin diizinkan merespon bot.
+                {t.dashboard.addGroupDesc}
               </p>
             </div>
 
@@ -563,7 +588,7 @@ export default function DashboardPage() {
               </div>
 
               {addGroupError && (
-                <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
+                <div role="alert" className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
                   {addGroupError}
                 </div>
               )}

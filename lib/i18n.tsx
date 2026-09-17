@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { dictionary, type Dictionary, type Language } from './dictionary';
 
 interface LanguageContextType {
@@ -11,17 +11,6 @@ interface LanguageContextType {
 
 const STORAGE_KEY = 'cosmos_language';
 
-function getInitialLanguage(): Language {
-  if (typeof window === 'undefined') return 'id';
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'id' || saved === 'en') return saved;
-  } catch {
-    // ignore
-  }
-  return 'id';
-}
-
 const LanguageContext = createContext<LanguageContextType>({
   language: 'id',
   setLanguage: () => {},
@@ -29,7 +18,30 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  // Initialize with the default language to keep server/client render output
+  // identical, then hydrate the saved preference on mount to avoid
+  // React hydration mismatches when localStorage holds 'en'.
+  const [language, setLanguageState] = useState<Language>('id');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === 'id' || saved === 'en') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration-safe sync of persisted preference after mount
+        setLanguageState(saved);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      document.documentElement.lang = language;
+    } catch {
+      // ignore
+    }
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

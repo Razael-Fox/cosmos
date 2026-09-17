@@ -221,7 +221,7 @@ export const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(function Turns
     <div className={`flex flex-col items-center justify-center my-3 ${className || ''}`}>
       <div ref={containerRef} className="min-h-[65px] flex items-center justify-center" />
       {renderError && (
-        <div className="mt-2 w-full max-w-sm p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-center">
+        <div role="alert" className="mt-2 w-full max-w-sm p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-center">
           <p className="text-xs text-destructive font-medium">{renderError}</p>
           <button
             type="button"

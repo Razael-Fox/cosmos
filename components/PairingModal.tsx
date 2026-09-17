@@ -165,7 +165,12 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.pairingModal.title}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+    >
       <div className="w-full max-w-lg rounded-2xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
@@ -205,6 +210,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                   setQrCodeData(null);
                   setQrImageUrl(null);
                 }}
+                aria-pressed={method === 'code'}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
                   method === 'code'
                     ? 'bg-card text-foreground shadow-xs'
@@ -222,6 +228,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                   setQrCodeData(null);
                   setQrImageUrl(null);
                 }}
+                aria-pressed={method === 'qr'}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
                   method === 'qr'
                     ? 'bg-card text-foreground shadow-xs'
@@ -314,6 +321,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                       onClick={handleCopy}
                       className="p-2.5 rounded-xl bg-background border border-border text-foreground hover:bg-muted transition-colors"
                       title={t.pairingModal.copyCode}
+                      aria-label={t.pairingModal.copyCode}
                     >
                       {copied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
                     </button>
@@ -328,7 +336,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <CircleNotch className="w-4 h-4 animate-spin text-primary" />
-                  <span>Menunggu otorisasi koneksi dari WhatsApp...</span>
+                  <span>{t.pairingModal.waitingAuth}</span>
                 </div>
               </div>
             ) : (
@@ -356,7 +364,7 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
             )}
 
             {errorMsg && (
-              <div className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div role="alert" className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
                 {errorMsg}
               </div>
             )}

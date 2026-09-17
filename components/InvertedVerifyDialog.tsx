@@ -91,7 +91,12 @@ export function InvertedVerifyDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.invertedVerify.title}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+    >
       <div className="w-full max-w-lg rounded-2xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
         <button
           onClick={onClose}
@@ -172,7 +177,7 @@ export function InvertedVerifyDialog({
             </div>
 
             {errorMsg && (
-              <div className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div role="alert" className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
                 {errorMsg}
               </div>
             )}

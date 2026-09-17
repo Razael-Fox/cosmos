@@ -30,7 +30,7 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Login gagal. Periksa kembali akun dan kata sandi Anda.';
+      const msg = err instanceof Error ? err.message : t.auth.loginFailed;
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);
@@ -74,6 +74,7 @@ export default function LoginPage() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder={t.auth.identifierPlaceholder}
+                  autoComplete="username"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
@@ -92,13 +93,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t.auth.passwordPlaceholder}
+                  autoComplete="current-password"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
             </div>
 
             {errorMsg && (
-              <div className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div role="alert" className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium">
                 {errorMsg}
               </div>
             )}
