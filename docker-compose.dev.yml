@@ -72,6 +72,7 @@ services:
             - ./.worktrees/website/components:/app/website/components
             - ./.worktrees/website/lib:/app/website/lib
             - ./.worktrees/website/public:/app/website/public
+            - ./.worktrees/website/next.config.ts:/app/website/next.config.ts
             - /app/website/node_modules
             - /app/website/.next
         depends_on:
