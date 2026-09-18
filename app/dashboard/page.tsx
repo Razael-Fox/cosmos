@@ -15,9 +15,11 @@ import {
     WarningCircle,
     User,
     Wallet,
-    ChartBar
+    ChartBar,
+    Sparkle
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
+import { getRandomTimeQuote } from '@/lib/timeQuotes';
 import {
     getStoredToken,
     getStoredUser,
@@ -49,6 +51,19 @@ export default function DashboardPage() {
     const [groups, setGroups] = useState<WhitelistedGroup[]>([]);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [timeQuote, setTimeQuote] = useState<string>('');
+    const [isShufflingQuote, setIsShufflingQuote] = useState(false);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe sync of client time-of-day quote
+        setTimeQuote(getRandomTimeQuote(new Date().getHours(), language));
+    }, [language]);
+
+    const handleShuffleQuote = () => {
+        setIsShufflingQuote(true);
+        setTimeQuote(getRandomTimeQuote(new Date().getHours(), language));
+        setTimeout(() => setIsShufflingQuote(false), 300);
+    };
 
     // Pairing Modal state
     const [showPairModal, setShowPairModal] = useState(false);
@@ -244,7 +259,23 @@ export default function DashboardPage() {
                             <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" weight="fill" />
                         </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl">{t.dashboard.headerSubtitle}</p>
+                    <div className="flex items-center gap-2 max-w-2xl">
+                        <p className="text-xs sm:text-sm text-muted-foreground italic">
+                            &ldquo;{timeQuote || t.dashboard.headerSubtitle}&rdquo;
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleShuffleQuote}
+                            title={language === 'id' ? 'Acak kutipan absurd' : 'Shuffle absurd quote'}
+                            className="p-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-colors shrink-0 cursor-pointer"
+                            aria-label="Shuffle quote"
+                        >
+                            <Sparkle
+                                className={`w-3.5 h-3.5 transition-transform ${isShufflingQuote ? 'rotate-180 scale-110' : ''}`}
+                                weight="bold"
+                            />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Global Error Banner with Retry */}
