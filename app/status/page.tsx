@@ -3,9 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-    CheckCircle,
-    WarningCircle,
-    XCircle,
     ArrowClockwise,
     ShieldCheck,
     DeviceMobile,
@@ -125,33 +122,6 @@ export default function StatusPage() {
         };
     }, [handleBack]);
 
-    const statusBanner = () => {
-        if (!data || data.status === 'ALL_OPERATIONAL') {
-            return {
-                bg: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-400',
-                indicator: 'bg-emerald-500',
-                title: t.statusPage.allOperational,
-                icon: <CheckCircle className="w-5 h-5 text-emerald-500" weight="fill" />
-            };
-        }
-        if (data.status === 'PARTIAL_OUTAGE') {
-            return {
-                bg: 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-400',
-                indicator: 'bg-amber-500',
-                title: t.statusPage.partialOutage,
-                icon: <WarningCircle className="w-5 h-5 text-amber-500" weight="fill" />
-            };
-        }
-        return {
-            bg: 'bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-400',
-            indicator: 'bg-rose-500',
-            title: t.statusPage.majorOutage,
-            icon: <XCircle className="w-5 h-5 text-rose-500" weight="fill" />
-        };
-    };
-
-    const banner = statusBanner();
-
     return (
         <div className="flex flex-col w-full min-h-screen py-10">
             <Container size="lg" className="space-y-10">
@@ -198,31 +168,6 @@ export default function StatusPage() {
                     </div>
                 </div>
 
-                {/* Overall Health Banner */}
-                <div
-                    className={`rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-xs transition-all ${banner.bg}`}
-                >
-                    <div className="flex items-center gap-3.5">
-                        <div className="p-2 rounded-xl bg-background/50 backdrop-blur-xs">{banner.icon}</div>
-                        <div>
-                            <p className="text-base sm:text-lg font-bold text-foreground">{banner.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {t.statusPage.lastChecked}{' '}
-                                {data?.lastChecked ? new Date(data.lastChecked).toLocaleTimeString() : '...'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-start sm:self-center text-xs font-mono font-medium">
-                        <span className="relative flex h-2.5 w-2.5">
-                            <span
-                                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${banner.indicator}`}
-                            />
-                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${banner.indicator}`} />
-                        </span>
-                        <span>{data?.uptime.percentage.toFixed(2) ?? '99.98'}% Availability</span>
-                    </div>
-                </div>
 
                 {/* Error Banner if API fails */}
                 {error && (
