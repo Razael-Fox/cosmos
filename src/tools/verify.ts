@@ -51,6 +51,23 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const jid = canonicalJid(phoneNumber);
     const meta = (metadata ?? {}) as { passwordHash?: string; username?: string; email?: string };
 
+    // Capture WhatsApp sender's profile name / username from incoming message
+    const waName = ctx.msg.pushName?.trim() || null;
+
+    // Resolve username: explicit metadata username takes precedence,
+    // otherwise fallback to WhatsApp profile name / username with collision guard.
+    let resolvedUsername = meta.username?.trim() || null;
+    if (!resolvedUsername && waName) {
+        const collision = await prisma.user.findFirst({
+            where: { username: waName, NOT: { id: jid } }
+        });
+        if (!collision) {
+            resolvedUsername = waName;
+        } else {
+            resolvedUsername = `${waName}_${phoneNumber.slice(-4)}`;
+        }
+    }
+
     // Atomic activation: mark OTP used, upsert whitelisted user, ensure default FREE subscription.
     await prisma.$transaction([
         prisma.otpVerification.update({ where: { id: result.record.id }, data: { isUsed: true } }),
@@ -58,13 +75,15 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             where: { id: jid },
             update: {
                 isWhitelisted: true,
+                ...(waName ? { pushName: waName } : {}),
+                ...(resolvedUsername ? { username: resolvedUsername } : {}),
                 ...(meta.passwordHash ? { passwordHash: meta.passwordHash } : {}),
-                ...(meta.username ? { username: meta.username } : {}),
                 ...(meta.email ? { email: meta.email } : {})
             },
             create: {
                 id: jid,
-                username: meta.username ?? null,
+                pushName: waName,
+                username: resolvedUsername,
                 email: meta.email ?? null,
                 passwordHash: meta.passwordHash ?? null,
                 isWhitelisted: true
@@ -85,11 +104,35 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         console.error('[Verify] Direct confirmation message failed:', err);
     }
 
+    // Notify co-located bot IPC server (to handle WhatsApp messaging)
     await sendIpcCommand('/internal/auth/verified', {
         phoneNumber,
         canonicalJid: jid,
-        regSessionId
+        regSessionId,
+        pushName: waName,
+        username: resolvedUsername
     }).catch((err) => console.error('[Verify] IPC notification failed:', err));
+
+    // Notify Fastify API to trigger real-time WebSocket emitAuthStatus
+    const apiPort = process.env.API_PORT || '5000';
+    const ipcSecret = process.env.INTERNAL_IPC_SECRET || '';
+    fetch(`http://127.0.0.1:${apiPort}/internal/auth/verified`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-internal-secret': ipcSecret
+        },
+        body: JSON.stringify({
+            phoneNumber,
+            canonicalJid: jid,
+            regSessionId,
+            pushName: waName,
+            username: resolvedUsername
+        })
+    }).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn('[Verify] Fastify internal HTTP notify fallback:', msg);
+    });
 
     return ctx.t('tools.verify.activated');
 }

@@ -51,6 +51,21 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
         case '/internal/auth/verified': {
             const canonicalJid = String(body.canonicalJid || '');
             if (!canonicalJid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+            const pushName = typeof body.pushName === 'string' ? body.pushName.trim() : null;
+            const username = typeof body.username === 'string' ? body.username.trim() : null;
+            if (pushName || username) {
+                await prisma.user
+                    .update({
+                        where: { id: canonicalJid },
+                        data: {
+                            ...(pushName ? { pushName } : {}),
+                            ...(username ? { username } : {})
+                        }
+                    })
+                    .catch(() => {
+                        /* ignore if already updated */
+                    });
+            }
             const sock = activeConnections.get('default');
             if (sock) {
                 await sock
