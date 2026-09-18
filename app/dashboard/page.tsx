@@ -1019,9 +1019,13 @@ export default function DashboardPage() {
                                                             <p className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-[240px]">
                                                                 {grp.subject}
                                                             </p>
-                                                            {grp.isAdmin && (
+                                                            {grp.isAdmin ? (
                                                                 <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase rounded bg-primary/15 text-primary">
                                                                     {t.dashboard.groupsCard.adminBadge}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-1.5 py-0.2 text-[9px] font-medium uppercase rounded bg-muted/80 text-muted-foreground border border-border/40">
+                                                                    {t.dashboard.groupsCard.memberBadge}
                                                                 </span>
                                                             )}
                                                         </div>
