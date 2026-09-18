@@ -440,7 +440,7 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
         const cleanDigits = trimmedIdentifier.replace(/\D/g, '');
         const phoneJid = cleanDigits.length >= 8 ? `${cleanDigits}@s.whatsapp.net` : '';
 
-        const user = await prisma.user.findFirst({
+        let user = await prisma.user.findFirst({
             where: {
                 OR: [{ username: trimmedIdentifier }, ...(phoneJid ? [{ id: phoneJid }] : [])]
             }
@@ -496,6 +496,27 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             }
         });
 
+        // Self-heal: check if clean digits record has pushName
+        if (!user.pushName || !user.username) {
+            const cleanDigits = user.id.replace(/\D/g, '');
+            if (cleanDigits && cleanDigits !== user.id) {
+                const legacy = await prisma.user.findUnique({ where: { id: cleanDigits } }).catch(() => null);
+                if (legacy?.pushName) {
+                    const resolvedName = legacy.pushName;
+                    const updated = await prisma.user
+                        .update({
+                            where: { id: user.id },
+                            data: {
+                                pushName: user.pushName || resolvedName,
+                                ...(!user.username ? { username: resolvedName } : {})
+                            }
+                        })
+                        .catch(() => null);
+                    if (updated) user = updated;
+                }
+            }
+        }
+
         const jwtToken = fastify.jwt.sign({ id: user.id });
 
         return reply.send({
@@ -521,8 +542,27 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
 
         if (record.isUsed) {
             const canonicalJid = record.userJid || `${record.phoneNumber}@s.whatsapp.net`;
-            const user = await prisma.user.findUnique({ where: { id: canonicalJid } });
+            let user = await prisma.user.findUnique({ where: { id: canonicalJid } });
             if (user && user.isWhitelisted) {
+                if (!user.pushName || !user.username) {
+                    const cleanDigits = user.id.replace(/\D/g, '');
+                    if (cleanDigits && cleanDigits !== user.id) {
+                        const legacy = await prisma.user.findUnique({ where: { id: cleanDigits } }).catch(() => null);
+                        if (legacy?.pushName) {
+                            const resolvedName = legacy.pushName;
+                            const updated = await prisma.user
+                                .update({
+                                    where: { id: user.id },
+                                    data: {
+                                        pushName: user.pushName || resolvedName,
+                                        ...(!user.username ? { username: resolvedName } : {})
+                                    }
+                                })
+                                .catch(() => null);
+                            if (updated) user = updated;
+                        }
+                    }
+                }
                 await processDeviceValidation(user.id, req, 'VERIFY_INVERTED', true);
                 const jwtToken = fastify.jwt.sign({ id: user.id, phoneNumber: record.phoneNumber });
                 const serialized = serializeUser(user);
@@ -546,9 +586,28 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
 
     // GET /api/v1/auth/me
     fastify.get('/me', { preHandler: [authenticateJwt] }, async (req, reply) => {
-        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+        let user = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return reply.status(404).send({ error: 'USER_NOT_FOUND', message: 'User account not found.' });
+        }
+        if (!user.pushName || !user.username) {
+            const cleanDigits = user.id.replace(/\D/g, '');
+            if (cleanDigits && cleanDigits !== user.id) {
+                const legacy = await prisma.user.findUnique({ where: { id: cleanDigits } }).catch(() => null);
+                if (legacy?.pushName) {
+                    const resolvedName = legacy.pushName;
+                    const updated = await prisma.user
+                        .update({
+                            where: { id: user.id },
+                            data: {
+                                pushName: user.pushName || resolvedName,
+                                ...(!user.username ? { username: resolvedName } : {})
+                            }
+                        })
+                        .catch(() => null);
+                    if (updated) user = updated;
+                }
+            }
         }
         return reply.send({ user: serializeUser(user) });
     });
