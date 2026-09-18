@@ -228,8 +228,12 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                     size: number;
                     desc?: string;
                     isAdmin: boolean;
+                    pictureUrl?: string | null;
                 }
             >();
+
+            // Map each group to its respective socket connection for fast metadata/photo querying
+            const groupSockMap = new Map<string, WASocket>();
 
             // Find all active socket connections belonging to or associated with this user
             const socketsToQuery: Array<{ sock: WASocket; isUserAccount: boolean }> = [];
@@ -275,6 +279,7 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                                 desc: typeof meta.desc === 'string' ? meta.desc : undefined,
                                 isAdmin
                             });
+                            groupSockMap.set(id, sock);
                         }
                     }
                 } catch (err) {
@@ -309,6 +314,9 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                                     const existing = groupsMap.get(id)!;
                                     existing.isAdmin = true;
                                 }
+                                if (!groupSockMap.has(id)) {
+                                    groupSockMap.set(id, defaultSock);
+                                }
                             }
                         }
                     }
@@ -332,11 +340,38 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                             desc: typeof meta?.desc === 'string' ? meta.desc : undefined,
                             isAdmin: false
                         });
+                        if (defaultSock && !groupSockMap.has(wg.jid)) {
+                            groupSockMap.set(wg.jid, defaultSock);
+                        }
                     }
                 }
             } catch (err) {
                 console.warn('[IPC] Error resolving user whitelisted groups from database:', err);
             }
+
+            // 6. Fetch profile pictures in parallel with a graceful timeout per group
+            await Promise.all(
+                Array.from(groupsMap.values()).map(async (grp) => {
+                    const sock = groupSockMap.get(grp.id) || defaultSock;
+                    if (sock) {
+                        try {
+                            const url = await Promise.race([
+                                (async () => {
+                                    const preview = await sock.profilePictureUrl(grp.id, 'preview').catch(() => null);
+                                    if (preview) return preview;
+                                    return await sock.profilePictureUrl(grp.id, 'image').catch(() => null);
+                                })(),
+                                new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500))
+                            ]);
+                            grp.pictureUrl = url || null;
+                        } catch {
+                            grp.pictureUrl = null;
+                        }
+                    } else {
+                        grp.pictureUrl = null;
+                    }
+                })
+            );
 
             // Return all groups with natural sorting
             const groups = Array.from(groupsMap.values()).sort((a, b) => {
@@ -344,6 +379,30 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             });
 
             return { status: 200, data: { ok: true, groups } };
+        }
+        case '/internal/groups/photo': {
+            const jid = String(body.jid || '').trim();
+            if (!jid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+
+            let sock = activeConnections.get('default');
+            const userJid = body.userJid ? String(body.userJid).trim() : null;
+            if (userJid) {
+                const cleanPhone = userJid.replace(/\D/g, '');
+                const subSock = activeConnections.get(`sub_${cleanPhone}`);
+                if (subSock) sock = subSock;
+            }
+
+            if (!sock) {
+                return { status: 503, data: { error: 'BOT_OFFLINE' } };
+            }
+
+            try {
+                const preview = await sock.profilePictureUrl(jid, 'preview').catch(() => null);
+                const url = preview || (await sock.profilePictureUrl(jid, 'image').catch(() => null));
+                return { status: 200, data: { ok: true, pictureUrl: url || null } };
+            } catch {
+                return { status: 200, data: { ok: true, pictureUrl: null } };
+            }
         }
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };
