@@ -9,6 +9,7 @@ import { groupRoutes } from './routes/groups.js';
 import { subbotRoutes } from './routes/subbots.js';
 import { internalRoutes } from './routes/internal.js';
 import { wsRoutes } from './routes/ws.js';
+import { systemRoutes } from './routes/system.js';
 
 export function buildApp(): FastifyInstance {
     const app = Fastify({
@@ -42,6 +43,7 @@ export function buildApp(): FastifyInstance {
     app.register(adminRoutes, { prefix: '/api/v1/admin' });
     app.register(groupRoutes, { prefix: '/api/v1/groups' });
     app.register(subbotRoutes, { prefix: '/api/v1/subbots' });
+    app.register(systemRoutes, { prefix: '/api/v1/system' });
     app.register(internalRoutes, { prefix: '/internal' });
     app.register(wsRoutes, { prefix: '/ws' });
 
