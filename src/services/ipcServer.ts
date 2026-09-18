@@ -194,6 +194,32 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             if (!userJid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
 
             const cleanPhone = userJid.replace(/\D/g, '');
+            const cleanId = (idStr?: string | null) => (idStr ? idStr.split(':')[0].split('@')[0] : null);
+
+            let dbUserLid: string | null = null;
+            try {
+                const dbUser = await prisma.user.findUnique({ where: { id: userJid } });
+                dbUserLid = dbUser?.lid || null;
+            } catch {
+                /* ignore db lookup error */
+            }
+
+            const userClean = cleanId(userJid) || cleanPhone;
+            const userCleanLid = cleanId(dbUserLid);
+
+            const isUserParticipant = (p: { id?: string; lid?: string }): boolean => {
+                const pCleanId = cleanId(p.id);
+                const pCleanLid = cleanId(p.lid);
+
+                if (userClean && (pCleanId === userClean || pCleanLid === userClean)) {
+                    return true;
+                }
+                if (userCleanLid && (pCleanId === userCleanLid || pCleanLid === userCleanLid)) {
+                    return true;
+                }
+                return false;
+            };
+
             const groupsMap = new Map<
                 string,
                 {
@@ -230,26 +256,24 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 console.warn('[IPC] Error finding user sub-bot instances:', err);
             }
 
-            // 3. Query all user's sub-bot sockets
-            for (const { sock, isUserAccount } of socketsToQuery) {
+            // 3. Query all user's sub-bot sockets - all groups are visible whether admin or member
+            for (const { sock } of socketsToQuery) {
                 try {
                     const fetched: Record<string, GroupMetadata> = await sock.groupFetchAllParticipating();
                     if (fetched && typeof fetched === 'object') {
                         for (const [id, meta] of Object.entries(fetched)) {
                             if (!id || !id.endsWith('@g.us')) continue;
-                            const myParticipant = meta.participants?.find(
-                                (p) => p.id === userJid || p.id?.replace(/\D/g, '') === cleanPhone
+                            const myParticipant = meta.participants?.find((p) => isUserParticipant(p));
+                            const isAdmin = Boolean(
+                                myParticipant?.admin === 'admin' || myParticipant?.admin === 'superadmin'
                             );
-                            const isAdmin = isUserAccount
-                                ? myParticipant?.admin === 'admin' || myParticipant?.admin === 'superadmin'
-                                : false;
 
                             groupsMap.set(id, {
                                 id,
                                 subject: meta.subject || 'WhatsApp Group',
                                 size: meta.participants?.length || meta.size || 0,
                                 desc: typeof meta.desc === 'string' ? meta.desc : undefined,
-                                isAdmin: Boolean(isAdmin)
+                                isAdmin
                             });
                         }
                     }
@@ -258,32 +282,32 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 }
             }
 
-            // 4. Also check main bot socket for shared groups
+            // 4. Also check main bot socket for shared groups where user is a participant (admin or member)
+            let defaultFetched: Record<string, GroupMetadata> | null = null;
             const defaultSock = activeConnections.get('default');
             if (defaultSock) {
                 try {
-                    const fetched: Record<string, GroupMetadata> = await defaultSock.groupFetchAllParticipating();
-                    if (fetched && typeof fetched === 'object') {
-                        for (const [id, meta] of Object.entries(fetched)) {
+                    defaultFetched = await defaultSock.groupFetchAllParticipating();
+                    if (defaultFetched && typeof defaultFetched === 'object') {
+                        for (const [id, meta] of Object.entries(defaultFetched)) {
                             if (!id || !id.endsWith('@g.us')) continue;
-                            const myParticipant = meta.participants?.find(
-                                (p) => p.id === userJid || p.id?.replace(/\D/g, '') === cleanPhone
-                            );
+                            const myParticipant = meta.participants?.find((p) => isUserParticipant(p));
+                            // Include group if user is a member (admin or regular participant)
                             if (myParticipant) {
-                                const isAdmin = myParticipant.admin === 'admin' || myParticipant.admin === 'superadmin';
+                                const isAdmin = Boolean(
+                                    myParticipant.admin === 'admin' || myParticipant.admin === 'superadmin'
+                                );
                                 if (!groupsMap.has(id)) {
                                     groupsMap.set(id, {
                                         id,
                                         subject: meta.subject || 'WhatsApp Group',
                                         size: meta.participants?.length || meta.size || 0,
                                         desc: typeof meta.desc === 'string' ? meta.desc : undefined,
-                                        isAdmin: Boolean(isAdmin)
+                                        isAdmin
                                     });
-                                } else {
+                                } else if (isAdmin) {
                                     const existing = groupsMap.get(id)!;
-                                    if (isAdmin && !existing.isAdmin) {
-                                        existing.isAdmin = true;
-                                    }
+                                    existing.isAdmin = true;
                                 }
                             }
                         }
@@ -293,9 +317,29 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 }
             }
 
+            // 5. Ensure all whitelisted groups registered by this user in the database are included
+            try {
+                const userWhitelisted = await prisma.whitelistedGroup.findMany({
+                    where: { ownerJid: userJid }
+                });
+                for (const wg of userWhitelisted) {
+                    if (!groupsMap.has(wg.jid)) {
+                        const meta = defaultFetched?.[wg.jid];
+                        groupsMap.set(wg.jid, {
+                            id: wg.jid,
+                            subject: meta?.subject || 'WhatsApp Group',
+                            size: meta?.participants?.length || meta?.size || 0,
+                            desc: typeof meta?.desc === 'string' ? meta.desc : undefined,
+                            isAdmin: false
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn('[IPC] Error resolving user whitelisted groups from database:', err);
+            }
+
+            // Return all groups with natural sorting
             const groups = Array.from(groupsMap.values()).sort((a, b) => {
-                if (a.isAdmin && !b.isAdmin) return -1;
-                if (!a.isAdmin && b.isAdmin) return 1;
                 return a.subject.localeCompare(b.subject);
             });
 
