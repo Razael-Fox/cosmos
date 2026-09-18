@@ -206,6 +206,22 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             });
         }
 
+        if (ipcRes.data?.discoveredUsername && !metadata.username) {
+            metadata.username = ipcRes.data.discoveredUsername;
+            await prisma.otpVerification
+                .updateMany({
+                    where: {
+                        phoneNumber: cleanPhone,
+                        purpose: 'REGISTRATION',
+                        isUsed: false
+                    },
+                    data: {
+                        metadata: JSON.stringify(metadata)
+                    }
+                })
+                .catch(() => {});
+        }
+
         return reply.send({
             expiresIn,
             message: 'OTP verification code has been dispatched to your WhatsApp.'

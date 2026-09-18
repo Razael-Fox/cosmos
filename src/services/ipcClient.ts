@@ -74,8 +74,14 @@ export function sendIpcCommand<T = unknown>(
     });
 }
 
-export async function sendOtpViaIpc(targetJid: string, code: string): Promise<IpcResponse> {
-    return sendIpcCommand('/internal/auth/send-otp', { targetJid, code });
+export async function sendOtpViaIpc(
+    targetJid: string,
+    code: string
+): Promise<IpcResponse<{ ok: boolean; discoveredUsername?: string | null }>> {
+    return sendIpcCommand<{ ok: boolean; discoveredUsername?: string | null }>('/internal/auth/send-otp', {
+        targetJid,
+        code
+    });
 }
 
 export async function notifyLoginViaIpc(data: {
