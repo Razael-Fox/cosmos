@@ -159,78 +159,104 @@ export default function PricingPage() {
                         </h3>
                     </div>
 
-                    <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
-                        <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                            <thead>
-                                <tr className="border-b border-border bg-muted/60 sticky top-16 z-20">
-                                    <th
-                                        scope="col"
-                                        className="p-4 font-bold text-foreground sticky left-0 bg-muted/80 backdrop-blur-xs z-30 min-w-[180px]"
-                                    >
-                                        {headers.feature}
-                                    </th>
-                                    <th scope="col" className="p-4 font-bold text-foreground text-center min-w-[110px]">
-                                        {headers.free}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="p-4 font-bold text-foreground text-center bg-primary/10 min-w-[120px]"
-                                    >
-                                        {headers.subsidized}
-                                    </th>
-                                    <th scope="col" className="p-4 font-bold text-foreground text-center min-w-[120px]">
-                                        {headers.partner}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {comparisonRows.map((row, idx) => (
-                                    <tr
-                                        key={idx}
-                                        className={`transition-colors hover:bg-muted/30 ${
-                                            idx % 2 === 0 ? 'bg-card' : 'bg-muted/15'
-                                        }`}
-                                    >
-                                        <td className="p-4 font-medium text-foreground sticky left-0 bg-card z-10">
-                                            {row.feature}
-                                        </td>
-                                        <td className="p-4 text-center text-muted-foreground">
-                                            {typeof row.free === 'boolean' ? (
-                                                row.free ? (
-                                                    <Check className="w-4 h-4 text-emerald-500 mx-auto" weight="bold" />
-                                                ) : (
-                                                    <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
-                                                )
-                                            ) : (
-                                                row.free
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center font-medium text-foreground bg-primary/5">
-                                            {typeof row.subsidized === 'boolean' ? (
-                                                row.subsidized ? (
-                                                    <Check className="w-4 h-4 text-emerald-500 mx-auto" weight="bold" />
-                                                ) : (
-                                                    <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
-                                                )
-                                            ) : (
-                                                row.subsidized
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center font-medium text-foreground">
-                                            {typeof row.partner === 'boolean' ? (
-                                                row.partner ? (
-                                                    <Check className="w-4 h-4 text-emerald-500 mx-auto" weight="bold" />
-                                                ) : (
-                                                    <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
-                                                )
-                                            ) : (
-                                                row.partner
-                                            )}
-                                        </td>
+                    <div className="relative rounded-2xl border border-border bg-card shadow-xs">
+                        <div className="overflow-x-auto rounded-2xl">
+                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[580px]">
+                                <thead>
+                                    <tr className="border-b border-border bg-muted/70">
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground sticky left-0 bg-muted border-r border-border z-20 min-w-[200px] sm:min-w-[240px]"
+                                        >
+                                            {headers.feature}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground text-center min-w-[110px] sm:min-w-[130px]"
+                                        >
+                                            {headers.free}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-primary text-center bg-primary/10 border-x border-primary/20 min-w-[120px] sm:min-w-[140px]"
+                                        >
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span>{headers.subsidized}</span>
+                                                <span className="text-[10px] font-normal uppercase tracking-wider text-primary/80 font-mono">
+                                                    Popular
+                                                </span>
+                                            </div>
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground text-center min-w-[110px] sm:min-w-[130px]"
+                                        >
+                                            {headers.partner}
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {comparisonRows.map((row, idx) => {
+                                        const isEven = idx % 2 === 0;
+                                        const rowBg = isEven ? 'bg-card' : 'bg-muted/20';
+                                        return (
+                                            <tr
+                                                key={idx}
+                                                className={`group transition-colors hover:bg-muted/40 ${rowBg}`}
+                                            >
+                                                <td
+                                                    className={`px-4 py-3.5 sm:px-6 sm:py-4 font-medium text-foreground sticky left-0 border-r border-border z-10 transition-colors ${rowBg} group-hover:bg-muted/40`}
+                                                >
+                                                    {row.feature}
+                                                </td>
+                                                <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-center text-muted-foreground">
+                                                    {typeof row.free === 'boolean' ? (
+                                                        row.free ? (
+                                                            <Check
+                                                                className="w-4 h-4 text-emerald-500 mx-auto"
+                                                                weight="bold"
+                                                            />
+                                                        ) : (
+                                                            <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        row.free
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-center font-medium text-foreground bg-primary/[0.04] border-x border-primary/20 group-hover:bg-primary/[0.08] transition-colors">
+                                                    {typeof row.subsidized === 'boolean' ? (
+                                                        row.subsidized ? (
+                                                            <Check
+                                                                className="w-4 h-4 text-emerald-500 mx-auto"
+                                                                weight="bold"
+                                                            />
+                                                        ) : (
+                                                            <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        row.subsidized
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-center font-medium text-foreground">
+                                                    {typeof row.partner === 'boolean' ? (
+                                                        row.partner ? (
+                                                            <Check
+                                                                className="w-4 h-4 text-emerald-500 mx-auto"
+                                                                weight="bold"
+                                                            />
+                                                        ) : (
+                                                            <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        row.partner
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </Container>
             </section>
