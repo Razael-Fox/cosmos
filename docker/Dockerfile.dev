@@ -58,6 +58,7 @@ COPY .worktrees/website/app ./app
 COPY .worktrees/website/components ./components
 COPY .worktrees/website/lib ./lib
 ENV NODE_ENV=development \
-    PORT=3000
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
 EXPOSE 3000
 CMD ["pnpm", "dev"]
