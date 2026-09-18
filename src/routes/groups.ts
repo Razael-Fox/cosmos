@@ -50,7 +50,8 @@ export const groupRoutes: FastifyPluginAsync = async (fastify) => {
             size: g.size,
             desc: g.desc,
             isAdmin: Boolean(g.isAdmin),
-            isWhitelisted: whitelistedSet.has(g.id)
+            isWhitelisted: whitelistedSet.has(g.id),
+            pictureUrl: g.pictureUrl || null
         }));
 
         // Guarantee all whitelisted groups owned by user remain visible regardless of bot cache or admin status
@@ -62,7 +63,8 @@ export const groupRoutes: FastifyPluginAsync = async (fastify) => {
                     size: 0,
                     desc: undefined,
                     isAdmin: false,
-                    isWhitelisted: true
+                    isWhitelisted: true,
+                    pictureUrl: null
                 });
             }
         }

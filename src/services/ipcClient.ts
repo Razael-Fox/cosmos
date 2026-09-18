@@ -150,6 +150,7 @@ export interface ParticipatingGroupIpcItem {
     size: number;
     desc?: string;
     isAdmin?: boolean;
+    pictureUrl?: string | null;
 }
 
 export async function fetchParticipatingGroupsViaIpc(
