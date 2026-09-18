@@ -159,57 +159,57 @@ export default function PricingPage() {
                         </h3>
                     </div>
 
-                    <div className="relative rounded-2xl border border-border bg-card shadow-xs">
-                        <div className="overflow-x-auto rounded-2xl">
-                            <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[580px]">
+                    <div className="relative rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-separate border-spacing-0 text-xs sm:text-sm min-w-[580px]">
                                 <thead>
-                                    <tr className="border-b border-border bg-muted/70">
+                                    <tr className="bg-muted">
                                         <th
                                             scope="col"
-                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground sticky left-0 bg-muted border-r border-border z-20 min-w-[200px] sm:min-w-[240px]"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground sticky left-0 bg-muted border-b border-r border-border z-20 min-w-[200px] sm:min-w-[240px] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)] dark:shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)] [transform:translateZ(0)]"
                                         >
                                             {headers.feature}
                                         </th>
                                         <th
                                             scope="col"
-                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground text-center min-w-[110px] sm:min-w-[130px]"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground text-center border-b border-border min-w-[110px] sm:min-w-[130px]"
                                         >
                                             {headers.free}
                                         </th>
                                         <th
                                             scope="col"
-                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-primary text-center bg-primary/10 border-x border-primary/20 min-w-[120px] sm:min-w-[140px]"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-primary text-center bg-primary/10 border-b border-x border-primary/25 min-w-[120px] sm:min-w-[140px]"
                                         >
                                             <div className="flex flex-col items-center gap-0.5">
                                                 <span>{headers.subsidized}</span>
-                                                <span className="text-[10px] font-normal uppercase tracking-wider text-primary/80 font-mono">
+                                                <span className="text-[10px] font-normal uppercase tracking-wider text-primary font-mono">
                                                     Popular
                                                 </span>
                                             </div>
                                         </th>
                                         <th
                                             scope="col"
-                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground text-center min-w-[110px] sm:min-w-[130px]"
+                                            className="px-4 py-3.5 sm:px-6 sm:py-4 font-bold text-foreground text-center border-b border-border min-w-[110px] sm:min-w-[130px]"
                                         >
                                             {headers.partner}
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-border">
+                                <tbody>
                                     {comparisonRows.map((row, idx) => {
-                                        const isEven = idx % 2 === 0;
-                                        const rowBg = isEven ? 'bg-card' : 'bg-muted/20';
+                                        const isLast = idx === comparisonRows.length - 1;
+                                        const borderBottom = isLast ? '' : 'border-b border-border';
                                         return (
                                             <tr
                                                 key={idx}
-                                                className={`group transition-colors hover:bg-muted/40 ${rowBg}`}
+                                                className="group transition-colors bg-card hover:bg-muted/40"
                                             >
                                                 <td
-                                                    className={`px-4 py-3.5 sm:px-6 sm:py-4 font-medium text-foreground sticky left-0 border-r border-border z-10 transition-colors ${rowBg} group-hover:bg-muted/40`}
+                                                    className={`px-4 py-3.5 sm:px-6 sm:py-4 font-medium text-foreground sticky left-0 bg-card group-hover:bg-muted transition-colors border-r border-border z-10 min-w-[200px] sm:min-w-[240px] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)] dark:shadow-[4px_0_8px_-2px_rgba(0,0,0,0.3)] [transform:translateZ(0)] ${borderBottom}`}
                                                 >
                                                     {row.feature}
                                                 </td>
-                                                <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-center text-muted-foreground">
+                                                <td className={`px-4 py-3.5 sm:px-6 sm:py-4 text-center text-muted-foreground ${borderBottom}`}>
                                                     {typeof row.free === 'boolean' ? (
                                                         row.free ? (
                                                             <Check
@@ -223,7 +223,7 @@ export default function PricingPage() {
                                                         row.free
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-center font-medium text-foreground bg-primary/[0.04] border-x border-primary/20 group-hover:bg-primary/[0.08] transition-colors">
+                                                <td className={`px-4 py-3.5 sm:px-6 sm:py-4 text-center font-medium text-foreground bg-primary/[0.04] border-x border-primary/20 group-hover:bg-primary/[0.08] transition-colors ${borderBottom}`}>
                                                     {typeof row.subsidized === 'boolean' ? (
                                                         row.subsidized ? (
                                                             <Check
@@ -237,7 +237,7 @@ export default function PricingPage() {
                                                         row.subsidized
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-center font-medium text-foreground">
+                                                <td className={`px-4 py-3.5 sm:px-6 sm:py-4 text-center font-medium text-foreground ${borderBottom}`}>
                                                     {typeof row.partner === 'boolean' ? (
                                                         row.partner ? (
                                                             <Check
