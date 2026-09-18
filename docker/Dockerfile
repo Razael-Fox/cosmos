@@ -16,6 +16,8 @@ COPY src ./src
 COPY scripts ./scripts
 COPY assets ./assets
 RUN pnpm config set package-import-method copy && \
+    pnpm config set fetch-retries 5 && \
+    pnpm config set fetch-retry-maxtimeout 180000 && \
     pnpm install --frozen-lockfile && \
     pnpm exec prisma generate && \
     pnpm build
@@ -31,6 +33,8 @@ COPY .worktrees/api/prisma ./prisma
 COPY .worktrees/api/prisma.config.ts ./
 COPY .worktrees/api/src ./src
 RUN pnpm config set package-import-method copy && \
+    pnpm config set fetch-retries 5 && \
+    pnpm config set fetch-retry-maxtimeout 180000 && \
     pnpm install --frozen-lockfile && \
     pnpm exec prisma generate && \
     pnpm build
@@ -61,6 +65,8 @@ ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
     NEXT_PUBLIC_SALES_NUMBER=$NEXT_PUBLIC_SALES_NUMBER
 
 RUN pnpm config set package-import-method copy && \
+    pnpm config set fetch-retries 5 && \
+    pnpm config set fetch-retry-maxtimeout 180000 && \
     pnpm install --frozen-lockfile && \
     pnpm build
 
