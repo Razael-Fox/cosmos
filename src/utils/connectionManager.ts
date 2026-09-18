@@ -286,7 +286,7 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
 
                 if (existing) {
                     let newUsername = existing.username;
-                    if (!newUsername) {
+                    if (!newUsername || newUsername === existing.pushName) {
                         const candidate = waUsername || waName;
                         if (candidate) {
                             const collision = await sessionPrisma.user.findFirst({

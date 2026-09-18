@@ -170,32 +170,60 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     }
 
     if (senderJidDb) {
-        const canonicalJid = `${senderJidDb.replace(/\D/g, '')}@s.whatsapp.net`;
-        // Fire and forget db upsert to ensure JID/LID mapping is saved
-        prisma.user
-            .upsert({
-                where: { id: senderJidDb },
-                update: {
-                    ...(senderLidDb ? { lid: senderLidDb } : {}),
-                    ...(msg.pushName ? { pushName: msg.pushName } : {})
-                },
-                create: {
-                    id: senderJidDb,
-                    lid: senderLidDb || null,
-                    pushName: msg.pushName || null
-                }
-            })
-            .then(() => {
-                if (msg.pushName && canonicalJid !== senderJidDb) {
-                    return prisma.user.updateMany({
-                        where: { id: canonicalJid },
-                        data: { pushName: msg.pushName }
+        const cleanDigits = senderJidDb.replace(/\D/g, '');
+        const canonicalJid = cleanDigits ? `${cleanDigits}@s.whatsapp.net` : senderJidDb;
+        const newWaName = msg.pushName?.trim() || null;
+
+        (async () => {
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        OR: [{ id: senderJidDb }, { id: canonicalJid }, ...(cleanDigits ? [{ id: cleanDigits }] : [])]
+                    }
+                });
+
+                if (user) {
+                    let updatedUsername: string | undefined = undefined;
+                    // If user has no username, or their username was tracking their previous WhatsApp name
+                    if (newWaName && (!user.username || user.username === user.pushName)) {
+                        const collision = await prisma.user.findFirst({
+                            where: { username: newWaName, NOT: { id: user.id } }
+                        });
+                        updatedUsername = collision
+                            ? cleanDigits
+                                ? `${newWaName}_${cleanDigits.slice(-4)}`
+                                : undefined
+                            : newWaName;
+                    }
+
+                    await prisma.user.updateMany({
+                        where: {
+                            OR: [
+                                { id: senderJidDb },
+                                { id: canonicalJid },
+                                ...(cleanDigits ? [{ id: cleanDigits }] : [])
+                            ]
+                        },
+                        data: {
+                            ...(newWaName ? { pushName: newWaName } : {}),
+                            ...(updatedUsername ? { username: updatedUsername } : {}),
+                            ...(senderLidDb ? { lid: senderLidDb } : {})
+                        }
+                    });
+                } else {
+                    await prisma.user.create({
+                        data: {
+                            id: senderJidDb,
+                            lid: senderLidDb || null,
+                            pushName: newWaName,
+                            username: newWaName
+                        }
                     });
                 }
-            })
-            .catch(() => {
+            } catch {
                 /* ignore */
-            });
+            }
+        })();
     }
 
     const senderRaw = senderJidDb || senderLidDb || '';
