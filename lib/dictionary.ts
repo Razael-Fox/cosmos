@@ -288,11 +288,14 @@ const rawDictionary = {
                 quotaReachedNotice:
                     'Batas whitelist telah mencapai batas maksimum sesuai paket Anda. Untuk menambahkan grup baru, hapus salah satu grup dari daftar.',
                 accountGroupsTitle: 'Pilih Grup WhatsApp',
-                accountGroupsSubtitle: 'Daftar grup yang diambil langsung dari akun WhatsApp Anda.',
+                accountGroupsSubtitle:
+                    'Daftar grup tempat bot bergabung bersama Anda, atau dari sub-bot Anda yang terhubung.',
+                botInviteNotice:
+                    'Bot harus diundang ke grup WhatsApp terlebih dahulu agar dapat terdeteksi, kecuali jika akun Anda terhubung sebagai sub-bot.',
                 searchPlaceholder: 'Cari grup berdasarkan nama atau JID...',
-                noAccountGroupsFound: 'Tidak ada grup WhatsApp yang ditemukan di akun Anda.',
+                noAccountGroupsFound: 'Tidak ada grup bersama yang terdeteksi.',
                 noAccountGroupsHint:
-                    'Pastikan sub-bot WhatsApp Anda telah terhubung dan aktif, atau masukkan JID grup secara manual.',
+                    'Pastikan bot telah dimasukkan ke dalam grup WhatsApp Anda, atau hubungkan akun Anda sebagai sub-bot. Anda juga dapat memasukkan JID grup secara manual di bawah.',
                 membersCount: '{count} anggota',
                 addToWhitelist: 'Tambah ke Whitelist',
                 alreadyWhitelisted: 'Ter-whitelist',
@@ -647,11 +650,14 @@ const rawDictionary = {
                 quotaReachedNotice:
                     'The whitelist has reached its limit based on your plan. To add more groups, remove one from the list.',
                 accountGroupsTitle: 'Select WhatsApp Groups',
-                accountGroupsSubtitle: 'Groups retrieved directly from your connected WhatsApp account.',
+                accountGroupsSubtitle:
+                    'Groups where the bot is a member with you, or from your linked sub-bot account.',
+                botInviteNotice:
+                    'The bot must be invited to your WhatsApp group first to be detected, unless your account is linked as a sub-bot.',
                 searchPlaceholder: 'Search groups by name or JID...',
-                noAccountGroupsFound: 'No WhatsApp groups detected on your account.',
+                noAccountGroupsFound: 'No shared groups detected.',
                 noAccountGroupsHint:
-                    'Make sure your WhatsApp sub-bot is linked and active, or enter the group JID manually.',
+                    'Make sure the bot has been added to your WhatsApp group, or link your account as a sub-bot. You can also enter the group JID manually below.',
                 membersCount: '{count} members',
                 addToWhitelist: 'Add to Whitelist',
                 alreadyWhitelisted: 'Whitelisted',

@@ -20,7 +20,8 @@ import {
     ArrowsClockwise,
     MagnifyingGlass,
     CaretDown,
-    CaretUp
+    CaretUp,
+    Info
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { getRandomTimeQuote } from '@/lib/timeQuotes';
@@ -1022,6 +1023,12 @@ export default function DashboardPage() {
                                     placeholder={t.dashboard.groupsCard.searchPlaceholder}
                                     className="w-full pl-10 pr-4 py-2 rounded-xl border border-border bg-background text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                                 />
+                            </div>
+
+                            {/* Bot Presence Notice */}
+                            <div className="flex items-start gap-2 p-2.5 rounded-xl bg-primary/5 border border-primary/15 text-[11px] leading-relaxed text-muted-foreground">
+                                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" weight="bold" />
+                                <span>{t.dashboard.groupsCard.botInviteNotice}</span>
                             </div>
 
                             {/* Group List Body (Scrollable) */}
