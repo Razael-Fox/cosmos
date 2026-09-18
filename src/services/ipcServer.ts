@@ -5,6 +5,7 @@ import { prisma } from '#db.js';
 import { timingSafeStringCompare } from './otpService.js';
 import { dispatchLoginSecurityAlert } from './securityAlertService.js';
 import { activeConnections } from '#utils/connectionManager.js';
+import type { WASocket, GroupMetadata } from '@whiskeysockets/baileys';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
 
@@ -187,6 +188,118 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 console.error('[IPC] Sub-bot deletion failed:', err);
                 return { status: 500, data: { error: 'DELETE_FAILED' } };
             }
+        }
+        case '/internal/groups/participating': {
+            const userJid = String(body.userJid || '').trim();
+            if (!userJid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+
+            const cleanPhone = userJid.replace(/\D/g, '');
+            const groupsMap = new Map<
+                string,
+                {
+                    id: string;
+                    subject: string;
+                    size: number;
+                    desc?: string;
+                    isAdmin: boolean;
+                }
+            >();
+
+            // Find all active socket connections belonging to or associated with this user
+            const socketsToQuery: Array<{ sock: WASocket; isUserAccount: boolean }> = [];
+
+            // 1. Direct sub-bot matching user's phone number
+            const directSubSock = activeConnections.get(`sub_${cleanPhone}`);
+            if (directSubSock) {
+                socketsToQuery.push({ sock: directSubSock, isUserAccount: true });
+            }
+
+            // 2. Any other sub-bots registered by this user
+            try {
+                const subBots = await prisma.subBotInstance.findMany({
+                    where: { ownerJid: userJid, status: 'ACTIVE' }
+                });
+                for (const sub of subBots) {
+                    if (sub.id === cleanPhone) continue;
+                    const sock = activeConnections.get(`sub_${sub.id}`);
+                    if (sock) {
+                        socketsToQuery.push({ sock, isUserAccount: true });
+                    }
+                }
+            } catch (err) {
+                console.warn('[IPC] Error finding user sub-bot instances:', err);
+            }
+
+            // 3. Query all user's sub-bot sockets
+            for (const { sock, isUserAccount } of socketsToQuery) {
+                try {
+                    const fetched: Record<string, GroupMetadata> = await sock.groupFetchAllParticipating();
+                    if (fetched && typeof fetched === 'object') {
+                        for (const [id, meta] of Object.entries(fetched)) {
+                            if (!id || !id.endsWith('@g.us')) continue;
+                            const myParticipant = meta.participants?.find(
+                                (p) => p.id === userJid || p.id?.replace(/\D/g, '') === cleanPhone
+                            );
+                            const isAdmin = isUserAccount
+                                ? myParticipant?.admin === 'admin' || myParticipant?.admin === 'superadmin'
+                                : false;
+
+                            groupsMap.set(id, {
+                                id,
+                                subject: meta.subject || 'WhatsApp Group',
+                                size: meta.participants?.length || meta.size || 0,
+                                desc: typeof meta.desc === 'string' ? meta.desc : undefined,
+                                isAdmin: Boolean(isAdmin)
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[IPC] Error fetching groups from sub-bot socket:', err);
+                }
+            }
+
+            // 4. Also check main bot socket for shared groups
+            const defaultSock = activeConnections.get('default');
+            if (defaultSock) {
+                try {
+                    const fetched: Record<string, GroupMetadata> = await defaultSock.groupFetchAllParticipating();
+                    if (fetched && typeof fetched === 'object') {
+                        for (const [id, meta] of Object.entries(fetched)) {
+                            if (!id || !id.endsWith('@g.us')) continue;
+                            const myParticipant = meta.participants?.find(
+                                (p) => p.id === userJid || p.id?.replace(/\D/g, '') === cleanPhone
+                            );
+                            if (myParticipant) {
+                                const isAdmin = myParticipant.admin === 'admin' || myParticipant.admin === 'superadmin';
+                                if (!groupsMap.has(id)) {
+                                    groupsMap.set(id, {
+                                        id,
+                                        subject: meta.subject || 'WhatsApp Group',
+                                        size: meta.participants?.length || meta.size || 0,
+                                        desc: typeof meta.desc === 'string' ? meta.desc : undefined,
+                                        isAdmin: Boolean(isAdmin)
+                                    });
+                                } else {
+                                    const existing = groupsMap.get(id)!;
+                                    if (isAdmin && !existing.isAdmin) {
+                                        existing.isAdmin = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[IPC] Error fetching groups from main bot socket:', err);
+                }
+            }
+
+            const groups = Array.from(groupsMap.values()).sort((a, b) => {
+                if (a.isAdmin && !b.isAdmin) return -1;
+                if (!a.isAdmin && b.isAdmin) return 1;
+                return a.subject.localeCompare(b.subject);
+            });
+
+            return { status: 200, data: { ok: true, groups } };
         }
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };
