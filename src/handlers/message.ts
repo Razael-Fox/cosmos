@@ -170,6 +170,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     }
 
     if (senderJidDb) {
+        const canonicalJid = `${senderJidDb.replace(/\D/g, '')}@s.whatsapp.net`;
         // Fire and forget db upsert to ensure JID/LID mapping is saved
         prisma.user
             .upsert({
@@ -182,6 +183,14 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     id: senderJidDb,
                     lid: senderLidDb || null,
                     pushName: msg.pushName || null
+                }
+            })
+            .then(() => {
+                if (msg.pushName && canonicalJid !== senderJidDb) {
+                    return prisma.user.updateMany({
+                        where: { id: canonicalJid },
+                        data: { pushName: msg.pushName }
+                    });
                 }
             })
             .catch(() => {

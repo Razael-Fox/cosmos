@@ -96,6 +96,18 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         })
     ]);
 
+    if (phoneNumber && phoneNumber !== jid) {
+        await prisma.user
+            .updateMany({
+                where: { id: phoneNumber },
+                data: {
+                    ...(waName ? { pushName: waName } : {}),
+                    ...(resolvedUsername ? { username: resolvedUsername } : {})
+                }
+            })
+            .catch(() => {});
+    }
+
     try {
         await ctx.sock.sendMessage(jid, {
             text: ctx.t('tools.verify.success')
