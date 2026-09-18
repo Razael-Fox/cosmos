@@ -22,7 +22,21 @@ import type {
     SystemStatusResponse
 } from './types';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+export function getApiBaseUrl(): string {
+    const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+    if (typeof window !== 'undefined') {
+        // If client is accessed via a non-localhost host (e.g. mobile IP or remote domain),
+        // but envUrl points to localhost, fall back to relative URL ("") so the browser
+        // requests the server hosting the app rather than localhost on the client's device.
+        const isClientLocalhost =
+            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!isClientLocalhost && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+            return '';
+        }
+    }
+    return envUrl;
+}
+
 const TOKEN_STORAGE_KEY = 'cosmos_jwt_token';
 const USER_STORAGE_KEY = 'cosmos_user_profile';
 
@@ -99,7 +113,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const baseUrl = getApiBaseUrl();
+    const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
     const response = await fetch(url, {
         ...options,
@@ -323,7 +338,8 @@ export async function deleteSubBot(phone: string): Promise<{ success: boolean }>
 // -------------------------------------------------------------
 
 function getWebSocketUrl(pathWithQuery: string): string {
-    const origin = API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const baseUrl = getApiBaseUrl();
+    const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
     const wsProtocol = origin.startsWith('https') ? 'wss:' : 'ws:';
     const cleanHost = origin.replace(/^https?:\/\//, '');
     const path = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;

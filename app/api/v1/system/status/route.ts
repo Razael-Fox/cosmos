@@ -18,7 +18,7 @@ function formatHumanUptime(seconds: number): string {
 
 export async function GET() {
     // Attempt to proxy to backend Fastify API if running
-    const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://api:4000';
     if (apiUrl) {
         try {
             const controller = new AbortController();
