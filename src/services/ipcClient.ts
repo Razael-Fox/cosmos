@@ -143,3 +143,22 @@ export async function getSubBotPairingStateViaIpc(phone: string): Promise<IpcRes
 export async function deleteSubBotViaIpc(phone: string): Promise<IpcResponse<{ ok?: boolean }>> {
     return sendIpcCommand<{ ok?: boolean }>('/internal/subbots/delete', { phone }, config.BOT_IPC_SOCKET, 8000);
 }
+
+export interface ParticipatingGroupIpcItem {
+    id: string;
+    subject: string;
+    size: number;
+    desc?: string;
+    isAdmin?: boolean;
+}
+
+export async function fetchParticipatingGroupsViaIpc(
+    userJid: string
+): Promise<IpcResponse<{ ok: boolean; groups?: ParticipatingGroupIpcItem[] }>> {
+    return sendIpcCommand<{ ok: boolean; groups?: ParticipatingGroupIpcItem[] }>(
+        '/internal/groups/participating',
+        { userJid },
+        config.BOT_IPC_SOCKET,
+        15000
+    );
+}

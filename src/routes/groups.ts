@@ -3,6 +3,7 @@ import { prisma } from '../db.js';
 import { authenticateJwt } from '../middleware/authenticate.js';
 import { deviceValidationPreHandler } from '../middleware/deviceValidation.js';
 import { QuotaService, executeWithUserLock } from '../services/quotaService.js';
+import { fetchParticipatingGroupsViaIpc, type ParticipatingGroupIpcItem } from '../services/ipcClient.js';
 
 export const groupRoutes: FastifyPluginAsync = async (fastify) => {
     // GET /api/v1/groups
@@ -20,6 +21,48 @@ export const groupRoutes: FastifyPluginAsync = async (fastify) => {
                 createdAt: g.createdAt.toISOString()
             }))
         );
+    });
+
+    // GET /api/v1/groups/participating
+    fastify.get('/participating', { preHandler: [authenticateJwt, deviceValidationPreHandler] }, async (req, reply) => {
+        const userId = req.user.id;
+
+        let botGroups: ParticipatingGroupIpcItem[] = [];
+        try {
+            const ipcRes = await fetchParticipatingGroupsViaIpc(userId);
+            if (ipcRes.status === 200 && Array.isArray(ipcRes.data?.groups)) {
+                botGroups = ipcRes.data.groups;
+            }
+        } catch (err) {
+            console.warn('[Groups] Failed to fetch participating groups via IPC:', err);
+        }
+
+        const whitelisted = await prisma.whitelistedGroup.findMany({
+            where: { ownerJid: userId }
+        });
+        const whitelistedSet = new Set(whitelisted.map((g) => g.jid));
+
+        const quota = await QuotaService.getUserQuota(userId);
+
+        const groups = botGroups.map((g) => ({
+            id: g.id,
+            subject: g.subject,
+            size: g.size,
+            desc: g.desc,
+            isAdmin: Boolean(g.isAdmin),
+            isWhitelisted: whitelistedSet.has(g.id)
+        }));
+
+        return reply.send({
+            groups,
+            quota: {
+                current: quota.groups.current,
+                max: quota.groups.max,
+                available: quota.groups.available,
+                tier: quota.tier,
+                isLimitReached: quota.groups.current >= quota.groups.max
+            }
+        });
     });
 
     // POST /api/v1/groups/whitelist
