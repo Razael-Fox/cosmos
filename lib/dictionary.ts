@@ -98,6 +98,8 @@ const rawDictionary = {
             refreshing: 'Menyinkronkan...',
             viewStatus: 'Lihat Status',
             backHome: 'Kembali ke Beranda',
+            back: 'Kembali',
+            slideBackHint: 'Geser ke kanan untuk kembali',
             latency: 'Latensi'
         },
         features: {
@@ -498,6 +500,8 @@ const rawDictionary = {
             refreshing: 'Syncing...',
             viewStatus: 'View Status',
             backHome: 'Back to Home',
+            back: 'Back',
+            slideBackHint: 'Swipe right to go back',
             latency: 'Latency'
         },
         features: {
