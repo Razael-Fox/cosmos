@@ -34,7 +34,12 @@
         "docker:down": "docker compose down",
         "docker:logs": "docker logs cosmos-all-in-one --tail 100",
         "docker:status": "docker inspect cosmos-all-in-one --format 'running: {{.Image}}' && docker images --no-trunc cosmos-all-in-one:latest --format 'latest:  {{.ID}}' && docker exec cosmos-all-in-one /usr/local/bin/pm2 list",
-        "docker:deploy": "./scripts/docker-deploy.sh"
+        "docker:deploy": "./scripts/docker-deploy.sh",
+        "docker:dev": "./scripts/docker-dev.sh",
+        "docker:dev:build": "./scripts/docker-dev.sh build",
+        "docker:dev:up": "./scripts/docker-dev.sh up",
+        "docker:dev:down": "./scripts/docker-dev.sh down",
+        "docker:dev:logs": "./scripts/docker-dev.sh logs"
     },
     "keywords": [],
     "author": "",

@@ -1,0 +1,63 @@
+# syntax=docker/dockerfile:1.4
+ARG NODE_VERSION=22-bookworm-slim
+
+# -------------------------------------------------------------
+# Base Stage for Development
+# -------------------------------------------------------------
+FROM node:${NODE_VERSION} AS dev-base
+RUN corepack enable && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg openssl curl ca-certificates libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+# -------------------------------------------------------------
+# Stage: Bot Engine Dev
+# -------------------------------------------------------------
+FROM dev-base AS bot-dev
+WORKDIR /app/bot
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+COPY assets ./assets
+COPY scripts ./scripts
+RUN pnpm config set package-import-method copy && \
+    pnpm install && \
+    pnpm exec prisma generate
+COPY src ./src
+ENV NODE_ENV=development
+CMD ["pnpm", "dev"]
+
+# -------------------------------------------------------------
+# Stage: API Gateway Dev
+# -------------------------------------------------------------
+FROM dev-base AS api-dev
+WORKDIR /app/api
+COPY .worktrees/api/package.json .worktrees/api/pnpm-lock.yaml .worktrees/api/pnpm-workspace.yaml .worktrees/api/tsconfig.json ./
+COPY .worktrees/api/prisma ./prisma
+COPY .worktrees/api/prisma.config.ts ./
+RUN pnpm config set package-import-method copy && \
+    pnpm install && \
+    pnpm exec prisma generate
+COPY .worktrees/api/src ./src
+ENV NODE_ENV=development \
+    PORT=4000
+EXPOSE 4000
+CMD ["pnpm", "dev"]
+
+# -------------------------------------------------------------
+# Stage: Web Portal Dev
+# -------------------------------------------------------------
+FROM dev-base AS web-dev
+WORKDIR /app/website
+COPY .worktrees/website/package.json .worktrees/website/pnpm-lock.yaml .worktrees/website/pnpm-workspace.yaml .worktrees/website/tsconfig.json ./
+COPY .worktrees/website/next.config.ts .worktrees/website/components.json .worktrees/website/postcss.config.mjs ./
+RUN pnpm config set package-import-method copy && \
+    pnpm install
+COPY .worktrees/website/public ./public
+COPY .worktrees/website/app ./app
+COPY .worktrees/website/components ./components
+COPY .worktrees/website/lib ./lib
+ENV NODE_ENV=development \
+    PORT=3000
+EXPOSE 3000
+CMD ["pnpm", "dev"]

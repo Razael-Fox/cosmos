@@ -1,0 +1,76 @@
+services:
+    bot:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.dev
+            target: bot-dev
+        image: cosmos-bot-dev:latest
+        container_name: cosmos-bot-dev
+        restart: unless-stopped
+        stdin_open: true
+        tty: true
+        env_file:
+            - .env
+        environment:
+            NODE_ENV: development
+            DATABASE_URL: file:/app/storage/database.sqlite
+            BOT_IPC_SOCKET: /app/storage/ipc.sock
+        volumes:
+            - ./src:/app/bot/src
+            - ./assets:/app/bot/assets
+            - ./scripts:/app/bot/scripts
+            - ./storage:/app/storage
+            - /app/bot/node_modules
+
+    api:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.dev
+            target: api-dev
+        image: cosmos-api-dev:latest
+        container_name: cosmos-api-dev
+        restart: unless-stopped
+        ports:
+            - '4000:4000'
+        env_file:
+            - .env
+        environment:
+            NODE_ENV: development
+            PORT: 4000
+            DATABASE_URL: file:/app/storage/database.sqlite
+            BOT_IPC_SOCKET: /app/storage/ipc.sock
+        volumes:
+            - ./.worktrees/api/src:/app/api/src
+            - ./storage:/app/storage
+            - /app/api/node_modules
+        depends_on:
+            - bot
+
+    web:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.dev
+            target: web-dev
+        image: cosmos-web-dev:latest
+        container_name: cosmos-web-dev
+        restart: unless-stopped
+        ports:
+            - '3000:3000'
+        env_file:
+            - .env
+        environment:
+            NODE_ENV: development
+            PORT: 3000
+            NEXT_PUBLIC_API_URL: http://localhost:4000
+            NEXT_PUBLIC_SITE_URL: http://localhost:3000
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+            WATCHPACK_POLLING: 'true'
+        volumes:
+            - ./.worktrees/website/app:/app/website/app
+            - ./.worktrees/website/components:/app/website/components
+            - ./.worktrees/website/lib:/app/website/lib
+            - ./.worktrees/website/public:/app/website/public
+            - /app/website/node_modules
+            - /app/website/.next
+        depends_on:
+            - api
