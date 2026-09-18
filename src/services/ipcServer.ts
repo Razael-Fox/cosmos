@@ -46,7 +46,25 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 text: `🔐 *Cosmos Verification Code*\n\nYour one-time code is: *${code}*\nIt expires in 5 minutes. Do not share this code with anyone.`
             });
             console.log(`[IPC] OTP dispatched to ${targetJid}`);
-            return { status: 200, data: { ok: true } };
+
+            let discoveredUsername: string | null = null;
+            try {
+                const cleanPhone = targetJid.split('@')[0].replace(/\D/g, '');
+                const { USyncQuery, USyncUser } = await import('@whiskeysockets/baileys');
+                const usync = new USyncQuery()
+                    .withContactProtocol()
+                    .withUsernameProtocol()
+                    .withUser(new USyncUser().withPhone(`+${cleanPhone}`));
+                const res = await sock.executeUSyncQuery(usync);
+                const item = res?.list?.[0] as Record<string, unknown> | undefined;
+                if (item && typeof item.username === 'string' && item.username) {
+                    discoveredUsername = item.username;
+                }
+            } catch (err) {
+                console.debug('[IPC] USync query non-fatal error:', err);
+            }
+
+            return { status: 200, data: { ok: true, discoveredUsername } };
         }
         case '/internal/auth/verified': {
             const canonicalJid = String(body.canonicalJid || '');
