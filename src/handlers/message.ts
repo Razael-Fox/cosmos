@@ -109,6 +109,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     console.log('[DEBUG] Message received:', {
         fromMe: msg.key.fromMe,
         remoteJid: msg.key.remoteJid,
+        pushName: msg.pushName,
         text: msg.message.conversation || msg.message.extendedTextMessage?.text || ''
     });
 
@@ -134,9 +135,11 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
     const getJidAndLid = () => {
         if (msg.key.fromMe) {
+            const rawBotJid = sock.user?.id ? cleanId(sock.user.id) : null;
+            const rawBotLid = (sock.user as any)?.lid ? cleanId((sock.user as any).lid) : null;
             return {
-                jidDb: cleanId(sock.user?.id),
-                lidDb: cleanId((sock.user as any)?.lid)
+                jidDb: rawBotJid ? `${rawBotJid}@s.whatsapp.net` : null,
+                lidDb: rawBotLid
             };
         }
         const p = msg.key.participant || msg.key.remoteJid;
@@ -148,9 +151,10 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         const out = { jidDb: null as string | null, lidDb: null as string | null };
         if (p && p.endsWith('@lid')) {
             out.lidDb = cleanId(p);
-            out.jidDb = pAlt ? cleanId(pAlt) : null;
-        } else {
-            out.jidDb = cleanId(p);
+            out.jidDb = pAlt ? `${cleanId(pAlt)}@s.whatsapp.net` : null;
+        } else if (p) {
+            const clean = cleanId(p);
+            out.jidDb = clean ? `${clean}@s.whatsapp.net` : null;
             out.lidDb = pAlt ? cleanId(pAlt) : null;
         }
         return out;
@@ -170,17 +174,20 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     }
 
     if (senderJidDb) {
-        const cleanDigits = senderJidDb.replace(/\D/g, '');
-        const canonicalJid = cleanDigits ? `${cleanDigits}@s.whatsapp.net` : senderJidDb;
+        const canonicalJid = senderJidDb.includes('@')
+            ? senderJidDb
+            : `${senderJidDb.replace(/\D/g, '')}@s.whatsapp.net`;
+        const cleanDigits = canonicalJid.split('@')[0].replace(/\D/g, '');
         const newWaName = msg.pushName?.trim() || null;
 
         (async () => {
             try {
-                const user = await prisma.user.findFirst({
-                    where: {
-                        OR: [{ id: senderJidDb }, { id: canonicalJid }, ...(cleanDigits ? [{ id: cleanDigits }] : [])]
-                    }
-                });
+                // Delete legacy duplicate record if any exists to avoid UNIQUE constraint conflicts
+                if (cleanDigits && cleanDigits !== canonicalJid) {
+                    await prisma.user.delete({ where: { id: cleanDigits } }).catch(() => {});
+                }
+
+                const user = await prisma.user.findUnique({ where: { id: canonicalJid } });
 
                 if (user) {
                     let updatedUsername: string | undefined = undefined;
@@ -196,14 +203,8 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                             : newWaName;
                     }
 
-                    await prisma.user.updateMany({
-                        where: {
-                            OR: [
-                                { id: senderJidDb },
-                                { id: canonicalJid },
-                                ...(cleanDigits ? [{ id: cleanDigits }] : [])
-                            ]
-                        },
+                    await prisma.user.update({
+                        where: { id: canonicalJid },
                         data: {
                             ...(newWaName ? { pushName: newWaName } : {}),
                             ...(updatedUsername ? { username: updatedUsername } : {}),
@@ -213,20 +214,20 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 } else {
                     await prisma.user.create({
                         data: {
-                            id: senderJidDb,
+                            id: canonicalJid,
                             lid: senderLidDb || null,
                             pushName: newWaName,
                             username: newWaName
                         }
                     });
                 }
-            } catch {
-                /* ignore */
+            } catch (err) {
+                console.error('[Message Handler] Error synchronizing user profile:', err);
             }
         })();
     }
 
-    const senderRaw = senderJidDb || senderLidDb || '';
+    const senderRaw = senderJidDb ? cleanId(senderJidDb) || '' : senderLidDb || '';
 
     const sessionStore = dbContext.getStore();
     const currentSessionId = sessionStore?.sessionId || 'default';
