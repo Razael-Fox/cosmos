@@ -154,6 +154,13 @@ down() {
     run_docker docker compose -f "${COMPOSE_FILE}" down "$@"
 }
 
+restart() {
+    echo "[docker-dev] Restarting development containers..."
+    run_docker docker compose -f "${COMPOSE_FILE}" restart "$@"
+    echo "[docker-dev] Restart complete."
+    status
+}
+
 logs() {
     run_docker docker compose -f "${COMPOSE_FILE}" logs -f "$@"
 }
@@ -173,6 +180,7 @@ status() {
     echo "  - WhatsApp Bot:  Interactive / Socket (/app/storage/ipc.sock)"
     echo ""
     echo "[docker-dev] Useful commands:"
+    echo "  - Restart all / one:    ./scripts/docker-dev.sh restart [bot|api|web]"
     echo "  - Tail all logs:        ./scripts/docker-dev.sh logs"
     echo "  - Tail service logs:    ./scripts/docker-dev.sh logs [bot|api|web]"
     echo "  - Pair WhatsApp bot:    ./scripts/docker-dev.sh pair"
@@ -195,6 +203,9 @@ case "${COMMAND}" in
     down|stop)
         down "$@"
         ;;
+    restart)
+        restart "$@"
+        ;;
     logs)
         logs "$@"
         ;;
@@ -209,7 +220,7 @@ case "${COMMAND}" in
         up
         ;;
     *)
-        echo "Usage: $0 {build|up|down|logs|pair|status|dev} [args...]"
+        echo "Usage: $0 {build|up|down|restart|logs|pair|status|dev} [args...]"
         exit 1
         ;;
 esac

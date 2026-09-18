@@ -39,6 +39,7 @@
         "docker:dev:build": "./scripts/docker-dev.sh build",
         "docker:dev:up": "./scripts/docker-dev.sh up",
         "docker:dev:down": "./scripts/docker-dev.sh down",
+        "docker:dev:restart": "./scripts/docker-dev.sh restart",
         "docker:dev:logs": "./scripts/docker-dev.sh logs"
     },
     "keywords": [],
