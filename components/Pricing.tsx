@@ -70,7 +70,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
         {
             id: 'FREE' as SubscriptionTier,
             name: t.pricing.free.name,
-            badge: t.pricing.free.badge,
             price: t.pricing.free.price,
             desc: t.pricing.free.desc,
             features: t.pricing.free.features,
@@ -83,7 +82,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
         {
             id: 'SUBSIDIZED' as SubscriptionTier,
             name: t.pricing.subsidized.name,
-            badge: t.pricing.subsidized.badge,
             price: t.pricing.subsidized.price,
             desc: t.pricing.subsidized.desc,
             features: t.pricing.subsidized.features,
@@ -95,7 +93,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
         {
             id: 'PARTNER' as SubscriptionTier,
             name: t.pricing.partner.name,
-            badge: t.pricing.partner.badge,
             price: t.pricing.partner.price,
             desc: t.pricing.partner.desc,
             features: t.pricing.partner.features,
@@ -154,11 +151,8 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
                             )}
 
                             <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="p-2.5 rounded-2xl bg-muted border border-border">{plan.icon}</div>
-                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
-                                        {plan.badge}
-                                    </span>
+                                <div>
+                                    <div className="w-fit p-2.5 rounded-2xl bg-muted border border-border">{plan.icon}</div>
                                 </div>
 
                                 <div>

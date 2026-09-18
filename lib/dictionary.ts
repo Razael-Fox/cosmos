@@ -144,7 +144,6 @@ const rawDictionary = {
             free: {
                 name: 'Free',
                 price: 'Rp0',
-                badge: 'Pemula',
                 desc: 'Cocok untuk pengguna personal yang ingin mencoba kemampuan bot WhatsApp.',
                 features: [
                     '2 Sub-Bot aktif',
@@ -159,7 +158,6 @@ const rawDictionary = {
             subsidized: {
                 name: 'Subsidized',
                 price: 'Rp10.000',
-                badge: 'Komunitas',
                 desc: 'Pilihan ekonomis terbaik untuk komunitas kecil dan admin grup aktif.',
                 features: [
                     '5 Sub-Bot aktif',
@@ -174,7 +172,6 @@ const rawDictionary = {
             partner: {
                 name: 'Partner',
                 price: 'Rp32.000',
-                badge: 'Enterprise',
                 desc: 'Paket terlengkap untuk pengelola komunitas besar dan bisnis.',
                 features: [
                     '12 Sub-Bot aktif',
@@ -546,7 +543,6 @@ const rawDictionary = {
             free: {
                 name: 'Free',
                 price: 'Rp0',
-                badge: 'Starter',
                 desc: 'Ideal for personal users testing out WhatsApp bot automation capabilities.',
                 features: [
                     '2 Active Sub-Bots',
@@ -561,7 +557,6 @@ const rawDictionary = {
             subsidized: {
                 name: 'Subsidized',
                 price: 'Rp10.000',
-                badge: 'Community',
                 desc: 'Best affordable option for growing communities and active group administrators.',
                 features: [
                     '5 Active Sub-Bots',
@@ -576,7 +571,6 @@ const rawDictionary = {
             partner: {
                 name: 'Partner',
                 price: 'Rp32.000',
-                badge: 'Enterprise',
                 desc: 'Complete high-capacity tier for large communities, networks, and power users.',
                 features: [
                     '12 Active Sub-Bots',

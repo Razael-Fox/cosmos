@@ -127,10 +127,7 @@ export default function HomePage() {
                     <div className="max-w-xl mx-auto p-8 sm:p-10 rounded-3xl bg-card border border-border hover:border-primary/50 transition-all shadow-sm space-y-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-mono">
-                                    {t.pricing.free.badge}
-                                </span>
-                                <h3 className="text-2xl font-extrabold text-foreground mt-2">{t.pricing.free.name}</h3>
+                                <h3 className="text-2xl font-extrabold text-foreground">{t.pricing.free.name}</h3>
                             </div>
                             <div className="text-right">
                                 <p className="text-3xl font-extrabold font-mono text-foreground">
