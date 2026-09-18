@@ -53,6 +53,20 @@ export const groupRoutes: FastifyPluginAsync = async (fastify) => {
             isWhitelisted: whitelistedSet.has(g.id)
         }));
 
+        // Guarantee all whitelisted groups owned by user remain visible regardless of bot cache or admin status
+        for (const wg of whitelisted) {
+            if (!groups.some((g) => g.id === wg.jid)) {
+                groups.push({
+                    id: wg.jid,
+                    subject: 'WhatsApp Group',
+                    size: 0,
+                    desc: undefined,
+                    isAdmin: false,
+                    isWhitelisted: true
+                });
+            }
+        }
+
         return reply.send({
             groups,
             quota: {
