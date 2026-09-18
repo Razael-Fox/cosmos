@@ -17,7 +17,8 @@ import type {
     WhitelistedGroup,
     AddGroupRequest,
     SubscriptionTier,
-    AuthStatusWsMessage
+    AuthStatusWsMessage,
+    ParticipatingGroupsResponse
 } from './types';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
@@ -246,6 +247,16 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatusRespons
  */
 export async function listGroups(): Promise<WhitelistedGroup[]> {
     return request<WhitelistedGroup[]>('/api/v1/groups', {
+        method: 'GET'
+    });
+}
+
+/**
+ * GET /api/v1/groups/participating
+ * Retrieves all participating WhatsApp groups discovered from user's account via IPC.
+ */
+export async function listParticipatingGroups(): Promise<ParticipatingGroupsResponse> {
+    return request<ParticipatingGroupsResponse>('/api/v1/groups/participating', {
         method: 'GET'
     });
 }

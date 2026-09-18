@@ -134,3 +134,24 @@ export interface AuthStatusWsMessage {
     user?: UserProfile;
     error?: string;
 }
+
+export interface ParticipatingGroup {
+    id: string;
+    subject: string;
+    size: number;
+    desc?: string;
+    isAdmin?: boolean;
+    isWhitelisted: boolean;
+}
+
+export interface ParticipatingGroupsResponse {
+    groups: ParticipatingGroup[];
+    quota: {
+        current: number;
+        max: number;
+        available: number;
+        tier: string;
+        isLimitReached: boolean;
+    };
+}
+

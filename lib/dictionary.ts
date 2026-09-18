@@ -284,7 +284,24 @@ const rawDictionary = {
                 submitAdd: 'Simpan ke Whitelist',
                 cancelAdd: 'Batal',
                 quotaFull:
-                    'Kuota grup telah mencapai batas paket Anda. Silakan upgrade untuk menambah lebih banyak grup.'
+                    'Kuota grup telah mencapai batas paket Anda. Silakan upgrade untuk menambah lebih banyak grup.',
+                quotaReachedNotice:
+                    'Batas whitelist telah mencapai batas maksimum sesuai paket Anda. Untuk menambahkan grup baru, hapus salah satu grup dari daftar.',
+                accountGroupsTitle: 'Pilih Grup WhatsApp',
+                accountGroupsSubtitle: 'Daftar grup yang diambil langsung dari akun WhatsApp Anda.',
+                searchPlaceholder: 'Cari grup berdasarkan nama atau JID...',
+                noAccountGroupsFound: 'Tidak ada grup WhatsApp yang ditemukan di akun Anda.',
+                noAccountGroupsHint:
+                    'Pastikan sub-bot WhatsApp Anda telah terhubung dan aktif, atau masukkan JID grup secara manual.',
+                membersCount: '{count} anggota',
+                addToWhitelist: 'Tambah ke Whitelist',
+                alreadyWhitelisted: 'Ter-whitelist',
+                adminBadge: 'Admin',
+                manualJidToggle: 'Atau masukkan JID grup secara manual',
+                enterManualJid: 'Masukkan JID grup manual',
+                refreshGroups: 'Segarkan daftar',
+                loadingAccountGroups: 'Memuat grup dari akun WhatsApp Anda...',
+                quotaUsageText: 'Kuota: {current} dari {max} grup ({tier})'
             },
             profileCard: {
                 title: 'Ringkasan Profil Akun',
@@ -625,7 +642,24 @@ const rawDictionary = {
                 jidHelp: 'Find your group JID by typing .getjid inside the target WhatsApp group.',
                 submitAdd: 'Save to Whitelist',
                 cancelAdd: 'Cancel',
-                quotaFull: 'Group quota limit reached for your plan. Please upgrade to add more groups.'
+                quotaFull: 'Group quota limit reached for your plan. Please upgrade to add more groups.',
+                quotaReachedNotice:
+                    'The whitelist has reached its limit based on your plan. To add more groups, remove one from the list.',
+                accountGroupsTitle: 'Select WhatsApp Groups',
+                accountGroupsSubtitle: 'Groups retrieved directly from your connected WhatsApp account.',
+                searchPlaceholder: 'Search groups by name or JID...',
+                noAccountGroupsFound: 'No WhatsApp groups detected on your account.',
+                noAccountGroupsHint:
+                    'Make sure your WhatsApp sub-bot is linked and active, or enter the group JID manually.',
+                membersCount: '{count} members',
+                addToWhitelist: 'Add to Whitelist',
+                alreadyWhitelisted: 'Whitelisted',
+                adminBadge: 'Admin',
+                manualJidToggle: 'Or enter group JID manually',
+                enterManualJid: 'Enter Group JID manually',
+                refreshGroups: 'Refresh groups list',
+                loadingAccountGroups: 'Loading groups from your WhatsApp account...',
+                quotaUsageText: 'Quota usage: {current} / {max} groups ({tier})'
             },
             profileCard: {
                 title: 'Account Profile Summary',
