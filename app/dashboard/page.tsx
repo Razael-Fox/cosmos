@@ -51,6 +51,43 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 
+function GroupAvatar({
+    name,
+    pictureUrl,
+    size = 'md'
+}: {
+    name?: string;
+    pictureUrl?: string | null;
+    size?: 'sm' | 'md';
+}) {
+    const [failedUrl, setFailedUrl] = useState<string | null>(null);
+    const sizeClasses = size === 'sm' ? 'w-8 h-8 rounded-xl text-[10px]' : 'w-9 h-9 rounded-xl text-xs';
+
+    const hasFailed = pictureUrl ? failedUrl === pictureUrl : true;
+
+    if (pictureUrl && !hasFailed) {
+        return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                src={pictureUrl}
+                alt={name || 'Group'}
+                referrerPolicy="no-referrer"
+                onError={() => setFailedUrl(pictureUrl)}
+                className={`${sizeClasses} object-cover shrink-0 border border-border/50 bg-muted shadow-2xs`}
+            />
+        );
+    }
+
+    const initials = name ? name.trim().slice(0, 2).toUpperCase() : 'GP';
+    return (
+        <div
+            className={`${sizeClasses} bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold uppercase select-none`}
+        >
+            {initials}
+        </div>
+    );
+}
+
 export default function DashboardPage() {
     const { t, language } = useTranslation();
     const router = useRouter();
@@ -88,6 +125,14 @@ export default function DashboardPage() {
         const map = new Map<string, string>();
         for (const pg of participatingGroups) {
             if (pg.subject) map.set(pg.id, pg.subject);
+        }
+        return map;
+    }, [participatingGroups]);
+
+    const groupPictureMap = useMemo(() => {
+        const map = new Map<string, string | null>();
+        for (const pg of participatingGroups) {
+            if (pg.pictureUrl) map.set(pg.id, pg.pictureUrl);
         }
         return map;
     }, [participatingGroups]);
@@ -758,23 +803,26 @@ export default function DashboardPage() {
                                     <tbody className="divide-y divide-border">
                                         {groups.map((grp) => {
                                             const groupSubject = groupNameMap.get(grp.jid);
+                                            const pictureUrl = groupPictureMap.get(grp.jid);
                                             return (
                                                 <tr key={grp.jid} className="hover:bg-muted/20 transition-colors">
                                                     <td className="p-4">
-                                                        {groupSubject ? (
-                                                            <div>
-                                                                <span className="font-semibold text-foreground text-xs sm:text-sm block">
-                                                                    {groupSubject}
+                                                        <div className="flex items-center gap-3">
+                                                            <GroupAvatar
+                                                                name={groupSubject}
+                                                                pictureUrl={pictureUrl}
+                                                            />
+                                                            <div className="min-w-0">
+                                                                <span className="font-semibold text-foreground text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-[320px]">
+                                                                    {groupSubject || grp.jid}
                                                                 </span>
-                                                                <span className="font-mono text-xs text-muted-foreground">
-                                                                    {grp.jid}
-                                                                </span>
+                                                                {groupSubject && (
+                                                                    <span className="font-mono text-xs text-muted-foreground block truncate max-w-[200px] sm:max-w-[320px]">
+                                                                        {grp.jid}
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                        ) : (
-                                                            <span className="font-mono font-medium text-foreground">
-                                                                {grp.jid}
-                                                            </span>
-                                                        )}
+                                                        </div>
                                                     </td>
                                                     <td className="p-4 text-xs text-muted-foreground">
                                                         {new Date(grp.createdAt).toLocaleDateString(dateLocale)}
@@ -801,17 +849,25 @@ export default function DashboardPage() {
                             <div className="sm:hidden divide-y divide-border">
                                 {groups.map((grp) => {
                                     const groupSubject = groupNameMap.get(grp.jid);
+                                    const pictureUrl = groupPictureMap.get(grp.jid);
                                     return (
                                         <div key={grp.jid} className="p-4 flex items-center justify-between gap-3">
-                                            <div className="min-w-0">
-                                                {groupSubject && (
-                                                    <p className="font-semibold text-xs text-foreground truncate max-w-[220px]">
-                                                        {groupSubject}
+                                            <div className="min-w-0 flex items-center gap-3">
+                                                <GroupAvatar
+                                                    name={groupSubject}
+                                                    pictureUrl={pictureUrl}
+                                                    size="sm"
+                                                />
+                                                <div className="min-w-0">
+                                                    {groupSubject && (
+                                                        <p className="font-semibold text-xs text-foreground truncate max-w-[180px]">
+                                                            {groupSubject}
+                                                        </p>
+                                                    )}
+                                                    <p className="font-mono text-xs text-muted-foreground truncate max-w-[180px]">
+                                                        {grp.jid}
                                                     </p>
-                                                )}
-                                                <p className="font-mono text-xs text-muted-foreground truncate max-w-[220px]">
-                                                    {grp.jid}
-                                                </p>
+                                                </div>
                                             </div>
                                             <button
                                                 type="button"
@@ -1011,9 +1067,10 @@ export default function DashboardPage() {
                                                 className="p-3 rounded-2xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex items-center justify-between gap-3"
                                             >
                                                 <div className="min-w-0 flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-xs uppercase">
-                                                        {grp.subject ? grp.subject.slice(0, 2) : 'GP'}
-                                                    </div>
+                                                    <GroupAvatar
+                                                        name={grp.subject}
+                                                        pictureUrl={grp.pictureUrl}
+                                                    />
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-1.5 flex-wrap">
                                                             <p className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-[240px]">

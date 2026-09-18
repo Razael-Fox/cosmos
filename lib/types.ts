@@ -142,6 +142,7 @@ export interface ParticipatingGroup {
     desc?: string;
     isAdmin?: boolean;
     isWhitelisted: boolean;
+    pictureUrl?: string | null;
 }
 
 export interface ParticipatingGroupsResponse {
