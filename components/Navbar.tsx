@@ -55,8 +55,9 @@ export function Navbar() {
 
     const navLinks = [
         { name: t.nav.home, href: '/' },
-        { name: t.nav.howItWorks, href: '/#how-it-works' },
+        { name: t.nav.howItWorks, href: '/how-it-works' },
         { name: t.nav.pricing, href: '/pricing' },
+        { name: t.nav.status, href: '/status' },
         ...(isAuthenticated ? [{ name: t.nav.dashboard, href: '/dashboard' }] : [])
     ];
 

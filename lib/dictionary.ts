@@ -14,6 +14,7 @@ const rawDictionary = {
             home: 'Beranda',
             howItWorks: 'Cara Kerja',
             pricing: 'Harga & Paket',
+            status: 'Status Sistem',
             dashboard: 'Dashboard',
             register: 'Daftar',
             login: 'Masuk',
@@ -59,6 +60,45 @@ const rawDictionary = {
             step3Title: '3. Tautkan Sub-Bot & Whitelist Grup',
             step3Desc:
                 'Gunakan 8-digit Pairing Code atau scan QR untuk mengaktifkan sub-bot mandiri dan daftarkan JID grup yang ingin dikelola.'
+        },
+        howItWorksPage: {
+            badge: 'Panduan Onboarding',
+            whyTitle: 'Mengapa Inverted Verification?',
+            whyDesc:
+                'Metode verifikasi kami membalikkan alur: Anda yang pertama kali mengirim pesan ke nomor bot resmi. Algoritma anti-spam WhatsApp mendeteksi pesan masuk ini sebagai obrolan inisiasi organik dari pengguna, sehingga nomor bot maupun nomor Anda terbebas dari risiko penandaan spam atau pemblokiran.',
+            pairingTitle: 'Panduan Menghubungkan Sub-Bot',
+            pairingDesc:
+                'Melalui fitur WhatsApp Linked Devices resmi (Baileys Multi-Device), nomor Anda bertindak sebagai node independen tanpa perlu membocorkan kredensial atau password akun WhatsApp Anda.',
+            readyTitle: 'Siap Menjalankan Bot WhatsApp Anda?',
+            readyDesc: 'Daftar sekarang dan nikmati 2 slot sub-bot mandiri gratis selamanya.',
+            ctaBtn: 'Mulai Sekarang — Gratis',
+            dashboardBtn: 'Buka Dashboard'
+        },
+        statusPage: {
+            title: 'Status Sistem & Telemetri',
+            subtitle: 'Pemantauan real-time untuk ketersediaan infrastruktur, sub-bot, dan layanan Cosmos.',
+            allOperational: 'Semua Sistem Beroperasi Normal',
+            partialOutage: 'Sebagian Layanan Mengalami Penurunan',
+            majorOutage: 'Gangguan Layanan Utama',
+            operational: 'Operasional',
+            degraded: 'Performa Menurun',
+            outage: 'Gangguan',
+            subbotsTitle: 'Sub-Bot Terhubung',
+            subbotsDesc: 'Sesi sub-bot aktif yang beroperasi di jaringan',
+            uptimeTitle: 'Uptime Sistem',
+            uptimeDesc: 'Tingkat ketersediaan operasional tanpa henti',
+            groupsTitle: 'Grup Whitelist',
+            groupsDesc: 'Komunitas WhatsApp aktif yang dilindungi',
+            banTitle: 'Insidensi Spam-Ban',
+            banDesc: 'Pemblokiran nomor WhatsApp terkonfirmasi',
+            servicesTitle: 'Kesehatan Layanan Komponen',
+            servicesDesc: 'Status konektivitas dan latensi mikro-layanan inti',
+            lastChecked: 'Terakhir diperiksa:',
+            refreshBtn: 'Segarkan Data',
+            refreshing: 'Menyinkronkan...',
+            viewStatus: 'Lihat Status',
+            backHome: 'Kembali ke Beranda',
+            latency: 'Latensi'
         },
         features: {
             title: 'Fitur Unggulan Cosmos',
@@ -377,6 +417,7 @@ const rawDictionary = {
             home: 'Home',
             howItWorks: 'How It Works',
             pricing: 'Pricing',
+            status: 'System Status',
             dashboard: 'Dashboard',
             register: 'Register',
             login: 'Login',
@@ -419,6 +460,45 @@ const rawDictionary = {
             step3Title: '3. Pair Sub-Bots & Whitelist Groups',
             step3Desc:
                 'Use the 8-digit Pairing Code or scan QR to activate your sub-bot and whitelist community groups.'
+        },
+        howItWorksPage: {
+            badge: 'Onboarding Walkthrough',
+            whyTitle: 'Why Inverted Verification?',
+            whyDesc:
+                'Our verification reverses the traditional flow: you initiate the first message to the official bot. WhatsApp anti-spam algorithms recognize this inbound interaction as organic user communication, entirely eliminating the risk of spam flagging or account bans.',
+            pairingTitle: 'How Sub-Bot Pairing Works',
+            pairingDesc:
+                'Using the official WhatsApp Linked Devices protocol (Baileys Multi-Device), your phone operates as an independent node without ever revealing account credentials or private passwords.',
+            readyTitle: 'Ready to Launch Your WhatsApp Bot?',
+            readyDesc: 'Register now and enjoy 2 free autonomous sub-bot slots forever.',
+            ctaBtn: 'Get Started Free',
+            dashboardBtn: 'Go to Dashboard'
+        },
+        statusPage: {
+            title: 'System Status & Telemetry',
+            subtitle: 'Real-time operational health, sub-bot connectivity, and infrastructure telemetry.',
+            allOperational: 'All Systems Operational',
+            partialOutage: 'Partial Service Degradation',
+            majorOutage: 'Major Service Outage',
+            operational: 'Operational',
+            degraded: 'Degraded',
+            outage: 'Outage',
+            subbotsTitle: 'Connected Sub-Bots',
+            subbotsDesc: 'Active sub-bot instances operating on the network',
+            uptimeTitle: 'System Uptime',
+            uptimeDesc: 'Continuous operational availability rate',
+            groupsTitle: 'Whitelisted Groups',
+            groupsDesc: 'Active community WhatsApp groups protected',
+            banTitle: 'Spam-Ban Incidence',
+            banDesc: 'Confirmed carrier or platform suspensions',
+            servicesTitle: 'Component Service Health',
+            servicesDesc: 'Live connectivity status and latency of core micro-services',
+            lastChecked: 'Last checked:',
+            refreshBtn: 'Refresh Status',
+            refreshing: 'Syncing...',
+            viewStatus: 'View Status',
+            backHome: 'Back to Home',
+            latency: 'Latency'
         },
         features: {
             title: 'Cosmos Core Features',

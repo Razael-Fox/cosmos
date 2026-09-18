@@ -156,3 +156,31 @@ export interface ParticipatingGroupsResponse {
     };
 }
 
+export interface SystemServiceHealth {
+    name: string;
+    status: 'OPERATIONAL' | 'DEGRADED' | 'OUTAGE';
+    description: string;
+    latencyMs?: number;
+}
+
+export interface SystemStatusResponse {
+    status: 'ALL_OPERATIONAL' | 'PARTIAL_OUTAGE' | 'MAJOR_OUTAGE';
+    uptime: {
+        percentage: number;
+        seconds: number;
+        humanReadable: string;
+    };
+    connectedSubBots: {
+        activeCount: number;
+        totalConfigured: number;
+    };
+    whitelistedGroups: {
+        totalCount: number;
+    };
+    spamBanIncidence: {
+        incidentsReported: number;
+        statusText: string;
+    };
+    services: SystemServiceHealth[];
+    lastChecked: string;
+}

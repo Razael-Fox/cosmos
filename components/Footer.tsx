@@ -68,13 +68,18 @@ export function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/#how-it-works" className="hover:text-foreground transition-colors">
+                                <Link href="/how-it-works" className="hover:text-foreground transition-colors">
                                     {t.nav.howItWorks}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/pricing" className="hover:text-foreground transition-colors">
                                     {t.nav.pricing}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/status" className="hover:text-foreground transition-colors">
+                                    {t.nav.status}
                                 </Link>
                             </li>
                             <li>
@@ -112,13 +117,18 @@ export function Footer() {
                             {t.footer.trustHeading}
                         </h2>
                         <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Link
+                                href="/status"
+                                className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+                            >
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 </span>
-                                <span className="font-medium text-foreground">{t.footer.statusText}</span>
-                            </div>
+                                <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                                    {t.footer.statusText} →
+                                </span>
+                            </Link>
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-secondary text-[11px] font-mono text-muted-foreground border border-border">
                                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                                 <span>Cloudflare Ingress & DDOS Guard</span>

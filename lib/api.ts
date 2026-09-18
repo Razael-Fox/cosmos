@@ -18,7 +18,8 @@ import type {
     AddGroupRequest,
     SubscriptionTier,
     AuthStatusWsMessage,
-    ParticipatingGroupsResponse
+    ParticipatingGroupsResponse,
+    SystemStatusResponse
 } from './types';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
@@ -457,4 +458,18 @@ export function createPairingWebSocket(
             ws = null;
         }
     };
+}
+
+// -------------------------------------------------------------
+// System Telemetry & Health Endpoints
+// -------------------------------------------------------------
+
+/**
+ * GET /api/v1/system/status
+ * Fetches real-time operational metrics and health status.
+ */
+export async function getSystemStatus(): Promise<SystemStatusResponse> {
+    return request<SystemStatusResponse>('/api/v1/system/status', {
+        method: 'GET'
+    });
 }
