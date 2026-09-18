@@ -1,37 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, DM_Sans, Nunito_Sans } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { LanguageProvider } from "@/lib/i18n";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
-const nunitoSansHeading = Nunito_Sans({
-  subsets: ["latin"],
-  variable: "--font-heading",
-});
-
 const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
-});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cosmos.razaelfox.com";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  ),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+    default: "Cosmos — Autonomous WhatsApp Multi-Device & Sub-Bot Platform",
     template: "%s • Cosmos",
   },
   description:
@@ -45,17 +38,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    title: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+    title: "Cosmos — Autonomous WhatsApp Multi-Device & Sub-Bot Platform",
     description:
       "Manage WhatsApp bot ecosystems, group automations, virtual banking, and autonomous multi-device sub-bots.",
-    images: [{ url: "/logo.png", width: 512, height: 512, alt: "Cosmos Logo" }],
+    url: siteUrl,
+    siteName: "Cosmos",
   },
   twitter: {
-    card: "summary",
-    title: "Cosmos — WhatsApp Multi-Device & Sub-Bot Platform",
+    card: "summary_large_image",
+    title: "Cosmos — Autonomous WhatsApp Multi-Device & Sub-Bot Platform",
     description:
       "Autonomous multi-device WhatsApp bot platform with secure verification and tiered quotas.",
-    images: ["/logo.png"],
+    creator: "@razaelfox",
   },
   robots: {
     index: true,
@@ -65,9 +59,28 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#059669" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0f0d" },
   ],
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Cosmos",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Cloud, Web, WhatsApp",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "IDR",
+  },
+  description:
+    "Autonomous multi-device WhatsApp bot platform, group automations, tiered quotas, and secure Cloudflare tunnel architecture.",
+  creator: {
+    "@type": "Person",
+    name: "RazaelFox",
+  },
 };
 
 export default function RootLayout({
@@ -78,17 +91,23 @@ export default function RootLayout({
   return (
     <html
       lang="id"
+      suppressHydrationWarning
       className={cn(
         "h-full",
         "antialiased",
-        geistSans.variable,
-        geistMono.variable,
         dmSans.variable,
-        nunitoSansHeading.variable
+        geistMono.variable
       )}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/20">
         <LanguageProvider>
+          <AnnouncementBar />
           <Navbar />
           <main className="flex-1 flex flex-col">{children}</main>
           <Footer />

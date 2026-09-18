@@ -65,7 +65,6 @@ export function InvertedVerifyDialog({
       },
       (err) => {
         void err;
-        // Polling fallback inside createAuthStatusWebSocket will handle network retries
       }
     );
 
@@ -76,7 +75,19 @@ export function InvertedVerifyDialog({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(verifyCommand);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(verifyCommand);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = verifyCommand;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -95,51 +106,55 @@ export function InvertedVerifyDialog({
       role="dialog"
       aria-modal="true"
       aria-label={t.invertedVerify.title}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-lg rounded-2xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
+      <div className="w-full max-w-lg rounded-3xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors cursor-pointer"
           aria-label={t.invertedVerify.cancel}
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col gap-2 text-center items-center">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <WhatsappLogo className="w-7 h-7" weight="fill" />
           </div>
-          <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+          <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground font-heading">
             {t.invertedVerify.title}
           </h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
             {t.invertedVerify.subtitle}
           </p>
         </div>
 
         {isVerified ? (
-          <div className="flex flex-col items-center justify-center py-6 gap-3 text-emerald-600 dark:text-emerald-400 animate-in zoom-in-95 duration-200">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex flex-col items-center justify-center py-6 gap-3 text-emerald-600 dark:text-emerald-400 animate-in zoom-in-95 duration-200"
+          >
             <Check className="w-12 h-12 p-2 bg-emerald-500/20 rounded-full" weight="bold" />
             <span className="font-semibold text-base">{t.invertedVerify.success}</span>
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <div className="space-y-2 text-sm text-muted-foreground bg-muted/40 p-4 rounded-xl border border-border">
-              <p className="font-medium text-foreground">{t.invertedVerify.step1}</p>
-              <p className="font-medium text-foreground">{t.invertedVerify.step2}</p>
-              <div className="flex items-center justify-between gap-2 p-2.5 bg-background rounded-lg border border-border mt-1">
-                <code className="text-xs font-mono font-semibold text-primary select-all break-all">
+            <div className="space-y-2.5 text-xs sm:text-sm text-muted-foreground bg-muted/40 p-4 rounded-2xl border border-border">
+              <p className="font-semibold text-foreground">{t.invertedVerify.step1}</p>
+              <p className="font-semibold text-foreground">{t.invertedVerify.step2}</p>
+              <div className="flex items-center justify-between gap-2 p-3 bg-background rounded-xl border border-border mt-1">
+                <code className="text-xs font-mono font-bold text-primary select-all break-all">
                   {verifyCommand}
                 </code>
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="shrink-0 flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors font-medium"
+                  className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors font-semibold cursor-pointer"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-emerald-500" weight="bold" />
                       <span>{t.invertedVerify.copied}</span>
                     </>
                   ) : (
@@ -150,34 +165,41 @@ export function InvertedVerifyDialog({
                   )}
                 </button>
               </div>
-              <p className="font-medium text-foreground pt-1">{t.invertedVerify.step3}</p>
+              <p className="font-semibold text-foreground pt-1">{t.invertedVerify.step3}</p>
             </div>
 
             <a
               href={clickToChatUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium shadow-md transition-all text-center"
+              className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs sm:text-sm shadow-md transition-all text-center cursor-pointer"
             >
               <WhatsappLogo className="w-5 h-5" weight="fill" />
               <span>{t.invertedVerify.whatsappBtn}</span>
             </a>
 
             <div className="flex flex-col items-center gap-2 pt-1">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <CircleNotch className="w-4 h-4 animate-spin text-emerald-600" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+                <CircleNotch className="w-4 h-4 animate-spin text-emerald-500" />
                 <span>{t.invertedVerify.waitingWs}</span>
               </div>
-              <span className="text-xs font-mono font-medium text-muted-foreground">
+              <div
+                role="timer"
+                aria-live="polite"
+                className="text-xs font-mono font-medium text-muted-foreground"
+              >
                 {t.invertedVerify.expiresIn}{' '}
-                <span className={timeLeft < 60 ? 'text-destructive font-bold' : 'text-foreground'}>
+                <span className={timeLeft < 60 ? 'text-destructive font-bold' : 'text-foreground font-semibold'}>
                   {formatSeconds(timeLeft)}
                 </span>
-              </span>
+              </div>
             </div>
 
             {errorMsg && (
-              <div role="alert" className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div
+                role="alert"
+                className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium"
+              >
                 {errorMsg}
               </div>
             )}
@@ -188,7 +210,7 @@ export function InvertedVerifyDialog({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-xl transition-colors cursor-pointer"
           >
             {t.invertedVerify.cancel}
           </button>

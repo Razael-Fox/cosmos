@@ -22,6 +22,7 @@ import type {
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
 const TOKEN_STORAGE_KEY = 'cosmos_jwt_token';
+const USER_STORAGE_KEY = 'cosmos_user_profile';
 
 export class ApiError extends Error {
   public status: number;
@@ -52,11 +53,34 @@ export function setStoredToken(token: string): void {
 }
 
 /**
- * Clears the stored JWT authentication token from localStorage.
+ * Retrieves the stored user profile from localStorage.
+ */
+export function getStoredUser(): import('./types').UserProfile | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(USER_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as import('./types').UserProfile;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Stores the user profile in localStorage.
+ */
+export function setStoredUser(user: import('./types').UserProfile): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+}
+
+/**
+ * Clears the stored JWT authentication token and profile from localStorage.
  */
 export function clearStoredToken(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(TOKEN_STORAGE_KEY);
+  localStorage.removeItem(USER_STORAGE_KEY);
 }
 
 /**
@@ -146,6 +170,9 @@ export async function verifyOtp(
   if (res.jwtToken) {
     setStoredToken(res.jwtToken);
   }
+  if (res.user) {
+    setStoredUser(res.user);
+  }
   return res;
 }
 
@@ -173,6 +200,9 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   });
   if (res.jwtToken) {
     setStoredToken(res.jwtToken);
+  }
+  if (res.user) {
+    setStoredUser(res.user);
   }
   return res;
 }

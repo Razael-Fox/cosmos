@@ -109,25 +109,25 @@ export function DirectOtpModal({
       role="dialog"
       aria-modal="true"
       aria-label={t.directOtp.title}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-md rounded-2xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
+      <div className="w-full max-w-md rounded-3xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors cursor-pointer"
           aria-label={t.common.close}
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col gap-2 text-center items-center">
-          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
             <ShieldCheck className="w-7 h-7" weight="bold" />
           </div>
-          <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+          <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground font-heading">
             {t.directOtp.title}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {t.directOtp.subtitle}
           </p>
         </div>
@@ -154,7 +154,7 @@ export function DirectOtpModal({
           <button
             type="submit"
             disabled={isSubmitting || otp.length < 6}
-            className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary/90 active:scale-[0.99] text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary/90 active:scale-[0.99] text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -171,13 +171,13 @@ export function DirectOtpModal({
         </form>
 
         {errorMsg && (
-          <div role="alert" className="p-3 text-xs text-center rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+          <div role="alert" className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium">
             {errorMsg}
           </div>
         )}
 
         {successMsg && (
-          <div role="status" className="p-3 text-xs text-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+          <div role="status" aria-live="polite" className="p-3 text-xs text-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
             {successMsg}
           </div>
         )}
@@ -194,13 +194,13 @@ export function DirectOtpModal({
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-border text-xs text-muted-foreground">
-          <span>
+          <div role="timer" aria-live="polite">
             {timeLeft > 0 ? (
               `${t.directOtp.expiresInLabel} ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`
             ) : (
               <span className="text-destructive font-medium">{t.directOtp.expired}</span>
             )}
-          </span>
+          </div>
 
           {resendCooldown > 0 ? (
             <span>
@@ -211,7 +211,7 @@ export function DirectOtpModal({
               type="button"
               onClick={handleResend}
               disabled={isResending}
-              className="text-primary hover:underline font-semibold"
+              className="text-primary hover:underline font-semibold cursor-pointer"
             >
               {isResending ? t.directOtp.resending : t.directOtp.resendBtn}
             </button>

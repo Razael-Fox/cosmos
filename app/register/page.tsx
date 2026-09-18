@@ -11,6 +11,9 @@ import {
   CircleNotch,
   ShieldCheck,
   Lightning,
+  Eye,
+  EyeSlash,
+  ArrowRight,
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { registerInverted, registerDirect } from '@/lib/api';
@@ -18,6 +21,8 @@ import type { RegisterInvertedResponse } from '@/lib/types';
 import { Turnstile, type TurnstileRef } from '@/components/Turnstile';
 import { InvertedVerifyDialog } from '@/components/InvertedVerifyDialog';
 import { DirectOtpModal } from '@/components/DirectOtpModal';
+import { AuthShell } from '@/components/AuthShell';
+import { Field } from '@/components/ui/field';
 
 export default function RegisterPage() {
   const { t } = useTranslation();
@@ -27,6 +32,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileRef>(null);
 
@@ -44,6 +51,8 @@ export default function RegisterPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Inverted verification modal state
   const [invertedData, setInvertedData] = useState<RegisterInvertedResponse | null>(null);
@@ -53,23 +62,26 @@ export default function RegisterPage() {
   const [directExpiresIn, setDirectExpiresIn] = useState(300);
 
   const cleanPhone = phone.replace(/\D/g, '');
+  const jidPreview = cleanPhone ? `${cleanPhone}@s.whatsapp.net` : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setPhoneError(null);
+    setPasswordError(null);
 
-    if (!cleanPhone || cleanPhone.length < 9) {
-      setErrorMsg(t.auth.invalidPhone);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setPhoneError(t.auth.invalidPhone);
       return;
     }
 
     if (password && password.length < 6) {
-      setErrorMsg(t.auth.passwordMinLength);
+      setPasswordError(t.auth.passwordMinLength);
       return;
     }
 
-    if (password !== confirmPassword) {
-      setErrorMsg(t.auth.passwordMismatch);
+    if (password && password !== confirmPassword) {
+      setPasswordError(t.auth.passwordMismatch);
       return;
     }
 
@@ -112,29 +124,39 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-card/50 to-background">
-      <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
+    <AuthShell currentStep={invertedData || showDirectModal ? 2 : 1}>
+      <div className="space-y-6">
+        {/* Mobile Header Brand (hidden on lg) */}
+        <div className="lg:hidden text-center space-y-2">
           <div className="inline-flex items-center justify-center">
             <Image
               src="/logo.png"
               alt="Cosmos Logo"
-              width={56}
-              height={56}
-              className="w-14 h-14 rounded-2xl object-contain shadow-md"
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-xl object-contain shadow-xs"
               priority
             />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading">
             {t.auth.registerTitle}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {t.auth.registerSubtitle}
           </p>
         </div>
 
-        {/* Mode Selector Tabs */}
+        {/* Desktop Title */}
+        <div className="hidden lg:block space-y-1">
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground font-heading">
+            {t.auth.registerTitle}
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            {t.auth.registerSubtitle}
+          </p>
+        </div>
+
+        {/* Mode Selector Segmented Control */}
         <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-2xl border border-border">
           <button
             type="button"
@@ -142,15 +164,15 @@ export default function RegisterPage() {
               setMode('inverted');
               setErrorMsg(null);
             }}
-            className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               mode === 'inverted'
                 ? 'bg-card text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             aria-pressed={mode === 'inverted'}
           >
-            <WhatsappLogo className="w-4 h-4 text-emerald-600" weight="fill" />
-            <span>{t.auth.invertedTab}</span>
+            <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
+            <span className="truncate">{t.auth.invertedTab}</span>
           </button>
           <button
             type="button"
@@ -158,7 +180,7 @@ export default function RegisterPage() {
               setMode('direct');
               setErrorMsg(null);
             }}
-            className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               mode === 'direct'
                 ? 'bg-card text-foreground shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
@@ -166,12 +188,12 @@ export default function RegisterPage() {
             aria-pressed={mode === 'direct'}
           >
             <Lightning className="w-4 h-4 text-amber-500" weight="fill" />
-            <span>{t.auth.directTab}</span>
+            <span className="truncate">{t.auth.directTab}</span>
           </button>
         </div>
 
         {/* Form Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-lg space-y-5">
+        <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-md space-y-5">
           {mode === 'inverted' ? (
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs flex items-start gap-2.5">
               <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" weight="bold" />
@@ -182,18 +204,19 @@ export default function RegisterPage() {
           ) : (
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
               <Lightning className="w-4 h-4 shrink-0 mt-0.5" weight="fill" />
-              <span>
-                {t.auth.directInfo}
-              </span>
+              <span>{t.auth.directInfo}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Phone */}
-            <div className="space-y-1">
-              <label htmlFor="phone" className="text-xs font-semibold text-foreground">
-                {t.auth.phoneLabel} <span className="text-destructive">*</span>
-              </label>
+            <Field
+              label={t.auth.phoneLabel}
+              htmlFor="phone"
+              required
+              error={phoneError}
+              hint={jidPreview ? `${t.auth.phonePreviewPrefix} ${jidPreview}` : t.auth.phoneHelp}
+            >
               <div className="relative">
                 <WhatsappLogo className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -201,94 +224,105 @@ export default function RegisterPage() {
                   type="tel"
                   required
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (phoneError) setPhoneError(null);
+                  }}
                   placeholder={t.auth.phonePlaceholder}
                   autoComplete="tel"
-                  inputMode="tel"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground">{t.auth.phoneHelp}</p>
-            </div>
+            </Field>
 
-            {/* Username */}
-            <div className="space-y-1">
-              <label htmlFor="username" className="text-xs font-semibold text-foreground">
-                {t.auth.usernameLabel}
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder={t.auth.usernamePlaceholder}
-                  autoComplete="username"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
-                />
-              </div>
-            </div>
+            {/* Optional Username & Email Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label={t.auth.usernameLabel} htmlFor="username">
+                <div className="relative">
+                  <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={t.auth.usernamePlaceholder}
+                    autoComplete="username"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+              </Field>
 
-            {/* Email */}
-            <div className="space-y-1">
-              <label htmlFor="email" className="text-xs font-semibold text-foreground">
-                {t.auth.emailLabel}
-              </label>
-              <div className="relative">
-                <EnvelopeSimple className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t.auth.emailPlaceholder}
-                  autoComplete="email"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
-                />
-              </div>
+              <Field label={t.auth.emailLabel} htmlFor="email">
+                <div className="relative">
+                  <EnvelopeSimple className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t.auth.emailPlaceholder}
+                    autoComplete="email"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+              </Field>
             </div>
 
             {/* Password */}
-            <div className="space-y-1">
-              <label htmlFor="password" className="text-xs font-semibold text-foreground">
-                {t.auth.passwordLabel}
-              </label>
+            <Field label={t.auth.passwordLabel} htmlFor="password" error={passwordError}>
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError(null);
+                  }}
                   placeholder={t.auth.passwordPlaceholder}
                   autoComplete="new-password"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeSlash className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-            </div>
+            </Field>
 
-            {/* Confirm Password */}
-            <div className="space-y-1">
-              <label htmlFor="confirmPassword" className="text-xs font-semibold text-foreground">
-                {t.auth.confirmPasswordLabel}
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t.auth.passwordPlaceholder}
-                  autoComplete="new-password"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
-                />
-              </div>
-            </div>
+            {/* Confirm Password (only if password provided) */}
+            {password && (
+              <Field label={t.auth.confirmPasswordLabel} htmlFor="confirm-password">
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t.auth.passwordPlaceholder}
+                    autoComplete="new-password"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeSlash className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </Field>
+            )}
 
             {/* Cloudflare Turnstile */}
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col items-center">
               <Turnstile
                 ref={turnstileRef}
                 onVerify={handleTurnstileVerify}
@@ -298,30 +332,33 @@ export default function RegisterPage() {
             </div>
 
             {errorMsg && (
-              <div role="alert" className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium">
+              <div
+                role="alert"
+                className="p-3 text-xs text-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium"
+              >
                 {errorMsg}
               </div>
             )}
 
+            {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || !turnstileToken}
-              className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              disabled={isLoading || !cleanPhone || !turnstileToken}
+              className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? (
                 <>
                   <CircleNotch className="w-4 h-4 animate-spin" />
                   <span>{t.auth.loading}</span>
                 </>
-              ) : mode === 'inverted' ? (
-                <>
-                  <WhatsappLogo className="w-4 h-4" weight="fill" />
-                  <span>{t.auth.submitRegister}</span>
-                </>
               ) : (
                 <>
-                  <Lightning className="w-4 h-4" weight="fill" />
-                  <span>{t.auth.submitRegisterDirect}</span>
+                  <span>
+                    {mode === 'inverted'
+                      ? t.auth.submitRegister
+                      : t.auth.submitRegisterDirect}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
@@ -333,26 +370,27 @@ export default function RegisterPage() {
             </Link>
           </div>
         </div>
+
+        {/* Inverted Verification Modal */}
+        {invertedData && (
+          <InvertedVerifyDialog
+            token={invertedData.token}
+            clickToChatUrl={invertedData.clickToChatUrl}
+            regSessionId={invertedData.regSessionId}
+            expiresIn={invertedData.expiresIn}
+            onClose={() => setInvertedData(null)}
+          />
+        )}
+
+        {/* Direct OTP Modal */}
+        {showDirectModal && (
+          <DirectOtpModal
+            phone={cleanPhone}
+            initialExpiresIn={directExpiresIn}
+            onClose={() => setShowDirectModal(false)}
+          />
+        )}
       </div>
-
-      {/* Modal Dialogs */}
-      {invertedData && (
-        <InvertedVerifyDialog
-          token={invertedData.token}
-          clickToChatUrl={invertedData.clickToChatUrl}
-          regSessionId={invertedData.regSessionId}
-          expiresIn={invertedData.expiresIn}
-          onClose={() => setInvertedData(null)}
-        />
-      )}
-
-      {showDirectModal && (
-        <DirectOtpModal
-          phone={cleanPhone}
-          initialExpiresIn={directExpiresIn}
-          onClose={() => setShowDirectModal(false)}
-        />
-      )}
-    </div>
+    </AuthShell>
   );
 }

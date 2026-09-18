@@ -1,14 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
+import Link from 'next/link';
 import { Check, WhatsappLogo, Sparkle, Lightning, ShieldCheck } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import type { SubscriptionTier } from '@/lib/types';
+import { Container } from '@/components/ui/container';
 
 interface PricingProps {
   userPhone?: string;
   currentTier?: SubscriptionTier;
   onSelectFree?: () => void;
+}
+
+function subscribeToAuth(callback: () => void) {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
+
+function getAuthSnapshot(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem('cosmos_jwt_token');
+}
+
+function getAuthServerSnapshot(): boolean {
+  return false;
 }
 
 function generateSalesUrl(
@@ -20,7 +36,7 @@ function generateSalesUrl(
 ): string {
   const timestamp = Math.floor(Date.now() / 1000);
   const orderRef = `COSMOS-SUB-${timestamp}`;
-  const targetPhone = userPhone || '[Nomor WhatsApp Anda]';
+  const targetPhone = userPhone || '[WhatsApp Phone]';
 
   const msg = template
     .replace('{tier}', tierName)
@@ -35,10 +51,23 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
   const { t } = useTranslation();
   const salesNumber = (process.env.NEXT_PUBLIC_SALES_NUMBER || '628123456789').replace(/\D/g, '');
 
+  const isAuthenticated = useSyncExternalStore(
+    subscribeToAuth,
+    getAuthSnapshot,
+    getAuthServerSnapshot
+  );
+
   const handleSubscribe = (tierName: string, price: string) => {
     const url = generateSalesUrl(tierName, price, userPhone, t.sales.prefillMsg, salesNumber);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
+
+  const freeHref = isAuthenticated ? '/dashboard' : '/register';
+  const freeCtaText = isAuthenticated && currentTier === 'FREE'
+    ? t.pricing.activePlan
+    : isAuthenticated
+    ? t.nav.dashboard
+    : t.pricing.free.cta;
 
   const plans = [
     {
@@ -49,10 +78,10 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
       desc: t.pricing.free.desc,
       features: t.pricing.free.features,
       isPopular: false,
-      icon: <Sparkle className="w-6 h-6 text-zinc-500" />,
-      ctaText: t.pricing.free.cta,
+      icon: <Sparkle className="w-5 h-5 text-primary" />,
+      ctaText: freeCtaText,
       action: onSelectFree ? onSelectFree : undefined,
-      href: onSelectFree ? undefined : '/register',
+      href: onSelectFree ? undefined : freeHref,
     },
     {
       id: 'SUBSIDIZED' as SubscriptionTier,
@@ -62,7 +91,7 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
       desc: t.pricing.subsidized.desc,
       features: t.pricing.subsidized.features,
       isPopular: true,
-      icon: <Lightning className="w-6 h-6 text-amber-500" weight="fill" />,
+      icon: <Lightning className="w-5 h-5 text-amber-500" weight="fill" />,
       ctaText: t.pricing.subsidized.cta,
       action: () => handleSubscribe('Subsidized Tier', t.pricing.subsidized.price),
     },
@@ -74,28 +103,43 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
       desc: t.pricing.partner.desc,
       features: t.pricing.partner.features,
       isPopular: false,
-      icon: <ShieldCheck className="w-6 h-6 text-indigo-500" weight="fill" />,
+      icon: <ShieldCheck className="w-5 h-5 text-indigo-500" weight="fill" />,
       ctaText: t.pricing.partner.cta,
       action: () => handleSubscribe('Partner Tier', t.pricing.partner.price),
     },
   ];
 
   return (
-    <div className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col gap-10">
+    <Container size="lg" className="py-16 space-y-12">
+      {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
-        <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground font-heading">
+        <span className="text-xs font-bold uppercase tracking-wider text-primary">
+          Simple, Transparent Pricing
+        </span>
+        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-heading">
           {t.pricing.title}
         </h2>
-        <p className="text-base md:text-lg text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           {t.pricing.subtitle}
         </p>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-xs text-muted-foreground border border-border">
-          <WhatsappLogo className="w-4 h-4 text-emerald-600" weight="fill" />
-          <span>{t.pricing.manualFlowNotice}</span>
+
+        {/* Step-by-step manual sales notice callout */}
+        <div className="mt-6 p-4 rounded-2xl bg-card border border-border shadow-xs text-left max-w-2xl mx-auto space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+            <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
+            <span>{t.pricing.salesNoticeTitle}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <p>{t.pricing.salesNoticeStep1}</p>
+            <p>{t.pricing.salesNoticeStep2}</p>
+            <p>{t.pricing.salesNoticeStep3}</p>
+            <p>{t.pricing.salesNoticeStep4}</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+      {/* Plan Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
         {plans.map((plan) => {
           const isCurrent = currentTier === plan.id;
           return (
@@ -104,12 +148,12 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
               aria-label={`${plan.name} plan`}
               className={`rounded-3xl p-8 flex flex-col justify-between transition-all relative ${
                 plan.isPopular
-                  ? 'bg-card border-2 border-primary shadow-xl scale-[1.02]'
-                  : 'bg-card border border-border shadow-sm hover:shadow-md'
+                  ? 'bg-card border-2 border-primary ring-4 ring-primary/10 shadow-xl md:-translate-y-2'
+                  : 'bg-card border border-border shadow-xs hover:border-primary/40'
               }`}
             >
               {plan.isPopular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider shadow-sm">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wider shadow-sm">
                   {t.pricing.popular}
                 </div>
               )}
@@ -125,25 +169,27 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 min-h-[32px]">{plan.desc}</p>
+                  <h3 className="text-2xl font-bold text-foreground font-heading">{plan.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1 min-h-[36px] leading-relaxed">
+                    {plan.desc}
+                  </p>
                 </div>
 
-                <div className="flex items-baseline gap-1 pt-2 border-t border-border">
-                  <span className="text-4xl font-extrabold tracking-tight text-foreground">
+                <div className="flex items-baseline gap-1 pt-3 border-t border-border">
+                  <span className="text-4xl font-extrabold tracking-tight text-foreground font-mono">
                     {plan.price}
                   </span>
-                  <span className="text-sm text-muted-foreground">{t.pricing.periodMonth}</span>
+                  <span className="text-xs text-muted-foreground">{t.pricing.periodMonth}</span>
                 </div>
 
                 <div className="space-y-3 pt-2">
                   <p className="text-xs font-bold text-foreground uppercase tracking-wider">
                     {t.pricing.included}
                   </p>
-                  <ul className="space-y-2.5 text-sm text-muted-foreground">
+                  <ul className="space-y-2.5 text-xs text-muted-foreground">
                     {plan.features.map((feat, idx) => (
                       <li key={idx} className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" weight="bold" />
+                        <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" weight="bold" />
                         <span>{feat}</span>
                       </li>
                     ))}
@@ -155,26 +201,26 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
                 {isCurrent ? (
                   <div
                     role="status"
-                    className="w-full py-3 px-4 rounded-xl bg-muted text-center text-sm font-semibold text-muted-foreground border border-border"
+                    className="w-full py-3 px-4 rounded-xl bg-muted text-center text-xs font-semibold text-muted-foreground border border-border"
                   >
                     {t.pricing.activePlan}
                   </div>
                 ) : plan.href ? (
-                  <a
+                  <Link
                     href={plan.href}
-                    className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all shadow-sm ${
+                    className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-xs transition-all shadow-xs ${
                       plan.isPopular
                         ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                         : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border'
                     }`}
                   >
                     <span>{plan.ctaText}</span>
-                  </a>
+                  </Link>
                 ) : (
                   <button
                     type="button"
                     onClick={plan.action}
-                    className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all shadow-sm ${
+                    className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-xs transition-all shadow-xs cursor-pointer ${
                       plan.isPopular
                         ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                         : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border'
@@ -189,6 +235,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
           );
         })}
       </div>
-    </div>
+    </Container>
   );
 }

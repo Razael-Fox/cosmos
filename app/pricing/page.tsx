@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { Pricing } from '@/components/Pricing';
-import { Check, Minus, Question } from '@phosphor-icons/react';
+import { Check, Minus, Question, CaretDown } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
+import { Container } from '@/components/ui/container';
 
 type CellValue = string | boolean;
 
@@ -102,92 +103,150 @@ export default function PricingPage() {
   const headers = TABLE_HEADERS[language];
   const faqs = FAQ_CONTENT[language];
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.items.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  };
+
   return (
-    <div className="flex flex-col w-full py-8">
+    <div className="flex flex-col w-full">
+      {/* FAQ Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
+      {/* Pricing Header & Cards */}
       <Pricing />
 
       {/* Comparison Table Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 border-t border-border">
-        <h3 className="text-2xl font-bold font-heading text-center mb-8 text-foreground">
-          {comparisonTitle}
-        </h3>
+      <section className="border-t border-border py-16 bg-muted/10">
+        <Container size="lg" className="space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">
+              Feature Matrix
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-foreground">
+              {comparisonTitle}
+            </h3>
+          </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th scope="col" className="p-4 font-semibold text-foreground">{headers.feature}</th>
-                <th scope="col" className="p-4 font-semibold text-foreground text-center">{headers.free}</th>
-                <th scope="col" className="p-4 font-semibold text-foreground text-center bg-primary/5">{headers.subsidized}</th>
-                <th scope="col" className="p-4 font-semibold text-foreground text-center">{headers.partner}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {comparisonRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-muted/20 transition-colors">
-                  <td className="p-4 font-medium text-foreground">{row.feature}</td>
-                  <td className="p-4 text-center text-muted-foreground">
-                    {typeof row.free === 'boolean' ? (
-                      row.free ? (
-                        <Check className="w-5 h-5 text-emerald-600 mx-auto" weight="bold" />
-                      ) : (
-                        <Minus className="w-5 h-5 text-zinc-400 mx-auto" />
-                      )
-                    ) : (
-                      row.free
-                    )}
-                  </td>
-                  <td className="p-4 text-center font-medium text-foreground bg-primary/5">
-                    {typeof row.subsidized === 'boolean' ? (
-                      row.subsidized ? (
-                        <Check className="w-5 h-5 text-emerald-600 mx-auto" weight="bold" />
-                      ) : (
-                        <Minus className="w-5 h-5 text-zinc-400 mx-auto" />
-                      )
-                    ) : (
-                      row.subsidized
-                    )}
-                  </td>
-                  <td className="p-4 text-center font-medium text-foreground">
-                    {typeof row.partner === 'boolean' ? (
-                      row.partner ? (
-                        <Check className="w-5 h-5 text-emerald-600 mx-auto" weight="bold" />
-                      ) : (
-                        <Minus className="w-5 h-5 text-zinc-400 mx-auto" />
-                      )
-                    ) : (
-                      row.partner
-                    )}
-                  </td>
+          <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
+            <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/60 sticky top-16 z-20">
+                  <th
+                    scope="col"
+                    className="p-4 font-bold text-foreground sticky left-0 bg-muted/80 backdrop-blur-xs z-30 min-w-[180px]"
+                  >
+                    {headers.feature}
+                  </th>
+                  <th scope="col" className="p-4 font-bold text-foreground text-center min-w-[110px]">
+                    {headers.free}
+                  </th>
+                  <th
+                    scope="col"
+                    className="p-4 font-bold text-foreground text-center bg-primary/10 min-w-[120px]"
+                  >
+                    {headers.subsidized}
+                  </th>
+                  <th scope="col" className="p-4 font-bold text-foreground text-center min-w-[120px]">
+                    {headers.partner}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {comparisonRows.map((row, idx) => (
+                  <tr
+                    key={idx}
+                    className={`transition-colors hover:bg-muted/30 ${
+                      idx % 2 === 0 ? 'bg-card' : 'bg-muted/15'
+                    }`}
+                  >
+                    <td className="p-4 font-medium text-foreground sticky left-0 bg-card z-10">
+                      {row.feature}
+                    </td>
+                    <td className="p-4 text-center text-muted-foreground">
+                      {typeof row.free === 'boolean' ? (
+                        row.free ? (
+                          <Check className="w-4 h-4 text-emerald-500 mx-auto" weight="bold" />
+                        ) : (
+                          <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
+                        )
+                      ) : (
+                        row.free
+                      )}
+                    </td>
+                    <td className="p-4 text-center font-medium text-foreground bg-primary/5">
+                      {typeof row.subsidized === 'boolean' ? (
+                        row.subsidized ? (
+                          <Check className="w-4 h-4 text-emerald-500 mx-auto" weight="bold" />
+                        ) : (
+                          <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
+                        )
+                      ) : (
+                        row.subsidized
+                      )}
+                    </td>
+                    <td className="p-4 text-center font-medium text-foreground">
+                      {typeof row.partner === 'boolean' ? (
+                        row.partner ? (
+                          <Check className="w-4 h-4 text-emerald-500 mx-auto" weight="bold" />
+                        ) : (
+                          <Minus className="w-4 h-4 text-muted-foreground/60 mx-auto" />
+                        )
+                      ) : (
+                        row.partner
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Container>
       </section>
 
-      {/* FAQ Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12 border-t border-border space-y-6">
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-2 rounded-full bg-primary/10 text-primary">
-            <Question className="w-5 h-5" weight="bold" />
-          </div>
-          <h3 className="text-2xl font-bold font-heading text-foreground">
-            {faqs.title}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {faqs.subtitle}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          {faqs.items.map((faq, idx) => (
-            <div key={idx} className="p-6 rounded-2xl bg-card border border-border space-y-2">
-              <h4 className="font-bold text-sm text-foreground">{faq.q}</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">{faq.a}</p>
+      {/* FAQ Accordion Section */}
+      <section className="py-16 border-t border-border">
+        <Container size="md" className="space-y-8">
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-2 rounded-xl bg-primary/10 text-primary">
+              <Question className="w-5 h-5" weight="bold" />
             </div>
-          ))}
-        </div>
+            <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-foreground">
+              {faqs.title}
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {faqs.subtitle}
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            {faqs.items.map((faq, idx) => (
+              <details
+                key={idx}
+                className="group rounded-2xl border border-border bg-card p-4 transition-all duration-200 open:shadow-xs open:border-primary/40"
+              >
+                <summary className="flex items-center justify-between cursor-pointer list-none font-bold text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg py-1">
+                  <span>{faq.q}</span>
+                  <CaretDown className="w-4 h-4 text-muted-foreground group-open:rotate-180 transition-transform duration-200 shrink-0 ml-2" />
+                </summary>
+                <div className="pt-3 text-xs text-muted-foreground leading-relaxed border-t border-border/50 mt-3">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </Container>
       </section>
     </div>
   );

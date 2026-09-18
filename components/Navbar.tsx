@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -9,6 +9,7 @@ import {
   SignOut,
   List,
   X,
+  DeviceMobile,
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { clearStoredToken } from '@/lib/api';
@@ -39,6 +40,20 @@ export function Navbar() {
     getAuthServerSnapshot
   );
 
+  // Close mobile drawer on escape
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   const handleLogout = () => {
     clearStoredToken();
     router.push('/login');
@@ -50,21 +65,22 @@ export function Navbar() {
 
   const navLinks = [
     { name: t.nav.home, href: '/' },
+    { name: t.nav.howItWorks, href: '/#how-it-works' },
     { name: t.nav.pricing, href: '/pricing' },
     ...(isAuthenticated ? [{ name: t.nav.dashboard, href: '/dashboard' }] : []),
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/85 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <Image
             src="/logo.png"
             alt="Cosmos Logo"
-            width={36}
-            height={36}
-            className="w-9 h-9 object-contain group-hover:scale-105 transition-transform"
+            width={34}
+            height={34}
+            className="w-8.5 h-8.5 object-contain group-hover:scale-105 transition-transform"
             priority
           />
           <div className="flex flex-col">
@@ -77,20 +93,25 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav aria-label="Primary" className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              aria-current={pathname === link.href ? 'page' : undefined}
-              className={`text-sm font-medium transition-colors hover:text-foreground ${
-                pathname === link.href ? 'text-primary font-semibold' : 'text-muted-foreground'
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
+        {/* Desktop Navigation with Active Pill */}
+        <nav aria-label="Primary" className="hidden md:flex items-center gap-1 bg-muted/50 p-1 rounded-full border border-border">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  isActive
+                    ? 'bg-card text-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right Action Buttons */}
@@ -99,26 +120,27 @@ export function Navbar() {
           <button
             type="button"
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             title="Ganti Bahasa / Switch Language"
             aria-label="Ganti Bahasa / Switch Language"
           >
-            <Globe className="w-4 h-4" />
-            <span>{language.toUpperCase()}</span>
+            <Globe className="w-3.5 h-3.5" />
+            <span className="font-mono">{language.toUpperCase()}</span>
           </button>
 
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <Link
                 href="/dashboard"
-                className="px-4 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border transition-colors"
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
               >
-                {t.nav.dashboard}
+                <DeviceMobile className="w-3.5 h-3.5" />
+                <span>{t.nav.dashboard}</span>
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
               >
                 <SignOut className="w-4 h-4" />
                 <span>{t.nav.logout}</span>
@@ -155,7 +177,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-muted-foreground hover:text-foreground"
+            className="p-2 text-muted-foreground hover:text-foreground rounded-lg"
             aria-label="Toggle Menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav-drawer"
@@ -165,29 +187,40 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer Overlay */}
       {mobileMenuOpen && (
-        <div id="mobile-nav-drawer" className="md:hidden border-b border-border bg-card p-4 space-y-3">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block py-2 text-sm font-medium ${
-                pathname === link.href ? 'text-primary font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
+        <div
+          id="mobile-nav-drawer"
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 top-16 z-50 bg-background/95 backdrop-blur-md md:hidden p-6 flex flex-col justify-between border-t border-border animate-in fade-in slide-in-from-top-4 duration-200"
+        >
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`py-3 px-4 rounded-xl text-sm font-semibold transition-colors ${
+                    pathname === link.href
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
 
-          <div className="pt-3 border-t border-border flex flex-col gap-2">
+          <div className="pt-6 border-t border-border flex flex-col gap-3">
             {isAuthenticated ? (
               <>
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+                  className="w-full text-center py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-xs"
                 >
                   {t.nav.dashboard}
                 </Link>
@@ -197,7 +230,7 @@ export function Navbar() {
                     setMobileMenuOpen(false);
                     handleLogout();
                   }}
-                  className="w-full text-center py-2 text-xs font-semibold text-destructive"
+                  className="w-full text-center py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
                 >
                   {t.nav.logout}
                 </button>
@@ -207,14 +240,14 @@ export function Navbar() {
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl border border-border text-xs font-semibold"
+                  className="w-full text-center py-3 rounded-xl border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors"
                 >
                   {t.nav.login}
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+                  className="w-full text-center py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-xs"
                 >
                   {t.nav.register}
                 </Link>
