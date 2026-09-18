@@ -4,6 +4,7 @@ import { config } from '../config.js';
 import { timingSafeStringCompare } from '../services/cryptoService.js';
 import { emitAuthStatus } from '../services/authEventBus.js';
 import { processDeviceValidation } from '../middleware/deviceValidation.js';
+import { serializeUser } from '../utils/userSerializer.js';
 
 export const internalRoutes: FastifyPluginAsync = async (fastify) => {
     // POST /internal/auth/verified
@@ -24,6 +25,8 @@ export const internalRoutes: FastifyPluginAsync = async (fastify) => {
             phoneNumber?: string;
             canonicalJid?: string;
             regSessionId?: string;
+            pushName?: string;
+            username?: string;
         };
 
         if (!body.canonicalJid) {
@@ -34,11 +37,20 @@ export const internalRoutes: FastifyPluginAsync = async (fastify) => {
         const phoneNumber = body.phoneNumber || canonicalJid.replace(/\D/g, '');
         const regSessionId = body.regSessionId;
 
-        // Upsert user to ensure whitelisted
-        await prisma.user.upsert({
+        // Upsert user to ensure whitelisted and save WhatsApp username / profile name
+        const user = await prisma.user.upsert({
             where: { id: canonicalJid },
-            update: { isWhitelisted: true },
-            create: { id: canonicalJid, isWhitelisted: true }
+            update: {
+                isWhitelisted: true,
+                ...(body.pushName ? { pushName: body.pushName } : {}),
+                ...(body.username ? { username: body.username } : {})
+            },
+            create: {
+                id: canonicalJid,
+                pushName: body.pushName || null,
+                username: body.username || null,
+                isWhitelisted: true
+            }
         });
 
         // Register UserDevice isTrusted=true
@@ -46,12 +58,13 @@ export const internalRoutes: FastifyPluginAsync = async (fastify) => {
 
         // Issue JWT
         const jwtToken = fastify.jwt.sign({ id: canonicalJid, phoneNumber });
+        const serialized = serializeUser(user);
 
         // If regSessionId is provided, emit real-time event to active WebSocket
         if (regSessionId) {
-            emitAuthStatus(regSessionId, { status: 'VERIFIED', jwtToken });
+            emitAuthStatus(regSessionId, { status: 'VERIFIED', jwtToken, user: serialized });
         }
 
-        return reply.send({ ok: true, jwtToken });
+        return reply.send({ ok: true, jwtToken, user: serialized });
     });
 };

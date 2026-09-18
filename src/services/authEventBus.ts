@@ -1,8 +1,11 @@
 import { EventEmitter } from 'events';
 
+import type { UserProfile } from '../utils/userSerializer.js';
+
 export interface AuthStatusEvent {
     status: 'VERIFIED' | 'EXPIRED' | 'FAILED';
     jwtToken?: string;
+    user?: UserProfile;
     error?: string;
 }
 

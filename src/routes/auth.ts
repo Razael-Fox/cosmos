@@ -18,6 +18,7 @@ import { checkAndConsumeRateLimit } from '../services/rateLimiter.js';
 import { sendOtpViaIpc, notifyLoginViaIpc } from '../services/ipcClient.js';
 import { getRestoredClientIp } from '../middleware/clientIp.js';
 import { processDeviceValidation } from '../middleware/deviceValidation.js';
+import { authenticateJwt } from '../middleware/authenticate.js';
 import { serializeUser } from '../utils/userSerializer.js';
 import { emitAuthStatus } from '../services/authEventBus.js';
 
@@ -286,19 +287,34 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             }
         }
 
+        // Check if user already exists (e.g. from previous message or contact sync)
+        const existingUser = await prisma.user.findUnique({ where: { id: canonicalJid } });
+        let resolvedUsername = meta.username?.trim() || null;
+        if (!resolvedUsername && existingUser?.pushName) {
+            const collision = await prisma.user.findFirst({
+                where: { username: existingUser.pushName, NOT: { id: canonicalJid } }
+            });
+            if (!collision) {
+                resolvedUsername = existingUser.pushName;
+            } else {
+                resolvedUsername = `${existingUser.pushName}_${cleanPhone.slice(-4)}`;
+            }
+        }
+
         // Atomic user whitelisting and default FREE subscription setup
         const [user] = await prisma.$transaction([
             prisma.user.upsert({
                 where: { id: canonicalJid },
                 update: {
                     isWhitelisted: true,
-                    ...(meta.username ? { username: meta.username } : {}),
+                    ...(resolvedUsername ? { username: resolvedUsername } : {}),
                     ...(meta.email ? { email: meta.email } : {}),
                     ...(meta.passwordHash ? { passwordHash: meta.passwordHash } : {})
                 },
                 create: {
                     id: canonicalJid,
-                    username: meta.username ?? null,
+                    username: resolvedUsername,
+                    pushName: existingUser?.pushName ?? null,
                     email: meta.email ?? null,
                     passwordHash: meta.passwordHash ?? null,
                     isWhitelisted: true
@@ -509,8 +525,9 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             if (user && user.isWhitelisted) {
                 await processDeviceValidation(user.id, req, 'VERIFY_INVERTED', true);
                 const jwtToken = fastify.jwt.sign({ id: user.id, phoneNumber: record.phoneNumber });
-                emitAuthStatus(query.session, { status: 'VERIFIED', jwtToken });
-                return reply.send({ status: 'VERIFIED', jwtToken });
+                const serialized = serializeUser(user);
+                emitAuthStatus(query.session, { status: 'VERIFIED', jwtToken, user: serialized });
+                return reply.send({ status: 'VERIFIED', jwtToken, user: serialized });
             }
         }
 
@@ -525,6 +542,15 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
         }
 
         return reply.send({ status: 'PENDING' });
+    });
+
+    // GET /api/v1/auth/me
+    fastify.get('/me', { preHandler: [authenticateJwt] }, async (req, reply) => {
+        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+        if (!user) {
+            return reply.status(404).send({ error: 'USER_NOT_FOUND', message: 'User account not found.' });
+        }
+        return reply.send({ user: serializeUser(user) });
     });
 };
 

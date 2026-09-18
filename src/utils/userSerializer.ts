@@ -20,7 +20,7 @@ export function serializeUser(user: User): UserProfile {
         id: user.id,
         lid: user.lid ?? null,
         pushName: user.pushName ?? null,
-        username: user.username ?? null,
+        username: user.username || user.pushName || null,
         email: user.email ?? null,
         isWhitelisted: user.isWhitelisted,
         language: (user.language as 'ID' | 'EN') || 'ID',
