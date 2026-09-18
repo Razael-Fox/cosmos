@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -23,18 +22,6 @@ function getAuthServerSnapshot(): boolean {
     return false;
 }
 
-function subscribeNoop() {
-    return () => {};
-}
-
-function getClientSnapshot(): boolean {
-    return true;
-}
-
-function getServerSnapshot(): boolean {
-    return false;
-}
-
 export function Navbar() {
     const { t, language, setLanguage } = useTranslation();
     const router = useRouter();
@@ -42,7 +29,7 @@ export function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const isAuthenticated = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getAuthServerSnapshot);
-    const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
+
 
     // Close mobile drawer on escape key and lock body scroll
     useEffect(() => {
@@ -197,7 +184,7 @@ export function Navbar() {
                         <button
                             type="button"
                             onClick={() => setMobileMenuOpen((prev) => !prev)}
-                            className="p-2 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+                            className="p-2 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary"
                             aria-label="Toggle Menu"
                             aria-expanded={mobileMenuOpen}
                             aria-controls="mobile-nav-drawer"
@@ -208,132 +195,129 @@ export function Navbar() {
                 </div>
             </header>
 
-            {/* Mobile Drawer Overlay Portal */}
-            {mounted &&
-                mobileMenuOpen &&
-                createPortal(
-                    <div
-                        id="mobile-nav-drawer"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Mobile Navigation"
-                        className="fixed inset-0 z-50 flex flex-col bg-background/98 backdrop-blur-xl md:hidden animate-in fade-in duration-200"
-                    >
-                        {/* Drawer Header Bar */}
-                        <div className="flex h-16 items-center justify-between px-4 sm:px-6 border-b border-border shrink-0">
-                            <Link
-                                href="/"
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-2.5"
-                            >
-                                <Image
-                                    src="/logo.png"
-                                    alt="Cosmos Logo"
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8 object-contain"
-                                />
-                                <div className="flex flex-col">
-                                    <span className="font-heading font-extrabold text-base tracking-tight text-foreground">
-                                        {t.nav.brand}
-                                    </span>
-                                    <span className="text-[10px] -mt-1 text-muted-foreground font-mono">
-                                        {t.nav.portalBadge}
-                                    </span>
-                                </div>
-                            </Link>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={toggleLanguage}
-                                    className="px-2.5 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5"
-                                    aria-label="Ganti Bahasa / Switch Language"
-                                >
-                                    <Globe className="w-3.5 h-3.5" />
-                                    <span className="font-mono">{language.toUpperCase()}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                                    aria-label="Close Menu"
-                                >
-                                    <X className="w-6 h-6" />
-                                </button>
+            {/* Mobile Drawer Overlay */}
+            {mobileMenuOpen && (
+                <div
+                    id="mobile-nav-drawer"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Mobile Navigation"
+                    className="fixed inset-0 z-50 flex flex-col bg-background md:hidden animate-in fade-in duration-200"
+                >
+                    {/* Drawer Header Bar */}
+                    <div className="flex h-16 items-center justify-between px-4 sm:px-6 border-b border-border shrink-0">
+                        <Link
+                            href="/"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-2.5"
+                        >
+                            <Image
+                                src="/logo.png"
+                                alt="Cosmos Logo"
+                                width={32}
+                                height={32}
+                                className="w-8 h-8 object-contain"
+                            />
+                            <div className="flex flex-col">
+                                <span className="font-heading font-extrabold text-base tracking-tight text-foreground">
+                                    {t.nav.brand}
+                                </span>
+                                <span className="text-[10px] -mt-1 text-muted-foreground font-mono">
+                                    {t.nav.portalBadge}
+                                </span>
                             </div>
-                        </div>
+                        </Link>
 
-                        {/* Drawer Nav Links */}
-                        <div className="flex-1 overflow-y-auto px-6 py-6">
-                            <nav className="flex flex-col gap-1.5">
-                                {navLinks.map((link) => {
-                                    const isActive = pathname === link.href;
-                                    return (
-                                        <Link
-                                            key={link.href}
-                                            href={link.href}
-                                            onClick={() => setMobileMenuOpen(false)}
-                                            className={`py-3.5 px-4 rounded-2xl text-base font-semibold transition-all flex items-center justify-between ${
-                                                isActive
-                                                    ? 'bg-primary/15 text-primary dark:text-emerald-400 font-bold'
-                                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                                            }`}
-                                        >
-                                            <span>{link.name}</span>
-                                            {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                                        </Link>
-                                    );
-                                })}
-                            </nav>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={toggleLanguage}
+                                className="px-2.5 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer touch-manipulation flex items-center gap-1.5"
+                                aria-label="Ganti Bahasa / Switch Language"
+                            >
+                                <Globe className="w-3.5 h-3.5" />
+                                <span className="font-mono">{language.toUpperCase()}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer touch-manipulation"
+                                aria-label="Close Menu"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
                         </div>
+                    </div>
 
-                        {/* Drawer Auth Actions */}
-                        <div className="p-6 border-t border-border bg-card/40 shrink-0 flex flex-col gap-3">
-                            {isAuthenticated ? (
-                                <>
+                    {/* Drawer Nav Links */}
+                    <div className="flex-1 overflow-y-auto px-6 py-6">
+                        <nav className="flex flex-col gap-1.5">
+                            {navLinks.map((link) => {
+                                const isActive = pathname === link.href;
+                                return (
                                     <Link
-                                        href="/dashboard"
+                                        key={link.href}
+                                        href={link.href}
                                         onClick={() => setMobileMenuOpen(false)}
-                                        className="w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold shadow-xs flex items-center justify-center gap-2 transition-colors"
+                                        className={`py-3.5 px-4 rounded-2xl text-base font-semibold transition-all flex items-center justify-between touch-manipulation ${
+                                            isActive
+                                                ? 'bg-primary/15 text-primary dark:text-emerald-400 font-bold'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                                        }`}
                                     >
-                                        <DeviceMobile className="w-4 h-4" />
-                                        <span>{t.nav.dashboard}</span>
+                                        <span>{link.name}</span>
+                                        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                                     </Link>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setMobileMenuOpen(false);
-                                            handleLogout();
-                                        }}
-                                        className="w-full text-center py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                                    >
-                                        <SignOut className="w-4 h-4" />
-                                        <span>{t.nav.logout}</span>
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <Link
-                                        href="/login"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="w-full text-center py-3.5 rounded-xl border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors"
-                                    >
-                                        {t.nav.login}
-                                    </Link>
-                                    <Link
-                                        href="/register"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold shadow-xs transition-colors"
-                                    >
-                                        {t.nav.register}
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-                    </div>,
-                    document.body
-                )}
+                                );
+                            })}
+                        </nav>
+                    </div>
+
+                    {/* Drawer Auth Actions */}
+                    <div className="p-6 border-t border-border bg-card/40 shrink-0 flex flex-col gap-3">
+                        {isAuthenticated ? (
+                            <>
+                                <Link
+                                    href="/dashboard"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold shadow-xs flex items-center justify-center gap-2 transition-colors touch-manipulation"
+                                >
+                                    <DeviceMobile className="w-4 h-4" />
+                                    <span>{t.nav.dashboard}</span>
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        handleLogout();
+                                    }}
+                                    className="w-full text-center py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation"
+                                >
+                                    <SignOut className="w-4 h-4" />
+                                    <span>{t.nav.logout}</span>
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="w-full text-center py-3.5 rounded-xl border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors touch-manipulation"
+                                >
+                                    {t.nav.login}
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold shadow-xs transition-colors touch-manipulation"
+                                >
+                                    {t.nav.register}
+                                </Link>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </>
     );
 }
