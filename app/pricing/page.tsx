@@ -84,7 +84,7 @@ const FAQ_CONTENT: Record<'id' | 'en', { title: string; subtitle: string; items:
             },
             {
                 q: 'Apakah akun saya bisa di-banned WhatsApp jika menggunakan sub-bot?',
-                a: 'Cosmos menggunakan engine Baileys multi-device resmi yang mengemulasikan WhatsApp Web asli, dipadukan dengan flow Inverted Verification di mana pesan awal selalu diprakarsai oleh pengguna. Ini mencegah deteksi bot dan menjaga nomor Anda tetap aman.'
+                a: 'Meskipun Cosmos menggunakan engine Baileys multi-device resmi yang mengemulasikan WhatsApp Web asli, tim Cosmos maupun RazaelFox tidak memberikan jaminan ataupun bertanggung jawab jika akun WhatsApp pengguna terkena banned atau pemblokiran, karena hal tersebut sepenuhnya bergantung pada pola penggunaan masing-masing pengguna serta kepatuhan terhadap ketentuan layanan WhatsApp.'
             },
             {
                 q: 'Apa yang terjadi jika masa aktif langganan habis?',
@@ -106,7 +106,7 @@ const FAQ_CONTENT: Record<'id' | 'en', { title: string; subtitle: string; items:
             },
             {
                 q: 'Can my account get banned by WhatsApp when using a sub-bot?',
-                a: 'Cosmos uses the official multi-device Baileys engine that emulates genuine WhatsApp Web, combined with the Inverted Verification flow where the first message is always initiated by you. This prevents bot detection and keeps your number safe.'
+                a: 'While Cosmos uses the official multi-device Baileys engine that emulates genuine WhatsApp Web, neither the Cosmos team nor RazaelFox guarantees or takes responsibility if a user’s WhatsApp account gets banned. Account safety ultimately depends on the user’s own usage patterns, message activity, and compliance with WhatsApp Terms of Service.'
             },
             {
                 q: 'What happens when my subscription expires?',
