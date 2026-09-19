@@ -30,6 +30,20 @@ export interface ConnectOptions {
 }
 
 export const activeConnections = new Map<string, ReturnType<typeof makeWASocket>>();
+export const stoppedSessions = new Set<string>();
+
+export function stopConnection(sessionId: string): void {
+    stoppedSessions.add(sessionId);
+    const sock = activeConnections.get(sessionId);
+    if (sock) {
+        try {
+            sock.end(undefined);
+        } catch {
+            /* ignore */
+        }
+    }
+    activeConnections.delete(sessionId);
+}
 
 export async function connectToWhatsApp(options: ConnectOptions): Promise<void> {
     const { sessionId, phoneNumber, onPairingCode, onConnected, onClosed, isAborted } = options;
@@ -186,6 +200,11 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             }
         }
         if (connection === 'close') {
+            const isManuallyStopped = stoppedSessions.has(sessionId);
+            if (isManuallyStopped) {
+                stoppedSessions.delete(sessionId);
+            }
+
             const lastDisconnectError = lastDisconnect?.error as any;
             const errorCode = lastDisconnectError?.output?.statusCode || lastDisconnectError?.code;
             const errorMessage = lastDisconnectError?.message || 'Unknown Reason';
@@ -200,9 +219,11 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                 options.isAborted = undefined;
             }
 
-            const shouldReconnect = isPairingMode
-                ? isPairedSuccess && !options.disableReconnect
-                : !isLoggedOut && !options.disableReconnect;
+            const shouldReconnect = isManuallyStopped
+                ? false
+                : isPairingMode
+                  ? isPairedSuccess && !options.disableReconnect
+                  : !isLoggedOut && !options.disableReconnect;
 
             console.log(
                 `[Connection] [${sessionId}] Closed (Reason: ${errorMessage}, Code: ${errorCode}). Reconnecting: ${shouldReconnect}`

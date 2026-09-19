@@ -3,7 +3,7 @@ import path from 'path';
 import QRCode from 'qrcode';
 import Database from 'better-sqlite3';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import { activeConnections, connectToWhatsApp } from '#utils/connectionManager.js';
+import { activeConnections, connectToWhatsApp, stopConnection } from '#utils/connectionManager.js';
 import { getPrismaClient, disconnectPrismaClient } from '#db.js';
 import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
 import { loadConfig, clearConfigCache, isFeatureEnabled } from '#services/subBotConfigService.js';
@@ -128,11 +128,22 @@ export async function requestPairing(
     }
 
     if (isSubBotActive(cleanNumber)) {
-        return t('tools.subbot.already_active', { number: cleanNumber });
+        if (!isSubBotLinked(cleanNumber)) {
+            await stopSubBot(cleanNumber);
+        } else {
+            return t('tools.subbot.already_active', { number: cleanNumber });
+        }
     }
 
     if (hasPendingPairing(cleanNumber) || hasPendingPairingByUser(userJid)) {
-        return t('tools.subbot.already_pairing');
+        abortPairing(cleanNumber);
+        for (const [phone, session] of pendingPairings.entries()) {
+            const sessionUser = session.userJid.split(':')[0].split('@')[0].toLowerCase();
+            const cleanUser = userJid.split(':')[0].split('@')[0].toLowerCase();
+            if (sessionUser === cleanUser) {
+                abortPairing(phone);
+            }
+        }
     }
 
     if (activeConnections.size >= MAX_SUB_BOTS) {
@@ -369,11 +380,22 @@ export async function requestPairingHeadless(
     }
 
     if (isSubBotActive(cleanNumber)) {
-        return { ok: false, error: 'ALREADY_ACTIVE' };
+        if (!isSubBotLinked(cleanNumber)) {
+            await stopSubBot(cleanNumber);
+        } else {
+            return { ok: false, error: 'ALREADY_ACTIVE' };
+        }
     }
 
     if (hasPendingPairing(cleanNumber) || hasPendingPairingByUser(requesterJid)) {
-        return { ok: false, error: 'ALREADY_PAIRING' };
+        abortPairing(cleanNumber);
+        for (const [phone, session] of pendingPairings.entries()) {
+            const sessionUser = session.userJid.split(':')[0].split('@')[0].toLowerCase();
+            const cleanUser = requesterJid.split(':')[0].split('@')[0].toLowerCase();
+            if (sessionUser === cleanUser) {
+                abortPairing(phone);
+            }
+        }
     }
 
     if (activeConnections.size >= MAX_SUB_BOTS) {
@@ -539,19 +561,10 @@ export function getSubBotPairingState(phoneNumber: string): 'ACTIVE' | 'PAIRING'
 export async function stopSubBot(phoneNumber: string): Promise<boolean> {
     const clean = getCleanNumber(phoneNumber);
     const sessionId = `sub_${clean}`;
-    const sock = activeConnections.get(sessionId);
-    if (sock) {
-        try {
-            sock.end(undefined);
-        } catch {
-            /* ignore */
-        }
-        activeConnections.delete(sessionId);
-        subBotStartTimes.delete(clean);
-        await disconnectPrismaClient(sessionId);
-        return true;
-    }
-    return false;
+    stopConnection(sessionId);
+    subBotStartTimes.delete(clean);
+    await disconnectPrismaClient(sessionId);
+    return true;
 }
 
 export function isSubBotRegistered(phoneNumber: string): boolean {
