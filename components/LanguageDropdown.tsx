@@ -8,6 +8,7 @@ import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator
@@ -91,27 +92,29 @@ export function LanguageDropdown({
                     Language / Bahasa
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="my-1 -mx-1" />
-                {languages.map((item) => {
-                    const isSelected = language === item.code;
-                    return (
-                        <DropdownMenuItem
-                            key={item.code}
-                            onClick={() => setLanguage(item.code)}
-                            className={cn(
-                                'flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-colors',
-                                isSelected
-                                    ? 'bg-primary/10 text-primary font-semibold'
-                                    : 'text-foreground hover:bg-muted'
-                            )}
-                        >
-                            <span className="flex items-center gap-2">
-                                <span className="text-sm leading-none">{item.flag}</span>
-                                <span>{item.label}</span>
-                            </span>
-                            {isSelected && <Check className="w-4 h-4 text-primary" weight="bold" />}
-                        </DropdownMenuItem>
-                    );
-                })}
+                <DropdownMenuGroup>
+                    {languages.map((item) => {
+                        const isSelected = language === item.code;
+                        return (
+                            <DropdownMenuItem
+                                key={item.code}
+                                onClick={() => setLanguage(item.code)}
+                                className={cn(
+                                    'flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-colors',
+                                    isSelected
+                                        ? 'bg-primary/10 text-primary font-semibold'
+                                        : 'text-foreground hover:bg-muted'
+                                )}
+                            >
+                                <span className="flex items-center gap-2">
+                                    <span className="text-sm leading-none">{item.flag}</span>
+                                    <span>{item.label}</span>
+                                </span>
+                                {isSelected && <Check className="w-4 h-4 text-primary" weight="bold" />}
+                            </DropdownMenuItem>
+                        );
+                    })}
+                </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>
     );
