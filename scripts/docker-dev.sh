@@ -224,9 +224,9 @@ status() {
     echo "[docker-dev] Container Status:"
     run_docker docker compose -f "${COMPOSE_FILE}" ps
     echo ""
-    echo "[docker-dev] Endpoints:"
-    echo "  - Web Portal:    http://localhost:3000"
-    echo "  - API Gateway:   http://localhost:4000"
+    echo "[docker-dev] Endpoints (Local & LXC NAT VPS Forwarded):"
+    echo "  - Web Portal:    http://localhost:3000  (Public: http://38.49.212.111:1377 -> 192.168.11.86:3000)"
+    echo "  - API Gateway:   http://localhost:4000  (Public: http://38.49.212.111:1434 -> 192.168.11.86:4000)"
     echo "  - WhatsApp Bot:  Interactive / Socket (/app/storage/ipc.sock)"
     echo ""
     echo "[docker-dev] Useful commands:"

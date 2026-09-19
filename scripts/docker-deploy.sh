@@ -167,4 +167,10 @@ fi
 echo "[deploy] Active PM2 Process List:"
 run_docker docker exec "${CONTAINER}" /usr/local/bin/pm2 list 2>/dev/null || true
 
-echo "[deploy] Deployment complete! Tail logs anytime with: pnpm docker:logs"
+echo ""
+echo "[deploy] Deployment complete!"
+echo "[deploy] Endpoints:"
+echo "  - Local / Host Ingress: http://127.0.0.1:8080 (or http://192.168.11.86:8080)"
+echo "  - NAT VPS Public URL:   http://38.49.212.111:1623"
+echo "  - Cloudflare Tunnel:    https://cosmos.razael-fox.my.id (if configured)"
+echo "[deploy] Tail logs anytime with: pnpm docker:logs"
