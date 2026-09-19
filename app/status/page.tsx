@@ -145,7 +145,7 @@ export default function StatusPage() {
                 {/* Header Title & Refresh Button */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-6">
                     <div className="space-y-1.5">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold">
                             <Pulse className="w-3.5 h-3.5" weight="bold" />
                             <span>Telemetry Service</span>
                         </div>
@@ -294,7 +294,7 @@ export default function StatusPage() {
                                     )}
 
                                     <span
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold ${
                                             service.status === 'OPERATIONAL'
                                                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                                                 : service.status === 'DEGRADED'
@@ -331,7 +331,7 @@ export default function StatusPage() {
                 <button
                     type="button"
                     onClick={handleBack}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-card/95 backdrop-blur-md border border-border shadow-lg text-foreground font-semibold text-xs active:scale-95 transition-all touch-manipulation cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card/95 backdrop-blur-md border border-border shadow-lg text-foreground font-semibold text-xs active:scale-95 transition-all touch-manipulation cursor-pointer"
                     aria-label={t.statusPage.back}
                 >
                     <ArrowLeft className="w-4 h-4 text-primary" weight="bold" />

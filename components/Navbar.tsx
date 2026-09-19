@@ -100,7 +100,7 @@ export function Navbar() {
                     {/* Desktop Navigation with Active Pill */}
                     <nav
                         aria-label="Primary"
-                        className="hidden md:flex items-center gap-1 bg-muted/50 p-1 rounded-full border border-border"
+                        className="hidden md:flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border"
                     >
                         {navLinks.map((link) => {
                             const isActive = pathname === link.href;
@@ -109,7 +109,7 @@ export function Navbar() {
                                     key={link.href}
                                     href={link.href}
                                     aria-current={isActive ? 'page' : undefined}
-                                    className={`relative px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                    className={`relative px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                         isActive
                                             ? 'bg-card text-foreground shadow-xs'
                                             : 'text-muted-foreground hover:text-foreground hover:bg-card/50'

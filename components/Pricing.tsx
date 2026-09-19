@@ -145,7 +145,7 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
                             }`}
                         >
                             {plan.isPopular && (
-                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wider shadow-sm">
+                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-md bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wider shadow-sm">
                                     {t.pricing.popular}
                                 </div>
                             )}

@@ -454,7 +454,7 @@ export default function DashboardPage() {
                                     <span className="text-3xl font-black text-foreground font-heading">
                                         {subscription?.tier || 'FREE'}
                                     </span>
-                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
                                         {subscription?.status || 'ACTIVE'}
                                     </span>
                                 </div>
@@ -912,7 +912,7 @@ export default function DashboardPage() {
                                 </p>
                             </div>
                         </div>
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
                             <CheckCircle className="w-4 h-4" weight="fill" />
                             <span>{t.dashboard.whitelistActive}</span>
                         </span>
