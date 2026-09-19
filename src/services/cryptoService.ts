@@ -46,9 +46,15 @@ export function verifyAdminKey(providedHeader?: string): boolean {
     return timingSafeStringCompare(token, adminKey);
 }
 
-export function buildClickToChatUrl(botNumber: string, token: string): string {
+export function buildClickToChatUrl(botNumber: string, token: string): { universal: string; direct: string } {
     const clean = botNumber.replace(/\D/g, '');
-    return `https://wa.me/${clean}?text=${encodeURIComponent(`.verify ${token}`)}`;
+    const text = encodeURIComponent(`.verify ${token}`);
+    return {
+        // Universal link — opens in browser, OS dispatches to any WhatsApp variant
+        universal: `https://wa.me/${clean}?text=${text}`,
+        // Deep link — only opens regular WhatsApp (not WhatsApp Business)
+        direct: `whatsapp://send?phone=${clean}&text=${text}`
+    };
 }
 
 /**

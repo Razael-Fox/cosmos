@@ -111,11 +111,15 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             }
         });
 
-        const clickToChatUrl = buildClickToChatUrl(config.BOT_PHONE_NUMBER, token);
+        const { universal: clickToChatUrl, direct: clickToChatUrlDirect } = buildClickToChatUrl(
+            config.BOT_PHONE_NUMBER,
+            token
+        );
 
         return reply.send({
             token,
             clickToChatUrl,
+            clickToChatUrlDirect,
             regSessionId,
             expiresIn
         });
