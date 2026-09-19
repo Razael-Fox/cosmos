@@ -98,6 +98,49 @@ function hasDirectMedia(rawMsg: any): boolean {
     return false;
 }
 
+let activeInteractions = 0;
+
+function markPresenceActive(sock: WASocket, jid: string) {
+    activeInteractions++;
+    sock.sendPresenceUpdate('available').catch(() => {});
+    sock.sendPresenceUpdate('composing', jid).catch(() => {});
+}
+
+function markPresenceInactive(sock: WASocket, jid: string, delayMs = 1500) {
+    setTimeout(() => {
+        try {
+            sock.sendPresenceUpdate('paused', jid).catch(() => {});
+        } catch {
+            /* ignore */
+        }
+        activeInteractions = Math.max(0, activeInteractions - 1);
+        if (activeInteractions === 0) {
+            try {
+                sock.sendPresenceUpdate('unavailable').catch(() => {});
+            } catch {
+                /* ignore */
+            }
+        }
+    }, delayMs);
+}
+
+function markMessageRead(sock: WASocket, msg: WAMessage) {
+    if (
+        !msg.key.fromMe &&
+        msg.key.remoteJid &&
+        !msg.key.remoteJid.endsWith('@newsletter') &&
+        msg.key.remoteJid !== 'status@broadcast'
+    ) {
+        try {
+            sock.readMessages([msg.key]).catch((err) => {
+                console.error('[Message Handler] Failed to mark message as read:', err);
+            });
+        } catch (err) {
+            console.error('[Message Handler] Unexpected error invoking readMessages:', err);
+        }
+    }
+}
+
 export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<void> {
     if (!msg.message || !msg.key.remoteJid || !msg.key.id) return;
 
@@ -248,23 +291,6 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         return;
     }
 
-    // Automatically mark user messages as read (commands, random, or missed messages)
-    // This prevents notification spam on the bot account and renders double blue checkmarks for users
-    if (
-        !msg.key.fromMe &&
-        msg.key.remoteJid &&
-        !msg.key.remoteJid.endsWith('@newsletter') &&
-        msg.key.remoteJid !== 'status@broadcast'
-    ) {
-        try {
-            sock.readMessages([msg.key]).catch((err) => {
-                console.error('[Message Handler] Failed to mark message as read:', err);
-            });
-        } catch (err) {
-            console.error('[Message Handler] Unexpected error invoking readMessages:', err);
-        }
-    }
-
     // Resolve chat language preference (Hierarchy: Group -> User -> SubBot Default -> id)
     let chatLang: string | null = null;
     try {
@@ -321,7 +347,11 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
     }
 
-    // Global cancellation check: if user sends a cancel keyword (.cancel, cancel, .batal, batal, .abort, abort)
+    const activePrefix = subBotConfig?.prefix || '.';
+    const startsWithActivePrefix = trimmedText.startsWith(activePrefix);
+    const startsWithDot = trimmedText.startsWith('.');
+    const isCommand = startsWithActivePrefix || startsWithDot || isPlayReply;
+
     const lowerText = trimmedText.toLowerCase();
     const isCancelKeyword =
         lowerText === '.cancel' ||
@@ -331,328 +361,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         lowerText === '.abort' ||
         lowerText === 'abort';
 
-    if (senderRaw && isCancelKeyword && hasCancellableSession(senderRaw, jid)) {
-        const cancelMsg = await cancelActiveSession(senderRaw, jid, sock, msg, t);
-        if (cancelMsg && typeof cancelMsg === 'string' && cancelMsg.trim().length > 0) {
-            await sock.sendMessage(jid, { text: cancelMsg }, { quoted: msg });
-        }
-        return;
-    }
-
-    // Ignore programmatic bot responses from being processed as registration step input
     let isQuotingCommand = false;
-    if (msg.key.fromMe && msg.message) {
-        const qMsg =
-            msg.message.videoMessage?.contextInfo?.quotedMessage ||
-            msg.message.imageMessage?.contextInfo?.quotedMessage ||
-            msg.message.documentMessage?.contextInfo?.quotedMessage ||
-            msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
-        if (qMsg) {
-            const qText = qMsg.conversation || qMsg.extendedTextMessage?.text || '';
-            if (qText.trim().startsWith('.')) isQuotingCommand = true;
-        }
-    }
-
-    // Check if sender is currently in an active ID Card registration flow in this chat
-    if (senderRaw && !isQuotingCommand && isUserRegistering(senderRaw, jid)) {
-        if (!trimmedText.startsWith('.')) {
-            const handled = await processRegistrationStep(sock, msg, senderRaw, jid, trimmedText, t);
-            if (handled) return;
-        }
-    }
-
-    // Check if sender is confirming a pending bank transfer
-    if (senderRaw && !trimmedText.startsWith('.')) {
-        const handledBankConfirm = await processBankTransferConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
-        if (handledBankConfirm) return;
-    }
-
-    // Check if sender is confirming a pending loan application
-    if (senderRaw && !trimmedText.startsWith('.')) {
-        const handledLoanConfirm = await processLoanConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
-        if (handledLoanConfirm) return;
-    }
-
-    const activePrefix = subBotConfig?.prefix || '.';
-    const startsWithActivePrefix = trimmedText.startsWith(activePrefix);
-    const startsWithDot = trimmedText.startsWith('.');
-    const isCommand = startsWithActivePrefix || startsWithDot || isPlayReply;
-
-    if (isCommand) {
-        let commandName: string;
-        let argsStr: string;
-
-        if (isPlayReply) {
-            commandName = '.play';
-            argsStr = trimmedText;
-        } else {
-            const parts = trimmedText.split(/\s+/);
-            let rawCmd = parts[0];
-            if (startsWithActivePrefix && activePrefix !== '.') {
-                rawCmd = '.' + rawCmd.slice(activePrefix.length);
-            }
-            commandName = rawCmd;
-            argsStr = trimmedText.substring(parts[0].length).trim();
-        }
-
-        if (commandName === '.addgroup' || commandName === '.addwhitelist') {
-            console.log('Command executed', { command: '.addgroup', jid });
-            if (!jid.endsWith('@g.us')) {
-                await sock.sendMessage(jid, { text: t('core.group_only') });
-                return;
-            }
-            const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
-            const senderIdentity = senderJidDb || senderLidDb || '';
-            // Re-adding must never transfer ownership: whoever whitelisted first keeps it,
-            // whether that was the bot owner (global entry) or another user.
-            const alreadyWhitelisted = await prisma.whitelistedGroup.findUnique({ where: { jid } });
-            if (alreadyWhitelisted) {
-                await sock.sendMessage(jid, { text: t('core.group_already_whitelisted') }, { quoted: msg });
-                return;
-            }
-            if (isOwner) {
-                const success = await addGroup(jid, null);
-                if (success) {
-                    await sock.sendMessage(jid, { text: t('core.group_add_success') });
-                } else {
-                    await sock.sendMessage(jid, { text: t('core.group_add_failed') });
-                }
-                return;
-            }
-            try {
-                const result = await executeWithUserLock(senderIdentity, async () => {
-                    const check = await QuotaService.canAddGroup(senderIdentity, false);
-                    if (!check.allowed) return check;
-                    const ok = await addGroup(jid, senderIdentity);
-                    if (!ok) return null;
-                    // Close the race: a concurrent adder may have won the row first.
-                    const row = await prisma.whitelistedGroup.findUnique({ where: { jid } });
-                    if ((row as { ownerJid?: string | null } | null)?.ownerJid !== senderIdentity) {
-                        return { already: true as const };
-                    }
-                    return check;
-                });
-                if (result && 'already' in result) {
-                    await sock.sendMessage(jid, { text: t('core.group_already_whitelisted') }, { quoted: msg });
-                    return;
-                }
-                if (!result || !result.allowed) {
-                    const reason = result?.reason ?? '';
-                    const tierLabel = result?.tier ?? 'FREE';
-                    await sock.sendMessage(
-                        jid,
-                        {
-                            text:
-                                `⚠️ *Whitelist Limit Reached!*\n\n` +
-                                `Tier: ${tierLabel} Plan\n` +
-                                `${reason}\n\n` +
-                                `To add more groups:\n` +
-                                `1. Remove an inactive group using: .delgroup\n` +
-                                `2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing`
-                        },
-                        { quoted: msg }
-                    );
-                    return;
-                }
-                await sock.sendMessage(jid, { text: t('core.group_add_success') });
-            } catch (err) {
-                console.error('[Quota] .addgroup failed:', err);
-                await sock.sendMessage(jid, { text: t('core.group_add_failed') }, { quoted: msg });
-            }
-            return;
-        }
-
-        if (commandName === '.delgroup' || commandName === '.removewhitelist') {
-            console.log('Command executed', { command: '.delgroup', jid });
-            if (!jid.endsWith('@g.us')) {
-                await sock.sendMessage(jid, { text: t('core.group_only') });
-                return;
-            }
-            const senderIdentity = senderJidDb || senderLidDb || '';
-            try {
-                const group = await prisma.whitelistedGroup.findUnique({ where: { jid } });
-                if (!group) {
-                    await sock.sendMessage(jid, { text: t('core.group_not_whitelisted') }, { quoted: msg });
-                    return;
-                }
-                const groupOwner = (group as { ownerJid?: string | null }).ownerJid ?? null;
-                if (!isOwner && groupOwner !== senderIdentity) {
-                    await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
-                    return;
-                }
-                await prisma.whitelistedGroup.delete({ where: { jid } });
-                await sock.sendMessage(jid, { text: t('core.group_remove_success') }, { quoted: msg });
-            } catch (err) {
-                console.error('[Quota] .delgroup failed:', err);
-                await sock.sendMessage(jid, { text: t('core.group_add_failed') }, { quoted: msg });
-            }
-            return;
-        }
-
-        const tool = toolsHandler.getTool(commandName);
-        if (tool) {
-            // Check sub-bot feature toggles
-            if (isSubBot && subBotNumber) {
-                const reqFeature = getRequiredFeatureForTool(tool.definition?.name || '');
-                if (reqFeature && !isFeatureEnabled(subBotNumber, reqFeature)) {
-                    console.log(
-                        `[FeatureGate] Sub-bot +${subBotNumber} has feature '${reqFeature}' disabled. Rejecting command '${commandName}'.`
-                    );
-                    return;
-                }
-            }
-
-            // Check owner permission constraints
-            const isOwnerOnly = tool.definition?.owner === true;
-            if (isOwnerOnly && !isOwner) {
-                await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
-                return;
-            }
-
-            if (jid.endsWith('@g.us') && !isOwner) {
-                const whitelisted = await isGroupWhitelisted(jid);
-                if (!whitelisted) return;
-            }
-
-            console.log('Command executed', { command: commandName, jid });
-            console.log('[Message Handler] Command:', commandName, 'key details:', JSON.stringify(msg.key));
-
-            let args: Record<string, any> = {};
-            const props = tool.definition?.parameters?.properties;
-            if (props) {
-                const keys = Object.keys(props);
-                if (keys.length === 1) {
-                    args[keys[0]] = argsStr;
-                } else if (keys.length > 1) {
-                    try {
-                        args = JSON.parse(argsStr);
-                    } catch {
-                        args[keys[0]] = argsStr;
-                    }
-                }
-            }
-
-            // Fix quote previews for LIDs: replace raw LID numbers in the message text with pushnames or phone numbers
-            // We do this by modifying `msg` in place before execution, so tools quoting this `msg` have a readable preview.
-            if (msg.message) {
-                const msgKeys = ['extendedTextMessage', 'imageMessage', 'videoMessage'] as const;
-                for (const msgKey of msgKeys) {
-                    const msgContent = msg.message[msgKey];
-                    if (msgContent) {
-                        const textKey = msgKey === 'extendedTextMessage' ? 'text' : 'caption';
-                        let currentText = (msgContent as any)[textKey] as string | null | undefined;
-                        const mentionedJids = msgContent.contextInfo?.mentionedJid;
-
-                        if (currentText && mentionedJids && mentionedJids.length > 0) {
-                            let groupParticipants: any[] = [];
-                            if (jid.endsWith('@g.us')) {
-                                try {
-                                    const meta = await sock.groupMetadata(jid);
-                                    groupParticipants = meta.participants;
-                                } catch {
-                                    // ignore error
-                                }
-                            }
-
-                            for (const mJid of mentionedJids) {
-                                if (mJid.endsWith('@lid')) {
-                                    const lidNum = mJid.split('@')[0];
-                                    if (currentText.includes(`@${lidNum}`)) {
-                                        let resolvedJid = mJid;
-                                        const participant = groupParticipants.find((p: any) => p.lid === mJid);
-                                        if (participant && participant.id) {
-                                            resolvedJid = participant.id;
-                                        }
-
-                                        const searchJid = resolvedJid.endsWith('@lid') ? null : resolvedJid;
-                                        let replacement = `@${lidNum}`; // fallback
-
-                                        if (searchJid) {
-                                            const jidNum = searchJid.split('@')[0];
-                                            replacement = `@${jidNum}`; // phone fallback
-                                            try {
-                                                const user = await prisma.user.findUnique({ where: { id: jidNum } });
-                                                if (user && user.pushName) {
-                                                    replacement = `@${user.pushName}`;
-                                                }
-                                            } catch {
-                                                // ignore error
-                                            }
-                                        }
-
-                                        currentText = currentText.replace(new RegExp(`@${lidNum}`, 'g'), replacement);
-                                    }
-                                }
-                            }
-                            (msgContent as any)[textKey] = currentText;
-                        }
-                    }
-                }
-            }
-
-            await sock.sendPresenceUpdate('composing', jid);
-            const result = await toolsHandler.execute(commandName, args, { sock, msg, jid, t });
-            if (result && typeof result === 'string' && result.trim().length > 0) {
-                const matches = result.match(/@(\d+)/g);
-                const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
-                await sock.sendMessage(jid, { text: result, mentions }, { quoted: msg });
-            }
-            return;
-        }
-    }
-
-    // Offline AI Responder
-    if (!isOwner) {
-        if (!isSubBot || isFeatureEnabled(subBotNumber!, 'offlineAi')) {
-            const handled = await handleOfflineAiResponder(sock, msg, jid, text, chatLang);
-            if (handled) return;
-        }
-    }
-
-    // Auto-correct processing for owner's sent text messages
-    if (
-        isOwner &&
-        Boolean(msg.key.fromMe) &&
-        (!isSubBot || isFeatureEnabled(subBotNumber!, 'autocorrection')) &&
-        isAutoCorrectionEnabled(jid)
-    ) {
-        const msgId = msg.key.id;
-        if (msgId && trimmedText.length > 1 && !isCommand) {
-            try {
-                const corrected = await analyzeAndCorrectText(trimmedText);
-                if (corrected && corrected !== trimmedText) {
-                    console.log('Auto-correct executed', { jid, original: trimmedText, corrected });
-                    console.log(`[Auto-Correct] Editing message in ${jid}: "${trimmedText}" -> "${corrected}"`);
-                    await sock.sendMessage(jid, { text: corrected, edit: msg.key });
-                }
-            } catch (err: any) {
-                console.error('[Auto-Correct Error]', err);
-                console.error('Auto-correct handler failed', { error: err.message });
-            }
-        }
-    }
-
-    // Auto-DL Processing
-    const isBotResponseStr =
-        msg.key.fromMe &&
-        ((text && (text.startsWith('✅') || text.startsWith('⏳') || text.startsWith('❌'))) || false); // we will evaluate isQuotingCommand properly below
-
-    if (!isBotResponseStr && trimmedText && !isCommand) {
-        if (!isSubBot || isFeatureEnabled(subBotNumber!, 'autodl')) {
-            if (jid.endsWith('@g.us') && !isOwner) {
-                const whitelisted = await isGroupWhitelisted(jid);
-                if (whitelisted) {
-                    await processAutoDl(sock, msg, jid, trimmedText);
-                }
-            } else {
-                await processAutoDl(sock, msg, jid, trimmedText);
-            }
-        }
-    }
-
-    // Auto sticker processing if enabled for this chat and message contains direct media
-    // Ignore programmatic bot responses (which usually start with ✅, ⏳, or ❌, or quote a command) to prevent loops
-    isQuotingCommand = false;
     if (msg.key.fromMe && msg.message) {
         const qMsg =
             msg.message.videoMessage?.contextInfo?.quotedMessage ||
@@ -667,30 +376,424 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
     }
 
-    const isBotResponse =
-        msg.key.fromMe &&
-        ((text && (text.startsWith('✅') || text.startsWith('⏳') || text.startsWith('❌'))) || isQuotingCommand);
-    if (
-        !isBotResponse &&
+    const contextInfo =
+        msg.message?.extendedTextMessage?.contextInfo ||
+        msg.message?.imageMessage?.contextInfo ||
+        msg.message?.videoMessage?.contextInfo ||
+        msg.message?.documentMessage?.contextInfo ||
+        msg.message?.audioMessage?.contextInfo ||
+        msg.message?.stickerMessage?.contextInfo;
+
+    const mentionedJids: string[] = contextInfo?.mentionedJid || [];
+    const isBotMentioned = mentionedJids.some((j: string) => {
+        const raw = cleanId(j);
+        return (botRawJid && raw === botRawJid) || (botRawLid && raw === botRawLid);
+    });
+
+    const repliedToJid = contextInfo?.participant;
+    const repliedToRaw = cleanId(repliedToJid);
+    const isQuotingBot = Boolean(
+        contextInfo?.quotedMessage &&
+        ((botRawJid && repliedToRaw === botRawJid) || (botRawLid && repliedToRaw === botRawLid))
+    );
+
+    const isInInteractiveSession = Boolean(
+        (senderRaw && isCancelKeyword && hasCancellableSession(senderRaw, jid)) ||
+        (senderRaw && !isQuotingCommand && isUserRegistering(senderRaw, jid)) ||
+        (senderRaw && hasCancellableSession(senderRaw, jid))
+    );
+
+    const isAutoStickerTrigger = Boolean(
         (!isSubBot || isFeatureEnabled(subBotNumber!, 'autosticker')) &&
         isAutoStickerEnabled(jid) &&
         hasDirectMedia(msg.message)
-    ) {
-        if (jid.endsWith('@g.us') && !isOwner) {
-            const whitelisted = await isGroupWhitelisted(jid);
-            if (!whitelisted) return;
+    );
+
+    const isAutoDlTrigger = Boolean(
+        (!isSubBot || isFeatureEnabled(subBotNumber!, 'autodl')) && /(https?:\/\/[^\s]+)/.test(trimmedText)
+    );
+
+    const isOwnerAutoCorrect = Boolean(
+        isOwner &&
+        Boolean(msg.key.fromMe) &&
+        (!isSubBot || isFeatureEnabled(subBotNumber!, 'autocorrection')) &&
+        isAutoCorrectionEnabled(jid)
+    );
+
+    if (jid === 'status@broadcast' || jid.endsWith('@newsletter')) {
+        return;
+    }
+
+    const isDirectChat = jid.endsWith('@s.whatsapp.net') || jid.endsWith('@lid');
+    const isUserInteracting =
+        isDirectChat ||
+        isCommand ||
+        isBotMentioned ||
+        isQuotingBot ||
+        isInInteractiveSession ||
+        isAutoStickerTrigger ||
+        isAutoDlTrigger ||
+        isOwnerAutoCorrect;
+
+    // To avoid being detected as a bot by Meta/WhatsApp, the "online" and "read"
+    // statuses only work and are active when the user interacts with or performs an action on the bot.
+    if (!isUserInteracting) {
+        return;
+    }
+
+    markMessageRead(sock, msg);
+    markPresenceActive(sock, jid);
+
+    try {
+        if (senderRaw && isCancelKeyword && hasCancellableSession(senderRaw, jid)) {
+            const cancelMsg = await cancelActiveSession(senderRaw, jid, sock, msg, t);
+            if (cancelMsg && typeof cancelMsg === 'string' && cancelMsg.trim().length > 0) {
+                await sock.sendMessage(jid, { text: cancelMsg }, { quoted: msg });
+            }
+            return;
         }
 
-        console.log('Auto sticker executed', { jid });
-        console.log('[Message Handler] Auto sticker executing for jid:', jid);
-
-        await sock.sendPresenceUpdate('composing', jid);
-        const result = await toolsHandler.execute('sticker_maker', {}, { sock, msg, jid, t });
-        if (result && typeof result === 'string') {
-            if (result.startsWith('Failed') || result.startsWith('Error') || result.startsWith('Gagal')) {
-                await sock.sendMessage(jid, { text: result }, { quoted: msg });
+        // Check if sender is currently in an active ID Card registration flow in this chat
+        if (senderRaw && !isQuotingCommand && isUserRegistering(senderRaw, jid)) {
+            if (!trimmedText.startsWith('.')) {
+                const handled = await processRegistrationStep(sock, msg, senderRaw, jid, trimmedText, t);
+                if (handled) return;
             }
         }
-        return;
+
+        // Check if sender is confirming a pending bank transfer
+        if (senderRaw && !trimmedText.startsWith('.')) {
+            const handledBankConfirm = await processBankTransferConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
+            if (handledBankConfirm) return;
+        }
+
+        // Check if sender is confirming a pending loan application
+        if (senderRaw && !trimmedText.startsWith('.')) {
+            const handledLoanConfirm = await processLoanConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
+            if (handledLoanConfirm) return;
+        }
+
+        if (isCommand) {
+            let commandName: string;
+            let argsStr: string;
+
+            if (isPlayReply) {
+                commandName = '.play';
+                argsStr = trimmedText;
+            } else {
+                const parts = trimmedText.split(/\s+/);
+                let rawCmd = parts[0];
+                if (startsWithActivePrefix && activePrefix !== '.') {
+                    rawCmd = '.' + rawCmd.slice(activePrefix.length);
+                }
+                commandName = rawCmd;
+                argsStr = trimmedText.substring(parts[0].length).trim();
+            }
+
+            if (commandName === '.addgroup' || commandName === '.addwhitelist') {
+                console.log('Command executed', { command: '.addgroup', jid });
+                if (!jid.endsWith('@g.us')) {
+                    await sock.sendMessage(jid, { text: t('core.group_only') });
+                    return;
+                }
+                const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
+                const senderIdentity = senderJidDb || senderLidDb || '';
+                // Re-adding must never transfer ownership: whoever whitelisted first keeps it,
+                // whether that was the bot owner (global entry) or another user.
+                const alreadyWhitelisted = await prisma.whitelistedGroup.findUnique({ where: { jid } });
+                if (alreadyWhitelisted) {
+                    await sock.sendMessage(jid, { text: t('core.group_already_whitelisted') }, { quoted: msg });
+                    return;
+                }
+                if (isOwner) {
+                    const success = await addGroup(jid, null);
+                    if (success) {
+                        await sock.sendMessage(jid, { text: t('core.group_add_success') });
+                    } else {
+                        await sock.sendMessage(jid, { text: t('core.group_add_failed') });
+                    }
+                    return;
+                }
+                try {
+                    const result = await executeWithUserLock(senderIdentity, async () => {
+                        const check = await QuotaService.canAddGroup(senderIdentity, false);
+                        if (!check.allowed) return check;
+                        const ok = await addGroup(jid, senderIdentity);
+                        if (!ok) return null;
+                        // Close the race: a concurrent adder may have won the row first.
+                        const row = await prisma.whitelistedGroup.findUnique({ where: { jid } });
+                        if ((row as { ownerJid?: string | null } | null)?.ownerJid !== senderIdentity) {
+                            return { already: true as const };
+                        }
+                        return check;
+                    });
+                    if (result && 'already' in result) {
+                        await sock.sendMessage(jid, { text: t('core.group_already_whitelisted') }, { quoted: msg });
+                        return;
+                    }
+                    if (!result || !result.allowed) {
+                        const reason = result?.reason ?? '';
+                        const tierLabel = result?.tier ?? 'FREE';
+                        await sock.sendMessage(
+                            jid,
+                            {
+                                text:
+                                    `⚠️ *Whitelist Limit Reached!*\n\n` +
+                                    `Tier: ${tierLabel} Plan\n` +
+                                    `${reason}\n\n` +
+                                    `To add more groups:\n` +
+                                    `1. Remove an inactive group using: .delgroup\n` +
+                                    `2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing`
+                            },
+                            { quoted: msg }
+                        );
+                        return;
+                    }
+                    await sock.sendMessage(jid, { text: t('core.group_add_success') });
+                } catch (err) {
+                    console.error('[Quota] .addgroup failed:', err);
+                    await sock.sendMessage(jid, { text: t('core.group_add_failed') }, { quoted: msg });
+                }
+                return;
+            }
+
+            if (commandName === '.delgroup' || commandName === '.removewhitelist') {
+                console.log('Command executed', { command: '.delgroup', jid });
+                if (!jid.endsWith('@g.us')) {
+                    await sock.sendMessage(jid, { text: t('core.group_only') });
+                    return;
+                }
+                const senderIdentity = senderJidDb || senderLidDb || '';
+                try {
+                    const group = await prisma.whitelistedGroup.findUnique({ where: { jid } });
+                    if (!group) {
+                        await sock.sendMessage(jid, { text: t('core.group_not_whitelisted') }, { quoted: msg });
+                        return;
+                    }
+                    const groupOwner = (group as { ownerJid?: string | null }).ownerJid ?? null;
+                    if (!isOwner && groupOwner !== senderIdentity) {
+                        await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
+                        return;
+                    }
+                    await prisma.whitelistedGroup.delete({ where: { jid } });
+                    await sock.sendMessage(jid, { text: t('core.group_remove_success') }, { quoted: msg });
+                } catch (err) {
+                    console.error('[Quota] .delgroup failed:', err);
+                    await sock.sendMessage(jid, { text: t('core.group_add_failed') }, { quoted: msg });
+                }
+                return;
+            }
+
+            const tool = toolsHandler.getTool(commandName);
+            if (tool) {
+                // Check sub-bot feature toggles
+                if (isSubBot && subBotNumber) {
+                    const reqFeature = getRequiredFeatureForTool(tool.definition?.name || '');
+                    if (reqFeature && !isFeatureEnabled(subBotNumber, reqFeature)) {
+                        console.log(
+                            `[FeatureGate] Sub-bot +${subBotNumber} has feature '${reqFeature}' disabled. Rejecting command '${commandName}'.`
+                        );
+                        return;
+                    }
+                }
+
+                // Check owner permission constraints
+                const isOwnerOnly = tool.definition?.owner === true;
+                if (isOwnerOnly && !isOwner) {
+                    await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
+                    return;
+                }
+
+                if (jid.endsWith('@g.us') && !isOwner) {
+                    const whitelisted = await isGroupWhitelisted(jid);
+                    if (!whitelisted) return;
+                }
+
+                console.log('Command executed', { command: commandName, jid });
+                console.log('[Message Handler] Command:', commandName, 'key details:', JSON.stringify(msg.key));
+
+                let args: Record<string, any> = {};
+                const props = tool.definition?.parameters?.properties;
+                if (props) {
+                    const keys = Object.keys(props);
+                    if (keys.length === 1) {
+                        args[keys[0]] = argsStr;
+                    } else if (keys.length > 1) {
+                        try {
+                            args = JSON.parse(argsStr);
+                        } catch {
+                            args[keys[0]] = argsStr;
+                        }
+                    }
+                }
+
+                // Fix quote previews for LIDs: replace raw LID numbers in the message text with pushnames or phone numbers
+                // We do this by modifying `msg` in place before execution, so tools quoting this `msg` have a readable preview.
+                if (msg.message) {
+                    const msgKeys = ['extendedTextMessage', 'imageMessage', 'videoMessage'] as const;
+                    for (const msgKey of msgKeys) {
+                        const msgContent = msg.message[msgKey];
+                        if (msgContent) {
+                            const textKey = msgKey === 'extendedTextMessage' ? 'text' : 'caption';
+                            let currentText = (msgContent as any)[textKey] as string | null | undefined;
+                            const mentionedJids = msgContent.contextInfo?.mentionedJid;
+
+                            if (currentText && mentionedJids && mentionedJids.length > 0) {
+                                let groupParticipants: any[] = [];
+                                if (jid.endsWith('@g.us')) {
+                                    try {
+                                        const meta = await sock.groupMetadata(jid);
+                                        groupParticipants = meta.participants;
+                                    } catch {
+                                        // ignore error
+                                    }
+                                }
+
+                                for (const mJid of mentionedJids) {
+                                    if (mJid.endsWith('@lid')) {
+                                        const lidNum = mJid.split('@')[0];
+                                        if (currentText.includes(`@${lidNum}`)) {
+                                            let resolvedJid = mJid;
+                                            const participant = groupParticipants.find((p: any) => p.lid === mJid);
+                                            if (participant && participant.id) {
+                                                resolvedJid = participant.id;
+                                            }
+
+                                            const searchJid = resolvedJid.endsWith('@lid') ? null : resolvedJid;
+                                            let replacement = `@${lidNum}`; // fallback
+
+                                            if (searchJid) {
+                                                const jidNum = searchJid.split('@')[0];
+                                                replacement = `@${jidNum}`; // phone fallback
+                                                try {
+                                                    const user = await prisma.user.findUnique({
+                                                        where: { id: jidNum }
+                                                    });
+                                                    if (user && user.pushName) {
+                                                        replacement = `@${user.pushName}`;
+                                                    }
+                                                } catch {
+                                                    // ignore error
+                                                }
+                                            }
+
+                                            currentText = currentText.replace(
+                                                new RegExp(`@${lidNum}`, 'g'),
+                                                replacement
+                                            );
+                                        }
+                                    }
+                                }
+                                (msgContent as any)[textKey] = currentText;
+                            }
+                        }
+                    }
+                }
+
+                await sock.sendPresenceUpdate('composing', jid);
+                const result = await toolsHandler.execute(commandName, args, { sock, msg, jid, t });
+                if (result && typeof result === 'string' && result.trim().length > 0) {
+                    const matches = result.match(/@(\d+)/g);
+                    const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
+                    await sock.sendMessage(jid, { text: result, mentions }, { quoted: msg });
+                }
+                return;
+            }
+        }
+
+        // Offline AI Responder
+        if (!isOwner) {
+            if (!isSubBot || isFeatureEnabled(subBotNumber!, 'offlineAi')) {
+                const handled = await handleOfflineAiResponder(sock, msg, jid, text, chatLang);
+                if (handled) return;
+            }
+        }
+
+        // Auto-correct processing for owner's sent text messages
+        if (
+            isOwner &&
+            Boolean(msg.key.fromMe) &&
+            (!isSubBot || isFeatureEnabled(subBotNumber!, 'autocorrection')) &&
+            isAutoCorrectionEnabled(jid)
+        ) {
+            const msgId = msg.key.id;
+            if (msgId && trimmedText.length > 1 && !isCommand) {
+                try {
+                    const corrected = await analyzeAndCorrectText(trimmedText);
+                    if (corrected && corrected !== trimmedText) {
+                        console.log('Auto-correct executed', { jid, original: trimmedText, corrected });
+                        console.log(`[Auto-Correct] Editing message in ${jid}: "${trimmedText}" -> "${corrected}"`);
+                        await sock.sendMessage(jid, { text: corrected, edit: msg.key });
+                    }
+                } catch (err: any) {
+                    console.error('[Auto-Correct Error]', err);
+                    console.error('Auto-correct handler failed', { error: err.message });
+                }
+            }
+        }
+
+        // Auto-DL Processing
+        const isBotResponseStr =
+            msg.key.fromMe &&
+            ((text && (text.startsWith('✅') || text.startsWith('⏳') || text.startsWith('❌'))) || false); // we will evaluate isQuotingCommand properly below
+
+        if (!isBotResponseStr && trimmedText && !isCommand) {
+            if (!isSubBot || isFeatureEnabled(subBotNumber!, 'autodl')) {
+                if (jid.endsWith('@g.us') && !isOwner) {
+                    const whitelisted = await isGroupWhitelisted(jid);
+                    if (whitelisted) {
+                        await processAutoDl(sock, msg, jid, trimmedText);
+                    }
+                } else {
+                    await processAutoDl(sock, msg, jid, trimmedText);
+                }
+            }
+        }
+
+        // Auto sticker processing if enabled for this chat and message contains direct media
+        // Ignore programmatic bot responses (which usually start with ✅, ⏳, or ❌, or quote a command) to prevent loops
+        isQuotingCommand = false;
+        if (msg.key.fromMe && msg.message) {
+            const qMsg =
+                msg.message.videoMessage?.contextInfo?.quotedMessage ||
+                msg.message.imageMessage?.contextInfo?.quotedMessage ||
+                msg.message.documentMessage?.contextInfo?.quotedMessage ||
+                msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
+            if (qMsg) {
+                const qText = qMsg.conversation || qMsg.extendedTextMessage?.text || '';
+                if (qText.trim().startsWith('.') || (activePrefix !== '.' && qText.trim().startsWith(activePrefix))) {
+                    isQuotingCommand = true;
+                }
+            }
+        }
+
+        const isBotResponse =
+            msg.key.fromMe &&
+            ((text && (text.startsWith('✅') || text.startsWith('⏳') || text.startsWith('❌'))) || isQuotingCommand);
+        if (
+            !isBotResponse &&
+            (!isSubBot || isFeatureEnabled(subBotNumber!, 'autosticker')) &&
+            isAutoStickerEnabled(jid) &&
+            hasDirectMedia(msg.message)
+        ) {
+            if (jid.endsWith('@g.us') && !isOwner) {
+                const whitelisted = await isGroupWhitelisted(jid);
+                if (!whitelisted) return;
+            }
+
+            console.log('Auto sticker executed', { jid });
+            console.log('[Message Handler] Auto sticker executing for jid:', jid);
+
+            await sock.sendPresenceUpdate('composing', jid);
+            const result = await toolsHandler.execute('sticker_maker', {}, { sock, msg, jid, t });
+            if (result && typeof result === 'string') {
+                if (result.startsWith('Failed') || result.startsWith('Error') || result.startsWith('Gagal')) {
+                    await sock.sendMessage(jid, { text: result }, { quoted: msg });
+                }
+            }
+            return;
+        }
+    } finally {
+        markPresenceInactive(sock, jid);
     }
 }
