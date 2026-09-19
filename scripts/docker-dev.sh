@@ -80,6 +80,11 @@ prepare_storage() {
 }
 
 check_env() {
+    if command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1; then
+        echo "[docker-dev] Doppler detected and authenticated! Pulling latest 'dev' secrets from project 'cosmos'..."
+        doppler secrets download --project cosmos --config dev --format env --no-file > .env 2>/dev/null || true
+    fi
+
     if [ ! -f ".env" ] && [ -f ".env.example" ]; then
         echo "[docker-dev] Notice: .env not found. Creating default .env from .env.example..."
         cp .env.example .env

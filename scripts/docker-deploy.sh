@@ -94,6 +94,11 @@ check_disk() {
 }
 
 check_env() {
+    if command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1; then
+        echo "[deploy] Doppler detected and authenticated! Pulling latest 'prd' secrets from project 'cosmos'..."
+        doppler secrets download --project cosmos --config prd --format env --no-file > .env 2>/dev/null || true
+    fi
+
     if [ ! -f ".env" ] && [ -f ".env.example" ]; then
         echo "[deploy] Warning: .env not found. Creating .env from .env.example..."
         cp .env.example .env

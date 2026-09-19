@@ -102,3 +102,19 @@ if [ -f ".env" ]; then
     echo "[turnstile] NOTE: Since NEXT_PUBLIC_TURNSTILE_SITE_KEY is embedded at build time,"
     echo "[turnstile] run './scripts/docker-deploy.sh' to rebuild the production image with the new key."
 fi
+
+# Automatically sync into Doppler Secret Manager (Dev and PRD)
+if command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1; then
+    echo "[turnstile] Doppler CLI detected and authenticated! Synchronizing Turnstile keys to project 'cosmos'..."
+    doppler secrets set \
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY="${SITEKEY}" \
+        CLOUDFLARE_TURNSTILE_SECRET_KEY="${SECRET}" \
+        --project cosmos --config prd >/dev/null 2>&1 || true
+
+    doppler secrets set \
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY="${SITEKEY}" \
+        CLOUDFLARE_TURNSTILE_SECRET_KEY="${SECRET}" \
+        --project cosmos --config dev >/dev/null 2>&1 || true
+
+    echo "[turnstile] SUCCESS: Populated Turnstile keys into Doppler 'cosmos' [prd] and [dev] configs."
+fi

@@ -43,7 +43,12 @@
         "docker:dev:logs": "./scripts/docker-dev.sh logs",
         "docker:dev:clean": "./scripts/docker-dev.sh clean",
         "tunnel:setup": "./scripts/setup-cloudflare-tunnel.sh",
-        "turnstile:create": "./scripts/create-turnstile-widget.sh"
+        "turnstile:create": "./scripts/create-turnstile-widget.sh",
+        "doppler:pull:prd": "./scripts/sync-doppler.sh pull prd",
+        "doppler:pull:dev": "./scripts/sync-doppler.sh pull dev",
+        "doppler:push:prd": "./scripts/sync-doppler.sh push prd",
+        "doppler:push:dev": "./scripts/sync-doppler.sh push dev",
+        "doppler:status": "./scripts/sync-doppler.sh status"
     },
     "keywords": [],
     "author": "",

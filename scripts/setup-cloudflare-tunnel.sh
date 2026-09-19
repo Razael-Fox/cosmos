@@ -299,6 +299,34 @@ sync_env() {
 }
 
 # ------------------------------------------------------------------------------
+# Step 7: Sync to Doppler Secret Manager (Dev and PRD)
+# ------------------------------------------------------------------------------
+sync_doppler() {
+    if command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1; then
+        echo "[tunnel] Doppler CLI detected and authenticated! Synchronizing tunnel secrets..."
+        local project="cosmos"
+
+        if [ -n "${EXISTING_TOKEN}" ]; then
+            # Sync to PRD
+            doppler secrets set \
+                CLOUDFLARE_TUNNEL_TOKEN="${EXISTING_TOKEN}" \
+                APP_DOMAIN="${HOSTNAME}" \
+                NEXT_PUBLIC_SITE_URL="https://${HOSTNAME}" \
+                NEXT_PUBLIC_API_URL="https://${HOSTNAME}" \
+                --project "${project}" --config prd >/dev/null 2>&1 || true
+
+            # Sync to DEV
+            doppler secrets set \
+                CLOUDFLARE_TUNNEL_TOKEN="${EXISTING_TOKEN}" \
+                APP_DOMAIN="${HOSTNAME}" \
+                --project "${project}" --config dev >/dev/null 2>&1 || true
+
+            echo "[tunnel] SUCCESS: Populated Cloudflare tunnel token into Doppler '${project}' [prd] and [dev] configs."
+        fi
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # Execution Flow
 # ------------------------------------------------------------------------------
 install_cloudflared
@@ -311,6 +339,7 @@ else
 fi
 
 sync_env
+sync_doppler
 
 echo "======================================================================"
 echo "[tunnel] Cloudflare Tunnel configuration complete!"

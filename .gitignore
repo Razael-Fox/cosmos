@@ -115,3 +115,6 @@ website/
 *.sqlite-wal
 *.sqlite-shm
 
+# Doppler local secret cache
+doppler.json
+
