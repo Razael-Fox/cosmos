@@ -42,7 +42,8 @@
         "docker:dev:restart": "./scripts/docker-dev.sh restart",
         "docker:dev:logs": "./scripts/docker-dev.sh logs",
         "docker:dev:clean": "./scripts/docker-dev.sh clean",
-        "tunnel:setup": "./scripts/setup-cloudflare-tunnel.sh"
+        "tunnel:setup": "./scripts/setup-cloudflare-tunnel.sh",
+        "turnstile:create": "./scripts/create-turnstile-widget.sh"
     },
     "keywords": [],
     "author": "",
