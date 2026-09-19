@@ -83,7 +83,11 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                 setQrCodeData(event.data);
             } else if (event.type === 'code' && event.data) {
                 setPairingCode(event.data);
-            } else if (event.status === 'ACTIVE' || event.event === 'PAIRED') {
+            } else if (
+                event.status === 'ACTIVE' ||
+                event.event === 'PAIRED' ||
+                (event as { paired?: boolean }).paired === true
+            ) {
                 setIsSuccess(true);
                 setTimeout(() => {
                     onSuccess();
@@ -140,12 +144,39 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
 
     const handleCopy = async () => {
         if (!pairingCode) return;
+        let success = false;
         try {
-            await navigator.clipboard.writeText(pairingCode);
+            if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(pairingCode);
+                success = true;
+            }
+        } catch {
+            success = false;
+        }
+
+        if (!success && typeof document !== 'undefined') {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = pairingCode;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                textarea.style.opacity = '0';
+                textarea.setAttribute('readonly', '');
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                textarea.setSelectionRange(0, 99999);
+                success = document.execCommand('copy');
+                document.body.removeChild(textarea);
+            } catch {
+                success = false;
+            }
+        }
+
+        if (success) {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-        } catch {
-            // ignore
         }
     };
 

@@ -486,6 +486,64 @@ export function createPairingWebSocket(
     onError?: (err: unknown) => void
 ): () => void {
     let ws: WebSocket | null = null;
+    let isClosed = false;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    let initialPollTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+        isClosed = true;
+        if (ws) {
+            try {
+                ws.close();
+            } catch (closeErr) {
+                void closeErr;
+            }
+            ws = null;
+        }
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        if (initialPollTimeout) {
+            clearTimeout(initialPollTimeout);
+            initialPollTimeout = null;
+        }
+    };
+
+    const handleSuccess = (status = 'ACTIVE') => {
+        onMessage({ event: 'PAIRED', status });
+        cleanup();
+    };
+
+    const checkStatus = async () => {
+        if (isClosed) return;
+        try {
+            const clean = phone.replace(/\D/g, '');
+            const check = await request<{ status?: string; paired?: boolean }>(
+                `/api/v1/subbots/${encodeURIComponent(clean)}/status`
+            );
+            if (check && (check.status === 'ACTIVE' || check.paired === true)) {
+                handleSuccess(check.status);
+                return;
+            }
+        } catch {
+            // Fallback: check subbots list
+            try {
+                const list = await listSubBots();
+                const clean = phone.replace(/\D/g, '');
+                const found = list.find((b: SubBotInstance) => b.id === clean && b.status === 'ACTIVE');
+                if (found) {
+                    handleSuccess('ACTIVE');
+                }
+            } catch {
+                /* ignore */
+            }
+        }
+    };
+
+    // Fast polling starts alongside WebSocket for resilience in all environments
+    pollInterval = setInterval(checkStatus, 1500);
+    initialPollTimeout = setTimeout(checkStatus, 500);
 
     try {
         const wsUrl = getWebSocketUrl(
@@ -496,7 +554,11 @@ export function createPairingWebSocket(
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                onMessage(data);
+                if (data.status === 'ACTIVE' || data.event === 'PAIRED' || data.paired === true) {
+                    handleSuccess(data.status || 'ACTIVE');
+                } else {
+                    onMessage(data);
+                }
             } catch (parseErr) {
                 void parseErr;
                 onMessage({ type: 'raw', data: event.data });
@@ -511,14 +573,7 @@ export function createPairingWebSocket(
     }
 
     return () => {
-        if (ws) {
-            try {
-                ws.close();
-            } catch (closeErr) {
-                void closeErr;
-            }
-            ws = null;
-        }
+        cleanup();
     };
 }
 
