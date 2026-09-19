@@ -248,6 +248,23 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         return;
     }
 
+    // Automatically mark user messages as read (commands, random, or missed messages)
+    // This prevents notification spam on the bot account and renders double blue checkmarks for users
+    if (
+        !msg.key.fromMe &&
+        msg.key.remoteJid &&
+        !msg.key.remoteJid.endsWith('@newsletter') &&
+        msg.key.remoteJid !== 'status@broadcast'
+    ) {
+        try {
+            sock.readMessages([msg.key]).catch((err) => {
+                console.error('[Message Handler] Failed to mark message as read:', err);
+            });
+        } catch (err) {
+            console.error('[Message Handler] Unexpected error invoking readMessages:', err);
+        }
+    }
+
     // Resolve chat language preference (Hierarchy: Group -> User -> SubBot Default -> id)
     let chatLang: string | null = null;
     try {

@@ -6,6 +6,7 @@ import { cacheMessage, getCachedMessage, markMessageProcessed } from '#utils/mes
 import { usePrismaAuthState } from '#utils/prismaAuthState.js';
 import { initActiveSessions } from '#utils/sessionStore.js';
 import { dbContext, getPrismaClient, disconnectPrismaClient } from '#db.js';
+import { loadConfig } from '#services/subBotConfigService.js';
 
 const logger = pino({ level: 'debug' });
 const MAX_RECONNECT_ATTEMPTS = 15;
@@ -366,6 +367,24 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
 
                 if (msgTime > 0 && connectionOpenTimeSec > 0) {
                     if (msgTime < connectionOpenTimeSec - 2) {
+                        const isSub = sessionId !== 'default';
+                        const subNum = isSub ? sessionId.replace(/^sub_/, '') : null;
+                        const subCfg = subNum ? loadConfig(subNum) : null;
+                        if (!isSub || subCfg?.mode !== 'self') {
+                            if (
+                                !msg.key?.fromMe &&
+                                msg.key?.remoteJid &&
+                                msg.key?.id &&
+                                !msg.key.remoteJid.endsWith('@newsletter') &&
+                                msg.key.remoteJid !== 'status@broadcast'
+                            ) {
+                                try {
+                                    sock.readMessages([msg.key]).catch(() => {});
+                                } catch {
+                                    /* ignore */
+                                }
+                            }
+                        }
                         continue;
                     }
                 }
