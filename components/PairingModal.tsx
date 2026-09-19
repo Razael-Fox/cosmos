@@ -130,11 +130,21 @@ export function PairingModal({ onClose, onSuccess }: PairingModalProps) {
                 setErrorMsg(t.pairingModal.errorNoCredential);
             }
         } catch (err: unknown) {
-            const errorObj = err as { data?: { code?: string }; status?: number; message?: string };
-            if (errorObj.data?.code === 'QUOTA_EXCEEDED_SUBBOTS' || errorObj.status === 403) {
+            const errorObj = err as {
+                data?: { code?: string; message?: string; error?: string };
+                status?: number;
+                message?: string;
+            };
+            if (
+                errorObj.data?.code === 'QUOTA_EXCEEDED_SUBBOTS' ||
+                errorObj.data?.error === 'QUOTA_EXCEEDED' ||
+                errorObj.status === 403
+            ) {
                 setErrorMsg(t.pairingModal.errorQuota);
             } else {
-                const msg = err instanceof Error ? err.message : t.common.error;
+                const msg =
+                    errorObj.data?.message ||
+                    (err instanceof Error ? err.message : errorObj.message || t.common.error);
                 setErrorMsg(msg);
             }
         } finally {
