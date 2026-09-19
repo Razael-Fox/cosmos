@@ -4,7 +4,7 @@ services:
             context: .
             dockerfile: docker/Dockerfile.dev
             target: bot-dev
-        image: cosmos-bot-dev:latest
+        image: cosmos-bot:dev
         container_name: cosmos-bot-dev
         restart: unless-stopped
         stdin_open: true
@@ -30,7 +30,7 @@ services:
             context: .
             dockerfile: docker/Dockerfile.dev
             target: api-dev
-        image: cosmos-api-dev:latest
+        image: cosmos-api:dev
         container_name: cosmos-api-dev
         restart: unless-stopped
         # LXC NAT VPS: Host port 4000 (192.168.11.86:4000) forwards to public 38.49.212.111:1434
@@ -58,7 +58,7 @@ services:
             context: .
             dockerfile: docker/Dockerfile.dev
             target: web-dev
-        image: cosmos-web-dev:latest
+        image: cosmos-web:dev
         container_name: cosmos-web-dev
         restart: unless-stopped
         # LXC NAT VPS: Host port 3000 (192.168.11.86:3000) forwards to public 38.49.212.111:1377

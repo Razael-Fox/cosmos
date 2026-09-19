@@ -11,6 +11,7 @@ cd "${ROOT_DIR}"
 
 SERVICE="cosmos-all-in-one"
 CONTAINER="cosmos-all-in-one"
+IMAGE="cosmos:prd"
 
 # ------------------------------------------------------------------------------
 # Privilege & Docker Execution Helper
@@ -121,7 +122,7 @@ IS_RUNNING=$(run_docker docker inspect "${CONTAINER}" --format '{{.State.Running
 echo "[deploy] Building ${SERVICE}..."
 run_docker docker compose build "${SERVICE}" "$@"
 
-LATEST_IMG=$(run_docker docker images --no-trunc "${SERVICE}:latest" --format '{{.ID}}')
+LATEST_IMG=$(run_docker docker images --no-trunc "${IMAGE}" --format '{{.ID}}')
 
 if [ "${IS_RUNNING}" != "true" ] || [ "${OLD_IMG}" != "${LATEST_IMG}" ]; then
     echo "[deploy] Image changed (${OLD_IMG} -> ${LATEST_IMG}) or container stopped - recreating container..."

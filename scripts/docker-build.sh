@@ -9,6 +9,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
 SERVICE="cosmos-all-in-one"
+IMAGE="cosmos:prd"
 
 # ------------------------------------------------------------------------------
 # Privilege & Docker Execution Helper
@@ -98,7 +99,7 @@ if run_docker docker compose version >/dev/null 2>&1; then
 else
     # Fallback to docker build directly if compose plugin is unavailable
     echo "[docker-build] docker compose unavailable, falling back to docker build..."
-    run_docker docker build -f docker/Dockerfile -t "${SERVICE}:latest" "$@" .
+    run_docker docker build -f docker/Dockerfile -t "${IMAGE}" "$@" .
 fi
 
-echo "[docker-build] Build complete: ${SERVICE}:latest is ready."
+echo "[docker-build] Build complete: ${IMAGE} is ready."

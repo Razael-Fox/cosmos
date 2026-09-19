@@ -9,7 +9,7 @@ services:
                 NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://38.49.212.111:1623}
                 NEXT_PUBLIC_BOT_NUMBER: ${BOT_PHONE_NUMBER:-}
                 NEXT_PUBLIC_SALES_NUMBER: ${SALES_PHONE_NUMBER:-}
-        image: cosmos-all-in-one:latest
+        image: cosmos:prd
         container_name: cosmos-all-in-one
         restart: unless-stopped
         env_file:
