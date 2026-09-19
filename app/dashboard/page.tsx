@@ -30,6 +30,7 @@ import {
     getStoredUser,
     getUserProfile,
     getProfilePhoto,
+    getUserPresence,
     getSubscriptionStatus,
     listSubBots,
     deleteSubBot,
@@ -127,8 +128,30 @@ export default function DashboardPage() {
     const [timeQuote, setTimeQuote] = useState<string>('');
     const [fetchedAvatarUrl, setFetchedAvatarUrl] = useState<string | null>(null);
     const [avatarError, setAvatarError] = useState(false);
+    const [polledPresence, setPolledPresence] = useState<'online' | 'offline' | null>(null);
+    const presence = polledPresence ?? userProfile?.presence ?? 'offline';
 
     const avatarUrl = userProfile?.profilePictureUrl || fetchedAvatarUrl;
+
+    useEffect(() => {
+        if (!userProfile?.id) return;
+        let isMounted = true;
+        const checkPresence = () => {
+            getUserPresence()
+                .then((res) => {
+                    if (isMounted && res?.presence) {
+                        setPolledPresence(res.presence);
+                    }
+                })
+                .catch(() => {});
+        };
+        checkPresence();
+        const interval = setInterval(checkPresence, 10000);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, [userProfile?.id]);
 
     useEffect(() => {
         if (!userProfile?.profilePictureUrl && userProfile?.id) {
@@ -350,9 +373,7 @@ export default function DashboardPage() {
                 if (prev.some((g) => g.jid === created.jid)) return prev;
                 return [...prev, created];
             });
-            setParticipatingGroups((prev) =>
-                prev.map((g) => (g.id === groupJid ? { ...g, isWhitelisted: true } : g))
-            );
+            setParticipatingGroups((prev) => prev.map((g) => (g.id === groupJid ? { ...g, isWhitelisted: true } : g)));
             if (subscription) {
                 setSubscription({
                     ...subscription,
@@ -400,9 +421,7 @@ export default function DashboardPage() {
                 if (prev.some((g) => g.jid === created.jid)) return prev;
                 return [...prev, created];
             });
-            setParticipatingGroups((prev) =>
-                prev.map((g) => (g.id === cleanJid ? { ...g, isWhitelisted: true } : g))
-            );
+            setParticipatingGroups((prev) => prev.map((g) => (g.id === cleanJid ? { ...g, isWhitelisted: true } : g)));
             if (subscription) {
                 setSubscription({
                     ...subscription,
@@ -486,9 +505,23 @@ export default function DashboardPage() {
                                         <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
                                         {t.dashboard.userProfileCard?.title || 'WhatsApp Profile'}
                                     </span>
-                                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        {subscription?.status || 'ACTIVE'}
+                                    <span
+                                        className={`text-xs px-2.5 py-0.5 rounded-md font-semibold flex items-center gap-1.5 transition-colors border ${
+                                            presence === 'online'
+                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                                : 'bg-muted text-muted-foreground border-border'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`w-1.5 h-1.5 rounded-full ${
+                                                presence === 'online'
+                                                    ? 'bg-emerald-500 animate-pulse'
+                                                    : 'bg-zinc-400 dark:bg-zinc-600'
+                                            }`}
+                                        />
+                                        {presence === 'online'
+                                            ? t.dashboard.userProfileCard?.online || 'Online'
+                                            : t.dashboard.userProfileCard?.offline || 'Offline'}
                                     </span>
                                 </div>
 
@@ -514,7 +547,13 @@ export default function DashboardPage() {
                                             )}
                                         </div>
                                         <div className="absolute -bottom-1 -right-1 p-0.5 bg-card rounded-full shadow-xs">
-                                            <div className="p-0.5 rounded-full bg-emerald-500 text-white">
+                                            <div
+                                                className={`p-0.5 rounded-full text-white transition-colors ${
+                                                    presence === 'online'
+                                                        ? 'bg-emerald-500'
+                                                        : 'bg-zinc-400 dark:bg-zinc-600'
+                                                }`}
+                                            >
                                                 <WhatsappLogo className="w-3 h-3" weight="fill" />
                                             </div>
                                         </div>
@@ -549,7 +588,11 @@ export default function DashboardPage() {
                                             {subscription?.tier || 'FREE'}
                                         </span>
                                         <span className="text-[11px] text-muted-foreground">
-                                            ({subscription?.customPrefix ? t.dashboard.planCard.allowed : t.dashboard.planCard.locked})
+                                            (
+                                            {subscription?.customPrefix
+                                                ? t.dashboard.planCard.allowed
+                                                : t.dashboard.planCard.locked}
+                                            )
                                         </span>
                                     </div>
                                 </div>
@@ -890,10 +933,7 @@ export default function DashboardPage() {
                                                 <tr key={grp.jid} className="hover:bg-muted/20 transition-colors">
                                                     <td className="p-4">
                                                         <div className="flex items-center gap-3">
-                                                            <GroupAvatar
-                                                                name={groupSubject}
-                                                                pictureUrl={pictureUrl}
-                                                            />
+                                                            <GroupAvatar name={groupSubject} pictureUrl={pictureUrl} />
                                                             <div className="min-w-0">
                                                                 <span className="font-semibold text-foreground text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-[320px]">
                                                                     {groupSubject || grp.jid}
@@ -935,11 +975,7 @@ export default function DashboardPage() {
                                     return (
                                         <div key={grp.jid} className="p-4 flex items-center justify-between gap-3">
                                             <div className="min-w-0 flex items-center gap-3">
-                                                <GroupAvatar
-                                                    name={groupSubject}
-                                                    pictureUrl={pictureUrl}
-                                                    size="sm"
-                                                />
+                                                <GroupAvatar name={groupSubject} pictureUrl={pictureUrl} size="sm" />
                                                 <div className="min-w-0">
                                                     {groupSubject && (
                                                         <p className="font-semibold text-xs text-foreground truncate max-w-[180px]">
@@ -970,9 +1006,7 @@ export default function DashboardPage() {
                     {isGroupsQuotaFull && (
                         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3 text-xs text-amber-700 dark:text-amber-300">
                             <WarningCircle className="w-5 h-5 text-amber-500 shrink-0" weight="fill" />
-                            <p className="font-medium">
-                                {t.dashboard.groupsCard.quotaReachedNotice}
-                            </p>
+                            <p className="font-medium">{t.dashboard.groupsCard.quotaReachedNotice}</p>
                         </div>
                     )}
                 </section>
@@ -1090,7 +1124,9 @@ export default function DashboardPage() {
                                     title={t.dashboard.groupsCard.refreshGroups}
                                     className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors disabled:opacity-50 cursor-pointer"
                                 >
-                                    <ArrowsClockwise className={`w-4 h-4 ${isLoadingAccountGroups ? 'animate-spin' : ''}`} />
+                                    <ArrowsClockwise
+                                        className={`w-4 h-4 ${isLoadingAccountGroups ? 'animate-spin' : ''}`}
+                                    />
                                 </button>
                             </div>
 
@@ -1120,94 +1156,93 @@ export default function DashboardPage() {
                                         <Skeleton className="h-14 rounded-2xl w-full" />
                                         <Skeleton className="h-14 rounded-2xl w-full" />
                                     </div>
-                                ) : (() => {
-                                    const filtered = participatingGroups.filter((grp) => {
-                                        if (!groupSearchQuery.trim()) return true;
-                                        const query = groupSearchQuery.toLowerCase();
-                                        return (
-                                            grp.subject?.toLowerCase().includes(query) ||
-                                            grp.id.toLowerCase().includes(query)
-                                        );
-                                    });
+                                ) : (
+                                    (() => {
+                                        const filtered = participatingGroups.filter((grp) => {
+                                            if (!groupSearchQuery.trim()) return true;
+                                            const query = groupSearchQuery.toLowerCase();
+                                            return (
+                                                grp.subject?.toLowerCase().includes(query) ||
+                                                grp.id.toLowerCase().includes(query)
+                                            );
+                                        });
 
-                                    if (filtered.length === 0) {
-                                        return (
-                                            <div className="p-6 rounded-2xl border border-dashed border-border text-center space-y-2 my-2">
-                                                <UsersThree className="w-8 h-8 text-muted-foreground/60 mx-auto" />
-                                                <p className="text-sm font-semibold text-foreground">
-                                                    {t.dashboard.groupsCard.noAccountGroupsFound}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                                    {t.dashboard.groupsCard.noAccountGroupsHint}
-                                                </p>
-                                            </div>
-                                        );
-                                    }
+                                        if (filtered.length === 0) {
+                                            return (
+                                                <div className="p-6 rounded-2xl border border-dashed border-border text-center space-y-2 my-2">
+                                                    <UsersThree className="w-8 h-8 text-muted-foreground/60 mx-auto" />
+                                                    <p className="text-sm font-semibold text-foreground">
+                                                        {t.dashboard.groupsCard.noAccountGroupsFound}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                                        {t.dashboard.groupsCard.noAccountGroupsHint}
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
 
-                                    return filtered.map((grp) => {
-                                        const isAlreadyWhitelisted =
-                                            grp.isWhitelisted || groups.some((g) => g.jid === grp.id);
-                                        const isThisAdding = addingGroupJid === grp.id;
+                                        return filtered.map((grp) => {
+                                            const isAlreadyWhitelisted =
+                                                grp.isWhitelisted || groups.some((g) => g.jid === grp.id);
+                                            const isThisAdding = addingGroupJid === grp.id;
 
-                                        return (
-                                            <div
-                                                key={grp.id}
-                                                className="p-3 rounded-2xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex items-center justify-between gap-3"
-                                            >
-                                                <div className="min-w-0 flex items-center gap-3">
-                                                    <GroupAvatar
-                                                        name={grp.subject}
-                                                        pictureUrl={grp.pictureUrl}
-                                                    />
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <p className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-[240px]">
-                                                                {grp.subject}
+                                            return (
+                                                <div
+                                                    key={grp.id}
+                                                    className="p-3 rounded-2xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex items-center justify-between gap-3"
+                                                >
+                                                    <div className="min-w-0 flex items-center gap-3">
+                                                        <GroupAvatar name={grp.subject} pictureUrl={grp.pictureUrl} />
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <p className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-[240px]">
+                                                                    {grp.subject}
+                                                                </p>
+                                                                {grp.isAdmin ? (
+                                                                    <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase rounded bg-primary/15 text-primary">
+                                                                        {t.dashboard.groupsCard.adminBadge}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-1.5 py-0.2 text-[9px] font-medium uppercase rounded bg-muted/80 text-muted-foreground border border-border/40">
+                                                                        {t.dashboard.groupsCard.memberBadge}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[11px] text-muted-foreground truncate font-mono">
+                                                                {grp.size > 0 &&
+                                                                    `${t.dashboard.groupsCard.membersCount.replace('{count}', String(grp.size))} • `}
+                                                                {grp.id}
                                                             </p>
-                                                            {grp.isAdmin ? (
-                                                                <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase rounded bg-primary/15 text-primary">
-                                                                    {t.dashboard.groupsCard.adminBadge}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="px-1.5 py-0.2 text-[9px] font-medium uppercase rounded bg-muted/80 text-muted-foreground border border-border/40">
-                                                                    {t.dashboard.groupsCard.memberBadge}
-                                                                </span>
-                                                            )}
                                                         </div>
-                                                        <p className="text-[11px] text-muted-foreground truncate font-mono">
-                                                            {grp.size > 0 &&
-                                                                `${t.dashboard.groupsCard.membersCount.replace('{count}', String(grp.size))} • `}
-                                                            {grp.id}
-                                                        </p>
+                                                    </div>
+
+                                                    <div className="shrink-0">
+                                                        {isAlreadyWhitelisted ? (
+                                                            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
+                                                                <Check className="w-3.5 h-3.5" weight="bold" />
+                                                                <span>{t.dashboard.groupsCard.alreadyWhitelisted}</span>
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isGroupsQuotaFull || isThisAdding}
+                                                                onClick={() => handleAddGroupDirect(grp.id)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+                                                            >
+                                                                {isThisAdding ? (
+                                                                    <CircleNotch className="w-3.5 h-3.5 animate-spin" />
+                                                                ) : (
+                                                                    <Plus className="w-3.5 h-3.5" weight="bold" />
+                                                                )}
+                                                                <span>{t.dashboard.groupsCard.addToWhitelist}</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
-
-                                                <div className="shrink-0">
-                                                    {isAlreadyWhitelisted ? (
-                                                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
-                                                            <Check className="w-3.5 h-3.5" weight="bold" />
-                                                            <span>{t.dashboard.groupsCard.alreadyWhitelisted}</span>
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            disabled={isGroupsQuotaFull || isThisAdding}
-                                                            onClick={() => handleAddGroupDirect(grp.id)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
-                                                        >
-                                                            {isThisAdding ? (
-                                                                <CircleNotch className="w-3.5 h-3.5 animate-spin" />
-                                                            ) : (
-                                                                <Plus className="w-3.5 h-3.5" weight="bold" />
-                                                            )}
-                                                            <span>{t.dashboard.groupsCard.addToWhitelist}</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    });
-                                })()}
+                                            );
+                                        });
+                                    })()
+                                )}
                             </div>
 
                             {/* Manual JID Collapsible */}
@@ -1279,9 +1314,7 @@ export default function DashboardPage() {
                                             className="w-4 h-4 text-amber-500 shrink-0 mt-0.5"
                                             weight="fill"
                                         />
-                                        <p className="font-medium">
-                                            {t.dashboard.groupsCard.quotaReachedNotice}
-                                        </p>
+                                        <p className="font-medium">{t.dashboard.groupsCard.quotaReachedNotice}</p>
                                     </div>
                                 )}
 

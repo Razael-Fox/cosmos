@@ -275,7 +275,9 @@ const rawDictionary = {
                 planStatus: 'Status Paket',
                 currentTier: 'Paket Saat Ini',
                 upgradeBtn: 'Upgrade Paket',
-                perpetual: 'Permanen (Free)'
+                perpetual: 'Permanen (Free)',
+                online: 'Online',
+                offline: 'Offline'
             },
             planCard: {
                 title: 'Status Langganan',
@@ -680,7 +682,9 @@ const rawDictionary = {
                 planStatus: 'Plan Status',
                 currentTier: 'Current Plan',
                 upgradeBtn: 'Upgrade Plan',
-                perpetual: 'Perpetual (Free)'
+                perpetual: 'Perpetual (Free)',
+                online: 'Online',
+                offline: 'Offline'
             },
             planCard: {
                 title: 'Subscription Status',

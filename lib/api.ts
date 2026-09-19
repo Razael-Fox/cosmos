@@ -28,8 +28,7 @@ export function getApiBaseUrl(): string {
         // If client is accessed via a non-localhost host (e.g. mobile IP or remote domain),
         // but envUrl points to localhost, fall back to relative URL ("") so the browser
         // requests the server hosting the app rather than localhost on the client's device.
-        const isClientLocalhost =
-            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isClientLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!isClientLocalhost && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
             return '';
         }
@@ -233,6 +232,16 @@ export async function getUserProfile(): Promise<{ user: import('./types').UserPr
  */
 export async function getProfilePhoto(): Promise<{ pictureUrl: string | null }> {
     return await request<{ pictureUrl: string | null }>('/api/v1/auth/profile-photo', {
+        method: 'GET'
+    });
+}
+
+/**
+ * GET /api/v1/auth/presence
+ * Retrieves the live presence status ('online' | 'offline') of the authenticated user.
+ */
+export async function getUserPresence(): Promise<{ presence: 'online' | 'offline'; lastSeen?: number | null }> {
+    return await request<{ presence: 'online' | 'offline'; lastSeen?: number | null }>('/api/v1/auth/presence', {
         method: 'GET'
     });
 }
