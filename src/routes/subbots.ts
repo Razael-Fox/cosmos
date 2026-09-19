@@ -3,7 +3,7 @@ import { prisma } from '../db.js';
 import { authenticateJwt } from '../middleware/authenticate.js';
 import { deviceValidationPreHandler } from '../middleware/deviceValidation.js';
 import { QuotaService, executeWithUserLock } from '../services/quotaService.js';
-import { requestSubBotPairViaIpc, deleteSubBotViaIpc } from '../services/ipcClient.js';
+import { requestSubBotPairViaIpc, deleteSubBotViaIpc, getSubBotPairingStateViaIpc } from '../services/ipcClient.js';
 
 export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
     // GET /api/v1/subbots/list
@@ -142,6 +142,44 @@ export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
                 });
             }
         });
+    });
+
+    // GET /api/v1/subbots/:phone/status
+    fastify.get('/:phone/status', { preHandler: [authenticateJwt, deviceValidationPreHandler] }, async (req, reply) => {
+        const params = req.params as { phone?: string };
+        if (!params.phone) {
+            return reply.status(400).send({
+                error: 'INVALID_PHONE',
+                message: 'Sub-bot phone number is required.'
+            });
+        }
+
+        const cleanPhone = decodeURIComponent(params.phone).replace(/\D/g, '');
+        const userId = req.user.id;
+
+        const inst = await prisma.subBotInstance.findUnique({
+            where: { id: cleanPhone }
+        });
+
+        if (inst && inst.ownerJid === userId && inst.status === 'ACTIVE') {
+            return reply.send({ status: 'ACTIVE', paired: true });
+        }
+
+        try {
+            const ipcRes = await getSubBotPairingStateViaIpc(cleanPhone);
+            const state = (ipcRes.data as { state?: string } | undefined)?.state;
+            if (state === 'ACTIVE') {
+                await prisma.subBotInstance.upsert({
+                    where: { id: cleanPhone },
+                    update: { ownerJid: userId, status: 'ACTIVE' },
+                    create: { id: cleanPhone, ownerJid: userId, customPrefix: '.', status: 'ACTIVE' }
+                });
+                return reply.send({ status: 'ACTIVE', paired: true });
+            }
+            return reply.send({ status: state || (inst?.status ?? 'IDLE'), paired: false });
+        } catch {
+            return reply.send({ status: inst?.status ?? 'IDLE', paired: inst?.status === 'ACTIVE' });
+        }
     });
 
     // DELETE /api/v1/subbots/:phone
