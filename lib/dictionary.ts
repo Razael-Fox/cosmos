@@ -268,6 +268,15 @@ const rawDictionary = {
             confirmDeleteGroupDesc: 'Apakah Anda yakin ingin menghapus izin bot untuk grup ini?',
             confirmBtn: 'Ya, Lanjutkan',
             cancelBtn: 'Batal',
+            userProfileCard: {
+                title: 'Profil WhatsApp',
+                username: 'Username WhatsApp',
+                phone: 'Nomor WhatsApp',
+                planStatus: 'Status Paket',
+                currentTier: 'Paket Saat Ini',
+                upgradeBtn: 'Upgrade Paket',
+                perpetual: 'Permanen (Free)'
+            },
             planCard: {
                 title: 'Status Langganan',
                 currentTier: 'Paket Saat Ini',
@@ -664,6 +673,15 @@ const rawDictionary = {
             confirmDeleteGroupDesc: 'Are you sure you want to remove authorization for this group?',
             confirmBtn: 'Yes, Proceed',
             cancelBtn: 'Cancel',
+            userProfileCard: {
+                title: 'WhatsApp Profile',
+                username: 'WhatsApp Username',
+                phone: 'WhatsApp Number',
+                planStatus: 'Plan Status',
+                currentTier: 'Current Plan',
+                upgradeBtn: 'Upgrade Plan',
+                perpetual: 'Perpetual (Free)'
+            },
             planCard: {
                 title: 'Subscription Status',
                 currentTier: 'Current Plan',

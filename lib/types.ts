@@ -16,6 +16,7 @@ export interface UserProfile {
     lastLoginIp?: string | null;
     lastLoginAt?: string | null;
     createdAt: string;
+    profilePictureUrl?: string | null;
 }
 
 export interface RegisterInvertedRequest {

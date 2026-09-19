@@ -8,7 +8,6 @@ import {
     UsersThree,
     Trash,
     Plus,
-    Lightning,
     ArrowSquareOut,
     CircleNotch,
     CheckCircle,
@@ -21,7 +20,8 @@ import {
     MagnifyingGlass,
     CaretDown,
     CaretUp,
-    Info
+    Info,
+    WhatsappLogo
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { getRandomTimeQuote } from '@/lib/timeQuotes';
@@ -29,6 +29,7 @@ import {
     getStoredToken,
     getStoredUser,
     getUserProfile,
+    getProfilePhoto,
     getSubscriptionStatus,
     listSubBots,
     deleteSubBot,
@@ -89,6 +90,29 @@ function GroupAvatar({
     );
 }
 
+function formatRedactedPhone(jidOrPhone?: string | null): string {
+    if (!jidOrPhone) return '••••••••••••';
+    const rawDigits = jidOrPhone.split('@')[0].replace(/\D/g, '');
+    if (rawDigits.length <= 6) return rawDigits ? `+${rawDigits}` : '••••••••••••';
+
+    let countryCode = '+62';
+    let localDigits = rawDigits;
+    if (rawDigits.startsWith('62')) {
+        countryCode = '+62';
+        localDigits = rawDigits.slice(2);
+    } else if (rawDigits.startsWith('0')) {
+        countryCode = '+62';
+        localDigits = rawDigits.slice(1);
+    } else {
+        countryCode = `+${rawDigits.slice(0, 2)}`;
+        localDigits = rawDigits.slice(2);
+    }
+
+    const firstGroup = localDigits.slice(0, 3);
+    const lastGroup = localDigits.slice(-4);
+    return `${countryCode} ${firstGroup} •••• ${lastGroup}`;
+}
+
 export default function DashboardPage() {
     const { t, language } = useTranslation();
     const router = useRouter();
@@ -101,6 +125,22 @@ export default function DashboardPage() {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [timeQuote, setTimeQuote] = useState<string>('');
+    const [fetchedAvatarUrl, setFetchedAvatarUrl] = useState<string | null>(null);
+    const [avatarError, setAvatarError] = useState(false);
+
+    const avatarUrl = userProfile?.profilePictureUrl || fetchedAvatarUrl;
+
+    useEffect(() => {
+        if (!userProfile?.profilePictureUrl && userProfile?.id) {
+            getProfilePhoto()
+                .then((res) => {
+                    if (res?.pictureUrl) {
+                        setFetchedAvatarUrl(res.pictureUrl);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [userProfile?.profilePictureUrl, userProfile?.id]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe sync of client time-of-day quote
@@ -438,45 +478,86 @@ export default function DashboardPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Plan Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    {t.dashboard.planCard.title}
-                                </span>
-                                <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                    <Lightning className="w-5 h-5" weight="fill" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-foreground font-heading">
-                                        {subscription?.tier || 'FREE'}
+                        {/* User Profile & Plan Status Card */}
+                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center justify-between pb-3 border-b border-border/80">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                        <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
+                                        {t.dashboard.userProfileCard?.title || 'WhatsApp Profile'}
                                     </span>
-                                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                         {subscription?.status || 'ACTIVE'}
                                     </span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    {subscription?.expiresAt
-                                        ? `${t.dashboard.validUntilPrefix} ${new Date(subscription.expiresAt).toLocaleDateString(dateLocale)}`
-                                        : t.dashboard.planCard.perpetual}
-                                </p>
-                            </div>
 
-                            <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
-                                <span className="text-muted-foreground">{t.dashboard.planCard.prefixFeature}</span>
-                                <span className="font-semibold text-foreground">
-                                    {subscription?.customPrefix
-                                        ? t.dashboard.planCard.allowed
-                                        : t.dashboard.planCard.locked}
-                                </span>
+                                {/* User Details: Avatar + Username + Redacted Phone */}
+                                <div className="flex items-center gap-3.5 pt-3">
+                                    <div className="relative shrink-0">
+                                        <div className="w-13 h-13 rounded-2xl overflow-hidden border border-border bg-muted/60 flex items-center justify-center shadow-xs">
+                                            {avatarUrl && !avatarError ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img
+                                                    src={avatarUrl}
+                                                    alt={userProfile?.username || 'Profile'}
+                                                    referrerPolicy="no-referrer"
+                                                    className="w-full h-full object-cover"
+                                                    onError={() => setAvatarError(true)}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-primary/20 flex items-center justify-center text-primary font-bold text-lg font-heading">
+                                                    {(userProfile?.username || userProfile?.pushName || 'U')
+                                                        .charAt(0)
+                                                        .toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="absolute -bottom-1 -right-1 p-0.5 bg-card rounded-full shadow-xs">
+                                            <div className="p-0.5 rounded-full bg-emerald-500 text-white">
+                                                <WhatsappLogo className="w-3 h-3" weight="fill" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                        <h3 className="text-base font-bold text-foreground font-heading truncate">
+                                            {userProfile?.username
+                                                ? `@${userProfile.username}`
+                                                : userProfile?.pushName || 'WhatsApp User'}
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5 tracking-tight">
+                                            <span>{formatRedactedPhone(userProfile?.id)}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Plan Status Info */}
+                                <div className="mt-4 pt-3 border-t border-border/80 space-y-1">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground font-medium">
+                                            {t.dashboard.userProfileCard?.planStatus || 'Plan Status'}
+                                        </span>
+                                        <span className="text-muted-foreground font-mono">
+                                            {subscription?.expiresAt
+                                                ? `${t.dashboard.validUntilPrefix} ${new Date(subscription.expiresAt).toLocaleDateString(dateLocale)}`
+                                                : t.dashboard.planCard.perpetual}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-2xl font-black text-foreground font-heading">
+                                            {subscription?.tier || 'FREE'}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground">
+                                            ({subscription?.customPrefix ? t.dashboard.planCard.allowed : t.dashboard.planCard.locked})
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             <Link
                                 href="/pricing"
-                                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border transition-colors"
+                                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border transition-colors mt-2"
                             >
                                 <span>{t.dashboard.planCard.upgradeBtn}</span>
                                 <ArrowSquareOut className="w-3.5 h-3.5" />
