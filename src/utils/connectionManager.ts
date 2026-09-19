@@ -339,11 +339,11 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             for (const [participant, presence] of Object.entries(presences)) {
                 const target = participant || id;
                 if (target && presence) {
-                    updateUserPresence(target, presence.lastKnownPresence, (presence as any).lastSeen);
+                    updateUserPresence(target, presence.lastKnownPresence, (presence as any).lastSeen).catch(() => {});
                 }
             }
         } else if (id) {
-            updateUserPresence(id, 'available');
+            updateUserPresence(id, 'available').catch(() => {});
         }
     });
 

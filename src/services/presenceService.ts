@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import { prisma } from '#db.js';
+
 export type UserPresenceStatus = 'online' | 'offline';
 
 export interface PresenceRecord {
@@ -5,22 +9,79 @@ export interface PresenceRecord {
     lastSeen: number; // Unix timestamp in ms
 }
 
-// In-memory presence cache keyed by clean phone digits
-const presenceMap = new Map<string, PresenceRecord>();
-
-// If marked online, but no presence update or message received for 5 minutes, mark as offline
+const PRESENCE_FILE = path.join(process.cwd(), 'storage', 'presence.json');
 const PRESENCE_TIMEOUT_MS = 5 * 60 * 1000;
 
+// In-memory presence map: key is clean digits (e.g. phone or LID digits)
+const presenceMap = new Map<string, PresenceRecord>();
+// Bidirectional mapping between phone digits and LID digits
+const idLinkMap = new Map<string, string>();
+
+// Load presence records from disk if available
+function loadPresenceFromDisk(): void {
+    try {
+        if (fs.existsSync(PRESENCE_FILE)) {
+            const raw = fs.readFileSync(PRESENCE_FILE, 'utf8');
+            const data = JSON.parse(raw);
+            if (data && typeof data === 'object') {
+                for (const [key, val] of Object.entries(data)) {
+                    if (val && typeof val === 'object' && 'status' in val && 'lastSeen' in val) {
+                        presenceMap.set(key, val as PresenceRecord);
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('[Presence] Failed to load presence cache from disk:', e);
+    }
+}
+
+// Debounced save to disk
+let saveTimeout: NodeJS.Timeout | null = null;
+function scheduleSave(): void {
+    if (saveTimeout) return;
+    saveTimeout = setTimeout(() => {
+        saveTimeout = null;
+        try {
+            const obj: Record<string, PresenceRecord> = {};
+            for (const [k, v] of presenceMap.entries()) {
+                obj[k] = v;
+            }
+            const dir = path.dirname(PRESENCE_FILE);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(PRESENCE_FILE, JSON.stringify(obj), 'utf8');
+        } catch (e) {
+            console.warn('[Presence] Failed to persist presence cache:', e);
+        }
+    }, 1500);
+}
+
+// Initialize on module load
+loadPresenceFromDisk();
+
 /**
- * Updates or sets the WhatsApp presence status for a given user or JID.
+ * Associates two IDs together (e.g. user phone JID and user LID).
  */
-export function updateUserPresence(
-    jidOrPhone: string,
+export function linkPresenceIds(id1?: string | null, id2?: string | null): void {
+    if (!id1 || !id2) return;
+    const clean1 = id1.split('@')[0].replace(/\D/g, '');
+    const clean2 = id2.split('@')[0].replace(/\D/g, '');
+    if (!clean1 || !clean2 || clean1 === clean2) return;
+
+    idLinkMap.set(clean1, clean2);
+    idLinkMap.set(clean2, clean1);
+}
+
+/**
+ * Updates or sets the WhatsApp presence status for a given user or JID/LID.
+ */
+export async function updateUserPresence(
+    jidOrPhoneOrLid: string,
     status: UserPresenceStatus | string,
     lastSeen?: number | null
-): void {
-    const cleanPhone = jidOrPhone.split('@')[0].replace(/\D/g, '');
-    if (!cleanPhone) return;
+): Promise<void> {
+    const cleanId = jidOrPhoneOrLid.split('@')[0].replace(/\D/g, '');
+    if (!cleanId) return;
 
     const isOnline =
         status === 'available' ||
@@ -32,24 +93,92 @@ export function updateUserPresence(
     const finalStatus: UserPresenceStatus = isOnline ? 'online' : 'offline';
     let timestamp = Date.now();
     if (typeof lastSeen === 'number' && lastSeen > 0) {
-        // Baileys may provide unix timestamp in seconds or ms
         timestamp = lastSeen < 1e11 ? lastSeen * 1000 : lastSeen;
     }
 
-    presenceMap.set(cleanPhone, {
+    const record: PresenceRecord = {
         status: finalStatus,
         lastSeen: timestamp
-    });
+    };
+
+    presenceMap.set(cleanId, record);
+
+    // Check in-memory link
+    let linked = idLinkMap.get(cleanId);
+    if (!linked) {
+        try {
+            const canonicalJid = `${cleanId}@s.whatsapp.net`;
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [{ id: canonicalJid }, { id: cleanId }, { lid: cleanId }]
+                },
+                select: { id: true, lid: true }
+            });
+            if (user) {
+                const userCleanPhone = user.id.split('@')[0].replace(/\D/g, '');
+                const userCleanLid = user.lid ? user.lid.split('@')[0].replace(/\D/g, '') : null;
+                if (userCleanPhone && userCleanLid) {
+                    linkPresenceIds(userCleanPhone, userCleanLid);
+                    linked = userCleanPhone === cleanId ? userCleanLid : userCleanPhone;
+                }
+            }
+        } catch {
+            /* non-fatal */
+        }
+    }
+
+    if (linked) {
+        presenceMap.set(linked, record);
+    }
+
+    scheduleSave();
 }
 
 /**
  * Returns the current presence status and last seen timestamp for a given JID or phone.
  */
-export function getUserPresence(jidOrPhone: string): { status: UserPresenceStatus; lastSeen: number | null } {
-    const cleanPhone = jidOrPhone.split('@')[0].replace(/\D/g, '');
-    if (!cleanPhone) return { status: 'offline', lastSeen: null };
+export async function getUserPresence(
+    jidOrPhone: string
+): Promise<{ status: UserPresenceStatus; lastSeen: number | null }> {
+    const cleanId = jidOrPhone.split('@')[0].replace(/\D/g, '');
+    if (!cleanId) return { status: 'offline', lastSeen: null };
 
-    const record = presenceMap.get(cleanPhone);
+    // 1. Direct check in presenceMap
+    let record = presenceMap.get(cleanId);
+
+    // 2. Check linked ID
+    let linked = idLinkMap.get(cleanId);
+    if (!linked) {
+        try {
+            const canonicalJid = `${cleanId}@s.whatsapp.net`;
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [{ id: canonicalJid }, { id: cleanId }, { lid: cleanId }]
+                },
+                select: { id: true, lid: true }
+            });
+            if (user) {
+                const userCleanPhone = user.id.split('@')[0].replace(/\D/g, '');
+                const userCleanLid = user.lid ? user.lid.split('@')[0].replace(/\D/g, '') : null;
+                if (userCleanPhone && userCleanLid) {
+                    linkPresenceIds(userCleanPhone, userCleanLid);
+                    linked = userCleanPhone === cleanId ? userCleanLid : userCleanPhone;
+                }
+            }
+        } catch {
+            /* non-fatal */
+        }
+    }
+
+    if (linked) {
+        const linkedRecord = presenceMap.get(linked);
+        if (linkedRecord) {
+            if (!record || linkedRecord.lastSeen > record.lastSeen) {
+                record = linkedRecord;
+            }
+        }
+    }
+
     if (!record) {
         return { status: 'offline', lastSeen: null };
     }

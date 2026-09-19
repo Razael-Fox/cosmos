@@ -421,15 +421,31 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 if (subSock) sock = subSock;
             }
 
+            let userLid: string | null = null;
+            try {
+                const user = await prisma.user.findFirst({
+                    where: { OR: [{ id: canonicalJid }, { id: cleanPhone }, { lid: cleanPhone }] },
+                    select: { id: true, lid: true }
+                });
+                if (user?.lid) {
+                    userLid = user.lid.endsWith('@lid') ? user.lid : `${user.lid}@lid`;
+                }
+            } catch {
+                /* non-fatal */
+            }
+
             if (sock) {
                 try {
                     await sock.presenceSubscribe(canonicalJid).catch(() => {});
+                    if (userLid) {
+                        await sock.presenceSubscribe(userLid).catch(() => {});
+                    }
                 } catch {
                     /* non-fatal */
                 }
             }
 
-            const info = getUserPresence(cleanPhone || jid);
+            const info = await getUserPresence(cleanPhone || jid);
             return {
                 status: 200,
                 data: {
