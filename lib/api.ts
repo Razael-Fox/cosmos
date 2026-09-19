@@ -341,7 +341,14 @@ function getWebSocketUrl(pathWithQuery: string): string {
     const baseUrl = getApiBaseUrl();
     const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
     const wsProtocol = origin.startsWith('https') ? 'wss:' : 'ws:';
-    const cleanHost = origin.replace(/^https?:\/\//, '');
+    let cleanHost = origin.replace(/^https?:\/\//, '');
+
+    // In local dev where Next.js runs on 3000 and Fastify runs on 4000,
+    // point WebSocket directly to API port 4000 if connecting to port 3000
+    if (cleanHost.includes(':3000')) {
+        cleanHost = cleanHost.replace(':3000', ':4000');
+    }
+
     const path = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
     return `${wsProtocol}//${cleanHost}${path}`;
 }
@@ -354,26 +361,7 @@ export function createAuthStatusWebSocket(
     let isClosed = false;
     let ws: WebSocket | null = null;
     let pollInterval: ReturnType<typeof setInterval> | null = null;
-
-    const startPollingFallback = () => {
-        if (pollInterval || isClosed) return;
-        pollInterval = setInterval(async () => {
-            if (isClosed) return;
-            try {
-                const check = await request<AuthStatusWsMessage>(
-                    `/api/v1/auth/status?session=${encodeURIComponent(regSessionId)}`
-                );
-                if (check && check.status === 'VERIFIED') {
-                    if (check.jwtToken) setStoredToken(check.jwtToken);
-                    if (check.user) setStoredUser(check.user);
-                    onMessage(check);
-                    cleanup();
-                }
-            } catch (pollErr) {
-                void pollErr;
-            }
-        }, 2500);
-    };
+    let initialPollTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const cleanup = () => {
         isClosed = true;
@@ -389,7 +377,42 @@ export function createAuthStatusWebSocket(
             clearInterval(pollInterval);
             pollInterval = null;
         }
+        if (initialPollTimeout) {
+            clearTimeout(initialPollTimeout);
+            initialPollTimeout = null;
+        }
     };
+
+    const handleSuccess = (msg: AuthStatusWsMessage) => {
+        if (msg.jwtToken) setStoredToken(msg.jwtToken);
+        if (msg.user) setStoredUser(msg.user);
+        onMessage(msg);
+        cleanup();
+    };
+
+    const checkStatus = async () => {
+        if (isClosed) return;
+        try {
+            const check = await request<AuthStatusWsMessage>(
+                `/api/v1/auth/status?session=${encodeURIComponent(regSessionId)}`
+            );
+            if (check) {
+                if (check.status === 'VERIFIED') {
+                    handleSuccess(check);
+                } else if (check.status === 'EXPIRED' || check.status === 'FAILED') {
+                    onMessage(check);
+                    cleanup();
+                }
+            }
+        } catch (pollErr) {
+            void pollErr;
+        }
+    };
+
+    // Fast polling starts immediately alongside WebSocket for instantaneous detection
+    // and resilience against dev environments or network proxies that don't upgrade WebSockets
+    pollInterval = setInterval(checkStatus, 1000);
+    initialPollTimeout = setTimeout(checkStatus, 400);
 
     try {
         const wsUrl = getWebSocketUrl(`/ws/auth/status?session=${encodeURIComponent(regSessionId)}`);
@@ -399,10 +422,13 @@ export function createAuthStatusWebSocket(
             try {
                 const data = JSON.parse(event.data);
                 if (data.status === 'VERIFIED') {
-                    if (data.jwtToken) setStoredToken(data.jwtToken);
-                    if (data.user) setStoredUser(data.user);
+                    handleSuccess(data);
+                } else if (data.status === 'EXPIRED' || data.status === 'FAILED') {
+                    onMessage(data);
+                    cleanup();
+                } else {
+                    onMessage(data);
                 }
-                onMessage(data);
             } catch (parseErr) {
                 void parseErr;
             }
@@ -410,18 +436,19 @@ export function createAuthStatusWebSocket(
 
         ws.onerror = (event) => {
             if (onError) onError(event);
-            startPollingFallback();
         };
 
         ws.onclose = () => {
-            if (!isClosed) startPollingFallback();
+            // WebSocket closed; background polling continues until verified or timed out
         };
     } catch (connErr) {
         void connErr;
-        startPollingFallback();
     }
 
-    return cleanup;
+    return () => {
+        if (initialPollTimeout) clearTimeout(initialPollTimeout);
+        cleanup();
+    };
 }
 
 export interface PairingWsEvent {
