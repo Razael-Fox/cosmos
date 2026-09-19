@@ -106,8 +106,6 @@ export function Footer() {
                                     {t.nav.login}
                                 </Link>
                             </li>
-                            <li className="text-[11px] text-muted-foreground/80">{t.footer.noteAntiSpam}</li>
-                            <li className="text-[11px] text-muted-foreground/80">{t.footer.noteVps}</li>
                         </ul>
                     </div>
 
