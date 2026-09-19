@@ -3,7 +3,6 @@
 import React, { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import {
-    ArrowLeft,
     ArrowRight,
     ShieldCheck,
     WhatsappLogo,
@@ -35,16 +34,6 @@ export default function HowItWorksPage() {
     return (
         <div className="flex flex-col w-full min-h-screen py-10">
             <Container size="lg" className="space-y-12">
-                {/* Back to Home */}
-                <div>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>{t.statusPage.backHome}</span>
-                    </Link>
-                </div>
 
                 {/* Hero Header */}
                 <div className="text-center max-w-3xl mx-auto space-y-4">

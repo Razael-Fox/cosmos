@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { LanguageProvider } from '@/lib/i18n';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { FloatingBackButton } from '@/components/FloatingBackButton';
 
 const dmSans = DM_Sans({
     subsets: ['latin'],
@@ -94,7 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/20">
                 <LanguageProvider>
                     <Navbar />
-                    <main className="flex-1 flex flex-col">{children}</main>
+                    <FloatingBackButton />
+                    <main className="flex-1 flex flex-col pb-20 md:pb-0">{children}</main>
                     <Footer />
                 </LanguageProvider>
             </body>

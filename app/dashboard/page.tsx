@@ -12,9 +12,6 @@ import {
     CircleNotch,
     CheckCircle,
     WarningCircle,
-    User,
-    Wallet,
-    ChartBar,
     Check,
     ArrowsClockwise,
     MagnifyingGlass,
@@ -46,7 +43,6 @@ import type {
     UserProfile,
     ParticipatingGroup
 } from '@/lib/types';
-import { formatRupiah } from '@/lib/currency';
 import { PairingModal } from '@/components/PairingModal';
 import { Container } from '@/components/ui/container';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -1040,88 +1036,6 @@ export default function DashboardPage() {
                             <p className="font-medium">{t.dashboard.groupsCard.quotaReachedNotice}</p>
                         </div>
                     )}
-                </section>
-
-                {/* Profile Summary Card with Formatted Balance & Credit Gauge */}
-                <section className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs space-y-6">
-                    <div className="flex items-center justify-between border-b border-border pb-4">
-                        <div className="flex items-center gap-2.5">
-                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                <User className="w-5 h-5" weight="bold" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold font-heading text-foreground">
-                                    {t.dashboard.profileCard.title}
-                                </h3>
-                                <p className="text-xs text-muted-foreground">
-                                    {userProfile?.id || '628xxx@s.whatsapp.net'}
-                                </p>
-                            </div>
-                        </div>
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-                            <CheckCircle className="w-4 h-4" weight="fill" />
-                            <span>{t.dashboard.whitelistActive}</span>
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* Username */}
-                        <div className="space-y-1">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                {t.dashboard.profileCard.username}
-                            </span>
-                            <p className="text-sm font-bold text-foreground font-mono truncate">
-                                {userProfile?.username || userProfile?.pushName || '-'}
-                            </p>
-                            {userProfile?.pushName &&
-                                userProfile?.username &&
-                                userProfile.username !== userProfile.pushName && (
-                                    <p className="text-[11px] text-muted-foreground truncate font-sans">
-                                        WA: {userProfile.pushName}
-                                    </p>
-                                )}
-                        </div>
-
-                        {/* Email */}
-                        <div className="space-y-1">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                {t.dashboard.profileCard.email}
-                            </span>
-                            <p className="text-sm font-medium text-foreground">{userProfile?.email || '-'}</p>
-                        </div>
-
-                        {/* Formatted Rupiah Balance */}
-                        <div className="space-y-1">
-                            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                                <Wallet className="w-3.5 h-3.5 text-primary" />
-                                {t.dashboard.profileCard.balance}
-                            </span>
-                            <p className="text-lg font-extrabold text-foreground font-mono">
-                                {formatRupiah(Number(userProfile?.balance || 0))}
-                            </p>
-                        </div>
-
-                        {/* Credit Score Gauge */}
-                        <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="font-medium text-muted-foreground flex items-center gap-1.5">
-                                    <ChartBar className="w-3.5 h-3.5 text-indigo-500" />
-                                    {t.dashboard.profileCard.creditScore}
-                                </span>
-                                <span className="font-mono font-bold text-foreground">
-                                    {userProfile?.creditScore ?? 500} / 1000
-                                </span>
-                            </div>
-                            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-indigo-500 rounded-full transition-all"
-                                    style={{
-                                        width: `${Math.min(100, ((userProfile?.creditScore ?? 500) / 1000) * 100)}%`
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
                 </section>
 
                 {/* Pairing Modal */}

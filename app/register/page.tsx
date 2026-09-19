@@ -6,7 +6,6 @@ import Image from 'next/image';
 import {
     WhatsappLogo,
     Lock,
-    User,
     EnvelopeSimple,
     CircleNotch,
     ShieldCheck,
@@ -28,7 +27,6 @@ export default function RegisterPage() {
     const { t } = useTranslation();
     const [mode, setMode] = useState<'inverted' | 'direct'>('inverted');
     const [phone, setPhone] = useState('');
-    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -96,7 +94,6 @@ export default function RegisterPage() {
             if (mode === 'inverted') {
                 const res = await registerInverted({
                     phone: cleanPhone,
-                    username: username.trim() || undefined,
                     email: email.trim() || undefined,
                     password: password || undefined,
                     turnstileToken
@@ -105,7 +102,6 @@ export default function RegisterPage() {
             } else {
                 const res = await registerDirect({
                     phone: cleanPhone,
-                    username: username.trim() || undefined,
                     email: email.trim() || undefined,
                     password: password || undefined,
                     turnstileToken
@@ -231,38 +227,21 @@ export default function RegisterPage() {
                             </div>
                         </Field>
 
-                        {/* Optional Username & Email Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <Field label={t.auth.usernameLabel} htmlFor="username">
-                                <div className="relative">
-                                    <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                                    <input
-                                        id="username"
-                                        type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        placeholder={t.auth.usernamePlaceholder}
-                                        autoComplete="username"
-                                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                    />
-                                </div>
-                            </Field>
-
-                            <Field label={t.auth.emailLabel} htmlFor="email">
-                                <div className="relative">
-                                    <EnvelopeSimple className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder={t.auth.emailPlaceholder}
-                                        autoComplete="email"
-                                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                    />
-                                </div>
-                            </Field>
-                        </div>
+                        {/* Optional Email */}
+                        <Field label={t.auth.emailLabel} htmlFor="email">
+                            <div className="relative">
+                                <EnvelopeSimple className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder={t.auth.emailPlaceholder}
+                                    autoComplete="email"
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                                />
+                            </div>
+                        </Field>
 
                         {/* Password */}
                         <Field label={t.auth.passwordLabel} htmlFor="password" error={passwordError}>

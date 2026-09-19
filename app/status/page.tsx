@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import {
     ArrowClockwise,
     ShieldCheck,
     DeviceMobile,
     UsersThree,
-    Clock,
-    ArrowLeft,
-    Pulse
+    Clock
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { Container } from '@/components/ui/container';
@@ -18,19 +15,10 @@ import type { SystemStatusResponse } from '@/lib/types';
 
 export default function StatusPage() {
     const { t } = useTranslation();
-    const router = useRouter();
     const [data, setData] = useState<SystemStatusResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const handleBack = useCallback(() => {
-        if (typeof window !== 'undefined' && window.history.length > 1) {
-            router.back();
-        } else {
-            router.push('/');
-        }
-    }, [router]);
 
     const handleManualRefresh = async () => {
         setRefreshing(true);
@@ -81,74 +69,12 @@ export default function StatusPage() {
         };
     }, [t.common.networkError]);
 
-    // Enable edge-swipe ("slide back") gesture for comfortable one-handed mobile navigation
-    useEffect(() => {
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let isEligible = false;
-
-        const handleTouchStart = (e: TouchEvent) => {
-            if (e.touches.length !== 1) return;
-            const touch = e.touches[0];
-            // Only trigger if starting near the left edge (<= 45px)
-            if (touch.clientX <= 45) {
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                isEligible = true;
-            } else {
-                isEligible = false;
-            }
-        };
-
-        const handleTouchEnd = (e: TouchEvent) => {
-            if (!isEligible || e.changedTouches.length !== 1) return;
-            const touch = e.changedTouches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = Math.abs(touch.clientY - touchStartY);
-
-            // Horizontal swipe right of at least 70px with limited vertical drift
-            if (deltaX > 70 && deltaY < 80) {
-                handleBack();
-            }
-            isEligible = false;
-        };
-
-        window.addEventListener('touchstart', handleTouchStart, { passive: true });
-        window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-        return () => {
-            window.removeEventListener('touchstart', handleTouchStart);
-            window.removeEventListener('touchend', handleTouchEnd);
-        };
-    }, [handleBack]);
-
     return (
         <div className="flex flex-col w-full min-h-screen py-10">
             <Container size="lg" className="space-y-10">
-                {/* Navigation Native Back Button */}
-                <div className="flex items-center justify-between">
-                    <button
-                        type="button"
-                        onClick={handleBack}
-                        className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-card/70 hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-xs cursor-pointer touch-manipulation active:scale-95"
-                        aria-label={t.statusPage.back}
-                    >
-                        <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                        <span>{t.statusPage.back}</span>
-                    </button>
-
-                    <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/70 font-mono">
-                        <span>{t.statusPage.slideBackHint}</span>
-                    </span>
-                </div>
-
                 {/* Header Title & Refresh Button */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-6">
                     <div className="space-y-1.5">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold">
-                            <Pulse className="w-3.5 h-3.5" weight="bold" />
-                            <span>Telemetry Service</span>
-                        </div>
                         <h1 className="text-3xl sm:text-4xl font-extrabold font-heading tracking-tight text-foreground">
                             {t.statusPage.title}
                         </h1>
@@ -325,19 +251,6 @@ export default function StatusPage() {
                     </div>
                 </div>
             </Container>
-
-            {/* One-Handed Mobile Floating Back Button (Thumb Zone) */}
-            <div className="fixed bottom-6 left-5 z-40 sm:hidden">
-                <button
-                    type="button"
-                    onClick={handleBack}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card/95 backdrop-blur-md border border-border shadow-lg text-foreground font-semibold text-xs active:scale-95 transition-all touch-manipulation cursor-pointer"
-                    aria-label={t.statusPage.back}
-                >
-                    <ArrowLeft className="w-4 h-4 text-primary" weight="bold" />
-                    <span>{t.statusPage.back}</span>
-                </button>
-            </div>
         </div>
     );
 }

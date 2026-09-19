@@ -4,9 +4,10 @@ import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { Globe, SignOut, List, X, DeviceMobile } from '@phosphor-icons/react';
+import { SignOut, List, X, DeviceMobile } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { clearStoredToken } from '@/lib/api';
+import { LanguageDropdown } from '@/components/LanguageDropdown';
 
 function subscribeToAuth(callback: () => void) {
     window.addEventListener('storage', callback);
@@ -23,13 +24,12 @@ function getAuthServerSnapshot(): boolean {
 }
 
 export function Navbar() {
-    const { t, language, setLanguage } = useTranslation();
+    const { t } = useTranslation();
     const router = useRouter();
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const isAuthenticated = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getAuthServerSnapshot);
-
 
     // Close mobile drawer on escape key and lock body scroll
     useEffect(() => {
@@ -59,10 +59,6 @@ export function Navbar() {
     const handleLogout = () => {
         clearStoredToken();
         router.push('/login');
-    };
-
-    const toggleLanguage = () => {
-        setLanguage(language === 'id' ? 'en' : 'id');
     };
 
     const navLinks = [
@@ -121,19 +117,10 @@ export function Navbar() {
                         })}
                     </nav>
 
-                    {/* Right Action Buttons */}
+                    {/* Right Action Buttons (Desktop) */}
                     <div className="hidden md:flex items-center gap-3">
-                        {/* Language Toggle */}
-                        <button
-                            type="button"
-                            onClick={toggleLanguage}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                            title="Ganti Bahasa / Switch Language"
-                            aria-label="Ganti Bahasa / Switch Language"
-                        >
-                            <Globe className="w-3.5 h-3.5" />
-                            <span className="font-mono">{language.toUpperCase()}</span>
-                        </button>
+                        {/* Language Dropdown with upward display */}
+                        <LanguageDropdown variant="navbar" side="top" align="end" />
 
                         {isAuthenticated ? (
                             <div className="flex items-center gap-2">
@@ -171,31 +158,55 @@ export function Navbar() {
                         )}
                     </div>
 
-                    {/* Mobile Hamburger */}
+                    {/* Mobile Header Brand Status (Header right side on mobile) */}
                     <div className="flex items-center gap-2 md:hidden">
-                        <button
-                            type="button"
-                            onClick={toggleLanguage}
-                            className="px-2 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground cursor-pointer"
-                            aria-label="Ganti Bahasa / Switch Language"
-                        >
-                            {language.toUpperCase()}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setMobileMenuOpen((prev) => !prev)}
-                            className="p-2 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary"
-                            aria-label="Toggle Menu"
-                            aria-expanded={mobileMenuOpen}
-                            aria-controls="mobile-nav-drawer"
-                        >
-                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <List className="w-6 h-6" />}
-                        </button>
+                        {isAuthenticated ? (
+                            <Link
+                                href="/dashboard"
+                                className="p-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center gap-1"
+                                aria-label={t.nav.dashboard}
+                            >
+                                <DeviceMobile className="w-4 h-4" />
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/login"
+                                className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                            >
+                                {t.nav.login}
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
 
-            {/* Mobile Drawer Overlay */}
+            {/* Mobile Bottom Capsule Floating Component (Mobile UI only) */}
+            {!mobileMenuOpen && (
+                <div className="fixed bottom-5 inset-x-0 z-40 flex justify-center items-center pointer-events-none md:hidden px-4">
+                    <div className="pointer-events-auto inline-flex items-center gap-1.5 p-1.5 rounded-full border border-border/80 bg-background/90 backdrop-blur-lg shadow-xl ring-1 ring-foreground/10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        {/* Drawer Button */}
+                        <button
+                            type="button"
+                            onClick={() => setMobileMenuOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer touch-manipulation"
+                            aria-label="Open Navigation Drawer"
+                            aria-expanded={mobileMenuOpen}
+                            aria-controls="mobile-nav-drawer"
+                        >
+                            <List className="w-4 h-4" weight="bold" />
+                            <span>Menu</span>
+                        </button>
+
+                        {/* Subtle Vertical Divider */}
+                        <div className="w-px h-5 bg-border/80 my-auto" />
+
+                        {/* Language Switch Button with Dropdown (Upward display) */}
+                        <LanguageDropdown variant="capsule" side="top" align="center" />
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile Navigation Drawer */}
             {mobileMenuOpen && (
                 <div
                     id="mobile-nav-drawer"
@@ -229,15 +240,7 @@ export function Navbar() {
                         </Link>
 
                         <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={toggleLanguage}
-                                className="px-2.5 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer touch-manipulation flex items-center gap-1.5"
-                                aria-label="Ganti Bahasa / Switch Language"
-                            >
-                                <Globe className="w-3.5 h-3.5" />
-                                <span className="font-mono">{language.toUpperCase()}</span>
-                            </button>
+                            <LanguageDropdown variant="navbar" side="top" align="end" />
                             <button
                                 type="button"
                                 onClick={() => setMobileMenuOpen(false)}

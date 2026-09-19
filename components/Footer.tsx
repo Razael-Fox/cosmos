@@ -3,16 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { WhatsappLogo, ShieldCheck, GithubLogo, Globe } from '@phosphor-icons/react';
+import { WhatsappLogo, ShieldCheck, GithubLogo } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
+import { LanguageDropdown } from '@/components/LanguageDropdown';
 
 export function Footer() {
-    const { t, language, setLanguage } = useTranslation();
+    const { t } = useTranslation();
     const salesNumber = (process.env.NEXT_PUBLIC_SALES_NUMBER || '628123456789').replace(/\D/g, '');
-
-    const toggleLanguage = () => {
-        setLanguage(language === 'id' ? 'en' : 'id');
-    };
 
     return (
         <footer className="border-t border-border bg-card/60 backdrop-blur-xs mt-auto">
@@ -132,14 +129,7 @@ export function Footer() {
                                 <span>Cloudflare Ingress & DDOS Guard</span>
                             </div>
                             <div>
-                                <button
-                                    type="button"
-                                    onClick={toggleLanguage}
-                                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                >
-                                    <Globe className="w-3.5 h-3.5" />
-                                    <span>{language === 'id' ? 'Ganti ke English' : 'Switch to Bahasa Indonesia'}</span>
-                                </button>
+                                <LanguageDropdown variant="footer" side="top" align="start" />
                             </div>
                         </div>
                     </div>
