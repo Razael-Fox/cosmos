@@ -99,10 +99,18 @@ check_env() {
     fi
 }
 
+setup_tunnel() {
+    if [ -f "./scripts/setup-cloudflare-tunnel.sh" ]; then
+        echo "[deploy] Checking and configuring Cloudflare Tunnel..."
+        bash ./scripts/setup-cloudflare-tunnel.sh "${APP_DOMAIN:-cosmos.razael-fox.my.id}" "http://127.0.0.1:8080"
+    fi
+}
+
 check_disk
 ensure_worktrees
 prepare_storage
 check_env
+setup_tunnel
 
 # ------------------------------------------------------------------------------
 # Build and Image Comparison

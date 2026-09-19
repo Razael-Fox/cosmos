@@ -41,7 +41,8 @@
         "docker:dev:down": "./scripts/docker-dev.sh down",
         "docker:dev:restart": "./scripts/docker-dev.sh restart",
         "docker:dev:logs": "./scripts/docker-dev.sh logs",
-        "docker:dev:clean": "./scripts/docker-dev.sh clean"
+        "docker:dev:clean": "./scripts/docker-dev.sh clean",
+        "tunnel:setup": "./scripts/setup-cloudflare-tunnel.sh"
     },
     "keywords": [],
     "author": "",
