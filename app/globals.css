@@ -154,38 +154,7 @@
     background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12) 0%, transparent 65%);
 }
 
-/* macOS Dock Style Drawer Animations */
-@keyframes macos-dock-slide-up {
-    0% {
-        opacity: 0;
-        transform: scale(0.8) translateY(32px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
 
-@keyframes macos-dock-slide-down {
-    0% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(0.85) translateY(24px);
-    }
-}
-
-.animate-dock-slide-up {
-    transform-origin: bottom center;
-    animation: macos-dock-slide-up 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-dock-slide-down {
-    transform-origin: bottom center;
-    animation: macos-dock-slide-down 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
 
 /* Motion & Accessibility */
 @media (prefers-reduced-motion: reduce) {
