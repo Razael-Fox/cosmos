@@ -115,13 +115,6 @@ function markPresenceInactive(sock: WASocket, jid: string, delayMs = 1500) {
             /* ignore */
         }
         activeInteractions = Math.max(0, activeInteractions - 1);
-        if (activeInteractions === 0) {
-            try {
-                sock.sendPresenceUpdate('unavailable').catch(() => {});
-            } catch {
-                /* ignore */
-            }
-        }
     }, delayMs);
 }
 

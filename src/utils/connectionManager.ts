@@ -35,6 +35,7 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
     const { sessionId, phoneNumber, onPairingCode, onConnected, onClosed, isAborted } = options;
     let connectionOpenTimeSec = 0;
     let reconnectAttempts = 0;
+    let presenceKeepAlive: NodeJS.Timeout | null = null;
 
     const authState = await usePrismaAuthState(sessionId);
     if (isAborted?.()) return;
@@ -56,7 +57,7 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
         defaultQueryTimeoutMs: 60000,
         retryRequestDelayMs: 2000,
         maxMsgRetryCount: 15,
-        markOnlineOnConnect: false,
+        markOnlineOnConnect: true,
         getMessage: async (key) => {
             console.log(
                 `[getMessage] [${sessionId}] Request received for key ID: ${key.id}, remoteJid: ${key.remoteJid}, fromMe: ${key.fromMe}`
@@ -133,6 +134,19 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                 const { startInflationCron } = await import('../services/inflation.js');
                 startInflationCron(sock);
             }
+            try {
+                await sock.sendPresenceUpdate('available');
+            } catch {
+                /* ignore */
+            }
+            if (presenceKeepAlive) clearInterval(presenceKeepAlive);
+            presenceKeepAlive = setInterval(() => {
+                try {
+                    sock.sendPresenceUpdate('available').catch(() => {});
+                } catch {
+                    /* ignore */
+                }
+            }, 60000);
             if (onConnected) onConnected();
         }
         if (update.qr && isPairingMode && !sock.authState.creds.registered) {
@@ -195,6 +209,10 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             );
 
             connectionOpenTimeSec = 0;
+            if (presenceKeepAlive) {
+                clearInterval(presenceKeepAlive);
+                presenceKeepAlive = null;
+            }
             activeConnections.delete(sessionId);
 
             if (lastDisconnect?.error) {

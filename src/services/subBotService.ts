@@ -556,13 +556,23 @@ export async function stopSubBot(phoneNumber: string): Promise<boolean> {
 
 export function isSubBotRegistered(phoneNumber: string): boolean {
     const clean = getCleanNumber(phoneNumber);
+    const sock = activeConnections.get(`sub_${clean}`);
+    if (sock) {
+        try {
+            if (sock.authState?.creds?.registered === true) return true;
+        } catch {
+            /* ignore */
+        }
+    }
+
     const dbPath = path.resolve(process.cwd(), 'database', clean, 'database.sqlite');
     if (!fs.existsSync(dbPath)) return false;
 
     try {
         const db = new Database(dbPath, { readonly: true });
-        const row = db.prepare('SELECT value FROM "WhatsAppAuth" WHERE id = ?').get(`sub_${clean}_creds.json`) as
-            { value: string } | undefined;
+        const row = db
+            .prepare('SELECT value FROM "WhatsAppAuth" WHERE id = ? OR id = ?')
+            .get(`sub_${clean}_creds.json`, 'creds.json') as { value: string } | undefined;
         db.close();
         if (!row || !row.value) return false;
         const creds = JSON.parse(row.value);
