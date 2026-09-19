@@ -380,6 +380,7 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
 
             return { status: 200, data: { ok: true, groups } };
         }
+        case '/internal/users/photo':
         case '/internal/groups/photo': {
             const jid = String(body.jid || '').trim();
             if (!jid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
