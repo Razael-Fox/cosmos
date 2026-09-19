@@ -2,7 +2,7 @@
 
 import React, { useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, WhatsappLogo, CheckCircle, Sparkle, Check } from '@phosphor-icons/react';
+import { ArrowRight, WhatsappLogo, CheckCircle, Sparkle, Check } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { Container } from '@/components/ui/container';
 
@@ -33,26 +33,6 @@ export default function HomePage() {
             <section className="relative overflow-hidden pt-16 pb-20 md:py-28 border-b border-border cosmos-grid cosmos-glow">
                 <Container size="lg">
                     <div className="max-w-3xl mx-auto flex flex-col items-center text-center space-y-6">
-                        {/* Eyebrow badge & Live Status indicator pill */}
-                        <div className="flex flex-wrap items-center justify-center gap-2.5">
-                            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold tracking-wide">
-                                <ShieldCheck className="w-4 h-4" weight="bold" />
-                                <span>{t.hero.eyebrow}</span>
-                            </div>
-                            <Link
-                                href="/status"
-                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 text-xs font-semibold tracking-wide transition-colors"
-                            >
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </span>
-                                <span>
-                                    {t.footer.statusText} • {language === 'id' ? 'Lihat Status' : 'View Status'} →
-                                </span>
-                            </Link>
-                        </div>
-
                         {/* H1 Heading */}
                         <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground font-heading leading-[1.12]">
                             {t.hero.title}
