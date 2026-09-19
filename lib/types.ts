@@ -31,6 +31,7 @@ export interface RegisterInvertedRequest {
 export interface RegisterInvertedResponse {
     token: string; // Opaque string formatted as COSMOS-XXXXXX-<last4>
     clickToChatUrl: string;
+    clickToChatUrlDirect?: string; // whatsapp:// deep link — opens regular WhatsApp only
     regSessionId: string;
     expiresIn: number; // in seconds
 }

@@ -353,6 +353,7 @@ export default function RegisterPage() {
                     <InvertedVerifyDialog
                         token={invertedData.token}
                         clickToChatUrl={invertedData.clickToChatUrl}
+                        clickToChatUrlDirect={invertedData.clickToChatUrlDirect}
                         regSessionId={invertedData.regSessionId}
                         expiresIn={invertedData.expiresIn}
                         onClose={() => setInvertedData(null)}

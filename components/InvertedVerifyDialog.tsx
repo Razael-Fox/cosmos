@@ -9,6 +9,7 @@ import { createAuthStatusWebSocket, setStoredToken, setStoredUser } from '@/lib/
 interface InvertedVerifyDialogProps {
     token: string; // Treated as opaque string
     clickToChatUrl: string;
+    clickToChatUrlDirect?: string; // whatsapp:// deep link — targets regular WhatsApp only
     regSessionId: string;
     expiresIn: number; // in seconds
     onClose: () => void;
@@ -17,6 +18,7 @@ interface InvertedVerifyDialogProps {
 export function InvertedVerifyDialog({
     token,
     clickToChatUrl,
+    clickToChatUrlDirect,
     regSessionId,
     expiresIn,
     onClose
@@ -169,15 +171,32 @@ export function InvertedVerifyDialog({
                             <p className="font-semibold text-foreground pt-1">{t.invertedVerify.step3}</p>
                         </div>
 
-                        <a
-                            href={clickToChatUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            type="button"
+                            onClick={() => {
+                                // Prefer whatsapp:// deep link (opens regular WhatsApp only).
+                                // If the scheme is not handled (desktop, WA not installed),
+                                // fall back to the universal wa.me link after a short delay.
+                                if (clickToChatUrlDirect) {
+                                    const fallbackTimer = setTimeout(() => {
+                                        window.open(clickToChatUrl, '_blank', 'noopener,noreferrer');
+                                    }, 1500);
+                                    // If the page loses focus the deep link was handled — cancel fallback.
+                                    const cancelFallback = () => {
+                                        clearTimeout(fallbackTimer);
+                                        window.removeEventListener('blur', cancelFallback);
+                                    };
+                                    window.addEventListener('blur', cancelFallback);
+                                    window.location.href = clickToChatUrlDirect;
+                                } else {
+                                    window.open(clickToChatUrl, '_blank', 'noopener,noreferrer');
+                                }
+                            }}
                             className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs sm:text-sm shadow-md transition-all text-center cursor-pointer"
                         >
                             <WhatsappLogo className="w-5 h-5" weight="fill" />
                             <span>{t.invertedVerify.whatsappBtn}</span>
-                        </a>
+                        </button>
 
                         <div className="flex flex-col items-center gap-2 pt-1">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
