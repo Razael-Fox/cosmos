@@ -2,7 +2,6 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
 import { prisma } from '#db.js';
 import { verifyInvertedToken, registerInvertedMismatch } from '#services/otpService.js';
-import { sendIpcCommand } from '#services/ipcServer.js';
 
 export const definition: ToolDefinition = {
     name: 'verify',
@@ -108,27 +107,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             .catch(() => {});
     }
 
-    try {
-        await ctx.sock.sendMessage(jid, {
-            text: ctx.t('tools.verify.success')
-        });
-    } catch (err) {
-        console.error('[Verify] Direct confirmation message failed:', err);
-    }
-
-    // Notify co-located bot IPC server (to handle WhatsApp messaging)
-    await sendIpcCommand('/internal/auth/verified', {
-        phoneNumber,
-        canonicalJid: jid,
-        regSessionId,
-        pushName: waName,
-        username: resolvedUsername
-    }).catch((err) => console.error('[Verify] IPC notification failed:', err));
-
     // Notify Fastify API to trigger real-time WebSocket emitAuthStatus
-    const apiPort = process.env.API_PORT || '5000';
+    const defaultApiHost = process.env.NODE_ENV === 'development' ? 'api' : '127.0.0.1';
+    const apiUrl =
+        process.env.INTERNAL_API_URL ||
+        `http://${process.env.API_HOST || defaultApiHost}:${process.env.API_PORT || '4000'}`;
     const ipcSecret = process.env.INTERNAL_IPC_SECRET || '';
-    fetch(`http://127.0.0.1:${apiPort}/internal/auth/verified`, {
+
+    await fetch(`${apiUrl}/internal/auth/verified`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -140,11 +126,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             regSessionId,
             pushName: waName,
             username: resolvedUsername
-        })
+        }),
+        signal: AbortSignal.timeout(5000)
     }).catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn('[Verify] Fastify internal HTTP notify fallback:', msg);
     });
 
-    return ctx.t('tools.verify.activated');
+    return ctx.t('tools.verify.success');
 }

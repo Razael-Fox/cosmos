@@ -15,6 +15,8 @@ services:
             NODE_ENV: development
             DATABASE_URL: file:/app/storage/database.sqlite
             BOT_IPC_SOCKET: /app/storage/ipc.sock
+            INTERNAL_API_URL: http://api:4000
+            API_PORT: 4000
         volumes:
             - ./src:/app/bot/src
             - ./assets:/app/bot/assets
