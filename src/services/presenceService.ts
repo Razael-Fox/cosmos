@@ -9,7 +9,13 @@ export interface PresenceRecord {
     lastSeen: number; // Unix timestamp in ms
 }
 
-const PRESENCE_FILE = path.join(process.cwd(), 'storage', 'presence.json');
+function getPresenceFilePath(): string {
+    if (fs.existsSync('/app/storage')) {
+        return '/app/storage/presence.json';
+    }
+    return path.join(process.cwd(), 'storage', 'presence.json');
+}
+
 const PRESENCE_TIMEOUT_MS = 5 * 60 * 1000;
 
 // In-memory presence map: key is clean digits (e.g. phone or LID digits)
@@ -20,8 +26,9 @@ const idLinkMap = new Map<string, string>();
 // Load presence records from disk if available
 function loadPresenceFromDisk(): void {
     try {
-        if (fs.existsSync(PRESENCE_FILE)) {
-            const raw = fs.readFileSync(PRESENCE_FILE, 'utf8');
+        const filePath = getPresenceFilePath();
+        if (fs.existsSync(filePath)) {
+            const raw = fs.readFileSync(filePath, 'utf8');
             const data = JSON.parse(raw);
             if (data && typeof data === 'object') {
                 for (const [key, val] of Object.entries(data)) {
@@ -43,13 +50,14 @@ function scheduleSave(): void {
     saveTimeout = setTimeout(() => {
         saveTimeout = null;
         try {
+            const filePath = getPresenceFilePath();
             const obj: Record<string, PresenceRecord> = {};
             for (const [k, v] of presenceMap.entries()) {
                 obj[k] = v;
             }
-            const dir = path.dirname(PRESENCE_FILE);
+            const dir = path.dirname(filePath);
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(PRESENCE_FILE, JSON.stringify(obj), 'utf8');
+            fs.writeFileSync(filePath, JSON.stringify(obj), 'utf8');
         } catch (e) {
             console.warn('[Presence] Failed to persist presence cache:', e);
         }
