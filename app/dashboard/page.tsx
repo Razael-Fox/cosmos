@@ -608,111 +608,142 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Sub-Bots Quota Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    {t.dashboard.planCard.subBotsQuota}
-                                </span>
-                                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
-                                    <DeviceMobile className="w-5 h-5" weight="duotone" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex items-baseline justify-between">
-                                    <span className="text-3xl font-black text-foreground font-mono">
-                                        {currentBotsCount}{' '}
-                                        <span className="text-sm font-normal text-muted-foreground">/ {maxBots}</span>
+                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs flex flex-col justify-between">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                        {t.dashboard.planCard.subBotsQuota}
                                     </span>
-                                    <span className="text-xs font-semibold text-muted-foreground font-mono">
-                                        {Math.round((currentBotsCount / maxBots) * 100)}% {t.dashboard.usedSuffix}
-                                    </span>
+                                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
+                                        <DeviceMobile className="w-5 h-5" weight="duotone" />
+                                    </div>
                                 </div>
 
-                                <div
-                                    className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
-                                    role="progressbar"
-                                    aria-valuenow={currentBotsCount}
-                                    aria-valuemin={0}
-                                    aria-valuemax={maxBots}
-                                    aria-label={t.dashboard.planCard.subBotsQuota}
-                                >
+                                <div className="space-y-2">
+                                    <div className="flex items-baseline justify-between">
+                                        <span className="text-3xl font-black text-foreground font-mono">
+                                            {currentBotsCount}{' '}
+                                            <span className="text-sm font-normal text-muted-foreground">
+                                                / {maxBots}
+                                            </span>
+                                        </span>
+                                        <span className="text-xs font-semibold text-muted-foreground font-mono">
+                                            {Math.round((currentBotsCount / maxBots) * 100)}% {t.dashboard.usedSuffix}
+                                        </span>
+                                    </div>
+
                                     <div
-                                        className={`h-full rounded-full transition-all duration-300 ${
-                                            isBotsQuotaFull ? 'bg-amber-500' : 'bg-primary'
-                                        }`}
-                                        style={{ width: `${Math.min(100, (currentBotsCount / maxBots) * 100)}%` }}
-                                    />
+                                        className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
+                                        role="progressbar"
+                                        aria-valuenow={currentBotsCount}
+                                        aria-valuemin={0}
+                                        aria-valuemax={maxBots}
+                                        aria-label={t.dashboard.planCard.subBotsQuota}
+                                    >
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-300 ${
+                                                isBotsQuotaFull ? 'bg-amber-500' : 'bg-primary'
+                                            }`}
+                                            style={{ width: `${Math.min(100, (currentBotsCount / maxBots) * 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>
+                                        {t.dashboard.botsSlotsLeft.replace(
+                                            '{count}',
+                                            String(Math.max(0, maxBots - currentBotsCount))
+                                        )}
+                                    </span>
+                                    {isBotsQuotaFull && (
+                                        <Link href="/pricing" className="text-primary font-semibold hover:underline">
+                                            Upgrade →
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                                <span>
-                                    {t.dashboard.botsSlotsLeft.replace(
-                                        '{count}',
-                                        String(Math.max(0, maxBots - currentBotsCount))
-                                    )}
-                                </span>
-                                {isBotsQuotaFull && (
-                                    <Link href="/pricing" className="text-primary font-semibold hover:underline">
-                                        Upgrade →
-                                    </Link>
-                                )}
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowPairModal(true)}
+                                disabled={isBotsQuotaFull}
+                                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer mt-2"
+                            >
+                                <Plus className="w-3.5 h-3.5" weight="bold" />
+                                <span>{t.dashboard.subbotsCard.pairBtn}</span>
+                            </button>
                         </div>
 
                         {/* Groups Quota Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    {t.dashboard.planCard.groupsQuota}
-                                </span>
-                                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600">
-                                    <UsersThree className="w-5 h-5" weight="duotone" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex items-baseline justify-between">
-                                    <span className="text-3xl font-black text-foreground font-mono">
-                                        {currentGroupsCount}{' '}
-                                        <span className="text-sm font-normal text-muted-foreground">/ {maxGroups}</span>
+                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs flex flex-col justify-between">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                        {t.dashboard.planCard.groupsQuota}
                                     </span>
-                                    <span className="text-xs font-semibold text-muted-foreground font-mono">
-                                        {Math.round((currentGroupsCount / maxGroups) * 100)}% {t.dashboard.usedSuffix}
-                                    </span>
+                                    <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600">
+                                        <UsersThree className="w-5 h-5" weight="duotone" />
+                                    </div>
                                 </div>
 
-                                <div
-                                    className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
-                                    role="progressbar"
-                                    aria-valuenow={currentGroupsCount}
-                                    aria-valuemin={0}
-                                    aria-valuemax={maxGroups}
-                                    aria-label={t.dashboard.planCard.groupsQuota}
-                                >
+                                <div className="space-y-2">
+                                    <div className="flex items-baseline justify-between">
+                                        <span className="text-3xl font-black text-foreground font-mono">
+                                            {currentGroupsCount}{' '}
+                                            <span className="text-sm font-normal text-muted-foreground">
+                                                / {maxGroups}
+                                            </span>
+                                        </span>
+                                        <span className="text-xs font-semibold text-muted-foreground font-mono">
+                                            {Math.round((currentGroupsCount / maxGroups) * 100)}%{' '}
+                                            {t.dashboard.usedSuffix}
+                                        </span>
+                                    </div>
+
                                     <div
-                                        className={`h-full rounded-full transition-all duration-300 ${
-                                            isGroupsQuotaFull ? 'bg-amber-500' : 'bg-indigo-500'
-                                        }`}
-                                        style={{ width: `${Math.min(100, (currentGroupsCount / maxGroups) * 100)}%` }}
-                                    />
+                                        className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
+                                        role="progressbar"
+                                        aria-valuenow={currentGroupsCount}
+                                        aria-valuemin={0}
+                                        aria-valuemax={maxGroups}
+                                        aria-label={t.dashboard.planCard.groupsQuota}
+                                    >
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-300 ${
+                                                isGroupsQuotaFull ? 'bg-amber-500' : 'bg-indigo-500'
+                                            }`}
+                                            style={{
+                                                width: `${Math.min(100, (currentGroupsCount / maxGroups) * 100)}%`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>
+                                        {t.dashboard.groupsSlotsLeft.replace(
+                                            '{count}',
+                                            String(Math.max(0, maxGroups - currentGroupsCount))
+                                        )}
+                                    </span>
+                                    {isGroupsQuotaFull && (
+                                        <Link href="/pricing" className="text-primary font-semibold hover:underline">
+                                            Upgrade →
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                                <span>
-                                    {t.dashboard.groupsSlotsLeft.replace(
-                                        '{count}',
-                                        String(Math.max(0, maxGroups - currentGroupsCount))
-                                    )}
-                                </span>
-                                {isGroupsQuotaFull && (
-                                    <Link href="/pricing" className="text-primary font-semibold hover:underline">
-                                        Upgrade →
-                                    </Link>
-                                )}
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleOpenAddGroupModal}
+                                disabled={isGroupsQuotaFull}
+                                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border transition-colors cursor-pointer mt-2 disabled:opacity-50"
+                            >
+                                <Plus className="w-3.5 h-3.5" weight="bold" />
+                                <span>{t.dashboard.groupsCard.addBtn}</span>
+                            </button>
                         </div>
                     </div>
                 )}
