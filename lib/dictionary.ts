@@ -21,10 +21,6 @@ const rawDictionary = {
             logout: 'Keluar',
             language: 'Bahasa'
         },
-        announcement: {
-            message: 'Verifikasi terbalik anti-banned — tanpa risiko pemblokiran spam OTP',
-            cta: 'Coba Sekarang →'
-        },
         hero: {
             eyebrow: 'Anti-Banned Inverted Verification • Baileys Multi-Device',
             title: 'Ekosistem WhatsApp Bot Cerdas & Multi-Device Otonom',
@@ -422,10 +418,6 @@ const rawDictionary = {
             login: 'Login',
             logout: 'Logout',
             language: 'Language'
-        },
-        announcement: {
-            message: 'Anti-banned inverted verification — zero OTP spam-ban risk',
-            cta: 'Try Now →'
         },
         hero: {
             eyebrow: 'Anti-Banned Inverted Verification • Baileys Multi-Device',

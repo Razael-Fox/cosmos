@@ -3,7 +3,6 @@ import { DM_Sans, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { LanguageProvider } from '@/lib/i18n';
-import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 
@@ -94,7 +93,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </head>
             <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/20">
                 <LanguageProvider>
-                    <AnnouncementBar />
                     <Navbar />
                     <main className="flex-1 flex flex-col">{children}</main>
                     <Footer />
