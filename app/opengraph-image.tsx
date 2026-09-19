@@ -70,7 +70,7 @@ export default async function Image() {
                         letterSpacing: '-1px'
                     }}
                 >
-                    Autonomous WhatsApp Bots for Modern Teams & Communities
+                    Autonomous WhatsApp Bots for Teams & Communities
                 </h1>
                 <p style={{ fontSize: '24px', color: '#9CA3AF', margin: 0, lineHeight: 1.4 }}>
                     Multi-device sub-bots, anti-banned inverted verification, group whitelisting, and virtual banking.

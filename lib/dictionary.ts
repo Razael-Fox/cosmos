@@ -421,7 +421,7 @@ const rawDictionary = {
         },
         hero: {
             eyebrow: 'Anti-Banned Inverted Verification • Baileys Multi-Device',
-            title: 'Autonomous WhatsApp Bots for Modern Teams & Communities',
+            title: 'Autonomous WhatsApp Bots for Teams & Communities',
             subtitle:
                 'Connect your personal WhatsApp numbers as autonomous sub-bots, automate group chats, and enjoy integrated virtual banking with high-speed, ban-free verified infrastructure.',
             ctaRegister: 'Get Started Free',
