@@ -25,7 +25,7 @@ const rawDictionary = {
             eyebrow: 'Anti-Banned Inverted Verification • Baileys Multi-Device',
             title: 'Ekosistem WhatsApp Bot Cerdas & Multi-Device Otonom',
             subtitle:
-                'Hubungkan nomor WhatsApp Anda sebagai sub-bot mandiri, otomatisasi obrolan grup komunitas, dan nikmati fitur perbankan virtual dengan infrastruktur aman berkecepatan tinggi.',
+                'Hubungkan nomor WhatsApp Anda sendiri untuk menjadikannya bot otonom canggih, atau undang bot kami melalui tautan di bawah.',
             ctaRegister: 'Mulai Sekarang — Gratis',
             ctaPricing: 'Lihat Paket Langganan',
             ctaHowItWorks: 'Pelajari Cara Kerja',
@@ -423,7 +423,7 @@ const rawDictionary = {
             eyebrow: 'Anti-Banned Inverted Verification • Baileys Multi-Device',
             title: 'Autonomous WhatsApp Bots for Teams & Communities',
             subtitle:
-                'Connect your personal WhatsApp numbers as autonomous sub-bots, automate group chats, and enjoy integrated virtual banking with high-speed, ban-free verified infrastructure.',
+                'Connect your own WhatsApp numbers to turn them into advanced autonomous bots, or invite our bots via the link below.',
             ctaRegister: 'Get Started Free',
             ctaPricing: 'View Pricing Plans',
             ctaHowItWorks: 'See How It Works',
