@@ -5,6 +5,7 @@ import { prisma } from '#db.js';
 import { timingSafeStringCompare } from './otpService.js';
 import { dispatchLoginSecurityAlert } from './securityAlertService.js';
 import { activeConnections } from '#utils/connectionManager.js';
+import { getUserPresence } from './presenceService.js';
 import type { WASocket, GroupMetadata } from '@whiskeysockets/baileys';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
@@ -404,6 +405,39 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             } catch {
                 return { status: 200, data: { ok: true, pictureUrl: null } };
             }
+        }
+        case '/internal/users/presence': {
+            const jid = String(body.jid || '').trim();
+            if (!jid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+
+            const cleanPhone = jid.split('@')[0].replace(/\D/g, '');
+            const canonicalJid = cleanPhone ? `${cleanPhone}@s.whatsapp.net` : jid;
+
+            let sock = activeConnections.get('default');
+            const userJid = body.userJid ? String(body.userJid).trim() : null;
+            if (userJid) {
+                const subPhone = userJid.replace(/\D/g, '');
+                const subSock = activeConnections.get(`sub_${subPhone}`);
+                if (subSock) sock = subSock;
+            }
+
+            if (sock) {
+                try {
+                    await sock.presenceSubscribe(canonicalJid).catch(() => {});
+                } catch {
+                    /* non-fatal */
+                }
+            }
+
+            const info = getUserPresence(cleanPhone || jid);
+            return {
+                status: 200,
+                data: {
+                    ok: true,
+                    presence: info.status,
+                    lastSeen: info.lastSeen
+                }
+            };
         }
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };

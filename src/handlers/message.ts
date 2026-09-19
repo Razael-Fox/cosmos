@@ -14,6 +14,7 @@ import { hasCancellableSession, cancelActiveSession } from '#utils/cancellationM
 import { getTranslator } from '#utils/i18n.js';
 import { getOwnerNumbers } from '#utils/owner.js';
 import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
+import { updateUserPresence } from '#services/presenceService.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
     const name = toolName.toLowerCase();
@@ -205,6 +206,13 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
     let { jidDb: senderJidDb } = getJidAndLid();
     const { lidDb: senderLidDb } = getJidAndLid();
+
+    if (!msg.key.fromMe) {
+        const senderCandidate = senderJidDb || msg.key.participant || msg.key.remoteJid;
+        if (senderCandidate) {
+            updateUserPresence(senderCandidate, 'online');
+        }
+    }
 
     if (senderLidDb && !senderJidDb) {
         // Fallback: check DB if we only have LID but no JID in this message

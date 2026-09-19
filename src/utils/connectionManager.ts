@@ -6,6 +6,7 @@ import { cacheMessage, getCachedMessage, markMessageProcessed } from '#utils/mes
 import { usePrismaAuthState } from '#utils/prismaAuthState.js';
 import { initActiveSessions } from '#utils/sessionStore.js';
 import { dbContext, getPrismaClient, disconnectPrismaClient } from '#db.js';
+import { updateUserPresence } from '#services/presenceService.js';
 
 const logger = pino({ level: 'debug' });
 const MAX_RECONNECT_ATTEMPTS = 15;
@@ -330,6 +331,19 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
     sock.ev.on('contacts.update', async (updates) => {
         if (updates && updates.length > 0) {
             await syncContacts(updates);
+        }
+    });
+
+    sock.ev.on('presence.update', ({ id, presences }) => {
+        if (presences) {
+            for (const [participant, presence] of Object.entries(presences)) {
+                const target = participant || id;
+                if (target && presence) {
+                    updateUserPresence(target, presence.lastKnownPresence, (presence as any).lastSeen);
+                }
+            }
+        } else if (id) {
+            updateUserPresence(id, 'available');
         }
     });
 
