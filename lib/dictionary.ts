@@ -309,7 +309,9 @@ const rawDictionary = {
                 startBtn: 'Mulai',
                 stopBtn: 'Hentikan',
                 deleteBtn: 'Putuskan',
-                confirmDelete: 'Yakin ingin memutuskan sub-bot ini?'
+                confirmDelete: 'Yakin ingin memutuskan sub-bot ini?',
+                expandBtn: 'Lihat Semua ({count})',
+                collapseBtn: 'Ciutkan'
             },
             groupsCard: {
                 title: 'Grup WhatsApp Ter-Whitelist',
@@ -322,6 +324,8 @@ const rawDictionary = {
                 actionCol: 'Aksi',
                 deleteBtn: 'Hapus Whitelist',
                 confirmDeleteGroup: 'Yakin ingin menghapus whitelist untuk grup ini?',
+                expandBtn: 'Lihat Semua ({count})',
+                collapseBtn: 'Ciutkan',
                 addModalTitle: 'Tambah Whitelist Grup Baru',
                 jidInputLabel: 'JID Grup WhatsApp',
                 jidPlaceholder: '120363023456789@g.us',
@@ -717,7 +721,9 @@ const rawDictionary = {
                 startBtn: 'Start',
                 stopBtn: 'Stop',
                 deleteBtn: 'Disconnect',
-                confirmDelete: 'Are you sure you want to disconnect this sub-bot?'
+                confirmDelete: 'Are you sure you want to disconnect this sub-bot?',
+                expandBtn: 'View All ({count})',
+                collapseBtn: 'Collapse'
             },
             groupsCard: {
                 title: 'Whitelisted WhatsApp Groups',
@@ -730,6 +736,8 @@ const rawDictionary = {
                 actionCol: 'Actions',
                 deleteBtn: 'Remove Whitelist',
                 confirmDeleteGroup: 'Are you sure you want to remove whitelist for this group?',
+                expandBtn: 'View All ({count})',
+                collapseBtn: 'Collapse',
                 addModalTitle: 'Whitelist New WhatsApp Group',
                 jidInputLabel: 'WhatsApp Group JID',
                 jidPlaceholder: '120363023456789@g.us',

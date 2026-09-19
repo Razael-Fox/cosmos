@@ -46,7 +46,6 @@ import type {
 import { PairingModal } from '@/components/PairingModal';
 import { Container } from '@/components/ui/container';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 
@@ -180,6 +179,8 @@ export default function DashboardPage() {
     const [addingGroupJid, setAddingGroupJid] = useState<string | null>(null);
     const [showManualJidInput, setShowManualJidInput] = useState(false);
     const [refreshCount, setRefreshCount] = useState(0);
+    const [isBotsExpanded, setIsBotsExpanded] = useState(false);
+    const [isGroupsExpanded, setIsGroupsExpanded] = useState(false);
 
     const groupNameMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -603,8 +604,8 @@ export default function DashboardPage() {
                             </Link>
                         </div>
 
-                        {/* Sub-Bots Quota Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs flex flex-col justify-between">
+                        {/* Sub-Bots Quota & Connected Bots Combined Card */}
+                        <div className="p-6 rounded-3xl bg-card border border-border space-y-5 shadow-xs flex flex-col justify-between">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -658,6 +659,91 @@ export default function DashboardPage() {
                                         </Link>
                                     )}
                                 </div>
+
+                                {/* Connected Sub-Bots List Inside Card */}
+                                <div className="pt-3 border-t border-border/80 space-y-2.5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-foreground font-heading">
+                                            {t.dashboard.subbotsCard.title}
+                                        </span>
+                                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                                            {subBots.length}
+                                        </span>
+                                    </div>
+
+                                    {subBots.length === 0 ? (
+                                        <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/60 text-center">
+                                            <p className="text-xs text-muted-foreground">
+                                                {t.dashboard.subbotsCard.noBots}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1.5">
+                                            {(isBotsExpanded ? subBots : subBots.slice(0, 4)).map((bot) => (
+                                                <div
+                                                    key={bot.id}
+                                                    className="p-2.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between gap-2.5 hover:bg-muted/60 transition-colors"
+                                                >
+                                                    <div className="min-w-0 flex items-center gap-2">
+                                                        <div className="w-2 h-2 rounded-full shrink-0 bg-emerald-500" />
+                                                        <div className="min-w-0">
+                                                            <p className="font-mono font-semibold text-xs text-foreground truncate">
+                                                                {bot.id}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                                                <span>
+                                                                    Prefix:{' '}
+                                                                    <code className="font-bold text-foreground">
+                                                                        {bot.customPrefix || '.'}
+                                                                    </code>
+                                                                </span>
+                                                                <span>•</span>
+                                                                <span className="text-emerald-500 font-semibold">
+                                                                    {bot.status}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setBotToDelete(bot.id)}
+                                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
+                                                        title={t.dashboard.subbotsCard.deleteBtn}
+                                                        aria-label={t.dashboard.subbotsCard.deleteBtn}
+                                                    >
+                                                        <Trash className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                            {/* Expand / Collapse Button if > 4 Sub-Bots */}
+                                            {subBots.length > 4 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsBotsExpanded((prev) => !prev)}
+                                                    className="w-full py-1.5 px-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                >
+                                                    {isBotsExpanded ? (
+                                                        <>
+                                                            <span>{t.dashboard.subbotsCard.collapseBtn || 'Collapse'}</span>
+                                                            <CaretUp className="w-3.5 h-3.5" />
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span>
+                                                                {(t.dashboard.subbotsCard.expandBtn || 'View All ({count})').replace(
+                                                                    '{count}',
+                                                                    String(subBots.length)
+                                                                )}
+                                                            </span>
+                                                            <CaretDown className="w-3.5 h-3.5" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <button
@@ -671,8 +757,8 @@ export default function DashboardPage() {
                             </button>
                         </div>
 
-                        {/* Groups Quota Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs flex flex-col justify-between">
+                        {/* Whitelist Groups Quota & Group List Combined Card */}
+                        <div className="p-6 rounded-3xl bg-card border border-border space-y-5 shadow-xs flex flex-col justify-between">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -729,6 +815,92 @@ export default function DashboardPage() {
                                         </Link>
                                     )}
                                 </div>
+
+                                {/* Whitelisted Groups List Inside Card */}
+                                <div className="pt-3 border-t border-border/80 space-y-2.5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-foreground font-heading">
+                                            {t.dashboard.groupsCard.title}
+                                        </span>
+                                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                                            {groups.length}
+                                        </span>
+                                    </div>
+
+                                    {groups.length === 0 ? (
+                                        <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/60 text-center">
+                                            <p className="text-xs text-muted-foreground">
+                                                {t.dashboard.groupsCard.noGroups}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1.5">
+                                            {(isGroupsExpanded ? groups : groups.slice(0, 4)).map((grp) => {
+                                                const groupSubject = groupNameMap.get(grp.jid);
+                                                const pictureUrl = groupPictureMap.get(grp.jid);
+                                                return (
+                                                    <div
+                                                        key={grp.jid}
+                                                        className="p-2.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between gap-2.5 hover:bg-muted/60 transition-colors"
+                                                    >
+                                                        <div className="min-w-0 flex items-center gap-2.5">
+                                                            <GroupAvatar
+                                                                name={groupSubject}
+                                                                pictureUrl={pictureUrl}
+                                                                size="sm"
+                                                            />
+                                                            <div className="min-w-0">
+                                                                <p className="font-semibold text-xs text-foreground truncate">
+                                                                    {groupSubject || grp.jid}
+                                                                </p>
+                                                                {groupSubject && (
+                                                                    <p className="font-mono text-[10px] text-muted-foreground truncate">
+                                                                        {grp.jid}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setGroupToDelete(grp.jid)}
+                                                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
+                                                            title={t.dashboard.groupsCard.deleteBtn}
+                                                            aria-label={t.dashboard.groupsCard.deleteBtn}
+                                                        >
+                                                            <Trash className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {/* Expand / Collapse Button if > 4 Groups */}
+                                            {groups.length > 4 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsGroupsExpanded((prev) => !prev)}
+                                                    className="w-full py-1.5 px-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                                >
+                                                    {isGroupsExpanded ? (
+                                                        <>
+                                                            <span>{t.dashboard.groupsCard.collapseBtn || 'Collapse'}</span>
+                                                            <CaretUp className="w-3.5 h-3.5" />
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span>
+                                                                {(t.dashboard.groupsCard.expandBtn || 'View All ({count})').replace(
+                                                                    '{count}',
+                                                                    String(groups.length)
+                                                                )}
+                                                            </span>
+                                                            <CaretDown className="w-3.5 h-3.5" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <button
@@ -743,300 +915,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 )}
-
-                {/* Sub-Bots List Section */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-bold font-heading text-foreground">
-                                {t.dashboard.subbotsCard.title}
-                            </h2>
-                            <p className="text-xs text-muted-foreground">{t.dashboard.subbotsCard.subtitle}</p>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowPairModal(true)}
-                            disabled={isBotsQuotaFull}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
-                        >
-                            <Plus className="w-3.5 h-3.5" weight="bold" />
-                            <span>{t.dashboard.subbotsCard.pairBtn}</span>
-                        </button>
-                    </div>
-
-                    {isLoading ? (
-                        <Skeleton className="h-40 rounded-2xl" />
-                    ) : subBots.length === 0 ? (
-                        <EmptyState
-                            icon={<DeviceMobile className="w-6 h-6" />}
-                            title={t.dashboard.subbotsCard.noBots}
-                            description={t.dashboard.subbotsCard.noBotsDesc}
-                            action={
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPairModal(true)}
-                                    disabled={isBotsQuotaFull}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>{t.dashboard.subbotsCard.pairBtn}</span>
-                                </button>
-                            }
-                        />
-                    ) : (
-                        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
-                            {/* Desktop Table View */}
-                            <div className="hidden sm:block overflow-x-auto">
-                                <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                                            <th scope="col" className="p-4">
-                                                {t.dashboard.subbotsCard.phoneCol}
-                                            </th>
-                                            <th scope="col" className="p-4">
-                                                {t.dashboard.subbotsCard.prefixCol}
-                                            </th>
-                                            <th scope="col" className="p-4">
-                                                {t.dashboard.subbotsCard.statusCol}
-                                            </th>
-                                            <th scope="col" className="p-4">
-                                                {t.dashboard.subbotsCard.createdCol}
-                                            </th>
-                                            <th scope="col" className="p-4 text-right">
-                                                {t.dashboard.subbotsCard.actionsCol}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {subBots.map((bot) => (
-                                            <tr key={bot.id} className="hover:bg-muted/20 transition-colors">
-                                                <td className="p-4 font-mono font-semibold text-foreground">
-                                                    {bot.id}
-                                                </td>
-                                                <td className="p-4 font-mono font-bold text-foreground">
-                                                    <code className="px-2 py-0.5 rounded bg-muted border border-border">
-                                                        {bot.customPrefix || '.'}
-                                                    </code>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span
-                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                                                            bot.status === 'ACTIVE'
-                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                                                : 'bg-zinc-500/10 text-zinc-500'
-                                                        }`}
-                                                    >
-                                                        <span
-                                                            className={`w-1.5 h-1.5 rounded-full ${
-                                                                bot.status === 'ACTIVE'
-                                                                    ? 'bg-emerald-500'
-                                                                    : 'bg-zinc-400'
-                                                            }`}
-                                                        />
-                                                        <span>
-                                                            {bot.status === 'ACTIVE'
-                                                                ? t.dashboard.subbotsCard.statusActive
-                                                                : bot.status === 'PAUSED'
-                                                                  ? t.dashboard.subbotsCard.statusPaused
-                                                                  : t.dashboard.subbotsCard.statusDisconnected}
-                                                        </span>
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-xs text-muted-foreground">
-                                                    {new Date(bot.createdAt).toLocaleDateString(dateLocale)}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setBotToDelete(bot.id)}
-                                                        className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                                                        title={t.dashboard.subbotsCard.deleteBtn}
-                                                        aria-label={t.dashboard.subbotsCard.deleteBtn}
-                                                    >
-                                                        <Trash className="w-4 h-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Mobile Card List View */}
-                            <div className="sm:hidden divide-y divide-border">
-                                {subBots.map((bot) => (
-                                    <div key={bot.id} className="p-4 space-y-2.5">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-mono font-bold text-foreground text-sm">
-                                                {bot.id}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setBotToDelete(bot.id)}
-                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                                                aria-label={t.dashboard.subbotsCard.deleteBtn}
-                                            >
-                                                <Trash className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                            <span>
-                                                Prefix:{' '}
-                                                <code className="px-1.5 py-0.5 rounded bg-muted font-mono">
-                                                    {bot.customPrefix || '.'}
-                                                </code>
-                                            </span>
-                                            <span className="text-emerald-500 font-semibold">{bot.status}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </section>
-
-                {/* Whitelisted Groups Section */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-bold font-heading text-foreground">
-                                {t.dashboard.groupsCard.title}
-                            </h2>
-                            <p className="text-xs text-muted-foreground">{t.dashboard.groupsCard.subtitle}</p>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleOpenAddGroupModal}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border transition-colors cursor-pointer"
-                        >
-                            <Plus className="w-3.5 h-3.5" weight="bold" />
-                            <span>{t.dashboard.groupsCard.addBtn}</span>
-                        </button>
-                    </div>
-
-                    {isLoading ? (
-                        <Skeleton className="h-40 rounded-2xl" />
-                    ) : groups.length === 0 ? (
-                        <EmptyState
-                            icon={<UsersThree className="w-6 h-6" />}
-                            title={t.dashboard.groupsCard.noGroups}
-                            description={t.dashboard.groupsCard.noGroupsDesc}
-                            action={
-                                <button
-                                    type="button"
-                                    onClick={handleOpenAddGroupModal}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary text-secondary-foreground text-xs font-semibold border border-border shadow-xs hover:bg-secondary/80 cursor-pointer"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>{t.dashboard.groupsCard.addBtn}</span>
-                                </button>
-                            }
-                        />
-                    ) : (
-                        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
-                            {/* Desktop Table View */}
-                            <div className="hidden sm:block overflow-x-auto">
-                                <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                                            <th scope="col" className="p-4">
-                                                {t.dashboard.groupsCard.jidCol}
-                                            </th>
-                                            <th scope="col" className="p-4">
-                                                {t.dashboard.groupsCard.addedCol}
-                                            </th>
-                                            <th scope="col" className="p-4 text-right">
-                                                {t.dashboard.groupsCard.actionCol}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {groups.map((grp) => {
-                                            const groupSubject = groupNameMap.get(grp.jid);
-                                            const pictureUrl = groupPictureMap.get(grp.jid);
-                                            return (
-                                                <tr key={grp.jid} className="hover:bg-muted/20 transition-colors">
-                                                    <td className="p-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <GroupAvatar name={groupSubject} pictureUrl={pictureUrl} />
-                                                            <div className="min-w-0">
-                                                                <span className="font-semibold text-foreground text-xs sm:text-sm block truncate max-w-[200px] sm:max-w-[320px]">
-                                                                    {groupSubject || grp.jid}
-                                                                </span>
-                                                                {groupSubject && (
-                                                                    <span className="font-mono text-xs text-muted-foreground block truncate max-w-[200px] sm:max-w-[320px]">
-                                                                        {grp.jid}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4 text-xs text-muted-foreground">
-                                                        {new Date(grp.createdAt).toLocaleDateString(dateLocale)}
-                                                    </td>
-                                                    <td className="p-4 text-right">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setGroupToDelete(grp.jid)}
-                                                            className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                                                            title={t.dashboard.groupsCard.deleteBtn}
-                                                            aria-label={t.dashboard.groupsCard.deleteBtn}
-                                                        >
-                                                            <Trash className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Mobile Card List View */}
-                            <div className="sm:hidden divide-y divide-border">
-                                {groups.map((grp) => {
-                                    const groupSubject = groupNameMap.get(grp.jid);
-                                    const pictureUrl = groupPictureMap.get(grp.jid);
-                                    return (
-                                        <div key={grp.jid} className="p-4 flex items-center justify-between gap-3">
-                                            <div className="min-w-0 flex items-center gap-3">
-                                                <GroupAvatar name={groupSubject} pictureUrl={pictureUrl} size="sm" />
-                                                <div className="min-w-0">
-                                                    {groupSubject && (
-                                                        <p className="font-semibold text-xs text-foreground truncate max-w-[180px]">
-                                                            {groupSubject}
-                                                        </p>
-                                                    )}
-                                                    <p className="font-mono text-xs text-muted-foreground truncate max-w-[180px]">
-                                                        {grp.jid}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setGroupToDelete(grp.jid)}
-                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
-                                                aria-label={t.dashboard.groupsCard.deleteBtn}
-                                            >
-                                                <Trash className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Bottom Notification when Whitelist Quota Limit is Reached */}
-                    {isGroupsQuotaFull && (
-                        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3 text-xs text-amber-700 dark:text-amber-300">
-                            <WarningCircle className="w-5 h-5 text-amber-500 shrink-0" weight="fill" />
-                            <p className="font-medium">{t.dashboard.groupsCard.quotaReachedNotice}</p>
-                        </div>
-                    )}
-                </section>
 
                 {/* Pairing Modal */}
                 {showPairModal && (
