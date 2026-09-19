@@ -195,13 +195,13 @@ export function Navbar() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.22, ease: 'easeOut' }}
-                            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden pointer-events-auto"
+                            transition={{ duration: 0.18, ease: 'easeOut' }}
+                            className="fixed inset-0 z-40 bg-black/50 md:hidden pointer-events-auto"
                             onClick={closeMenu}
                             aria-hidden="true"
                         />
 
-                        {/* Mobile Drawer Panel (Genie expansion directly from bottom capsule) */}
+                        {/* Mobile Drawer Panel (Hardware-accelerated genie expansion) */}
                         <motion.div
                             key="mobile-nav-drawer-panel"
                             id="mobile-nav-drawer"
@@ -210,39 +210,39 @@ export function Navbar() {
                             aria-label="Mobile Navigation"
                             initial={{
                                 opacity: 0,
-                                scaleY: 0.2,
-                                scaleX: 0.45,
-                                y: 55,
-                                filter: 'blur(10px)',
+                                scaleY: 0.25,
+                                scaleX: 0.5,
+                                y: 40,
                             }}
                             animate={{
                                 opacity: 1,
                                 scaleY: 1,
                                 scaleX: 1,
                                 y: 0,
-                                filter: 'blur(0px)',
                             }}
                             exit={{
                                 opacity: 0,
-                                scaleY: 0.2,
-                                scaleX: 0.45,
-                                y: 50,
-                                filter: 'blur(8px)',
+                                scaleY: 0.3,
+                                scaleX: 0.55,
+                                y: 35,
                                 transition: {
-                                    duration: 0.2,
+                                    duration: 0.16,
                                     ease: [0.32, 0, 0.67, 0],
                                 },
                             }}
                             transition={{
                                 type: 'spring',
-                                damping: 25,
-                                stiffness: 280,
-                                mass: 0.8,
+                                damping: 28,
+                                stiffness: 320,
+                                mass: 0.6,
                             }}
-                            style={{ transformOrigin: 'bottom center' }}
-                            className="fixed bottom-20 inset-x-4 max-w-sm sm:max-w-md mx-auto z-50 md:hidden pointer-events-auto will-change-transform"
+                            style={{
+                                transformOrigin: 'bottom center',
+                                willChange: 'transform, opacity',
+                            }}
+                            className="fixed bottom-20 inset-x-4 max-w-sm sm:max-w-md mx-auto z-50 md:hidden pointer-events-auto"
                         >
-                            <div className="w-full max-h-[calc(100dvh-7.5rem)] rounded-3xl bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl ring-1 ring-foreground/10 p-5 flex flex-col gap-4 overflow-hidden">
+                            <div className="w-full max-h-[calc(100dvh-7.5rem)] rounded-3xl bg-card border border-border/80 shadow-2xl ring-1 ring-foreground/10 p-5 flex flex-col gap-4 overflow-hidden">
                                 {/* Drawer Header Bar */}
                                 <div className="flex items-center justify-between pb-3 border-b border-border/70 shrink-0">
                                     <Link
