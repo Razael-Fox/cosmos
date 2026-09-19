@@ -97,9 +97,19 @@ export const subbotRoutes: FastifyPluginAsync = async (fastify) => {
 
             if (ipcRes.status !== 200) {
                 const botError = (ipcRes.data as { error?: string } | undefined)?.error || 'PAIRING_FAILED';
+                let message = 'Sub-bot pairing could not be started.';
+                if (botError === 'ALREADY_ACTIVE') {
+                    message = 'This sub-bot is already actively connected.';
+                } else if (botError === 'ALREADY_PAIRING') {
+                    message = 'A pairing session is already in progress for this phone number.';
+                } else if (botError === 'QUOTA_EXCEEDED') {
+                    message = 'Maximum sub-bot instance quota reached.';
+                } else if (botError === 'CANNOT_PAIR_SELF') {
+                    message = 'Cannot pair the primary bot number as a sub-bot.';
+                }
                 return reply.status(ipcRes.status === 401 ? 500 : ipcRes.status).send({
                     error: botError,
-                    message: 'Sub-bot pairing could not be started.'
+                    message
                 });
             }
 
