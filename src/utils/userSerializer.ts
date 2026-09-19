@@ -13,9 +13,10 @@ export interface UserProfile {
     lastLoginIp?: string | null;
     lastLoginAt?: string | null;
     createdAt: string;
+    profilePictureUrl?: string | null;
 }
 
-export function serializeUser(user: User): UserProfile {
+export function serializeUser(user: User, profilePictureUrl?: string | null): UserProfile {
     return {
         id: user.id,
         lid: user.lid ?? null,
@@ -28,6 +29,7 @@ export function serializeUser(user: User): UserProfile {
         creditScore: user.creditScore,
         lastLoginIp: user.lastLoginIp ?? null,
         lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
-        createdAt: user.createdAt.toISOString()
+        createdAt: user.createdAt.toISOString(),
+        profilePictureUrl: profilePictureUrl ?? null
     };
 }
