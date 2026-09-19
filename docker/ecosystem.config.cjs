@@ -18,7 +18,9 @@ const apps = [
             STORAGE_ENCRYPTION_KEY: process.env.STORAGE_ENCRYPTION_KEY
         },
         max_memory_restart: '320M',
+        kill_timeout: 5000,
         restart_delay: 3000,
+        exp_backoff_restart_delay: 100,
         merge_logs: true,
         time: true
     },
@@ -39,7 +41,9 @@ const apps = [
             ADMIN_API_KEY: process.env.ADMIN_API_KEY
         },
         max_memory_restart: '220M',
+        kill_timeout: 5000,
         restart_delay: 3000,
+        exp_backoff_restart_delay: 100,
         merge_logs: true,
         time: true
     },
@@ -54,7 +58,9 @@ const apps = [
             HOSTNAME: '0.0.0.0'
         },
         max_memory_restart: '220M',
+        kill_timeout: 5000,
         restart_delay: 3000,
+        exp_backoff_restart_delay: 100,
         merge_logs: true,
         time: true
     },
@@ -63,6 +69,7 @@ const apps = [
         script: 'nginx',
         args: '-g "daemon off;" -c /app/config/nginx.conf -p /tmp/',
         max_memory_restart: '80M',
+        kill_timeout: 3000,
         restart_delay: 3000,
         merge_logs: true,
         time: true

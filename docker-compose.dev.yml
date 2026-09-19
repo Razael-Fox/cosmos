@@ -10,7 +10,8 @@ services:
         stdin_open: true
         tty: true
         env_file:
-            - .env
+            - path: .env
+              required: false
         environment:
             NODE_ENV: development
             DATABASE_URL: file:/app/storage/database.sqlite
@@ -35,7 +36,8 @@ services:
         ports:
             - '4000:4000'
         env_file:
-            - .env
+            - path: .env
+              required: false
         environment:
             NODE_ENV: development
             PORT: 4000
@@ -44,6 +46,7 @@ services:
             BOT_IPC_SOCKET: /app/storage/ipc.sock
         volumes:
             - ./.worktrees/api/src:/app/api/src
+            - ./.worktrees/api/prisma:/app/api/prisma
             - ./storage:/app/storage
             - /app/api/node_modules
         depends_on:
@@ -60,7 +63,8 @@ services:
         ports:
             - '3000:3000'
         env_file:
-            - .env
+            - path: .env
+              required: false
         environment:
             NODE_ENV: development
             PORT: 3000

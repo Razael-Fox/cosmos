@@ -1,14 +1,104 @@
-#!/bin/sh
-# Builds the single-container image using Git worktrees for multi-branch sources.
-set -eu
-ROOT=$(cd "$(dirname "$0")/.." && pwd)
-cd "$ROOT"
+#!/usr/bin/env bash
+# ==============================================================================
+# Cosmos Single-Container Docker Build Script
+# Prepares worktrees, checks disk space, and builds cosmos-all-in-one with Compose.
+# ==============================================================================
+set -euo pipefail
 
-if git rev-parse --verify website >/dev/null 2>&1; then
-  git worktree add --detach .worktrees/website website 2>/dev/null || git worktree repair .worktrees/website 2>/dev/null || true
-fi
-if git rev-parse --verify api >/dev/null 2>&1; then
-  git worktree add --detach .worktrees/api api 2>/dev/null || git worktree repair .worktrees/api 2>/dev/null || true
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT_DIR}"
+
+SERVICE="cosmos-all-in-one"
+
+# ------------------------------------------------------------------------------
+# Privilege & Docker Execution Helper
+# ------------------------------------------------------------------------------
+detect_docker_runner() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "not_found"
+        return
+    fi
+    if docker info >/dev/null 2>&1; then
+        echo "direct"
+    elif command -v sg >/dev/null 2>&1 && sg docker -c "docker info" >/dev/null 2>&1; then
+        echo "sg"
+    elif command -v sudo >/dev/null 2>&1 && sudo -n docker info >/dev/null 2>&1; then
+        echo "sudo"
+    else
+        echo "direct"
+    fi
+}
+
+DOCKER_RUNNER="$(detect_docker_runner)"
+
+if [ "${DOCKER_RUNNER}" = "not_found" ]; then
+    echo "[docker-build] ERROR: 'docker' command is not found in PATH." >&2
+    echo "[docker-build] Please install Docker and Docker Compose before running this script." >&2
+    exit 1
 fi
 
-docker build -f docker/Dockerfile -t cosmos-all-in-one:latest .
+run_docker() {
+    case "${DOCKER_RUNNER}" in
+        sg)
+            sg docker -c "$(printf '%q ' "$@")"
+            ;;
+        sudo)
+            sudo "$@"
+            ;;
+        *)
+            "$@"
+            ;;
+    esac
+}
+
+# ------------------------------------------------------------------------------
+# Worktree Verification
+# ------------------------------------------------------------------------------
+ensure_worktrees() {
+    echo "[docker-build] Verifying Git worktrees for API and Website..."
+    mkdir -p .worktrees
+
+    if [ ! -f ".worktrees/website/package.json" ]; then
+        echo "[docker-build] Setting up .worktrees/website worktree..."
+        git worktree add --detach .worktrees/website origin/website 2>/dev/null || \
+            git worktree add --detach .worktrees/website website 2>/dev/null || \
+            git worktree repair .worktrees/website 2>/dev/null || true
+    fi
+
+    if [ ! -f ".worktrees/api/package.json" ]; then
+        echo "[docker-build] Setting up .worktrees/api worktree..."
+        git worktree add --detach .worktrees/api origin/api 2>/dev/null || \
+            git worktree add --detach .worktrees/api api 2>/dev/null || \
+            git worktree repair .worktrees/api 2>/dev/null || true
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Pre-build Disk Space Check
+# ------------------------------------------------------------------------------
+check_disk_space() {
+    echo "[docker-build] Checking disk space before build..."
+    local use_pct
+    use_pct=$(df / --output=pcent 2>/dev/null | tail -n 1 | tr -dc '0-9' || echo "0")
+    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 90 ]; then
+        echo "[docker-build] Warning: Disk usage at ${use_pct}%. Pruning build cache..."
+        run_docker docker builder prune -f || true
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Main Build Execution
+# ------------------------------------------------------------------------------
+check_disk_space
+ensure_worktrees
+
+echo "[docker-build] Building image for service: ${SERVICE}..."
+if run_docker docker compose version >/dev/null 2>&1; then
+    run_docker docker compose build "${SERVICE}" "$@"
+else
+    # Fallback to docker build directly if compose plugin is unavailable
+    echo "[docker-build] docker compose unavailable, falling back to docker build..."
+    run_docker docker build -f docker/Dockerfile -t "${SERVICE}:latest" "$@" .
+fi
+
+echo "[docker-build] Build complete: ${SERVICE}:latest is ready."

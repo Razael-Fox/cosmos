@@ -15,11 +15,15 @@ SERVICES=("bot" "api" "web")
 # Privilege & Docker Execution Helper
 # ------------------------------------------------------------------------------
 detect_docker_runner() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "not_found"
+        return
+    fi
     if docker info >/dev/null 2>&1; then
         echo "direct"
-    elif sg docker -c "docker info" >/dev/null 2>&1; then
+    elif command -v sg >/dev/null 2>&1 && sg docker -c "docker info" >/dev/null 2>&1; then
         echo "sg"
-    elif sudo -n docker info >/dev/null 2>&1; then
+    elif command -v sudo >/dev/null 2>&1 && sudo -n docker info >/dev/null 2>&1; then
         echo "sudo"
     else
         echo "direct"
@@ -28,10 +32,16 @@ detect_docker_runner() {
 
 DOCKER_RUNNER="$(detect_docker_runner)"
 
+if [ "${DOCKER_RUNNER}" = "not_found" ]; then
+    echo "[docker-dev] ERROR: 'docker' command is not found in PATH." >&2
+    echo "[docker-dev] Please install Docker and Docker Compose before running this script." >&2
+    exit 1
+fi
+
 run_docker() {
     case "${DOCKER_RUNNER}" in
         sg)
-            sg docker -c "$*"
+            sg docker -c "$(printf '%q ' "$@")"
             ;;
         sudo)
             sudo "$@"
@@ -43,22 +53,36 @@ run_docker() {
 }
 
 # ------------------------------------------------------------------------------
-# Worktree Verification
+# Worktree, Storage, and Environment Verification
 # ------------------------------------------------------------------------------
 ensure_worktrees() {
     echo "[docker-dev] Verifying Git worktrees for API and Website..."
-    if [ ! -d ".worktrees/website" ]; then
+    mkdir -p .worktrees
+
+    if [ ! -f ".worktrees/website/package.json" ]; then
         echo "[docker-dev] Setting up .worktrees/website worktree..."
-        mkdir -p .worktrees
         git worktree add --detach .worktrees/website origin/website 2>/dev/null || \
-            git worktree add --detach .worktrees/website website 2>/dev/null || true
+            git worktree add --detach .worktrees/website website 2>/dev/null || \
+            git worktree repair .worktrees/website 2>/dev/null || true
     fi
 
-    if [ ! -d ".worktrees/api" ]; then
+    if [ ! -f ".worktrees/api/package.json" ]; then
         echo "[docker-dev] Setting up .worktrees/api worktree..."
-        mkdir -p .worktrees
         git worktree add --detach .worktrees/api origin/api 2>/dev/null || \
-            git worktree add --detach .worktrees/api api 2>/dev/null || true
+            git worktree add --detach .worktrees/api api 2>/dev/null || \
+            git worktree repair .worktrees/api 2>/dev/null || true
+    fi
+}
+
+prepare_storage() {
+    mkdir -p storage/logs storage/auth_info_baileys
+    chmod -R 775 storage 2>/dev/null || true
+}
+
+check_env() {
+    if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+        echo "[docker-dev] Notice: .env not found. Creating default .env from .env.example..."
+        cp .env.example .env
     fi
 }
 
@@ -67,29 +91,35 @@ ensure_worktrees() {
 # ------------------------------------------------------------------------------
 build_async() {
     echo "[docker-dev] Checking disk space before build..."
-    local avail_gb
-    avail_gb=$(df -BG "${ROOT_DIR}" | awk 'NR==2 {gsub(/G/,"",$4); print $4}')
-    if [ "${avail_gb}" -lt 5 ]; then
-        echo "[docker-dev] Warning: Low disk space (${avail_gb}GB remaining). Pruning build cache..."
+    local use_pct
+    use_pct=$(df / --output=pcent 2>/dev/null | tail -n 1 | tr -dc '0-9' || echo "0")
+    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 90 ]; then
+        echo "[docker-dev] Warning: Low disk space (${use_pct}% used). Pruning build cache..."
         run_docker docker builder prune -f || true
     fi
 
     ensure_worktrees
+    prepare_storage
+    check_env
+
+    local targets=("$@")
+    if [ "${#targets[@]}" -eq 0 ]; then
+        targets=("${SERVICES[@]}")
+    fi
 
     echo "======================================================================"
-    echo "[docker-dev] Launching ASYNCHRONOUS builds for: ${SERVICES[*]}"
-    echo "[docker-dev] Tasks will execute concurrently and stream logs alternately."
+    echo "[docker-dev] Launching ASYNCHRONOUS builds for: ${targets[*]}"
+    echo "[docker-dev] Tasks will execute concurrently and stream logs."
     echo "======================================================================"
 
     local pids=()
     local temp_dir
     temp_dir="$(mktemp -d /tmp/cosmos-docker-dev-build.XXXXXX)"
 
-    for svc in "${SERVICES[@]}"; do
+    for svc in "${targets[@]}"; do
         local status_file="${temp_dir}/${svc}.exit"
         (
             echo "[build:${svc}] Async build process started..."
-            # Execute docker build targeting the specific service
             if run_docker docker compose -f "${COMPOSE_FILE}" build "${svc}" 2>&1 | while IFS= read -r line; do
                 printf "[build:%s] %s\n" "${svc}" "${line}"
             done; then
@@ -106,11 +136,10 @@ build_async() {
 
     echo "[docker-dev] All background build processes initiated. Awaiting completion..."
 
-    # Wait for each asynchronous background process
     local failed=0
     for idx in "${!pids[@]}"; do
         local pid="${pids[$idx]}"
-        local svc="${SERVICES[$idx]}"
+        local svc="${targets[$idx]}"
         wait "${pid}" || failed=1
         local exit_code=0
         if [ -f "${temp_dir}/${svc}.exit" ]; then
@@ -134,7 +163,7 @@ build_async() {
     fi
 
     echo "======================================================================"
-    echo "[docker-dev] All service Docker images built successfully in parallel!"
+    echo "[docker-dev] All requested service Docker images built successfully!"
     echo "======================================================================"
 }
 
@@ -143,6 +172,8 @@ build_async() {
 # ------------------------------------------------------------------------------
 up() {
     ensure_worktrees
+    prepare_storage
+    check_env
     echo "[docker-dev] Starting development containers in background..."
     run_docker docker compose -f "${COMPOSE_FILE}" up -d "$@"
     echo "[docker-dev] Development services are now up."
@@ -167,7 +198,26 @@ logs() {
 
 pair() {
     echo "[docker-dev] Launching interactive WhatsApp pairing session..."
-    run_docker docker compose -f "${COMPOSE_FILE}" run --rm bot pnpm pair
+    ensure_worktrees
+    prepare_storage
+    check_env
+
+    # If bot container is already running, exec into it; otherwise run an ephemeral instance
+    local is_running
+    is_running=$(run_docker docker compose -f "${COMPOSE_FILE}" ps -q bot 2>/dev/null || echo "")
+    if [ -n "${is_running}" ]; then
+        echo "[docker-dev] Bot container is already running. Attaching pairing session via exec..."
+        run_docker docker compose -f "${COMPOSE_FILE}" exec bot pnpm pair
+    else
+        echo "[docker-dev] Bot container is not running. Starting ephemeral pairing container..."
+        run_docker docker compose -f "${COMPOSE_FILE}" run --rm bot pnpm pair
+    fi
+}
+
+clean() {
+    echo "[docker-dev] Cleaning development containers and dangling volumes..."
+    run_docker docker compose -f "${COMPOSE_FILE}" down -v --remove-orphans || true
+    echo "[docker-dev] Clean complete."
 }
 
 status() {
@@ -180,10 +230,13 @@ status() {
     echo "  - WhatsApp Bot:  Interactive / Socket (/app/storage/ipc.sock)"
     echo ""
     echo "[docker-dev] Useful commands:"
+    echo "  - Build all / one:      ./scripts/docker-dev.sh build [bot|api|web]"
+    echo "  - Start all / one:      ./scripts/docker-dev.sh up [bot|api|web]"
     echo "  - Restart all / one:    ./scripts/docker-dev.sh restart [bot|api|web]"
     echo "  - Tail all logs:        ./scripts/docker-dev.sh logs"
     echo "  - Tail service logs:    ./scripts/docker-dev.sh logs [bot|api|web]"
     echo "  - Pair WhatsApp bot:    ./scripts/docker-dev.sh pair"
+    echo "  - Clean containers:     ./scripts/docker-dev.sh clean"
     echo "  - Stop dev servers:     ./scripts/docker-dev.sh down"
 }
 
@@ -195,7 +248,7 @@ shift 1 || true
 
 case "${COMMAND}" in
     build)
-        build_async
+        build_async "$@"
         ;;
     up|start)
         up "$@"
@@ -212,6 +265,9 @@ case "${COMMAND}" in
     pair)
         pair
         ;;
+    clean)
+        clean
+        ;;
     status|ps)
         status
         ;;
@@ -220,7 +276,7 @@ case "${COMMAND}" in
         up
         ;;
     *)
-        echo "Usage: $0 {build|up|down|restart|logs|pair|status|dev} [args...]"
+        echo "Usage: $0 {build|up|down|restart|logs|pair|clean|status|dev} [service...|args...]"
         exit 1
         ;;
 esac

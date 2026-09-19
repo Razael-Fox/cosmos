@@ -18,11 +18,11 @@ WORKDIR /app/bot
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-COPY assets ./assets
-COPY scripts ./scripts
 RUN pnpm config set package-import-method copy && \
     pnpm install && \
     pnpm exec prisma generate
+COPY assets ./assets
+COPY scripts ./scripts
 COPY src ./src
 ENV NODE_ENV=development
 CMD ["pnpm", "dev"]

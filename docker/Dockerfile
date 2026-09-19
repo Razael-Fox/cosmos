@@ -12,15 +12,15 @@ WORKDIR /build/bot
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-COPY src ./src
-COPY scripts ./scripts
-COPY assets ./assets
 RUN pnpm config set package-import-method copy && \
     pnpm config set fetch-retries 5 && \
     pnpm config set fetch-retry-maxtimeout 180000 && \
     pnpm install --frozen-lockfile && \
-    pnpm exec prisma generate && \
-    pnpm build
+    pnpm exec prisma generate
+COPY src ./src
+COPY scripts ./scripts
+COPY assets ./assets
+RUN pnpm build
 
 # -------------------------------------------------------------
 # Stage 2: Build API Gateway (api branch)
@@ -31,13 +31,13 @@ WORKDIR /build/api
 COPY .worktrees/api/package.json .worktrees/api/pnpm-lock.yaml .worktrees/api/pnpm-workspace.yaml .worktrees/api/tsconfig.json ./
 COPY .worktrees/api/prisma ./prisma
 COPY .worktrees/api/prisma.config.ts ./
-COPY .worktrees/api/src ./src
 RUN pnpm config set package-import-method copy && \
     pnpm config set fetch-retries 5 && \
     pnpm config set fetch-retry-maxtimeout 180000 && \
     pnpm install --frozen-lockfile && \
-    pnpm exec prisma generate && \
-    pnpm build
+    pnpm exec prisma generate
+COPY .worktrees/api/src ./src
+RUN pnpm build
 
 # -------------------------------------------------------------
 # Stage 3: Build Web Portal (website branch)
@@ -47,6 +47,10 @@ RUN corepack enable
 WORKDIR /build/web
 COPY .worktrees/website/package.json .worktrees/website/pnpm-lock.yaml .worktrees/website/pnpm-workspace.yaml .worktrees/website/tsconfig.json ./
 COPY .worktrees/website/next.config.ts .worktrees/website/components.json .worktrees/website/postcss.config.mjs ./
+RUN pnpm config set package-import-method copy && \
+    pnpm config set fetch-retries 5 && \
+    pnpm config set fetch-retry-maxtimeout 180000 && \
+    pnpm install --frozen-lockfile
 COPY .worktrees/website/public ./public
 COPY .worktrees/website/app ./app
 COPY .worktrees/website/components ./components
@@ -64,11 +68,7 @@ ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
     NEXT_PUBLIC_BOT_NUMBER=$NEXT_PUBLIC_BOT_NUMBER \
     NEXT_PUBLIC_SALES_NUMBER=$NEXT_PUBLIC_SALES_NUMBER
 
-RUN pnpm config set package-import-method copy && \
-    pnpm config set fetch-retries 5 && \
-    pnpm config set fetch-retry-maxtimeout 180000 && \
-    pnpm install --frozen-lockfile && \
-    pnpm build
+RUN pnpm build
 
 # -------------------------------------------------------------
 # Stage 4: Hardened Production Runner (Non-Root User: cosmos)
@@ -119,5 +119,7 @@ RUN chmod +x /app/entrypoint.sh && chown cosmos:cosmos /app/config/* /app/entryp
 
 USER cosmos
 EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://127.0.0.1:80/healthz || curl -f http://127.0.0.1:80/ || exit 1
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["pm2-runtime", "/app/config/ecosystem.config.cjs"]
