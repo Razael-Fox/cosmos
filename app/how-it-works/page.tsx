@@ -9,8 +9,7 @@ import {
     WhatsappLogo,
     DeviceMobile,
     CheckCircle,
-    QrCode,
-    Sparkle
+    QrCode
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { Container } from '@/components/ui/container';
@@ -49,10 +48,6 @@ export default function HowItWorksPage() {
 
                 {/* Hero Header */}
                 <div className="text-center max-w-3xl mx-auto space-y-4">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold tracking-wide">
-                        <Sparkle className="w-3.5 h-3.5" weight="bold" />
-                        <span>{t.howItWorksPage.badge}</span>
-                    </div>
                     <h1 className="text-3xl sm:text-5xl font-extrabold font-heading tracking-tight text-foreground">
                         {t.howItWorks.title}
                     </h1>

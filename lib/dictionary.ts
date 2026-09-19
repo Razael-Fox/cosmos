@@ -58,7 +58,6 @@ const rawDictionary = {
                 'Gunakan 8-digit Pairing Code atau scan QR untuk mengaktifkan sub-bot mandiri dan daftarkan JID grup yang ingin dikelola.'
         },
         howItWorksPage: {
-            badge: 'Panduan Onboarding',
             whyTitle: 'Mengapa Inverted Verification?',
             whyDesc:
                 'Metode verifikasi kami membalikkan alur: Anda yang pertama kali mengirim pesan ke nomor bot resmi. Algoritma anti-spam WhatsApp mendeteksi pesan masuk ini sebagai obrolan inisiasi organik dari pengguna, sehingga nomor bot maupun nomor Anda terbebas dari risiko penandaan spam atau pemblokiran.',
@@ -453,7 +452,6 @@ const rawDictionary = {
                 'Use the 8-digit Pairing Code or scan QR to activate your sub-bot and whitelist community groups.'
         },
         howItWorksPage: {
-            badge: 'Onboarding Walkthrough',
             whyTitle: 'Why Inverted Verification?',
             whyDesc:
                 'Our verification reverses the traditional flow: you initiate the first message to the official bot. WhatsApp anti-spam algorithms recognize this inbound interaction as organic user communication, entirely eliminating the risk of spam flagging or account bans.',
@@ -518,7 +516,7 @@ const rawDictionary = {
             }
         },
         pricing: {
-            title: 'Subscription Plans & Pricing',
+            title: 'Plans & Pricing',
             subtitle: 'Select the tier tailored to your WhatsApp bot and community operational needs.',
             orderNow: 'Subscribe Now',
             contactSales: 'Contact Sales',

@@ -2,7 +2,7 @@
 
 import React, { useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { ArrowRight, WhatsappLogo, CheckCircle, Sparkle, Check } from '@phosphor-icons/react';
+import { ArrowRight, CheckCircle, Check } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { Container } from '@/components/ui/container';
 
@@ -24,8 +24,6 @@ export default function HomePage() {
     const { t, language } = useTranslation();
 
     const isAuthenticated = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getAuthServerSnapshot);
-
-    const salesNumber = (process.env.NEXT_PUBLIC_SALES_NUMBER || '628123456789').replace(/\D/g, '');
 
     return (
         <div className="flex flex-col w-full">
@@ -94,9 +92,6 @@ export default function HomePage() {
             <section className="py-20 border-b border-border bg-muted/10">
                 <Container size="lg" className="space-y-10">
                     <div className="text-center max-w-2xl mx-auto space-y-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-primary font-mono">
-                            Free & Scalable
-                        </span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-heading">
                             {t.pricing.title}
                         </h2>
@@ -143,58 +138,6 @@ export default function HomePage() {
                             >
                                 <span>{language === 'id' ? 'Bandingkan Semua Paket →' : 'Compare All Plans →'}</span>
                             </Link>
-                        </div>
-                    </div>
-                </Container>
-            </section>
-
-            {/* Restyled High-Contrast CTA Banner */}
-            <section className="py-20">
-                <Container size="lg">
-                    <div className="relative rounded-3xl border border-emerald-500/30 dark:border-emerald-400/25 bg-gradient-to-br from-card via-card to-emerald-950/30 dark:from-[#0d1713] dark:via-[#101c17] dark:to-[#08120e] p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-emerald-950/40 dark:shadow-emerald-950/60 overflow-hidden cosmos-grid">
-                        {/* Ambient radial glow positioned behind the card content */}
-                        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
-                        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
-
-                        <div className="relative z-10 space-y-3 text-center md:text-left max-w-xl">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 text-primary dark:text-emerald-400 border border-primary/25 text-xs font-semibold backdrop-blur-xs">
-                                <Sparkle className="w-3.5 h-3.5" weight="fill" />
-                                <span>Instant Autonomous Setup</span>
-                            </div>
-                            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold font-heading text-foreground">
-                                {t.hero.ctaTitle}
-                            </h2>
-                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{t.hero.ctaDesc}</p>
-                            <div className="flex flex-wrap gap-3 pt-2 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1 text-foreground font-medium">
-                                    <Check className="w-3.5 h-3.5 text-primary" weight="bold" /> Free 2 Sub-Bots
-                                </span>
-                                <span className="flex items-center gap-1 text-foreground font-medium">
-                                    <Check className="w-3.5 h-3.5 text-primary" weight="bold" /> Zero Ban Risk
-                                </span>
-                                <span className="flex items-center gap-1 text-foreground font-medium">
-                                    <Check className="w-3.5 h-3.5 text-primary" weight="bold" /> WhatsApp Support
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 shrink-0">
-                            {/* CTAs with crisp contrast */}
-                            <Link
-                                href={isAuthenticated ? '/dashboard' : '/register'}
-                                className="px-7 py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm shadow-md transition-all text-center"
-                            >
-                                {isAuthenticated ? t.nav.dashboard : t.hero.ctaRegister}
-                            </Link>
-                            <a
-                                href={`https://wa.me/${salesNumber}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-5 py-3.5 rounded-xl bg-card hover:bg-muted text-foreground font-semibold text-xs border border-border shadow-xs transition-all flex items-center gap-2"
-                            >
-                                <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
-                                <span>Sales WhatsApp</span>
-                            </a>
                         </div>
                     </div>
                 </Container>
