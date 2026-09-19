@@ -99,6 +99,7 @@ storage/logs/
 storage/scheduled_stories/*
 !storage/scheduled_stories/.gitkeep
 storage/active_sessions.json
+storage/presence.json
 storage/transaction/*
 !storage/transaction/.gitkeep
 
