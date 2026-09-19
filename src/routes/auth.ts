@@ -15,7 +15,12 @@ import {
 } from '../services/cryptoService.js';
 import { verifyTurnstileToken } from '../services/turnstileService.js';
 import { checkAndConsumeRateLimit } from '../services/rateLimiter.js';
-import { sendOtpViaIpc, notifyLoginViaIpc, fetchProfilePictureViaIpc } from '../services/ipcClient.js';
+import {
+    sendOtpViaIpc,
+    notifyLoginViaIpc,
+    fetchProfilePictureViaIpc,
+    fetchUserPresenceViaIpc
+} from '../services/ipcClient.js';
 import { getRestoredClientIp } from '../middleware/clientIp.js';
 import { processDeviceValidation } from '../middleware/deviceValidation.js';
 import { authenticateJwt } from '../middleware/authenticate.js';
@@ -633,13 +638,27 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             /* non-fatal */
         }
 
-        return reply.send({ user: serializeUser(user, profilePictureUrl) });
+        let presence: 'online' | 'offline' = 'offline';
+        try {
+            const presRes = await fetchUserPresenceViaIpc(user.id);
+            presence = presRes.presence;
+        } catch {
+            /* non-fatal */
+        }
+
+        return reply.send({ user: serializeUser(user, profilePictureUrl, presence) });
     });
 
     // GET /api/v1/auth/profile-photo
     fastify.get('/profile-photo', { preHandler: [authenticateJwt] }, async (req, reply) => {
         const pictureUrl = await fetchProfilePictureViaIpc(req.user.id);
         return reply.send({ pictureUrl });
+    });
+
+    // GET /api/v1/auth/presence
+    fastify.get('/presence', { preHandler: [authenticateJwt] }, async (req, reply) => {
+        const info = await fetchUserPresenceViaIpc(req.user.id);
+        return reply.send(info);
     });
 };
 

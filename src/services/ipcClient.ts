@@ -164,10 +164,7 @@ export async function fetchParticipatingGroupsViaIpc(
     );
 }
 
-export async function fetchProfilePictureViaIpc(
-    jid: string,
-    userJid?: string
-): Promise<string | null> {
+export async function fetchProfilePictureViaIpc(jid: string, userJid?: string): Promise<string | null> {
     try {
         const res = await sendIpcCommand<{ ok: boolean; pictureUrl?: string | null }>(
             '/internal/users/photo',
@@ -181,3 +178,22 @@ export async function fetchProfilePictureViaIpc(
     }
 }
 
+export async function fetchUserPresenceViaIpc(
+    jid: string,
+    userJid?: string
+): Promise<{ presence: 'online' | 'offline'; lastSeen: number | null }> {
+    try {
+        const res = await sendIpcCommand<{ ok: boolean; presence?: 'online' | 'offline'; lastSeen?: number | null }>(
+            '/internal/users/presence',
+            { jid, userJid },
+            config.BOT_IPC_SOCKET,
+            6000
+        );
+        return {
+            presence: res.data?.presence || 'offline',
+            lastSeen: res.data?.lastSeen ?? null
+        };
+    } catch {
+        return { presence: 'offline', lastSeen: null };
+    }
+}
