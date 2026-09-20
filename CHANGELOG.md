@@ -11,6 +11,41 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-11] - 2026-09-20
+
+### Added
+
+- **Unified Single-Container Production Architecture (`cosmos-origin`):**
+    - Multi-stage Docker container (`docker/Dockerfile`) bundling WhatsApp Bot Engine, Fastify API Gateway, Next.js Web Portal, unprivileged Nginx reverse proxy, and Cloudflare Tunnel runner under non-root user `cosmos` (UID 1001).
+    - PM2 supervision (`docker/ecosystem.config.cjs`) with per-process resource limits, failover backoff, and runtime unpackaged-service filtering.
+    - Automated lifecycle and deployment toolchain (`scripts/docker-build.sh`, `scripts/docker-deploy.sh`, `scripts/docker-dev.sh`).
+    - Doppler Secret Manager integration (`scripts/sync-doppler.sh`) for automated secret synchronization across `dev` and `prd`.
+    - Automated Cloudflare Tunnel configuration (`scripts/setup-cloudflare-tunnel.sh`) and Turnstile widget provisioning (`scripts/create-turnstile-widget.sh`).
+
+- **Sticker.ly Pack Search & Tray Export (`src/tools/stickerly.ts`, `src/services/stickerlyService.ts`, `src/utils/stickerPackBuilder.ts`):**
+    - Sticker.ly pack search and export command (`.stickerly`, `.spack`, `.stickerpack`) integrated via Dongtube API with Doppler secret management.
+    - Sequential 5-pack preview cards using native WhatsApp attachments with zero-clutter lifecycle (immediate delete-for-everyone upon selection, timeout, or cancellation).
+    - Automated 512x512 WebP normalization, 252x252 tray icon generation, companion `.wastickers` zip packaging, and WhatsApp MMS encrypted `stickerPackMessage` tray distribution.
+
+- **Centralized Quota, Inverted OTP Verification & Subscription Engine (`src/services/quotaService.ts`, `src/services/otpService.ts`, `src/services/subscriptionService.ts`, `src/tools/verify.ts`, `src/tools/subscription.ts`):**
+    - Inverted Click-to-Chat WhatsApp verification flow (`.verify <TOKEN>`) with sender-number verification binding and attempt throttling.
+    - Tier-based quota enforcement (Free, Subsidized, Partner) governing group whitelisting and sub-bot instance pairing limits.
+    - Subscription lifecycle engine with automated expiry reconciliation and `.sub add` administrative provisioning.
+    - Authenticated Unix domain socket IPC bridge (`/app/storage/ipc.sock`) with HMAC shared secrets for real-time OTP, presence, and session state coordination.
+
+### Changed
+
+- **Interactive Startup Pairing & Credential Separation (`src/utils/startupPrompt.ts`, `src/utils/owner.ts`):**
+    - Decoupled owner phone number from bot instance identity, featuring interactive terminal pairing prompts upon clean initialization.
+
+### Fixed
+
+- **Backup Deduplication & Presence Tracking (`src/utils/backup.ts`, `src/services/presenceService.ts`):**
+    - Prevented duplicate Telegram database backup archives using content-hash gated uploads.
+    - Established bidirectional JID/LID presence linking and automated contact display name synchronization.
+
+---
+
 ## [RF-2609-10] - 2026-09-15
 
 ### Added
