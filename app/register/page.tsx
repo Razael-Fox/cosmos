@@ -352,6 +352,7 @@ export default function RegisterPage() {
                 {invertedData && (
                     <InvertedVerifyDialog
                         token={invertedData.token}
+                        phoneNumber={cleanPhone}
                         clickToChatUrl={invertedData.clickToChatUrl}
                         clickToChatUrlDirect={invertedData.clickToChatUrlDirect}
                         regSessionId={invertedData.regSessionId}

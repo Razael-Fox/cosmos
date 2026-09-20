@@ -8,6 +8,7 @@ import { createAuthStatusWebSocket, setStoredToken, setStoredUser } from '@/lib/
 
 interface InvertedVerifyDialogProps {
     token: string; // Treated as opaque string
+    phoneNumber?: string;
     clickToChatUrl: string;
     clickToChatUrlDirect?: string; // whatsapp:// deep link — targets regular WhatsApp only
     regSessionId: string;
@@ -17,6 +18,7 @@ interface InvertedVerifyDialogProps {
 
 export function InvertedVerifyDialog({
     token,
+    phoneNumber,
     clickToChatUrl,
     clickToChatUrlDirect,
     regSessionId,
@@ -143,6 +145,12 @@ export function InvertedVerifyDialog({
                     </div>
                 ) : (
                     <div className="flex flex-col gap-5">
+                        {phoneNumber && (
+                            <div className="flex items-center justify-between text-xs px-3.5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                                <span className="font-medium">{t.invertedVerify.registeredNumber}</span>
+                                <span className="font-mono font-bold">+{phoneNumber}</span>
+                            </div>
+                        )}
                         <div className="space-y-2.5 text-xs sm:text-sm text-muted-foreground bg-muted/40 p-4 rounded-2xl border border-border">
                             <p className="font-semibold text-foreground">{t.invertedVerify.step1}</p>
                             <p className="font-semibold text-foreground">{t.invertedVerify.step2}</p>
