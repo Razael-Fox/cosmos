@@ -212,6 +212,12 @@ export function ensureDatabaseSchema(dbPath: string): void {
         }
         ensureColumnExists(db, 'WhitelistedGroup', 'ownerJid', 'TEXT');
         ensureColumnExists(db, 'WhitelistedGroup', 'createdAt', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+        ensureColumnExists(db, 'IdCard', 'bloodType', "TEXT NOT NULL DEFAULT 'O'");
+        ensureColumnExists(db, 'IdCard', 'rtRw', "TEXT NOT NULL DEFAULT '001/002'");
+        ensureColumnExists(db, 'IdCard', 'village', "TEXT NOT NULL DEFAULT 'Sukajadi'");
+        ensureColumnExists(db, 'IdCard', 'district', "TEXT NOT NULL DEFAULT 'Sukajadi'");
+        ensureColumnExists(db, 'IdCard', 'city', "TEXT NOT NULL DEFAULT 'BANDUNG'");
+        ensureColumnExists(db, 'IdCard', 'provinsi', "TEXT NOT NULL DEFAULT 'JAWA BARAT'");
     } catch (err) {
         console.error(`[DB] Error ensuring database schema at ${dbPath}:`, err);
     } finally {
