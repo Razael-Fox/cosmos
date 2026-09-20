@@ -50,8 +50,27 @@ case "${COMMAND}" in
         echo "[doppler] Secrets overview in [prd]:"
         doppler secrets --project "${PROJECT}" --config prd --only-names
         ;;
+    setup)
+        echo "[doppler] Ensuring project '${PROJECT}' exists..."
+        if ! doppler projects --json 2>/dev/null | grep -q "\"name\": \"${PROJECT}\""; then
+            echo "[doppler] Creating project '${PROJECT}'..."
+            doppler projects create "${PROJECT}"
+        else
+            echo "[doppler] Project '${PROJECT}' already exists."
+        fi
+
+        if [ -f ".env" ]; then
+            echo "[doppler] Uploading current .env secrets to [prd] and [dev]..."
+            doppler secrets upload .env --project "${PROJECT}" --config prd
+            doppler secrets upload .env --project "${PROJECT}" --config dev
+            echo "[doppler] Secrets successfully populated for dev and prd."
+        else
+            echo "[doppler] Notice: No local .env found to push. Configs are ready."
+        fi
+        echo "[doppler] Setup complete for project '${PROJECT}'."
+        ;;
     *)
-        echo "Usage: $0 {pull|push|status} [prd|dev]"
+        echo "Usage: $0 {pull|push|status|setup} [prd|dev]"
         exit 1
         ;;
 esac

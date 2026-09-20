@@ -117,4 +117,6 @@ website/
 
 # Doppler local secret cache
 doppler.json
+doppler.yaml
+.doppler.yaml
 

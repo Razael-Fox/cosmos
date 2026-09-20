@@ -88,10 +88,27 @@ check_disk_space() {
 }
 
 # ------------------------------------------------------------------------------
+# Environment & Doppler Secret Management
+# ------------------------------------------------------------------------------
+check_env() {
+    local config="${DOPPLER_CONFIG:-prd}"
+    if command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1; then
+        echo "[docker-build] Doppler detected and authenticated! Pulling latest '${config}' secrets from project 'cosmos'..."
+        doppler secrets download --project cosmos --config "${config}" --format env --no-file > .env 2>/dev/null || true
+    fi
+
+    if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+        echo "[docker-build] Notice: .env not found. Creating default .env from .env.example..."
+        cp .env.example .env
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # Main Build Execution
 # ------------------------------------------------------------------------------
 check_disk_space
 ensure_worktrees
+check_env
 
 echo "[docker-build] Building image for service: ${SERVICE}..."
 if run_docker docker compose version >/dev/null 2>&1; then

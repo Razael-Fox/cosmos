@@ -44,6 +44,7 @@
         "docker:dev:clean": "./scripts/docker-dev.sh clean",
         "tunnel:setup": "./scripts/setup-cloudflare-tunnel.sh",
         "turnstile:create": "./scripts/create-turnstile-widget.sh",
+        "doppler:setup": "./scripts/sync-doppler.sh setup",
         "doppler:pull:prd": "./scripts/sync-doppler.sh pull prd",
         "doppler:pull:dev": "./scripts/sync-doppler.sh pull dev",
         "doppler:push:prd": "./scripts/sync-doppler.sh push prd",
