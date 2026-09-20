@@ -9,7 +9,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-DEFAULT_HOSTNAME="${APP_DOMAIN:-cosmos.razael-fox.my.id}"
+DEFAULT_HOSTNAME="${APP_DOMAIN:-cosmos.example.com}"
 HOSTNAME="${1:-$DEFAULT_HOSTNAME}"
 TARGET_URL="${2:-http://127.0.0.1:8080}"
 

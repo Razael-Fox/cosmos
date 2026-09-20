@@ -5,8 +5,8 @@ services:
             dockerfile: docker/Dockerfile
             args:
                 NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
-                NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://38.49.212.111:1623}
-                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://38.49.212.111:1623}
+                NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:8080}
+                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
                 NEXT_PUBLIC_BOT_NUMBER: ${BOT_PHONE_NUMBER:-}
                 NEXT_PUBLIC_SALES_NUMBER: ${SALES_PHONE_NUMBER:-}
         image: cosmos:prd
@@ -19,10 +19,9 @@ services:
             NODE_ENV: production
             DATABASE_URL: file:/app/storage/database.sqlite
             BOT_IPC_SOCKET: /app/storage/ipc.sock
-            APP_DOMAIN: ${APP_DOMAIN:-38.49.212.111:1623}
+            APP_DOMAIN: ${APP_DOMAIN:-localhost:8080}
         volumes:
             - ./storage:/app/storage
-        # LXC NAT VPS: Host port 8080 (192.168.11.86:8080) forwards to public 38.49.212.111:1623.
-        # Container port 80 (Nginx reverse proxy) is exposed on host port 8080.
+        # Container port 80 (Nginx reverse proxy) is exposed on host port 8080 by default.
         ports:
             - '${HOST_PORT_ALL_IN_ONE:-8080}:80'

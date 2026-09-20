@@ -24,6 +24,11 @@ function canonicalJid(phone: string): string {
 }
 
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
+    // For user privacy and security, verification tokens must only be processed in direct messages
+    if (ctx.jid.endsWith('@g.us')) {
+        return ctx.t('tools.verify.dm_only');
+    }
+
     const token = String(args.query || '').trim();
     if (!token) {
         return ctx.t('tools.verify.usage');
@@ -36,14 +41,29 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     const { phoneNumber, metadata, regSessionId } = result.record;
+    const registeredPhone = phoneNumber.replace(/\D/g, '');
 
     // Sender binding: the WhatsApp number sending `.verify` must match the phone number
     // stored at registration time. Without this, anyone guessing a token could whitelist
     // (or burn) another user's pending registration.
-    const senderDigits = cleanId(getSenderJid(ctx.msg)).replace(/\D/g, '');
-    if (!senderDigits || senderDigits !== phoneNumber) {
+    // Collect all candidate IDs from sender to handle JID, LID, and Baileys alt fields
+    const candidates = new Set<string>();
+    const senderFromHelper = cleanId(getSenderJid(ctx.msg, ctx.sock));
+    if (senderFromHelper) candidates.add(senderFromHelper.replace(/\D/g, ''));
+    if (ctx.jid) candidates.add(cleanId(ctx.jid).replace(/\D/g, ''));
+    const key = ctx.msg.key as any;
+    if (key?.remoteJidAlt) candidates.add(cleanId(key.remoteJidAlt).replace(/\D/g, ''));
+    if (key?.participantAlt) candidates.add(cleanId(key.participantAlt).replace(/\D/g, ''));
+    if (key?.remoteJid) candidates.add(cleanId(key.remoteJid).replace(/\D/g, ''));
+    if (key?.participant) candidates.add(cleanId(key.participant).replace(/\D/g, ''));
+
+    const isMatch = candidates.has(registeredPhone);
+    if (!isMatch) {
         await registerInvertedMismatch(result.record.id);
-        console.log(`[Verify] Sender mismatch for token verification (expected ending ${phoneNumber.slice(-4)}).`);
+        const actualSender = senderFromHelper || cleanId(ctx.jid) || 'unknown';
+        console.log(
+            `[Verify] Sender mismatch for token verification: registeredEnding=${registeredPhone.slice(-4)}, senderEnding=${actualSender.slice(-4)}`
+        );
         return ctx.t('tools.verify.sender_mismatch');
     }
 

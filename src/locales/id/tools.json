@@ -895,10 +895,11 @@
     },
     "verify": {
         "usage": "Format tidak valid. Gunakan: .verify <TOKEN>",
+        "dm_only": "Demi keamanan dan privasi Anda, verifikasi akun harus dilakukan melalui pesan pribadi (chat langsung) dengan bot. Silakan kirim .verify di chat pribadi.",
         "invalid": "Token verifikasi tidak valid atau kedaluwarsa. Silakan minta tautan pendaftaran baru.",
         "success": "Registrasi Terverifikasi! Akun Anda telah berhasil masuk whitelist.",
         "activated": "Akun berhasil diverifikasi dan masuk whitelist.",
-        "sender_mismatch": "Token verifikasi ini tidak diterbitkan untuk nomor WhatsApp Anda. Kirim .verify dari nomor yang sama dengan yang Anda daftarkan di portal web.",
+        "sender_mismatch": "Token verifikasi ini tidak diterbitkan untuk nomor WhatsApp Anda. Silakan kirim .verify dari nomor WhatsApp yang sama dengan yang Anda daftarkan di portal web.",
         "locked": "Token verifikasi ini telah dikunci setelah terlalu banyak upaya gagal. Silakan minta tautan pendaftaran baru."
     },
     "sub": {

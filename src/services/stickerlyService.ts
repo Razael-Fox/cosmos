@@ -70,17 +70,32 @@ export async function searchStickerly(query: string, apiKey?: string): Promise<S
         return [];
     }
 
-    const response = await axios.get('https://api.dongtube.id/search/stickerly', {
-        params: {
-            apikey: key,
-            q: trimmedQuery
-        },
-        headers: {
-            'X-API-Key': key,
-            'User-Agent': 'CosmosBot/1.0'
-        },
-        timeout: 15000
-    });
+    let response;
+    try {
+        response = await axios.get('https://api.dongtube.id/search/stickerly', {
+            params: {
+                apikey: key,
+                q: trimmedQuery
+            },
+            headers: {
+                'X-API-Key': key,
+                'User-Agent': 'CosmosBot/1.0'
+            },
+            timeout: 15000
+        });
+    } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+            const status = err.response?.status ? ` (HTTP ${err.response.status})` : '';
+            if (err.config?.params && typeof err.config.params === 'object') {
+                delete err.config.params.apikey;
+            }
+            if (err.config?.url) {
+                err.config.url = err.config.url.replace(/apikey=[^&]+/gi, 'apikey=[REDACTED]');
+            }
+            throw new Error(`Sticker.ly search provider request failed${status}`, { cause: err });
+        }
+        throw err;
+    }
 
     if (!response.data || !response.data.status || !Array.isArray(response.data.result)) {
         return [];

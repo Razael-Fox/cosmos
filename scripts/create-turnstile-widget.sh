@@ -8,41 +8,39 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-DEFAULT_ACCOUNT_ID="aecab5f78acb207a192a9ca4c5b80b45"
-ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-$DEFAULT_ACCOUNT_ID}"
+ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-${3:-}}"
 API_TOKEN="${1:-${CLOUDFLARE_API_TOKEN:-}}"
 WIDGET_NAME="${2:-Cosmos Web Portal}"
+TARGET_HOST="${APP_DOMAIN:-localhost}"
+CLEAN_DOMAIN=$(echo "${TARGET_HOST}" | cut -d ':' -f 1)
 
-if [ -z "${API_TOKEN}" ]; then
+if [ -z "${API_TOKEN}" ] || [ -z "${ACCOUNT_ID}" ]; then
     echo "======================================================================"
     echo "[turnstile] Cloudflare Turnstile Widget Provisioning Helper"
     echo "======================================================================"
     echo "Usage:"
-    echo "  $0 <CLOUDFLARE_API_TOKEN> [WIDGET_NAME]"
+    echo "  $0 <CLOUDFLARE_API_TOKEN> [WIDGET_NAME] [CLOUDFLARE_ACCOUNT_ID]"
     echo ""
     echo "Or provide environment variables:"
-    echo "  CLOUDFLARE_API_TOKEN='...' $0"
+    echo "  CLOUDFLARE_API_TOKEN='...' CLOUDFLARE_ACCOUNT_ID='...' $0"
     echo ""
     echo "Requirements for Cloudflare API Token:"
     echo "  - Account.Turnstile (Edit)"
-    echo ""
-    echo "Default Account ID detected from tunnel: ${ACCOUNT_ID}"
-    echo "Allowed Domains will be set to: cosmos.razael-fox.my.id, 38.49.212.111, localhost"
     echo "======================================================================"
     exit 1
 fi
 
 echo "[turnstile] Creating Turnstile widget '${WIDGET_NAME}' under Account: ${ACCOUNT_ID}..."
 
+DOMAINS_JSON="[\"localhost\"]"
+if [ -n "${CLEAN_DOMAIN}" ] && [ "${CLEAN_DOMAIN}" != "localhost" ]; then
+    DOMAINS_JSON="[\"${CLEAN_DOMAIN}\", \"localhost\"]"
+fi
+
 PAYLOAD=$(cat <<EOF
 {
   "name": "${WIDGET_NAME}",
-  "domains": [
-    "cosmos.razael-fox.my.id",
-    "razael-fox.my.id",
-    "38.49.212.111",
-    "localhost"
-  ],
+  "domains": ${DOMAINS_JSON},
   "mode": "managed",
   "bot_fight_mode": false
 }

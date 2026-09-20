@@ -193,7 +193,8 @@ run_docker docker exec "${CONTAINER}" /usr/local/bin/pm2 list 2>/dev/null || tru
 echo ""
 echo "[deploy] Deployment complete!"
 echo "[deploy] Endpoints:"
-echo "  - Local / Host Ingress: http://127.0.0.1:8080 (or http://192.168.11.86:8080)"
-echo "  - NAT VPS Public URL:   http://38.49.212.111:1623"
-echo "  - Cloudflare Tunnel:    https://cosmos.razael-fox.my.id (if configured)"
+echo "  - Local / Host Ingress: http://127.0.0.1:${HOST_PORT_ALL_IN_ONE:-8080}"
+if [ -n "${APP_DOMAIN:-}" ]; then
+    echo "  - Public / Domain:      https://${APP_DOMAIN}"
+fi
 echo "[deploy] Tail logs anytime with: pnpm docker:logs"

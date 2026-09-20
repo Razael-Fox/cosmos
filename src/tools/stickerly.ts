@@ -84,7 +84,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         if (err?.message === 'DONGTUBE_API_KEY_MISSING') {
             return `❌ ${ctx.t('media.stickerly.error_api_key')}`;
         }
-        console.error('[Stickerly] Search API error:', err);
+        console.error('[Stickerly] Search API error:', err?.message || 'Unknown error');
         return `❌ ${ctx.t('media.stickerly.error_search', {
             error: err?.message || 'Unknown error'
         })}`;

@@ -11,6 +11,9 @@ const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 3;
 
 function otpSecret(): string {
+    if (process.env.NODE_ENV === 'production' && !process.env.OTP_SECRET) {
+        throw new Error('FATAL: OTP_SECRET environment variable must be configured in production.');
+    }
     return process.env.OTP_SECRET || 'cosmos-dev-otp-secret-change-me';
 }
 

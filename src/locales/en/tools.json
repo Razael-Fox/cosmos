@@ -895,10 +895,11 @@
     },
     "verify": {
         "usage": "Invalid format. Use: .verify <TOKEN>",
+        "dm_only": "For your security and privacy, account verification must be completed in a direct message with the bot. Please send .verify in a private chat.",
         "invalid": "Invalid or expired verification token. Please request a new registration link.",
         "success": "Registration Verified! Your account has been whitelisted successfully.",
         "activated": "Account verified and whitelisted successfully.",
-        "sender_mismatch": "This verification token was not issued for your WhatsApp number. Please send .verify from the same number you registered with on the web portal.",
+        "sender_mismatch": "This verification token was not issued for your WhatsApp number. Please send .verify from the same WhatsApp number you registered with on the web portal.",
         "locked": "This verification token has been locked after too many failed attempts. Please request a new registration link."
     },
     "sub": {

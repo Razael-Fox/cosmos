@@ -256,8 +256,8 @@ async function runTests() {
 
     // [Test 10] Quoting preview message with "This" by another user in group chat
     console.log('[Test 10] Testing quoting preview card with "This" by another user in group chat...');
-    const userA = '62895326563307';
-    const userB = '6282225907841';
+    const userA = '628111111111';
+    const userB = '628222222222';
     const groupChat = '120363274823554999@g.us';
 
     const groupDeletedKeys: any[] = [];

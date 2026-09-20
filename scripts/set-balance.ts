@@ -8,8 +8,14 @@ const dbPath = process.env.DATABASE_URL?.replace('file:', '') || './storage/data
 const adapter = new PrismaBetterSqlite3({ url: dbPath });
 const prisma = new PrismaClient({ adapter });
 
-const targetNumber = '6282225907841';
-const newBalance = 30_000_000n; // Rp30.000.000
+const targetNumber = process.argv[2] || process.env.TARGET_PHONE;
+const balanceArg = process.argv[3];
+const newBalance = balanceArg ? BigInt(balanceArg.replace(/\D/g, '')) : 30_000_000n; // Default Rp30.000.000
+
+if (!targetNumber) {
+    console.log('Usage: pnpm tsx scripts/set-balance.ts <PHONE_NUMBER> [NEW_BALANCE]');
+    process.exit(1);
+}
 
 async function main() {
     const users = await prisma.user.findMany({

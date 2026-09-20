@@ -1,0 +1,41 @@
+# Git metadata
+.git
+.gitignore
+.worktrees/**/.git
+.worktrees/**/node_modules/
+.worktrees/**/.next/
+.worktrees/**/dist/
+.worktrees/**/.env
+.worktrees/**/.env.*
+!.worktrees/**/.env.example
+
+# Environment files with live secrets
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases, Baileys session keys, and runtime storage
+storage/*.sqlite
+storage/*.sqlite-*
+storage/*.sqlite-wal
+storage/*.sqlite-shm
+storage/auth_info_baileys/
+storage/logs/
+storage/active_sessions.json
+storage/presence.json
+auth_info_baileys/
+
+# Dependencies and build outputs
+node_modules/
+dist/
+.nyc_output/
+coverage/
+
+# Temporary media & stickers
+stickers/
+story/
+*.log
+
+# Internal documentation & issue notes
+ISSUE*.md
+REVIEW*.md
