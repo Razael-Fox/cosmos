@@ -256,21 +256,48 @@ async function runTests() {
     assert(mockSock.sentMessages.pop().content.text.includes('Please specify a valid gender'));
 
     await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Female');
-    assert(mockSock.sentMessages.pop().content.text.includes('Address'));
+    assert(mockSock.sentMessages.pop().content.text.includes('Blood Type'));
 
-    // Step 4: Send Address
+    // Step 4: Send Blood Type
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'XYZ');
+    assert(mockSock.sentMessages.pop().content.text.includes('valid blood type'));
+
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'O');
+    assert(mockSock.sentMessages.pop().content.text.includes('Street Address'));
+
+    // Step 5: Send Street Address
     await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jl. Pahlawan No. 45');
+    assert(mockSock.sentMessages.pop().content.text.includes('RT/RW'));
+
+    // Step 6: Send RT/RW
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, '001/002');
+    assert(mockSock.sentMessages.pop().content.text.includes('Village/Kelurahan'));
+
+    // Step 7: Send Village
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Sukajadi');
+    assert(mockSock.sentMessages.pop().content.text.includes('District/Kecamatan'));
+
+    // Step 8: Send District
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Sukajadi');
+    assert(mockSock.sentMessages.pop().content.text.includes('City/Regency'));
+
+    // Step 9: Send City
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Surabaya');
+    assert(mockSock.sentMessages.pop().content.text.includes('Province'));
+
+    // Step 10: Send Province
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jawa Timur');
     assert(mockSock.sentMessages.pop().content.text.includes('Religion'));
 
-    // Step 5: Send Religion
+    // Step 11: Send Religion
     await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Kristen');
     assert(mockSock.sentMessages.pop().content.text.includes('Marital Status'));
 
-    // Step 6: Send Marital Status
+    // Step 12: Send Marital Status
     await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Single');
     assert(mockSock.sentMessages.pop().content.text.includes('Occupation'));
 
-    // Step 7: Send Occupation (Triggers card generation)
+    // Step 13: Send Occupation (Triggers card generation)
     await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'UI Designer');
     assert.strictEqual(isUserRegistering(regUser), false, 'Registration session should be closed after completion');
 

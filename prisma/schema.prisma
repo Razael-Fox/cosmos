@@ -368,7 +368,13 @@ model IdCard {
   placeOfBirth  String
   dateOfBirth   String
   gender        String
+  bloodType     String   @default("O")
   address       String
+  rtRw          String   @default("001/002")
+  village       String   @default("Sukajadi")
+  district      String   @default("Sukajadi")
+  city          String   @default("BANDUNG")
+  provinsi      String   @default("JAWA BARAT")
   religion      String
   maritalStatus String
   occupation    String

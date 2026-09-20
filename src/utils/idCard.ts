@@ -1,12 +1,7 @@
 import { prisma } from '#db.js';
 import { cleanId, lidToPnMap } from '#utils/casino.js';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import {
-    generateIdCardImage,
-    fetchUserProfilePic,
-    fetchUserProfilePicUrl,
-    IdCardData
-} from '#utils/imageProcessing.js';
+import { generateIdCardImage, DEFAULT_ID_CARD_PHOTO_URL, IdCardData } from '#utils/imageProcessing.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
 
 export interface RegistrationSession {
@@ -448,7 +443,13 @@ export async function saveIdCard(data: {
     placeOfBirth: string;
     dateOfBirth: string;
     gender: string;
+    bloodType?: string;
     address: string;
+    rtRw?: string;
+    village?: string;
+    district?: string;
+    city?: string;
+    provinsi?: string;
     religion: string;
     maritalStatus: string;
     occupation: string;
@@ -497,7 +498,13 @@ export async function saveIdCard(data: {
             placeOfBirth: data.placeOfBirth.toUpperCase().trim(),
             dateOfBirth: data.dateOfBirth.trim(),
             gender: data.gender.toUpperCase().trim(),
+            bloodType: (data.bloodType || 'O').toUpperCase().trim(),
             address: data.address.toUpperCase().trim(),
+            rtRw: (data.rtRw || '001/002').trim(),
+            village: (data.village || 'SUKAJADI').toUpperCase().trim(),
+            district: (data.district || 'SUKAJADI').toUpperCase().trim(),
+            city: (data.city || data.placeOfBirth || 'BANDUNG').toUpperCase().trim(),
+            provinsi: (data.provinsi || 'JAWA BARAT').toUpperCase().trim(),
             religion: data.religion.toUpperCase().trim(),
             maritalStatus: data.maritalStatus.toUpperCase().trim(),
             occupation: data.occupation.toUpperCase().trim(),
@@ -511,7 +518,13 @@ export async function saveIdCard(data: {
             placeOfBirth: data.placeOfBirth.toUpperCase().trim(),
             dateOfBirth: data.dateOfBirth.trim(),
             gender: data.gender.toUpperCase().trim(),
+            bloodType: (data.bloodType || 'O').toUpperCase().trim(),
             address: data.address.toUpperCase().trim(),
+            rtRw: (data.rtRw || '001/002').trim(),
+            village: (data.village || 'SUKAJADI').toUpperCase().trim(),
+            district: (data.district || 'SUKAJADI').toUpperCase().trim(),
+            city: (data.city || data.placeOfBirth || 'BANDUNG').toUpperCase().trim(),
+            provinsi: (data.provinsi || 'JAWA BARAT').toUpperCase().trim(),
             religion: data.religion.toUpperCase().trim(),
             maritalStatus: data.maritalStatus.toUpperCase().trim(),
             occupation: data.occupation.toUpperCase().trim(),
@@ -656,8 +669,8 @@ export async function processRegistrationStep(
                 remoteJid,
                 {
                     text: t
-                        ? t('utilities.idcard.step_prompt_address')
-                        : 'Thank you. Please reply with your *Address* (e.g., Jl. Merdeka No. 1).'
+                        ? t('utilities.idcard.step_prompt_blood')
+                        : 'Thank you. Please specify your *Blood Type* (A / B / AB / O).'
                 },
                 { quoted: msg }
             );
@@ -665,7 +678,38 @@ export async function processRegistrationStep(
         }
 
         case 4: {
-            // Address
+            // Blood Type
+            const bt = trimmed.toUpperCase().replace(/[^A-Z]/g, '');
+            if (bt !== 'A' && bt !== 'B' && bt !== 'AB' && bt !== 'O') {
+                await sock.sendMessage(
+                    remoteJid,
+                    {
+                        text: t
+                            ? t('utilities.idcard.step_blood_invalid')
+                            : 'Please specify a valid blood type: *A*, *B*, *AB*, or *O*.'
+                    },
+                    { quoted: msg }
+                );
+                return true;
+            }
+
+            session.data.bloodType = bt;
+            session.step = 5;
+
+            await sock.sendMessage(
+                remoteJid,
+                {
+                    text: t
+                        ? t('utilities.idcard.step_prompt_address')
+                        : 'Thank you. Please reply with your *Street Address* (e.g., Jl. Merdeka No. 1).'
+                },
+                { quoted: msg }
+            );
+            return true;
+        }
+
+        case 5: {
+            // Street Address
             if (trimmed.length < 3) {
                 await sock.sendMessage(
                     remoteJid,
@@ -679,7 +723,152 @@ export async function processRegistrationStep(
                 return true;
             }
             session.data.address = trimmed;
-            session.step = 5;
+            session.step = 6;
+
+            await sock.sendMessage(
+                remoteJid,
+                {
+                    text: t
+                        ? t('utilities.idcard.step_prompt_rtrw')
+                        : 'Thank you. Please reply with your *RT/RW* (e.g., 001/002).'
+                },
+                { quoted: msg }
+            );
+            return true;
+        }
+
+        case 6: {
+            // RT / RW
+            if (trimmed.length < 3) {
+                await sock.sendMessage(
+                    remoteJid,
+                    {
+                        text: t
+                            ? t('utilities.idcard.step_rtrw_invalid')
+                            : 'Please provide a valid RT/RW format (e.g., 001/002).'
+                    },
+                    { quoted: msg }
+                );
+                return true;
+            }
+            session.data.rtRw = trimmed;
+            session.step = 7;
+
+            await sock.sendMessage(
+                remoteJid,
+                {
+                    text: t
+                        ? t('utilities.idcard.step_prompt_village')
+                        : 'Thank you. Please reply with your *Village/Kelurahan* (e.g., Sukajadi).'
+                },
+                { quoted: msg }
+            );
+            return true;
+        }
+
+        case 7: {
+            // Village / Kelurahan
+            if (trimmed.length < 2) {
+                await sock.sendMessage(
+                    remoteJid,
+                    {
+                        text: t
+                            ? t('utilities.idcard.step_village_invalid')
+                            : 'Please provide a valid village/kelurahan name (at least 2 characters).'
+                    },
+                    { quoted: msg }
+                );
+                return true;
+            }
+            session.data.village = trimmed;
+            session.step = 8;
+
+            await sock.sendMessage(
+                remoteJid,
+                {
+                    text: t
+                        ? t('utilities.idcard.step_prompt_district')
+                        : 'Thank you. Please reply with your *District/Kecamatan* (e.g., Sukajadi).'
+                },
+                { quoted: msg }
+            );
+            return true;
+        }
+
+        case 8: {
+            // District / Kecamatan
+            if (trimmed.length < 2) {
+                await sock.sendMessage(
+                    remoteJid,
+                    {
+                        text: t
+                            ? t('utilities.idcard.step_district_invalid')
+                            : 'Please provide a valid district/kecamatan name (at least 2 characters).'
+                    },
+                    { quoted: msg }
+                );
+                return true;
+            }
+            session.data.district = trimmed;
+            session.step = 9;
+
+            await sock.sendMessage(
+                remoteJid,
+                {
+                    text: t
+                        ? t('utilities.idcard.step_prompt_city')
+                        : 'Thank you. Please reply with your *City/Regency* (e.g., Bandung or Jakarta Pusat).'
+                },
+                { quoted: msg }
+            );
+            return true;
+        }
+
+        case 9: {
+            // City / Kota
+            if (trimmed.length < 2) {
+                await sock.sendMessage(
+                    remoteJid,
+                    {
+                        text: t
+                            ? t('utilities.idcard.step_city_invalid')
+                            : 'Please provide a valid city/regency name (at least 2 characters).'
+                    },
+                    { quoted: msg }
+                );
+                return true;
+            }
+            session.data.city = trimmed;
+            session.step = 10;
+
+            await sock.sendMessage(
+                remoteJid,
+                {
+                    text: t
+                        ? t('utilities.idcard.step_prompt_province')
+                        : 'Thank you. Please reply with your *Province* (e.g., Jawa Barat or DKI Jakarta).'
+                },
+                { quoted: msg }
+            );
+            return true;
+        }
+
+        case 10: {
+            // Province / Provinsi
+            if (trimmed.length < 2) {
+                await sock.sendMessage(
+                    remoteJid,
+                    {
+                        text: t
+                            ? t('utilities.idcard.step_province_invalid')
+                            : 'Please provide a valid province name (at least 2 characters).'
+                    },
+                    { quoted: msg }
+                );
+                return true;
+            }
+            session.data.provinsi = trimmed;
+            session.step = 11;
 
             await sock.sendMessage(
                 remoteJid,
@@ -693,7 +882,7 @@ export async function processRegistrationStep(
             return true;
         }
 
-        case 5: {
+        case 11: {
             // Religion
             if (trimmed.length < 2) {
                 await sock.sendMessage(
@@ -708,7 +897,7 @@ export async function processRegistrationStep(
                 return true;
             }
             session.data.religion = trimmed;
-            session.step = 6;
+            session.step = 12;
 
             await sock.sendMessage(
                 remoteJid,
@@ -722,7 +911,7 @@ export async function processRegistrationStep(
             return true;
         }
 
-        case 6: {
+        case 12: {
             // Marital Status
             const status = trimmed.toUpperCase();
             let maritalStatus: string = status;
@@ -748,7 +937,7 @@ export async function processRegistrationStep(
             }
 
             session.data.maritalStatus = maritalStatus;
-            session.step = 7;
+            session.step = 13;
 
             await sock.sendMessage(
                 remoteJid,
@@ -762,7 +951,7 @@ export async function processRegistrationStep(
             return true;
         }
 
-        case 7: {
+        case 13: {
             // Occupation - Final Step!
             if (trimmed.length < 2) {
                 await sock.sendMessage(
@@ -799,7 +988,13 @@ export async function processRegistrationStep(
                     placeOfBirth: session.data.placeOfBirth || 'INDONESIA',
                     dateOfBirth: session.data.dateOfBirth || '01-01-2000',
                     gender: session.data.gender || 'LAKI-LAKI',
+                    bloodType: session.data.bloodType || 'O',
                     address: session.data.address || 'JL. UTAMA NO. 1',
+                    rtRw: session.data.rtRw || '001/002',
+                    village: session.data.village || 'SUKAJADI',
+                    district: session.data.district || 'SUKAJADI',
+                    city: session.data.city || session.data.placeOfBirth || 'BANDUNG',
+                    provinsi: session.data.provinsi || 'JAWA BARAT',
                     religion: session.data.religion || 'ISLAM',
                     maritalStatus: session.data.maritalStatus || 'BELUM KAWIN',
                     occupation: session.data.occupation || 'DEVELOPER',
@@ -807,13 +1002,8 @@ export async function processRegistrationStep(
                     validUntil: 'SEUMUR HIDUP'
                 });
 
-                // Fetch user's WhatsApp profile picture
-                const targetJid = (msg.key.participant || msg.key.remoteJid) ?? cleaned;
-                const pfpUrl = await fetchUserProfilePicUrl(sock, targetJid);
-                const pfpBuffer = await fetchUserProfilePic(sock, targetJid);
-
-                // Generate ID card image
-                const imageBuffer = await generateIdCardImage(saved, pfpBuffer, pfpUrl);
+                // Generate ID card image with original REST API test photo format (no WhatsApp avatar)
+                const imageBuffer = await generateIdCardImage(saved, null, DEFAULT_ID_CARD_PHOTO_URL);
 
                 const caption = t
                     ? t('utilities.idcard.issued_caption', {
@@ -821,6 +1011,9 @@ export async function processRegistrationStep(
                           fullName: saved.fullName,
                           dob: saved.dateOfBirth,
                           gender: saved.gender,
+                          bloodType: saved.bloodType,
+                          city: saved.city,
+                          provinsi: saved.provinsi,
                           citizenship: saved.citizenship,
                           validUntil: saved.validUntil
                       })
@@ -829,6 +1022,8 @@ export async function processRegistrationStep(
                       `*Full Name:* ${saved.fullName}\n` +
                       `*Date of Birth:* ${saved.dateOfBirth}\n` +
                       `*Gender:* ${saved.gender}\n` +
+                      `*Blood Type:* ${saved.bloodType}\n` +
+                      `*City & Province:* ${saved.city}, ${saved.provinsi}\n` +
                       `*Citizenship:* ${saved.citizenship}\n` +
                       `*Valid Until:* ${saved.validUntil}`;
 

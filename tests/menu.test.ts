@@ -33,20 +33,20 @@ async function runTests() {
     assert(Buffer.isBuffer(defaultBuffer), 'Default banner must be a Buffer');
     assert(defaultBuffer.length > 0, 'Default banner buffer must not be empty');
 
-    const bannerPath = path.resolve(process.cwd(), 'assets', 'menu_banner.png');
+    const bannerPath = path.resolve(process.cwd(), 'assets', 'menu_banner.jpg');
     const placeholderPath = path.resolve(process.cwd(), 'assets', 'menu_banner.placeholder.png');
 
     if (fs.existsSync(bannerPath) && fs.statSync(bannerPath).size > 0) {
         assert.strictEqual(
             defaultBuffer.length,
             fs.statSync(bannerPath).size,
-            'Should load the actual menu_banner.png when available and non-empty'
+            'Should load the actual menu_banner.jpg when available and non-empty'
         );
     } else if (fs.existsSync(placeholderPath)) {
         assert.strictEqual(
             defaultBuffer.length,
             fs.statSync(placeholderPath).size,
-            'Should automatically fall back to menu_banner.placeholder.png when menu_banner.png is missing or 0 bytes'
+            'Should automatically fall back to menu_banner.placeholder.png when menu_banner.jpg is missing or 0 bytes'
         );
     }
 
@@ -321,14 +321,14 @@ async function runTests() {
     );
     console.log('✓ Bilingual localization parity and command descriptions verified.');
 
-    // [Test 10] Tool Execution with Baileys Hero Banner (renderLargerThumbnail: true)
+    // [Test 10] Tool Execution with Baileys Hero Banner Photo Attachment
     console.log('[Test 10] Testing Baileys hero banner dispatch in help & menu execution...');
-    let capturedMessage: any = null;
+    let capturedMessages: any[] = [];
 
     const mockSock: any = {
         user: { id: '628999999999@s.whatsapp.net' },
         sendMessage: async (_jid: string, content: any, _opts: any) => {
-            capturedMessage = content;
+            capturedMessages.push(content);
             return { key: { id: 'mock_msg_id' } };
         }
     };
@@ -353,46 +353,40 @@ async function runTests() {
     };
 
     // 10.1 Execute .menu overview
+    capturedMessages = [];
     const execResult = await helpExecute({}, mockCtx);
     assert.strictEqual(execResult, undefined, 'execute must return undefined when sock is provided to prevent echo');
-    assert(capturedMessage, 'Mock socket must have received sendMessage');
-    assert(capturedMessage.text.includes('COSMOS BOT'), 'Sent text must include dashboard header');
-    assert(capturedMessage.contextInfo, 'Sent payload must include contextInfo');
-    assert(capturedMessage.contextInfo.externalAdReply, 'contextInfo must include externalAdReply');
-
-    const adReply = capturedMessage.contextInfo.externalAdReply;
-    assert.strictEqual(adReply.mediaType, 1, 'mediaType must be 1 (IMAGE)');
-    assert.strictEqual(
-        adReply.renderLargerThumbnail,
-        true,
-        'CRITICAL: renderLargerThumbnail must be explicitly true for Baileys hero banner'
-    );
-    assert(Buffer.isBuffer(adReply.thumbnail), 'thumbnail must be a valid Buffer');
-    assert(adReply.thumbnail.length > 0, 'thumbnail buffer must not be empty');
-    assert.strictEqual(adReply.sourceUrl, 'https://github.com/razaelmahasaputra/cosmos');
+    assert(capturedMessages.length > 0, 'Mock socket must have received at least one sendMessage');
+    const firstMsg = capturedMessages[0];
+    assert(Buffer.isBuffer(firstMsg.image), 'Hero banner must be sent as an image buffer attachment');
+    const combinedContent = capturedMessages.map((m) => m.caption || m.text || '').join('\n');
+    assert(combinedContent.includes('COSMOS BOT'), 'Sent content must include dashboard header');
 
     // 10.2 Execute .help slot (Command Inspector)
-    capturedMessage = null;
+    capturedMessages = [];
     await helpExecute({ query: 'slot' }, mockCtx);
-    assert(capturedMessage, 'Mock socket must have received inspector message');
-    assert(capturedMessage.text.includes('COMMAND GUIDE: .slot'), 'Sent text must include command guide');
-    assert.strictEqual(capturedMessage.contextInfo.externalAdReply.renderLargerThumbnail, true);
+    assert(capturedMessages.length > 0, 'Mock socket must have received inspector message');
+    assert(Buffer.isBuffer(capturedMessages[0].image), 'Hero banner must be attached');
+    const slotContent = capturedMessages.map((m) => m.caption || m.text || '').join('\n');
+    assert(slotContent.includes('COMMAND GUIDE: .slot'), 'Sent text must include command guide');
 
     // 10.3 Execute .menu casino (Category commands list)
-    capturedMessage = null;
+    capturedMessages = [];
     await menuExecute({ query: 'casino' }, mockCtx);
-    assert(capturedMessage, 'Mock socket must have received category list message');
-    assert(capturedMessage.text.includes('CASINO COMMANDS'), 'Sent text must include category command list');
-    assert.strictEqual(capturedMessage.contextInfo.externalAdReply.renderLargerThumbnail, true);
+    assert(capturedMessages.length > 0, 'Mock socket must have received category list message');
+    assert(Buffer.isBuffer(capturedMessages[0].image), 'Hero banner must be attached');
+    const casinoContent = capturedMessages.map((m) => m.caption || m.text || '').join('\n');
+    assert(casinoContent.includes('CASINO COMMANDS'), 'Sent text must include category command list');
 
     // 10.4 Execute .menu all (All commands catalog)
-    capturedMessage = null;
+    capturedMessages = [];
     await menuExecute({ query: 'all' }, mockCtx);
-    assert(capturedMessage, 'Mock socket must have received all-menu message');
-    assert(capturedMessage.text.includes('CASINO'), 'Sent text must contain catalog categories');
-    assert.strictEqual(capturedMessage.contextInfo.externalAdReply.renderLargerThumbnail, true);
+    assert(capturedMessages.length > 0, 'Mock socket must have received all-menu message');
+    assert(Buffer.isBuffer(capturedMessages[0].image), 'Hero banner must be attached');
+    const allContent = capturedMessages.map((m) => m.caption || m.text || '').join('\n');
+    assert(allContent.includes('CASINO'), 'Sent text must contain catalog categories');
 
-    console.log('✓ Baileys hero banner attribute (renderLargerThumbnail: true) and entrypoints verified.');
+    console.log('✓ Baileys hero banner attachment and entrypoints verified.');
 
     console.log('--- ALL MENU & HELP SYSTEM TESTS PASSED SUCCESSFULLY! ---');
 }

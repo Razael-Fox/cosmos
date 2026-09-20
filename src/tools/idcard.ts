@@ -6,7 +6,7 @@ import {
     isUserRegistering,
     cancelRegistrationSession
 } from '#utils/idCard.js';
-import { generateIdCardImage, fetchUserProfilePic, fetchUserProfilePicUrl } from '#utils/imageProcessing.js';
+import { generateIdCardImage, DEFAULT_ID_CARD_PHOTO_URL } from '#utils/imageProcessing.js';
 import { getTranslator } from '#utils/i18n.js';
 import { renderAlert } from '../utils/uiFormatter.js';
 
@@ -79,17 +79,24 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             );
 
             try {
-                const targetJid = (ctx.msg.key.participant || ctx.msg.key.remoteJid) ?? senderJid;
-                const pfpUrl = await fetchUserProfilePicUrl(ctx.sock, targetJid);
-                const pfp = await fetchUserProfilePic(ctx.sock, targetJid);
-                const imageBuffer = await generateIdCardImage(existing, pfp, customPhotoUrl || pfpUrl);
+                const imageBuffer = await generateIdCardImage(
+                    existing,
+                    null,
+                    customPhotoUrl || DEFAULT_ID_CARD_PHOTO_URL
+                );
                 const caption = t('utilities.idcard.card_caption', {
                     nik: existing.nik,
                     fullName: existing.fullName,
                     pob: existing.placeOfBirth,
                     dob: existing.dateOfBirth,
                     gender: existing.gender,
+                    bloodType: (existing as any).bloodType || 'O',
                     address: existing.address,
+                    rtRw: (existing as any).rtRw || '001/002',
+                    village: (existing as any).village || 'Sukajadi',
+                    district: (existing as any).district || 'Sukajadi',
+                    city: (existing as any).city || existing.placeOfBirth || 'BANDUNG',
+                    provinsi: (existing as any).provinsi || 'JAWA BARAT',
                     religion: existing.religion,
                     maritalStatus: existing.maritalStatus,
                     occupation: existing.occupation,
@@ -129,17 +136,20 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     try {
         await ctx.sock.sendMessage(ctx.jid, { text: t('utilities.idcard.fetching') }, { quoted: ctx.msg });
-        const targetJid = (ctx.msg.key.participant || ctx.msg.key.remoteJid) ?? senderJid;
-        const pfpUrl = await fetchUserProfilePicUrl(ctx.sock, targetJid);
-        const pfp = await fetchUserProfilePic(ctx.sock, targetJid);
-        const imageBuffer = await generateIdCardImage(existing, pfp, customPhotoUrl || pfpUrl);
+        const imageBuffer = await generateIdCardImage(existing, null, customPhotoUrl || DEFAULT_ID_CARD_PHOTO_URL);
         const caption = t('utilities.idcard.card_caption', {
             nik: existing.nik,
             fullName: existing.fullName,
             pob: existing.placeOfBirth,
             dob: existing.dateOfBirth,
             gender: existing.gender,
+            bloodType: (existing as any).bloodType || 'O',
             address: existing.address,
+            rtRw: (existing as any).rtRw || '001/002',
+            village: (existing as any).village || 'Sukajadi',
+            district: (existing as any).district || 'Sukajadi',
+            city: (existing as any).city || existing.placeOfBirth || 'BANDUNG',
+            provinsi: (existing as any).provinsi || 'JAWA BARAT',
             religion: existing.religion,
             maritalStatus: existing.maritalStatus,
             occupation: existing.occupation,
