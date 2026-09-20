@@ -58,8 +58,8 @@ export function extractStickerlyPackId(input: string): string | null {
     if (urlMatch && urlMatch[1]) {
         return urlMatch[1];
     }
-    // Check if input itself looks like a pack ID (alphanumeric 4-12 characters, no spaces)
-    if (/^[A-Za-z0-9_-]{4,16}$/.test(trimmed)) {
+    // Check if input is strictly a 6-character pack ID (e.g. OD5GZR, SMFF38)
+    if (/^[A-Za-z0-9]{6}$/.test(trimmed)) {
         return trimmed;
     }
     return null;

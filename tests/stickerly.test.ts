@@ -41,6 +41,8 @@ async function runTests() {
     assert.strictEqual(extractStickerlyPackId('https://sticker.ly/s/OD5GZR'), 'OD5GZR');
     assert.strictEqual(extractStickerlyPackId('http://sticker.ly/s/SMFF38/'), 'SMFF38');
     assert.strictEqual(extractStickerlyPackId('OD5GZR'), 'OD5GZR');
+    assert.strictEqual(extractStickerlyPackId('chibi'), null);
+    assert.strictEqual(extractStickerlyPackId('anime'), null);
     assert.strictEqual(extractStickerlyPackId('random search phrase with spaces'), null);
     console.log('✓ extractStickerlyPackId passed');
 

@@ -53,24 +53,26 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         return ctx.t('media.stickerly.already_active');
     }
 
-    // Direct Sticker.ly URL handling
-    const directPackId = extractStickerlyPackId(rawQuery);
-    if (directPackId && (rawQuery.includes('sticker.ly') || rawQuery.length <= 10)) {
-        try {
-            const packDetails = await getStickerPackDetails(directPackId);
-            const progressMsg = await ctx.sock.sendMessage(ctx.jid, {
-                text: `⏳ ${ctx.t('media.stickerly.processing', {
-                    name: packDetails.name,
-                    count: packDetails.stickers.length
-                })}`
-            });
-            await processStickerPackMaker(ctx.sock, ctx.jid, packDetails, progressMsg?.key, ctx.t);
-            return;
-        } catch (err: any) {
-            console.error('[Stickerly] Direct pack fetch error:', err);
-            return `❌ ${ctx.t('media.stickerly.error_fetch_pack', {
-                error: err?.message || 'Unknown error'
-            })}`;
+    // Direct Sticker.ly URL handling (e.g. https://sticker.ly/s/OD5GZR)
+    if (rawQuery.includes('sticker.ly')) {
+        const directPackId = extractStickerlyPackId(rawQuery);
+        if (directPackId) {
+            try {
+                const packDetails = await getStickerPackDetails(directPackId);
+                const progressMsg = await ctx.sock.sendMessage(ctx.jid, {
+                    text: `⏳ ${ctx.t('media.stickerly.processing', {
+                        name: packDetails.name,
+                        count: packDetails.stickers.length
+                    })}`
+                });
+                await processStickerPackMaker(ctx.sock, ctx.jid, packDetails, progressMsg?.key, ctx.t);
+                return;
+            } catch (err: any) {
+                console.error('[Stickerly] Direct pack fetch error:', err);
+                return `❌ ${ctx.t('media.stickerly.error_fetch_pack', {
+                    error: err?.message || 'Unknown error'
+                })}`;
+            }
         }
     }
 
@@ -89,6 +91,23 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     if (!searchResults || searchResults.length === 0) {
+        // Fallback: check if the query was a standalone 6-char pack ID (e.g. OD5GZR)
+        const directPackId = extractStickerlyPackId(rawQuery);
+        if (directPackId) {
+            try {
+                const packDetails = await getStickerPackDetails(directPackId);
+                const progressMsg = await ctx.sock.sendMessage(ctx.jid, {
+                    text: `⏳ ${ctx.t('media.stickerly.processing', {
+                        name: packDetails.name,
+                        count: packDetails.stickers.length
+                    })}`
+                });
+                await processStickerPackMaker(ctx.sock, ctx.jid, packDetails, progressMsg?.key, ctx.t);
+                return;
+            } catch {
+                // Fall through to no_results
+            }
+        }
         return ctx.t('media.stickerly.no_results', { query: rawQuery });
     }
 
