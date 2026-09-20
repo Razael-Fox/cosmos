@@ -79,7 +79,7 @@ ensure_worktrees() {
 prepare_storage() {
     echo "[deploy] Ensuring host storage directory and permissions..."
     mkdir -p storage/logs storage/auth_info_baileys
-    chmod -R 775 storage 2>/dev/null || true
+    chmod -R 777 storage 2>/dev/null || true
 }
 
 check_disk() {
@@ -121,13 +121,18 @@ setup_tunnel
 # ------------------------------------------------------------------------------
 # Build and Image Comparison
 # ------------------------------------------------------------------------------
-OLD_IMG=$(run_docker docker inspect "${CONTAINER}" --format '{{.Image}}' 2>/dev/null || echo "none")
-IS_RUNNING=$(run_docker docker inspect "${CONTAINER}" --format '{{.State.Running}}' 2>/dev/null || echo "false")
+if run_docker docker inspect "${CONTAINER}" >/dev/null 2>&1; then
+    OLD_IMG=$(run_docker docker inspect "${CONTAINER}" --format '{{.Image}}' | tr -d '[:space:]')
+    IS_RUNNING=$(run_docker docker inspect "${CONTAINER}" --format '{{.State.Running}}' | tr -d '[:space:]')
+else
+    OLD_IMG="none"
+    IS_RUNNING="false"
+fi
 
 echo "[deploy] Building ${SERVICE}..."
 run_docker docker compose build "${SERVICE}" "$@"
 
-LATEST_IMG=$(run_docker docker images --no-trunc "${IMAGE}" --format '{{.ID}}')
+LATEST_IMG=$(run_docker docker images --no-trunc "${IMAGE}" --format '{{.ID}}' | tr -d '[:space:]')
 
 if [ "${IS_RUNNING}" != "true" ] || [ "${OLD_IMG}" != "${LATEST_IMG}" ]; then
     echo "[deploy] Image changed (${OLD_IMG} -> ${LATEST_IMG}) or container stopped - recreating container..."
@@ -146,7 +151,11 @@ START_TIME=$(date +%s)
 HEALTHY=0
 
 while [ $(( $(date +%s) - START_TIME )) -lt "${MAX_WAIT_SECONDS}" ]; do
-    CURRENT_RUNNING=$(run_docker docker inspect "${CONTAINER}" --format '{{.State.Running}}' 2>/dev/null || echo "false")
+    if run_docker docker inspect "${CONTAINER}" >/dev/null 2>&1; then
+        CURRENT_RUNNING=$(run_docker docker inspect "${CONTAINER}" --format '{{.State.Running}}' | tr -d '[:space:]')
+    else
+        CURRENT_RUNNING="false"
+    fi
     if [ "${CURRENT_RUNNING}" != "true" ]; then
         echo "[deploy] Container stopped unexpectedly during boot. Fetching logs..."
         run_docker docker logs "${CONTAINER}" --tail 40 || true
