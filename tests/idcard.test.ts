@@ -12,7 +12,11 @@ import {
     parseBirthPlaceAndDate,
     calculateAge
 } from '../src/utils/idCard.js';
-import { generateIdCardImage, createPlaceholderPhotoBuffer } from '../src/utils/imageProcessing.js';
+import {
+    generateIdCardImage,
+    generateIdCardImageLocal,
+    createPlaceholderPhotoBuffer
+} from '../src/utils/imageProcessing.js';
 import { formatMentions, cleanId } from '../src/utils/casino.js';
 import idCardTool from '../src/tools/idcard.js';
 import loanTool from '../src/tools/loan.js';
@@ -126,10 +130,15 @@ async function runTests() {
     assert(imageBuffer.length > 10000, 'Image buffer must be non-trivial size');
 
     const metadata = await sharp(imageBuffer).metadata();
-    assert.strictEqual(metadata.width, 1264, 'Output width should match template');
-    assert.strictEqual(metadata.height, 848, 'Output height should match template');
-    assert.strictEqual(metadata.format, 'jpeg', 'Output format should be JPEG');
-    console.log('✓ Image generation and Sharp compositing verified successfully.');
+    assert(metadata.width && metadata.width > 0, 'Output must have valid width');
+    assert(metadata.height && metadata.height > 0, 'Output must have valid height');
+
+    const localBuffer = await generateIdCardImageLocal(sampleData, placeholderBuffer);
+    const localMeta = await sharp(localBuffer).metadata();
+    assert.strictEqual(localMeta.width, 1264, 'Local output width should match template');
+    assert.strictEqual(localMeta.height, 848, 'Local output height should match template');
+    assert.strictEqual(localMeta.format, 'jpeg', 'Local output format should be JPEG');
+    console.log('✓ Image generation (REST API and local fallback) verified successfully.');
 
     // 5. Test Database Persistence
     console.log('[Test 5] Testing Prisma database persistence and user association...');

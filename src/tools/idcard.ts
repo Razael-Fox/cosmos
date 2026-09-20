@@ -6,7 +6,7 @@ import {
     isUserRegistering,
     cancelRegistrationSession
 } from '#utils/idCard.js';
-import { generateIdCardImage, fetchUserProfilePic } from '#utils/imageProcessing.js';
+import { generateIdCardImage, fetchUserProfilePic, fetchUserProfilePicUrl } from '#utils/imageProcessing.js';
 import { getTranslator } from '#utils/i18n.js';
 import { renderAlert } from '../utils/uiFormatter.js';
 
@@ -23,6 +23,10 @@ export const definition: ToolDefinition = {
             action: {
                 type: 'string',
                 description: 'Optional action parameter (e.g. register, view, cancel).'
+            },
+            photo: {
+                type: 'string',
+                description: 'Optional photo URL for the virtual ID card.'
             }
         }
     }
@@ -38,6 +42,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
     const commandPart = rawText.split(/\s+/)[0]?.toLowerCase() || '';
     const actionArg = (args.action || '').trim().toLowerCase();
+
+    let customPhotoUrl: string | undefined = typeof args.photo === 'string' ? args.photo.trim() : undefined;
+    if (!customPhotoUrl) {
+        const match = rawText.match(/https?:\/\/[^\s]+/i);
+        if (match) {
+            customPhotoUrl = match[0];
+        }
+    }
 
     const isRegisterCommand =
         commandPart === '.register-id' ||
@@ -67,11 +79,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             );
 
             try {
-                const pfp = await fetchUserProfilePic(
-                    ctx.sock,
-                    (ctx.msg.key.participant || ctx.msg.key.remoteJid) ?? senderJid
-                );
-                const imageBuffer = await generateIdCardImage(existing, pfp);
+                const targetJid = (ctx.msg.key.participant || ctx.msg.key.remoteJid) ?? senderJid;
+                const pfpUrl = await fetchUserProfilePicUrl(ctx.sock, targetJid);
+                const pfp = await fetchUserProfilePic(ctx.sock, targetJid);
+                const imageBuffer = await generateIdCardImage(existing, pfp, customPhotoUrl || pfpUrl);
                 const caption = t('utilities.idcard.card_caption', {
                     nik: existing.nik,
                     fullName: existing.fullName,
@@ -118,11 +129,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     try {
         await ctx.sock.sendMessage(ctx.jid, { text: t('utilities.idcard.fetching') }, { quoted: ctx.msg });
-        const pfp = await fetchUserProfilePic(
-            ctx.sock,
-            (ctx.msg.key.participant || ctx.msg.key.remoteJid) ?? senderJid
-        );
-        const imageBuffer = await generateIdCardImage(existing, pfp);
+        const targetJid = (ctx.msg.key.participant || ctx.msg.key.remoteJid) ?? senderJid;
+        const pfpUrl = await fetchUserProfilePicUrl(ctx.sock, targetJid);
+        const pfp = await fetchUserProfilePic(ctx.sock, targetJid);
+        const imageBuffer = await generateIdCardImage(existing, pfp, customPhotoUrl || pfpUrl);
         const caption = t('utilities.idcard.card_caption', {
             nik: existing.nik,
             fullName: existing.fullName,

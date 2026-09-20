@@ -1,7 +1,12 @@
 import { prisma } from '#db.js';
 import { cleanId, lidToPnMap } from '#utils/casino.js';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import { generateIdCardImage, fetchUserProfilePic, IdCardData } from '#utils/imageProcessing.js';
+import {
+    generateIdCardImage,
+    fetchUserProfilePic,
+    fetchUserProfilePicUrl,
+    IdCardData
+} from '#utils/imageProcessing.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
 
 export interface RegistrationSession {
@@ -803,13 +808,12 @@ export async function processRegistrationStep(
                 });
 
                 // Fetch user's WhatsApp profile picture
-                const pfpBuffer = await fetchUserProfilePic(
-                    sock,
-                    (msg.key.participant || msg.key.remoteJid) ?? cleaned
-                );
+                const targetJid = (msg.key.participant || msg.key.remoteJid) ?? cleaned;
+                const pfpUrl = await fetchUserProfilePicUrl(sock, targetJid);
+                const pfpBuffer = await fetchUserProfilePic(sock, targetJid);
 
                 // Generate ID card image
-                const imageBuffer = await generateIdCardImage(saved, pfpBuffer);
+                const imageBuffer = await generateIdCardImage(saved, pfpBuffer, pfpUrl);
 
                 const caption = t
                     ? t('utilities.idcard.issued_caption', {
