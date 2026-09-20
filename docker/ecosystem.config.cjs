@@ -8,7 +8,7 @@ const apps = [
         name: 'cosmos-bot',
         cwd: '/app/bot',
         script: 'dist/index.js',
-        node_args: '--max-old-space-size=256',
+        node_args: '--max-old-space-size=384',
         env: {
             NODE_ENV: 'production',
             DATABASE_URL: 'file:/app/storage/database.sqlite',
@@ -17,7 +17,7 @@ const apps = [
             GROQ_API_KEY: process.env.GROQ_API_KEY,
             STORAGE_ENCRYPTION_KEY: process.env.STORAGE_ENCRYPTION_KEY
         },
-        max_memory_restart: '320M',
+        max_memory_restart: '512M',
         kill_timeout: 5000,
         restart_delay: 3000,
         exp_backoff_restart_delay: 100,

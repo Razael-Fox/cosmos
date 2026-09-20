@@ -1,14 +1,5 @@
 import axios from 'axios';
 import sharp from 'sharp';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import crypto from 'crypto';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import ffmpegStatic from 'ffmpeg-static';
-
-const execAsync = promisify(exec);
 
 export interface StickerlySearchResultItem {
     name: string;
@@ -160,12 +151,13 @@ export async function getStickerPackDetails(packIdOrUrl: string): Promise<Sticke
 }
 
 /**
- * Downloads a thumbnail from URL and normalizes it to either a PNG image buffer or MP4 video buffer.
- * Under Rule D, external FFmpeg commands must always read from temporary files written to disk.
+ * Downloads a thumbnail from URL and normalizes it to a crisp PNG image buffer.
+ * For animated sticker packs, extracting the first frame via Sharp is instantaneous (~30ms)
+ * and avoids CPU-heavy GIF/MP4 transcoding that causes message timeouts and memory spikes.
  */
 export async function fetchAndNormalizeThumbnail(
     thumbnailUrl: string,
-    isAnimated: boolean
+    _isAnimated = false
 ): Promise<NormalizedThumbnail> {
     const response = await axios.get(thumbnailUrl, {
         responseType: 'arraybuffer',
@@ -173,51 +165,7 @@ export async function fetchAndNormalizeThumbnail(
     });
     const rawBuffer = Buffer.from(response.data);
 
-    if (isAnimated) {
-        let tempGifPath = '';
-        let tempMp4Path = '';
-        try {
-            // First convert animated WebP to GIF using Sharp
-            const gifBuffer = await sharp(rawBuffer, { animated: true }).gif().toBuffer();
-
-            // Convert GIF to MP4 via FFmpeg for native WhatsApp GIF playback
-            const id = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-            tempGifPath = path.join(os.tmpdir(), `thumb_${id}.gif`);
-            tempMp4Path = path.join(os.tmpdir(), `thumb_${id}.mp4`);
-
-            fs.writeFileSync(tempGifPath, gifBuffer);
-
-            const ffmpegBin = ffmpegStatic || 'ffmpeg';
-            const cmd = `"${ffmpegBin}" -y -i "${tempGifPath}" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${tempMp4Path}"`;
-            await execAsync(cmd);
-
-            const mp4Buffer = fs.readFileSync(tempMp4Path);
-            return {
-                type: 'video',
-                buffer: mp4Buffer,
-                gifPlayback: true
-            };
-        } catch (animErr) {
-            console.warn('[Stickerly] Animated thumbnail conversion failed, falling back to static PNG:', animErr);
-        } finally {
-            if (tempGifPath && fs.existsSync(tempGifPath)) {
-                try {
-                    fs.unlinkSync(tempGifPath);
-                } catch {
-                    /* ignore */
-                }
-            }
-            if (tempMp4Path && fs.existsSync(tempMp4Path)) {
-                try {
-                    fs.unlinkSync(tempMp4Path);
-                } catch {
-                    /* ignore */
-                }
-            }
-        }
-    }
-
-    // Default static image fallback (PNG format via Sharp)
+    // Default static image normalization (PNG format via Sharp)
     const pngBuffer = await sharp(rawBuffer).png().toBuffer();
     return {
         type: 'image',

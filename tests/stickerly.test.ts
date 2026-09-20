@@ -73,7 +73,7 @@ async function runTests() {
     console.log('[Test 4] Testing fetchAndNormalizeThumbnail...');
     const normalizedThumb = await fetchAndNormalizeThumbnail(firstPack.thumbnail, firstPack.animated);
     assert(normalizedThumb.buffer.length > 0, 'Thumbnail buffer should not be empty');
-    assert(normalizedThumb.type === 'image' || normalizedThumb.type === 'video', 'Thumbnail should be image or video');
+    assert.strictEqual(normalizedThumb.type, 'image', 'Thumbnail must be image');
     console.log(
         `✓ fetchAndNormalizeThumbnail succeeded with type "${normalizedThumb.type}" (${normalizedThumb.buffer.length} bytes)`
     );
