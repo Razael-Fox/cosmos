@@ -70,5 +70,28 @@
         "no_session": "Failed: There is no ongoing lyrics playback in this chat.",
         "stopped": "Lyrics playback for \"{{song}}\" has been successfully stopped.",
         "error": "Failed: An error occurred while stopping lyrics playback."
+    },
+    "stickerly": {
+        "usage": "Please provide a search keyword or Sticker.ly URL.\nExample: *.stickerly Chibi*",
+        "already_active": "You already have an active sticker search in this chat. Please select a pack (1-5) or type *.cancel* first.",
+        "no_results": "No sticker packs found for *{{query}}*.",
+        "error_api_key": "Dongtube API key is not configured. Please set DONGTUBE_API_KEY in Doppler.",
+        "error_search": "Failed to search Sticker.ly: {{error}}",
+        "card_header": "*STICKER PACK #{{number}}*",
+        "label_title": "Title",
+        "label_author": "Author",
+        "label_stickers": "Stickers",
+        "label_views": "Views",
+        "label_exports": "Exports",
+        "label_type": "Type",
+        "value_animated": "Animated",
+        "value_static": "Static",
+        "guide_title": "🔍 *Sticker.ly Search Results for \"{{query}}\"*",
+        "guide_instruction": "Reply with a number (*1-{{count}}*) or quote any preview card above to export the sticker pack.\nType *.cancel* to abort.",
+        "cancelled": "❌ Sticker search cancelled.",
+        "processing": "Processing sticker pack: *\"{{name}}\"* ({{count}} stickers)...",
+        "wastickers_caption": "📦 *{{name}}* ({{count}} stickers)\nTap to import with Sticker Maker / WhatsApp!",
+        "error_fetch_pack": "Failed to fetch sticker pack details: {{error}}",
+        "error_process_pack": "Failed to process and build sticker pack: {{error}}"
     }
 }

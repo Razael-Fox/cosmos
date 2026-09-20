@@ -697,6 +697,9 @@
         "sticker_maker": {
             "description": "Creates a sticker from an image, video, or GIF sent by the user."
         },
+        "stickerly": {
+            "description": "Search for sticker packs on Sticker.ly and export them to WhatsApp."
+        },
         "stopautocorrection": {
             "description": "Disables automated AI message auto-correction via OpenRouter for this chat."
         },

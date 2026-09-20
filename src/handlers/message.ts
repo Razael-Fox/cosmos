@@ -15,6 +15,7 @@ import { getTranslator } from '#utils/i18n.js';
 import { getOwnerNumbers } from '#utils/owner.js';
 import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
 import { updateUserPresence, linkPresenceIds } from '#services/presenceService.js';
+import { hasActiveStickerlySession, processStickerlySelection } from '#utils/stickerlySession.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
     const name = toolName.toLowerCase();
@@ -51,7 +52,20 @@ function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | nul
     if (['property', 'realestate', 'catalog', 'sell'].includes(name)) {
         return 'property';
     }
-    if (['play', 'playlyrics', 'stoplyrics', 'tiktokdl', 'pinterestdl', 'telegramdl', 'ytdl'].includes(name)) {
+    if (
+        [
+            'play',
+            'playlyrics',
+            'stoplyrics',
+            'tiktokdl',
+            'pinterestdl',
+            'telegramdl',
+            'ytdl',
+            'stickerly',
+            'spack',
+            'stickerpack'
+        ].includes(name)
+    ) {
         return 'downloaders';
     }
     if (['autodl'].includes(name)) {
@@ -481,6 +495,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         if (senderRaw && !trimmedText.startsWith('.')) {
             const handledLoanConfirm = await processLoanConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
             if (handledLoanConfirm) return;
+        }
+
+        // Check if sender is selecting a sticker pack from active Sticker.ly search
+        if (senderRaw && hasActiveStickerlySession(senderRaw, jid)) {
+            const handledStickerly = await processStickerlySelection(sock, msg, senderRaw, jid, trimmedText, t);
+            if (handledStickerly) return;
         }
 
         if (isCommand) {

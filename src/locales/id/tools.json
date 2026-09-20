@@ -695,7 +695,10 @@
             "description": "Mengaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
         },
         "sticker_maker": {
-            "description": "Membuat stiker dari gambar, video, atau GIF yang dikirimkan oleh pengguna."
+            "description": "Membuat stiker dari gambar, video, atau GIF yang dikirim pengguna."
+        },
+        "stickerly": {
+            "description": "Cari paket stiker di Sticker.ly dan ekspor langsung ke WhatsApp."
         },
         "stopautocorrection": {
             "description": "Menonaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
