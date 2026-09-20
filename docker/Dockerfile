@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-# Cosmos all-in-one single-container image (Bot + API + Web + Nginx + cloudflared).
+# Cosmos origin single-container image (Bot + API + Web + Nginx + cloudflared).
 
 ARG NODE_VERSION=22-bookworm-slim
 

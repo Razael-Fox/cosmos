@@ -9,9 +9,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-SERVICE="cosmos-all-in-one"
-CONTAINER="cosmos-all-in-one"
-IMAGE="cosmos:prd"
+SERVICE="cosmos-origin"
+CONTAINER="cosmos-origin"
+IMAGE="cosmos-origin:latest"
 
 # ------------------------------------------------------------------------------
 # Privilege & Docker Execution Helper

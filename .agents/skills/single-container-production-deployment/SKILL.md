@@ -6,7 +6,7 @@ description: >
 
 # Cosmos Single-Container Production Deployment Standards
 
-Dokumen ini adalah standar operasional dan panduan arsitektur containerization untuk repositori Cosmos dalam memaketkan tiga aplikasi independen (Bot WhatsApp, Fastify API Gateway, dan Next.js Web Portal) ke dalam satu kontainer Docker produksi (`cosmos-all-in-one`) yang disupervisi oleh PM2 dan Nginx.
+Dokumen ini adalah standar operasional dan panduan arsitektur containerization untuk repositori Cosmos dalam memaketkan tiga aplikasi independen (Bot WhatsApp, Fastify API Gateway, dan Next.js Web Portal) ke dalam satu kontainer Docker produksi (`cosmos-origin`) yang disupervisi oleh PM2 dan Nginx.
 
 ---
 

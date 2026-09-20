@@ -169,7 +169,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### V. Arsitektur Produksi Kontainer Tunggal (Single-Container Production Standards)
 
-- **Multi-Stage Containerization:** Cosmos memaketkan 3 aplikasi mandiri (WhatsApp Bot di `main`, Fastify API Gateway di `api`, dan Next.js Web Portal di `website`) ke dalam satu kontainer Docker produksi `cosmos-all-in-one` yang disupervisi oleh PM2 dan Nginx non-root.
+- **Multi-Stage Containerization:** Cosmos memaketkan 3 aplikasi mandiri (WhatsApp Bot di `main`, Fastify API Gateway di `api`, dan Next.js Web Portal di `website`) ke dalam satu kontainer Docker produksi `cosmos-origin` yang disupervisi oleh PM2 dan Nginx non-root.
 - **Non-Root & Unprivileged Nginx:** Runner Docker wajib berjalan di bawah user non-root `cosmos` (UID 1001). Nginx wajib menggunakan direktori sementara `/tmp/*` (`client_body_temp_path`, dll.) dan direktif `user` di level root Nginx dilarang digunakan.
 - **Next.js Standalone Loopback Binding:** Pada PM2 runtime, service `cosmos-web` **WAJIB** mengekspor `HOSTNAME: '0.0.0.0'` agar server standalone Next.js mengikat ke loopback kontainer dan dapat diakses oleh reverse proxy Nginx (`127.0.0.1:3000`).
 - **Cloudflare Ingress & Turnstile:** Akses publik dikelola melalui Cloudflare Tunnel outbound (`cloudflared --url http://127.0.0.1:80`). Variabel frontend `NEXT_PUBLIC_TURNSTILE_SITE_KEY` wajib diinjeksikan via Docker build argument (`ARG`), sedangkan secret backend `CLOUDFLARE_TURNSTILE_SECRET_KEY` diinjeksikan saat runtime via `.env`. Rujuk panduan lengkap di `.agents/skills/single-container-production-deployment/SKILL.md`.
@@ -194,11 +194,11 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### Z. Verifikasi Deploy Kontainer (Container Deploy Verification Standards)
 
-- **Samakan Image:** Setelah `docker compose build`, **WAJIB** membandingkan ID image kontainer berjalan vs `cosmos-all-in-one:latest` (`docker inspect` vs `docker images --no-trunc`) dan menjalankan `docker compose up -d` bila berbeda sebelum mengklaim perbaikan sudah live.
+- **Samakan Image:** Setelah `docker compose build`, **WAJIB** membandingkan ID image kontainer berjalan vs `cosmos-origin:latest` (`docker inspect` vs `docker images --no-trunc`) dan menjalankan `docker compose up -d` bila berbeda sebelum mengklaim perbaikan sudah live.
 - **Bukti di Bundle Berjalan:** Keberadaan perbaikan wajib dibuktikan dengan `grep` string literal di `/app/website/.next/`, `/app/bot/dist`, atau `/app/api/dist` **di dalam kontainer yang berjalan**, plus cek `pm2 list` dan `curl` ke rute terkait. Rujuk panduan di `.agents/skills/container-deploy-verification/SKILL.md`.
 
 ### AA. Rebuild & Redeploy Otomatis Setiap Perubahan Kode (Mandatory Container Rebuild on Code Changes)
 
-- **Selalu Build + Deploy:** Setiap ada perubahan kode pada salah satu dari tiga aplikasi (Bot Engine di root, API Gateway di `.worktrees/api`, Web Portal di `.worktrees/website`) yang ditujukan untuk produksi, AI Agent **WAJIB** menuntaskannya sampai live: verifikasi per worktree (`typecheck` + `lint` + `build` + test bila ada) → commit lokal → `docker compose build cosmos-all-in-one` → `docker compose up -d` → verifikasi sesuai Aturan Z. Dilarang berhenti hanya pada commit. Shortcut: `pnpm docker:deploy` (root `package.json`) menjalankan seluruh alur build → up → recreate-bila-berubah → verifikasi.
+- **Selalu Build + Deploy:** Setiap ada perubahan kode pada salah satu dari tiga aplikasi (Bot Engine di root, API Gateway di `.worktrees/api`, Web Portal di `.worktrees/website`) yang ditujukan untuk produksi, AI Agent **WAJIB** menuntaskannya sampai live: verifikasi per worktree (`typecheck` + `lint` + `build` + test bila ada) → commit lokal → `docker compose build cosmos-origin` → `docker compose up -d` → verifikasi sesuai Aturan Z. Dilarang berhenti hanya pada commit. Shortcut: `pnpm docker:deploy` (root `package.json`) menjalankan seluruh alur build → up → recreate-bila-berubah → verifikasi.
 - **Pengecualian Docs-Only:** Perubahan yang tidak masuk image Docker (`.agents/skills/*`, `*.md`/AGENTS.md, `.env` yang di-gitignore) tidak memerlukan rebuild — kecuali `.env` mengubah variabel `NEXT_PUBLIC_*` (bake-time), maka rebuild **tetap wajib**.
 - **Cek Disk Dulu:** Sebelum build, cek `df -h /` dan `docker system df`; bila sempit, jalankan `docker builder prune -f` terlebih dahulu (build berikutnya full dan lambat). Kegagalan khas: `failed to extract layer ... no space left on device`.

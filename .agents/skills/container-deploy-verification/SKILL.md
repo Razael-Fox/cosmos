@@ -10,8 +10,8 @@ Jangan pernah mengklaim perbaikan "sudah live" hanya karena `docker compose buil
 ## 1. Samakan Image Berjalan vs Terbaru
 
 ```bash
-docker inspect cosmos-all-in-one --format '{{.Image}}'
-docker images --no-trunc cosmos-all-in-one:latest --format '{{.ID}}'
+docker inspect cosmos-origin --format '{{.Image}}'
+docker images --no-trunc cosmos-origin:latest --format '{{.ID}}'
 ```
 
 Beda ID → jalankan `docker compose up -d` (recreate) lalu verifikasi ulang.
@@ -20,11 +20,11 @@ Beda ID → jalankan `docker compose up -d` (recreate) lalu verifikasi ulang.
 
 ```bash
 # Bot/API (dist JS):
-docker exec cosmos-all-in-one grep -c "<namaFungsiBaru>" /app/bot/dist/... /app/api/dist/...
+docker exec cosmos-origin grep -c "<namaFungsiBaru>" /app/bot/dist/... /app/api/dist/...
 # Website (bundle minified → cari string literal, bukan nama variabel):
-docker exec cosmos-all-in-one grep -r -l "<string-literal-unik>" /app/website/.next/
+docker exec cosmos-origin grep -r -l "<string-literal-unik>" /app/website/.next/
 # Kunci build-time (NEXT_PUBLIC_*):
-docker exec cosmos-all-in-one grep -r -o "<nilai-key>" /app/website/.next/static | head
+docker exec cosmos-origin grep -r -o "<nilai-key>" /app/website/.next/static | head
 ```
 
 Catatan: `NEXT_PUBLIC_*` tertanam saat build. Perubahan `.env` untuk variabel tersebut (contoh: `BOT_PHONE_NUMBER` → `NEXT_PUBLIC_BOT_NUMBER`) **wajib** `build` ulang + `up -d`; restart saja tidak cukup. Variabel runtime (secret, token) cukup `up -d`.
@@ -32,9 +32,9 @@ Catatan: `NEXT_PUBLIC_*` tertanam saat build. Perubahan `.env` untuk variabel te
 ## 3. Kesehatan Service & Sesi
 
 ```bash
-docker exec cosmos-all-in-one /usr/local/bin/pm2 list   # semua online, cosmos-bot ↺ stabil
+docker exec cosmos-origin /usr/local/bin/pm2 list   # semua online, cosmos-bot ↺ stabil
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8080/<route>
-docker logs cosmos-all-in-one --tail 40 | grep -a -v -E "cloudflared|argotunnel"
+docker logs cosmos-origin --tail 40 | grep -a -v -E "cloudflared|argotunnel"
 ```
 
 Sesi WhatsApp tersimpan di volume `./storage` (bukan di image) — recreate aman tanpa pairing ulang. File `.env` berisi secret dan di-gitignore: jangan commit, jangan tampilkan nilainya.

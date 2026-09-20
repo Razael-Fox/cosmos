@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Cosmos Single-Container Docker Build Script
-# Prepares worktrees, checks disk space, and builds cosmos-all-in-one with Compose.
+# Prepares worktrees, checks disk space, and builds cosmos-origin with Compose.
 # ==============================================================================
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
-SERVICE="cosmos-all-in-one"
-IMAGE="cosmos:prd"
+SERVICE="cosmos-origin"
+IMAGE="cosmos-origin:latest"
 
 # ------------------------------------------------------------------------------
 # Privilege & Docker Execution Helper

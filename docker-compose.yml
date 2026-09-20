@@ -1,5 +1,5 @@
 services:
-    cosmos-all-in-one:
+    cosmos-origin:
         build:
             context: .
             dockerfile: docker/Dockerfile
@@ -9,8 +9,8 @@ services:
                 NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
                 NEXT_PUBLIC_BOT_NUMBER: ${BOT_PHONE_NUMBER:-}
                 NEXT_PUBLIC_SALES_NUMBER: ${SALES_PHONE_NUMBER:-}
-        image: cosmos:prd
-        container_name: cosmos-all-in-one
+        image: cosmos-origin:latest
+        container_name: cosmos-origin
         restart: unless-stopped
         env_file:
             - path: .env
@@ -24,4 +24,4 @@ services:
             - ./storage:/app/storage
         # Container port 80 (Nginx reverse proxy) is exposed on host port 8080 by default.
         ports:
-            - '${HOST_PORT_ALL_IN_ONE:-8080}:80'
+            - '${HOST_PORT_ORIGIN:-${HOST_PORT_ALL_IN_ONE:-8080}}:80'

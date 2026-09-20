@@ -34,7 +34,7 @@ Aturan baku:
 - Setelah deploy, verifikasi bundle yang **berjalan** (bukan yang baru dibangun):
     ```bash
     docker inspect <container> --format '{{.Image}}'
-    docker images --no-trunc cosmos-all-in-one:latest --format '{{.ID}}'
+    docker images --no-trunc cosmos-origin:latest --format '{{.ID}}'
     docker exec <container> grep -r -l "<string-perbaikan>" /app/website/.next/static
     ```
 - Minta pengguna hard-refresh (`Ctrl+Shift+R`) agar chunk JS lama tidak ter-cache.
