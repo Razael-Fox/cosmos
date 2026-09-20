@@ -252,6 +252,76 @@ async function runTests() {
     );
     console.log('✓ Cancellation via .cancel and immediate delete-for-everyone passed');
 
+    // [Test 10] Quoting preview message with "This" by another user in group chat
+    console.log('[Test 10] Testing quoting preview card with "This" by another user in group chat...');
+    const userA = '62895326563307';
+    const userB = '6282225907841';
+    const groupChat = '120363274823554999@g.us';
+
+    const groupDeletedKeys: any[] = [];
+    const mockGroupSock: any = {
+        sendMessage: async (jid: string, content: any) => {
+            if (content.delete) {
+                groupDeletedKeys.push(content.delete);
+                return;
+            }
+            return { key: { id: `mock_msg_${Date.now()}` } };
+        },
+        waUploadToServer: async () => ({ directPath: '/mock/direct/path' }),
+        relayMessage: async () => ({})
+    };
+
+    const groupSession: StickerlySession = {
+        chatJid: groupChat,
+        userJid: userA,
+        query: 'Anime',
+        packs: searchResults.slice(0, 3),
+        previewMessageKeys: [
+            { id: 'prev_a1', remoteJid: groupChat, fromMe: true },
+            { id: 'prev_a2', remoteJid: groupChat, fromMe: true },
+            { id: 'prev_a3', remoteJid: groupChat, fromMe: true }
+        ],
+        guideMessageKey: { id: 'guide_a1', remoteJid: groupChat, fromMe: true },
+        timer: setTimeout(() => {}, 60000)
+    };
+
+    registerStickerlySession(groupSession);
+
+    // Verify session is active by chat ID even when checked with userB
+    assert(hasActiveStickerlySession(groupChat), 'Session must be active for groupChat');
+    assert(hasActiveStickerlySession(userB, groupChat), 'Session must be active for userB in groupChat');
+
+    // Simulate userB replying to preview #3 with "This"
+    const quoteMsgFromUserB = {
+        key: { id: 'reply_msg_99', remoteJid: groupChat, participant: `${userB}@s.whatsapp.net` },
+        message: {
+            extendedTextMessage: {
+                text: 'This',
+                contextInfo: {
+                    stanzaId: 'prev_a3',
+                    quotedMessage: {
+                        imageMessage: {
+                            caption: '*STICKER PACK #3*\n📦 *Title:* Pack 3\n👤 *Author:* Someone'
+                        }
+                    }
+                }
+            }
+        }
+    } as any;
+
+    const groupHandled = await processStickerlySelection(
+        mockGroupSock,
+        quoteMsgFromUserB,
+        userB,
+        groupChat,
+        'This',
+        (k) => k
+    );
+    assert.strictEqual(groupHandled, true, 'Quoting preview #3 with "This" must be handled');
+    assert.strictEqual(hasActiveStickerlySession(groupChat), false, 'Session must be cleared after selection');
+    assert(groupDeletedKeys.length >= 4, 'All preview messages and guide must be deleted');
+    console.log('✓ Group-wide selection quoting preview with "This" passed');
+
     console.log('\n========================================');
     console.log('🎉 ALL STICKER.LY TESTS PASSED SUCCESSFULLY!');
     console.log('========================================');

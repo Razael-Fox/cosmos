@@ -10,12 +10,23 @@ import { isUserRegistering, processRegistrationStep } from '#utils/idCard.js';
 import { processBankTransferConfirmation } from '#tools/bank.js';
 import { processLoanConfirmation } from '#tools/loan.js';
 import { formatMentions } from '#utils/casino.js';
-import { hasCancellableSession, cancelActiveSession } from '#utils/cancellationManager.js';
+import {
+    hasCancellableSession,
+    cancelActiveSession,
+    unregisterCancellableSessionByUser
+} from '#utils/cancellationManager.js';
 import { getTranslator } from '#utils/i18n.js';
 import { getOwnerNumbers } from '#utils/owner.js';
 import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
 import { updateUserPresence, linkPresenceIds } from '#services/presenceService.js';
-import { hasActiveStickerlySession, processStickerlySelection } from '#utils/stickerlySession.js';
+import {
+    hasActiveStickerlySession,
+    getStickerlySession,
+    deleteStickerlySession,
+    deletePreviewMessages,
+    removeScheduledDeletions,
+    processStickerlySelection
+} from '#utils/stickerlySession.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
     const name = toolName.toLowerCase();
@@ -421,10 +432,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         ((botRawJid && repliedToRaw === botRawJid) || (botRawLid && repliedToRaw === botRawLid))
     );
 
+    const isStickerlyActiveInChat = hasActiveStickerlySession(jid);
     const isInInteractiveSession = Boolean(
-        (senderRaw && isCancelKeyword && hasCancellableSession(senderRaw, jid)) ||
+        (senderRaw && isCancelKeyword && (hasCancellableSession(senderRaw, jid) || isStickerlyActiveInChat)) ||
         (senderRaw && !isQuotingCommand && isUserRegistering(senderRaw, jid)) ||
-        (senderRaw && hasCancellableSession(senderRaw, jid))
+        (senderRaw && hasCancellableSession(senderRaw, jid)) ||
+        isStickerlyActiveInChat
     );
 
     const isAutoStickerTrigger = Boolean(
@@ -469,6 +482,24 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     markPresenceActive(sock, jid);
 
     try {
+        if (isCancelKeyword && isStickerlyActiveInChat) {
+            const session = getStickerlySession(jid);
+            if (session) {
+                clearTimeout(session.timer);
+                unregisterCancellableSessionByUser(session.userJid, jid);
+                if (senderRaw) unregisterCancellableSessionByUser(senderRaw, jid);
+                const allKeys = [...session.previewMessageKeys];
+                if (session.guideMessageKey) {
+                    allKeys.push(session.guideMessageKey);
+                }
+                await deletePreviewMessages(sock, jid, allKeys);
+                await removeScheduledDeletions(jid, allKeys.map((k) => k.id!).filter(Boolean));
+                deleteStickerlySession(jid);
+                await sock.sendMessage(jid, { text: t('media.stickerly.cancelled') }, { quoted: msg });
+                return;
+            }
+        }
+
         if (senderRaw && isCancelKeyword && hasCancellableSession(senderRaw, jid)) {
             const cancelMsg = await cancelActiveSession(senderRaw, jid, sock, msg, t);
             if (cancelMsg && typeof cancelMsg === 'string' && cancelMsg.trim().length > 0) {
@@ -498,8 +529,8 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
 
         // Check if sender is selecting a sticker pack from active Sticker.ly search
-        if (senderRaw && hasActiveStickerlySession(senderRaw, jid)) {
-            const handledStickerly = await processStickerlySelection(sock, msg, senderRaw, jid, trimmedText, t);
+        if (isStickerlyActiveInChat) {
+            const handledStickerly = await processStickerlySelection(sock, msg, senderRaw || '', jid, trimmedText, t);
             if (handledStickerly) return;
         }
 

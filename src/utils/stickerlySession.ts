@@ -36,18 +36,54 @@ export function registerStickerlySession(session: StickerlySession): void {
     activeStickerlySessions.set(key, session);
 }
 
-export function getStickerlySession(userJid: string, chatJid: string): StickerlySession | undefined {
-    const key = getSessionKey(userJid, chatJid);
-    return activeStickerlySessions.get(key);
+export function getStickerlySession(arg1: string, arg2?: string): StickerlySession | undefined {
+    if (!arg1) return undefined;
+    const clean1 = cleanId(arg1).toLowerCase();
+    const clean2 = arg2 ? cleanId(arg2).toLowerCase() : undefined;
+
+    // 1. Try exact composite keys in either order
+    if (clean2) {
+        const s1 = activeStickerlySessions.get(`${clean1}:${clean2}`);
+        if (s1) return s1;
+        const s2 = activeStickerlySessions.get(`${clean2}:${clean1}`);
+        if (s2) return s2;
+    }
+
+    // 2. Match by chat JID
+    for (const session of activeStickerlySessions.values()) {
+        const sc = cleanId(session.chatJid).toLowerCase();
+        if (sc === clean1 || (clean2 && sc === clean2)) {
+            return session;
+        }
+    }
+
+    return undefined;
 }
 
-export function hasActiveStickerlySession(userJid: string, chatJid: string): boolean {
-    return getStickerlySession(userJid, chatJid) !== undefined;
+export function hasActiveStickerlySession(arg1: string, arg2?: string): boolean {
+    return getStickerlySession(arg1, arg2) !== undefined;
 }
 
-export function deleteStickerlySession(userJid: string, chatJid: string): boolean {
-    const key = getSessionKey(userJid, chatJid);
-    return activeStickerlySessions.delete(key);
+export function deleteStickerlySession(arg1: string, arg2?: string): boolean {
+    if (!arg1) return false;
+    const clean1 = cleanId(arg1).toLowerCase();
+    const clean2 = arg2 ? cleanId(arg2).toLowerCase() : undefined;
+
+    let deleted = false;
+    for (const [k, session] of activeStickerlySessions.entries()) {
+        const sc = cleanId(session.chatJid).toLowerCase();
+        const su = cleanId(session.userJid).toLowerCase();
+        if (
+            (sc === clean1 && (!clean2 || su === clean2)) ||
+            (sc === clean2 && su === clean1) ||
+            (clean2 && (k === `${clean1}:${clean2}` || k === `${clean2}:${clean1}`)) ||
+            (!clean2 && (sc === clean1 || su === clean1))
+        ) {
+            activeStickerlySessions.delete(k);
+            deleted = true;
+        }
+    }
+    return deleted;
 }
 
 /**
@@ -242,18 +278,20 @@ export async function processStickerlySelection(
     text: string,
     t: (key: string, opts?: any) => string
 ): Promise<boolean> {
-    const session = getStickerlySession(userJid, chatJid);
+    const session = getStickerlySession(chatJid, userJid);
     if (!session) return false;
 
     let selectedPack: StickerlySearchResultItem | null = null;
 
-    // Check if the user quoted one of the 5 preview messages
+    // Check context info for quoted preview messages
     const contextInfo =
         msg.message?.extendedTextMessage?.contextInfo ||
         msg.message?.imageMessage?.contextInfo ||
-        msg.message?.videoMessage?.contextInfo;
+        msg.message?.videoMessage?.contextInfo ||
+        msg.message?.documentMessage?.contextInfo;
     const quotedStanzaId = contextInfo?.stanzaId;
 
+    // 1. Check if the user quoted one of the 5 preview messages by stanzaId
     if (quotedStanzaId) {
         const matchIdx = session.previewMessageKeys.findIndex((k) => k.id === quotedStanzaId);
         if (matchIdx !== -1 && session.packs[matchIdx]) {
@@ -261,11 +299,30 @@ export async function processStickerlySelection(
         }
     }
 
-    // Check if the user typed a number (1 - 5) or #1 - #5
+    // 2. Check if quoted message caption or text contains STICKER PACK #N / PAKET STIKER #N
+    if (!selectedPack && contextInfo?.quotedMessage) {
+        const qm = contextInfo.quotedMessage;
+        const quotedCaption =
+            qm.imageMessage?.caption ||
+            qm.videoMessage?.caption ||
+            qm.conversation ||
+            qm.extendedTextMessage?.text ||
+            '';
+        const cardMatch = quotedCaption.match(/(?:STICKER PACK|PAKET STIKER)\s*#(\d+)/i);
+        if (cardMatch) {
+            const num = parseInt(cardMatch[1], 10);
+            if (num >= 1 && num <= session.packs.length) {
+                selectedPack = session.packs[num - 1];
+            }
+        }
+    }
+
+    // 3. Check if the user typed a number (1 - 5), #1 - #5, pack 1-5, or similar
     if (!selectedPack) {
-        const cleanNumber = text.replace(/^#/, '').trim();
-        if (/^\d+$/.test(cleanNumber)) {
-            const num = parseInt(cleanNumber, 10);
+        const trimmed = text.trim();
+        const numMatch = trimmed.match(/^(?:#|pack\s*|paket\s*|nomor\s*|no\.?\s*|pilih\s*)?([1-5])$/i);
+        if (numMatch) {
+            const num = parseInt(numMatch[1], 10);
             if (num >= 1 && num <= session.packs.length) {
                 selectedPack = session.packs[num - 1];
             }
@@ -278,6 +335,7 @@ export async function processStickerlySelection(
 
     // Clear session timeout timer
     clearTimeout(session.timer);
+    unregisterCancellableSessionByUser(session.userJid, session.chatJid);
     unregisterCancellableSessionByUser(userJid, chatJid);
 
     // Collect all preview keys and guide key
@@ -289,7 +347,8 @@ export async function processStickerlySelection(
     // IMMEDIATELY delete all preview messages and guide message for everyone
     await deletePreviewMessages(sock, chatJid, allKeysToDelete);
     await removeScheduledDeletions(chatJid, allKeysToDelete.map((k) => k.id!).filter(Boolean));
-    deleteStickerlySession(userJid, chatJid);
+    deleteStickerlySession(session.chatJid);
+    deleteStickerlySession(chatJid);
 
     // Send immediate progress notification
     const progressText = t('media.stickerly.processing', {
