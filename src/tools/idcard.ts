@@ -6,7 +6,8 @@ import {
     isUserRegistering,
     cancelRegistrationSession
 } from '#utils/idCard.js';
-import { generateIdCardImage, DEFAULT_ID_CARD_PHOTO_URL } from '#utils/imageProcessing.js';
+import { generateIdCardImage } from '#utils/imageProcessing.js';
+import { getAvatarPlaceholderUrl } from '#utils/avatarSeed.js';
 import { getTranslator } from '#utils/i18n.js';
 import { renderAlert } from '../utils/uiFormatter.js';
 
@@ -82,7 +83,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 const imageBuffer = await generateIdCardImage(
                     existing,
                     null,
-                    customPhotoUrl || DEFAULT_ID_CARD_PHOTO_URL
+                    customPhotoUrl || getAvatarPlaceholderUrl(existing.nik, senderJid)
                 );
                 const caption = t('utilities.idcard.card_caption', {
                     nik: existing.nik,
@@ -136,7 +137,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     try {
         await ctx.sock.sendMessage(ctx.jid, { text: t('utilities.idcard.fetching') }, { quoted: ctx.msg });
-        const imageBuffer = await generateIdCardImage(existing, null, customPhotoUrl || DEFAULT_ID_CARD_PHOTO_URL);
+        const imageBuffer = await generateIdCardImage(
+            existing,
+            null,
+            customPhotoUrl || getAvatarPlaceholderUrl(existing.nik, senderJid)
+        );
         const caption = t('utilities.idcard.card_caption', {
             nik: existing.nik,
             fullName: existing.fullName,
