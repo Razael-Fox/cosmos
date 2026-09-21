@@ -127,6 +127,7 @@ export default function DashboardPage() {
     const presence = polledPresence ?? userProfile?.presence ?? 'offline';
 
     const avatarUrl = userProfile?.profilePictureUrl || fetchedAvatarUrl;
+    const placeholderAvatarUrl = userProfile?.avatarPlaceholderUrl ?? null;
 
     useEffect(() => {
         if (!userProfile?.id) return;
@@ -534,6 +535,14 @@ export default function DashboardPage() {
                                                     referrerPolicy="no-referrer"
                                                     className="w-full h-full object-cover"
                                                     onError={() => setAvatarError(true)}
+                                                />
+                                            ) : placeholderAvatarUrl ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img
+                                                    src={placeholderAvatarUrl}
+                                                    alt={userProfile?.username || 'Profile'}
+                                                    referrerPolicy="no-referrer"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-primary/20 flex items-center justify-center text-primary font-bold text-lg font-heading">

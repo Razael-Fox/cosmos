@@ -17,6 +17,7 @@ export interface UserProfile {
     lastLoginAt?: string | null;
     createdAt: string;
     profilePictureUrl?: string | null;
+    avatarPlaceholderUrl?: string | null;
     presence?: 'online' | 'offline' | null;
 }
 
