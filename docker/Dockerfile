@@ -92,7 +92,7 @@ RUN mkdir -p /var/lib/nginx /var/log/nginx && chown -R cosmos:cosmos /var/lib/ng
 
 WORKDIR /app
 RUN mkdir -p /app/bot /app/api /app/website /app/storage /app/config /app/storage/logs /app/storage/auth_info_baileys /app/storage/sub-bot && \
-    chown -R cosmos:cosmos /app && chmod 700 /app/storage
+    chown -R cosmos:cosmos /app && chmod 777 /app/storage /app/storage/sub-bot
 
 # Package Bot Engine
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/dist ./bot/dist
