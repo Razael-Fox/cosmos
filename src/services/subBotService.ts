@@ -30,6 +30,21 @@ export function getCleanNumber(raw: string): string {
     return raw.replace(/\D/g, '');
 }
 
+/**
+ * Returns the persistent host-mounted directory for a given sub-bot phone number.
+ * Path: `<STORAGE_DIR>/sub-bot/<phoneNumber>/`
+ *
+ * This must stay in sync with the equivalent path resolution in `src/db.ts`
+ * (`getPrismaClient` non-default branch) so that both modules always access the
+ * same on-disk location.
+ */
+function getSubBotDir(cleanNumber: string): string {
+    const storageRoot =
+        process.env.STORAGE_DIR ||
+        (fs.existsSync('/app/storage') ? '/app/storage' : path.resolve(process.cwd(), 'storage'));
+    return path.join(storageRoot, 'sub-bot', cleanNumber);
+}
+
 export function isSubBotActive(phoneNumber: string): boolean {
     const clean = getCleanNumber(phoneNumber);
     return activeConnections.has(`sub_${clean}`);
@@ -169,7 +184,7 @@ export async function requestPairing(
         console.error('[SubBot] Quota check failed, allowing pairing to proceed:', err);
     }
 
-    const botDir = path.resolve(process.cwd(), 'database', cleanNumber);
+    const botDir = getSubBotDir(cleanNumber);
     if (!fs.existsSync(botDir)) {
         fs.mkdirSync(botDir, { recursive: true });
     }
@@ -416,7 +431,7 @@ export async function requestPairingHeadless(
         console.error('[SubBot] Headless quota check failed, allowing pairing to proceed:', err);
     }
 
-    const botDir = path.resolve(process.cwd(), 'database', cleanNumber);
+    const botDir = getSubBotDir(cleanNumber);
     if (!fs.existsSync(botDir)) {
         fs.mkdirSync(botDir, { recursive: true });
     }
@@ -578,7 +593,7 @@ export function isSubBotRegistered(phoneNumber: string): boolean {
         }
     }
 
-    const dbPath = path.resolve(process.cwd(), 'database', clean, 'database.sqlite');
+    const dbPath = path.join(getSubBotDir(clean), 'database.sqlite');
     if (!fs.existsSync(dbPath)) return false;
 
     try {
@@ -600,7 +615,7 @@ export async function startSubBot(phoneNumber: string): Promise<boolean> {
     const sessionId = `sub_${clean}`;
     if (activeConnections.has(sessionId)) return false;
 
-    const botDir = path.resolve(process.cwd(), 'database', clean);
+    const botDir = getSubBotDir(clean);
     if (!fs.existsSync(botDir)) return false;
 
     if (!isSubBotRegistered(clean)) {
@@ -634,7 +649,7 @@ export async function deleteSubBot(phoneNumber: string): Promise<boolean> {
     }
     clearConfigCache(clean);
 
-    const botDir = path.resolve(process.cwd(), 'database', clean);
+    const botDir = getSubBotDir(clean);
     if (fs.existsSync(botDir)) {
         try {
             fs.rmSync(botDir, { recursive: true, force: true });
@@ -664,7 +679,10 @@ export function getSubBotStatus(phoneNumber: string) {
 }
 
 export function listAllSubBots() {
-    const dbDir = path.resolve(process.cwd(), 'database');
+    const storageRoot =
+        process.env.STORAGE_DIR ||
+        (fs.existsSync('/app/storage') ? '/app/storage' : path.resolve(process.cwd(), 'storage'));
+    const dbDir = path.join(storageRoot, 'sub-bot');
     if (!fs.existsSync(dbDir)) return [];
 
     const entries = fs.readdirSync(dbDir, { withFileTypes: true });
@@ -716,7 +734,10 @@ export async function broadcastSubBotForex(multiplier: number, reasoning: string
 }
 
 export function initSubBots(): void {
-    const dbDir = path.resolve(process.cwd(), 'database');
+    const storageRoot =
+        process.env.STORAGE_DIR ||
+        (fs.existsSync('/app/storage') ? '/app/storage' : path.resolve(process.cwd(), 'storage'));
+    const dbDir = path.join(storageRoot, 'sub-bot');
     if (!fs.existsSync(dbDir)) return;
 
     try {

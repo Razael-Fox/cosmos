@@ -455,7 +455,15 @@ export function getPrismaClient(sessionId: string = 'default'): PrismaClient {
         ensureDatabaseSchema(targetDbPath);
     } else {
         const phoneNumber = sessionId.replace(/^sub_/, '');
-        const botDir = path.resolve(process.cwd(), 'database', phoneNumber);
+
+        // Resolve the persistent storage root: prefer the STORAGE_DIR env-var
+        // (set to /app/storage inside the container), then fall back to a local
+        // `./storage` directory for development.
+        const storageRoot =
+            process.env.STORAGE_DIR ||
+            (fs.existsSync('/app/storage') ? '/app/storage' : path.resolve(process.cwd(), 'storage'));
+
+        const botDir = path.join(storageRoot, 'sub-bot', phoneNumber);
 
         if (!fs.existsSync(botDir)) {
             fs.mkdirSync(botDir, { recursive: true });

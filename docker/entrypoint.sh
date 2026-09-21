@@ -6,7 +6,7 @@ DB_FILE="${DATABASE_URL:-file:/app/storage/database.sqlite}"
 DB_PATH=$(printf '%s' "$DB_FILE" | sed 's|^file:||')
 IPC_SOCK="${BOT_IPC_SOCKET:-/app/storage/ipc.sock}"
 
-mkdir -p "$STORAGE_DIR/logs" "$STORAGE_DIR/auth_info_baileys" 2>/dev/null || true
+mkdir -p "$STORAGE_DIR/logs" "$STORAGE_DIR/auth_info_baileys" "$STORAGE_DIR/sub-bot" 2>/dev/null || true
 chmod 700 "$STORAGE_DIR" 2>/dev/null || true
 chmod 600 "$DB_PATH" 2>/dev/null || true
 

@@ -91,7 +91,7 @@ RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx || true
 RUN mkdir -p /var/lib/nginx /var/log/nginx && chown -R cosmos:cosmos /var/lib/nginx /var/log/nginx
 
 WORKDIR /app
-RUN mkdir -p /app/bot /app/api /app/website /app/storage /app/config /app/storage/logs /app/storage/auth_info_baileys && \
+RUN mkdir -p /app/bot /app/api /app/website /app/storage /app/config /app/storage/logs /app/storage/auth_info_baileys /app/storage/sub-bot && \
     chown -R cosmos:cosmos /app && chmod 700 /app/storage
 
 # Package Bot Engine
