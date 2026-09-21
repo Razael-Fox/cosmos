@@ -102,6 +102,8 @@ storage/active_sessions.json
 storage/presence.json
 storage/transaction/*
 !storage/transaction/.gitkeep
+storage/sub-bot/*
+!storage/sub-bot/.gitkeep
 
 # Markdown files
 ISSUE*.md
