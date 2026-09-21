@@ -365,7 +365,7 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
 
         return reply.send({
             jwtToken,
-            user: serializeUser(user)
+            user: serializeUser(user, undefined, undefined, null)
         });
     });
 
@@ -546,7 +546,7 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
 
         return reply.send({
             jwtToken,
-            user: serializeUser(user)
+            user: serializeUser(user, undefined, undefined, null)
         });
     });
 
@@ -590,7 +590,7 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
                 }
                 await processDeviceValidation(user.id, req, 'VERIFY_INVERTED', true);
                 const jwtToken = fastify.jwt.sign({ id: user.id, phoneNumber: record.phoneNumber });
-                const serialized = serializeUser(user);
+                const serialized = serializeUser(user, undefined, undefined, null);
                 emitAuthStatus(query.session, { status: 'VERIFIED', jwtToken, user: serialized });
                 return reply.send({ status: 'VERIFIED', jwtToken, user: serialized });
             }
@@ -650,7 +650,12 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             /* non-fatal */
         }
 
-        return reply.send({ user: serializeUser(user, profilePictureUrl, presence) });
+        const idCard = await prisma.idCard
+            .findUnique({ where: { userJid: user.id }, select: { nik: true } })
+            .catch(() => null);
+        const nik = idCard?.nik ?? null;
+
+        return reply.send({ user: serializeUser(user, profilePictureUrl, presence, nik) });
     });
 
     // GET /api/v1/auth/profile-photo

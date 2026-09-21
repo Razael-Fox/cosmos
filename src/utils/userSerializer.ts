@@ -1,5 +1,18 @@
 import type { User } from '../generated/prisma/client.js';
 
+const DICEBEAR_BASE_URL = 'https://api.dicebear.com/10.x';
+const AVATAR_STYLE = 'thumbs';
+
+function buildAvatarPlaceholderUrl(seed: string): string {
+    return `${DICEBEAR_BASE_URL}/${AVATAR_STYLE}/svg?seed=${encodeURIComponent(seed)}`;
+}
+
+function getAvatarPlaceholderUrl(nik: string | null | undefined, jidOrPhone: string): string {
+    const phoneDigits = jidOrPhone.split('@')[0].replace(/\D/g, '');
+    const seed = nik && nik.trim() ? nik.trim() : phoneDigits;
+    return buildAvatarPlaceholderUrl(seed);
+}
+
 export interface UserProfile {
     id: string;
     lid?: string | null;
@@ -14,13 +27,15 @@ export interface UserProfile {
     lastLoginAt?: string | null;
     createdAt: string;
     profilePictureUrl?: string | null;
+    avatarPlaceholderUrl: string;
     presence?: 'online' | 'offline' | null;
 }
 
 export function serializeUser(
     user: User,
     profilePictureUrl?: string | null,
-    presence?: 'online' | 'offline' | null
+    presence?: 'online' | 'offline' | null,
+    nik?: string | null
 ): UserProfile {
     return {
         id: user.id,
@@ -36,6 +51,7 @@ export function serializeUser(
         lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
         createdAt: user.createdAt.toISOString(),
         profilePictureUrl: profilePictureUrl ?? null,
+        avatarPlaceholderUrl: getAvatarPlaceholderUrl(nik, user.id),
         presence: presence ?? null
     };
 }
