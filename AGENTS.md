@@ -91,6 +91,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 ### I. Manajemen Versi Lokal (Git Local Commits)
 
 - **Wajib Commit Lokal:** Setiap kali menyelesaikan sebuah tugas atau perubahan kode, AI Agent **WAJIB** melakukan commit secara lokal (`git add .` dan `git commit -m "..."`) tanpa perlu melakukan `push`. Hal ini bertujuan agar diff kode selalu tercatat, konteks pekerjaan tidak hilang antar-sesi, dan meminimalisir risiko perubahan dari sesi sebelumnya tertinggal saat sesi berikutnya diinstruksikan untuk melakukan `push`.
+- **Larangan Commit/Push `ISSUE.md` (No Implicit ISSUE.md Commit/Push):** File `ISSUE.md` (dokumen perencanaan/issue lokal) **DILARANG** untuk di-commit (`git add ISSUE.md`, `git add -f ISSUE.md`, atau ikut tercakup oleh `git add .` / `git add -A`) maupun di-`push` kecuali ada **perintah eksplisit dari pengguna** pada sesi berjalan. File ini memang sengaja dimasukkan ke `.gitignore`, sehingga AI Agent wajib memastikan file tersebut tidak ikut ter-stage; bila `git add .` berpotensi menyeretnya, gunakan staging selektif (`git add <path spesifik>`) alih-alih staging menyeluruh. Pengecualian hanya berlaku bila pengguna secara tegas memerintahkan commit/push file tersebut (misal: "commit ISSUE.md", "push ISSUE.md").
 
 ---
 
@@ -101,7 +102,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 3. **Eksekusi Perubahan:** Lakukan pengeditan kode secara presisi dan bersih dalam TypeScript.
 4. **Jalankan Verifikasi:** Jalankan `pnpm typecheck` dan `pnpm lint` untuk memastikan tidak ada syntax error atau tipe mismatch.
 5. **Format Kode:** Jalankan `pnpm format` agar format kode seragam dan sesuai standar (jalankan setelah script lainnya).
-6. **Lakukan Git Commit:** Lakukan commit lokal atas semua perubahan yang telah selesai dan terverifikasi beserta hasil formatting.
+6. **Lakukan Git Commit:** Lakukan commit lokal atas semua perubahan yang telah selesai dan terverifikasi beserta hasil formatting. **Kecualikan `ISSUE.md`** — jangan di-stage atau di-commit kecuali pengguna memberi perintah eksplisit (lihat Aturan I).
 7. **Ringkaskan Hasil:** Berikan penjelasan singkat, padat, dan jelas mengenai perubahan yang telah dilakukan beserta bukti verifikasi.
 
 ### J. Database & Persistensi (Prisma SQLite)
