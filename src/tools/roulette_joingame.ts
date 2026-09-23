@@ -73,26 +73,27 @@ const joinGameTool: ToolModule = {
         const numPlayers = session.players.length;
 
         return renderCard({
-            title: 'BUCKSHOT ROULETTE LOBBY',
+            title: ctx.t('games.roulette.card_title_lobby'),
             icon: '🔫',
             headerStyle: 'bold',
+            t: ctx.t,
             sections: [
                 {
-                    title: `ACTIVE ROSTER (${numPlayers}/5 PLAYERS)`,
+                    title: ctx.t('games.roulette.active_roster_title', { current: numPlayers }),
                     items: session.players.map((p, idx) => ({
                         label: `${idx === 0 ? '👑 ' : ''}@${p.pushName}`,
-                        value: p.betAmount > 0 ? formatRupiah(p.betAmount) : 'No Bet'
+                        value: p.betAmount > 0 ? formatRupiah(p.betAmount) : ctx.t('games.roulette.no_bet')
                     }))
                 },
                 {
-                    title: 'PRIZE POT',
+                    title: ctx.t('games.roulette.prize_pot_title'),
                     items: [
-                        { label: 'Current Pot', value: formatRupiah(session.potAmount) },
-                        { label: 'Minimum Bet', value: formatRupiah(MIN_BET) }
+                        { label: ctx.t('games.roulette.current_pot_label'), value: formatRupiah(session.potAmount) },
+                        { label: ctx.t('games.roulette.minimum_bet_label'), value: formatRupiah(MIN_BET) }
                     ]
                 }
             ],
-            tip: 'Place bet with .bet <amount> • Host starts with .startgame'
+            tip: ctx.t('games.roulette.tip_join')
         });
     }
 };

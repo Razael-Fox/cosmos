@@ -48,10 +48,19 @@
         "unexpected_error": "Error: An unexpected issue occurred while downloading the Telegram video.",
         "video_retrieved": "✅ The Telegram video has been successfully retrieved.",
         "photo_retrieved": "✅ The Telegram photo has been successfully retrieved.",
-        "video_downloaded": "✅ The Telegram video has been successfully downloaded."
+        "video_downloaded": "✅ The Telegram video has been successfully downloaded.",
+        "owner_request_title": "🔒 *Private Telegram Content Request*",
+        "owner_request_body": "A user requested media from a private Telegram chat that has not been added to the database yet.",
+        "owner_request_link": "*Requested Link:* {{link}}",
+        "owner_request_chat_id": "*Internal Chat ID:* ```{{chatId}}```",
+        "owner_request_message_id": "*Message ID:* ```{{messageId}}```",
+        "owner_request_user": "*Requester Username:* {{name}}",
+        "owner_request_phone": "*WhatsApp Number:* {{number}}",
+        "owner_request_next_steps": "*Next Steps:*\n1. If an invite link is available, run `.tgadd <invite-link>` so the dummy account joins automatically.\n2. Otherwise, join the group manually using the dummy account, then register it with `.tgadd <link-or-chat-id>`.\n3. The requester may retry the same command afterwards."
     },
     "pinterestdl": {
-        "document_version": "Document version"
+        "document_version": "Document version",
+        "card_title": "PINTEREST MEDIA"
     },
     "play": {
         "results_title": "Here are the top results for *{{query}}*.\nPlease reply with a number (1-{{count}}) to this message to download:\n",
@@ -92,6 +101,10 @@
         "processing": "Processing sticker pack: *\"{{name}}\"* ({{count}} stickers)...",
         "wastickers_caption": "📦 *{{name}}* ({{count}} stickers)\nTap to import with Sticker Maker / WhatsApp!",
         "error_fetch_pack": "Failed to fetch sticker pack details: {{error}}",
-        "error_process_pack": "Failed to process and build sticker pack: {{error}}"
+        "error_process_pack": "Failed to process and build sticker pack: {{error}}",
+        "cancellation_desc": "Sticker.ly search for \"{{query}}\"",
+        "untitled_pack": "Untitled Pack",
+        "error_no_stickers": "Sticker pack contains no stickers.",
+        "error_download_failed": "Failed to download any stickers from the pack."
     }
 }

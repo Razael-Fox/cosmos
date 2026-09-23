@@ -6,6 +6,7 @@ import { timingSafeStringCompare } from './otpService.js';
 import { dispatchLoginSecurityAlert } from './securityAlertService.js';
 import { activeConnections } from '#utils/connectionManager.js';
 import { getUserPresence } from './presenceService.js';
+import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 import type { WASocket, GroupMetadata } from '@whiskeysockets/baileys';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
@@ -44,8 +45,10 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             if (!targetJid || !code) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
             const sock = activeConnections.get('default');
             if (!sock) return { status: 503, data: { error: 'BOT_OFFLINE' } };
+            const lang = await getChatLanguage(targetJid);
+            const t = getTranslator(lang);
             await sock.sendMessage(targetJid, {
-                text: `🔐 *Cosmos Verification Code*\n\nYour one-time code is: *${code}*\nIt expires in 5 minutes. Do not share this code with anyone.`
+                text: t('core.ipc_otp', { code })
             });
             console.log(`[IPC] OTP dispatched to ${targetJid}`);
 
@@ -88,9 +91,11 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             }
             const sock = activeConnections.get('default');
             if (sock) {
+                const lang = await getChatLanguage(canonicalJid);
+                const t = getTranslator(lang);
                 await sock
                     .sendMessage(canonicalJid, {
-                        text: `✅ *Registration Verified!*\n\nYour account has been whitelisted successfully. You may now proceed on the web dashboard.`
+                        text: t('core.ipc_verified')
                     })
                     .catch((err) => console.error('[IPC] Verification notice failed:', err));
             }
@@ -132,13 +137,14 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             if (!userJid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
             const sock = activeConnections.get('default');
             if (sock) {
+                const lang = await getChatLanguage(userJid);
+                const t = getTranslator(lang);
                 await sock
                     .sendMessage(userJid, {
-                        text:
-                            `🎉 *Subscription Activated!*\n\n` +
-                            `Tier: ${tier}\n` +
-                            `Valid Until: ${(body.expiresAt as string) || 'Unlimited'}\n\n` +
-                            `Thank you for supporting Cosmos!`
+                        text: t('core.ipc_sub_activated', {
+                            tier,
+                            expiresAt: (body.expiresAt as string) || t('core.unknown', 'Unlimited')
+                        })
                     })
                     .catch((err) => console.error('[IPC] Subscription receipt failed:', err));
             }

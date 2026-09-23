@@ -21,6 +21,7 @@ export interface CardOptions {
     footer?: string;
     tips?: string[];
     tip?: string;
+    t?: TranslatorFn;
 }
 
 export interface AlertOptions {
@@ -30,6 +31,7 @@ export interface AlertOptions {
     details?: string[];
     actionSuggestion?: string;
     prefix?: string;
+    t?: TranslatorFn;
 }
 
 export interface ProgressOptions {
@@ -158,11 +160,11 @@ export function renderCard(options: CardOptions): string {
     }
 
     if (tips.length > 0) {
-        lines.push('');
+        const tipPrefix = options.t ? options.t('tools.ui.tip_prefix', '💡 *Tip:*') : '💡 *Tip:*';
         if (tips.length === 1) {
-            lines.push(`💡 *Tip:* ${tips[0]}`);
+            lines.push(`${tipPrefix} ${tips[0]}`);
         } else {
-            lines.push('💡 *Tip:*');
+            lines.push(tipPrefix);
             tips.forEach((tp) => {
                 lines.push(`• ${tp}`);
             });
@@ -177,7 +179,11 @@ export function renderCard(options: CardOptions): string {
  */
 export function renderAlert(options: AlertOptions): string {
     const icon = ALERT_ICONS[options.type] || 'ℹ️';
-    const title = options.title || DEFAULT_ALERT_TITLES[options.type] || 'NOTICE';
+    const defaultTitle = options.t
+        ? options.t(`tools.ui.alert_titles.${options.type}`, DEFAULT_ALERT_TITLES[options.type])
+        : DEFAULT_ALERT_TITLES[options.type];
+    const title =
+        options.title || defaultTitle || (options.t ? options.t('tools.ui.alert_titles.notice', 'NOTICE') : 'NOTICE');
     const lines: string[] = [`╭───「 ${icon} *${title}* 」`, `│`, `│ ${options.message}`];
 
     if (options.details && options.details.length > 0) {
@@ -269,7 +275,13 @@ export function renderSyntaxError(
 /**
  * Renders a structured Table or Numbered Catalog Card.
  */
-export function renderCatalogCard(title: string, icon: string, items: CatalogItem[], footerTip?: string): string {
+export function renderCatalogCard(
+    title: string,
+    icon: string,
+    items: CatalogItem[],
+    footerTip?: string,
+    t?: TranslatorFn
+): string {
     const iconPart = icon ? `${icon} ` : '';
     const lines: string[] = [`┌──「 ${iconPart}*${title}* 」`];
 
@@ -290,7 +302,8 @@ export function renderCatalogCard(title: string, icon: string, items: CatalogIte
 
     lines.push(`└─────────────────────`);
     if (footerTip) {
-        lines.push(`\n💡 *Tip:* ${footerTip}`);
+        const tipPrefix = t ? t('tools.ui.tip_prefix', '💡 *Tip:*') : '💡 *Tip:*';
+        lines.push(`\n${tipPrefix} ${footerTip}`);
     }
     return lines.join('\n');
 }
@@ -298,11 +311,14 @@ export function renderCatalogCard(title: string, icon: string, items: CatalogIte
 /**
  * Renders a heart health gauge for minigames like Buckshot Roulette: [ ❤️❤️❤️🖤🖤 ] (3/5 HP)
  */
-export function renderHealthGauge(current: number, max: number = 5): string {
+export function renderHealthGauge(current: number, max: number = 5, t?: TranslatorFn): string {
     const safeCurrent = Math.max(0, Math.min(current, max));
     const safeMax = Math.max(1, max);
     const hearts = '❤️'.repeat(safeCurrent) + '🖤'.repeat(safeMax - safeCurrent);
-    return `[ ${hearts} ] (${safeCurrent}/${safeMax} HP)`;
+    const suffix = t
+        ? t('tools.ui.hp_suffix', { current: safeCurrent, max: safeMax })
+        : `(${safeCurrent}/${safeMax} HP)`;
+    return `[ ${hearts} ] ${suffix}`;
 }
 
 /**

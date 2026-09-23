@@ -28,24 +28,36 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const mentions = formatMentions([senderJid]);
 
     const planLabel =
-        quota.tier === 'FREE' ? 'Free Tier' : quota.tier === 'SUBSIDIZED' ? 'Subsidized Tier' : 'Partner Tier';
+        quota.tier === 'FREE'
+            ? ctx.t('tools.myplan.tier_free')
+            : quota.tier === 'SUBSIDIZED'
+              ? ctx.t('tools.myplan.tier_subsidized')
+              : ctx.t('tools.myplan.tier_partner');
+
     const status = quota.isOwner
-        ? 'Bot Owner (Unlimited)'
-        : `Active${quota.expiresAt ? ` (Valid until ${quota.expiresAt.toDateString()})` : ''}`;
+        ? ctx.t('tools.myplan.status_owner')
+        : `${ctx.t('tools.myplan.status_active')}${
+              quota.expiresAt ? ctx.t('tools.myplan.valid_until', { date: quota.expiresAt.toDateString() }) : ''
+          }`;
+
     const bonus = quota.economyMultiplier.toFixed(2);
+    const unlim = ctx.t('tools.myplan.unlimited');
+    const usedSuffix = ctx.t('tools.myplan.used_suffix');
+    const prefixStatus = quota.customPrefixAllowed
+        ? ctx.t('tools.myplan.prefix_enabled')
+        : ctx.t('tools.myplan.prefix_locked');
 
     const text =
-        `📊 *Cosmos Subscription & Limits*\n\n` +
-        `User: @${senderJid.split('@')[0]}\n` +
-        `Plan: ${planLabel}\n` +
-        `Status: ${status}\n\n` +
-        `• Whitelisted Groups: ${renderUsageBar(quota.groups.current, quota.groups.max)} ${quota.groups.current} / ${Number.isFinite(quota.groups.max) ? quota.groups.max : '∞'} used\n` +
-        `• Active Sub-Bots: ${renderUsageBar(quota.subBots.current, quota.subBots.max)} ${quota.subBots.current} / ${Number.isFinite(quota.subBots.max) ? quota.subBots.max : '∞'} used\n` +
-        `• Custom Prefix: ${quota.customPrefixAllowed ? 'Enabled' : 'Locked (.)'}\n` +
-        `• Economy Bonus: ${bonus}x Multiplier\n\n` +
-        `Need more resources? Upgrade anytime at https://razael-fox.my.id/pricing\n` +
-        `_Example upgrade cost: Subsidized ${formatRupiah(10000)}/month._`;
-
+        `${ctx.t('tools.myplan.title')}\n\n` +
+        `${ctx.t('tools.myplan.user_label')}: @${senderJid.split('@')[0]}\n` +
+        `${ctx.t('tools.myplan.plan_label')}: ${planLabel}\n` +
+        `${ctx.t('tools.myplan.status_label')}: ${status}\n\n` +
+        `• ${ctx.t('tools.myplan.groups_label')}: ${renderUsageBar(quota.groups.current, quota.groups.max)} ${quota.groups.current} / ${Number.isFinite(quota.groups.max) ? quota.groups.max : unlim} ${usedSuffix}\n` +
+        `• ${ctx.t('tools.myplan.subbots_label')}: ${renderUsageBar(quota.subBots.current, quota.subBots.max)} ${quota.subBots.current} / ${Number.isFinite(quota.subBots.max) ? quota.subBots.max : unlim} ${usedSuffix}\n` +
+        `• ${ctx.t('tools.myplan.custom_prefix_label')}: ${prefixStatus}\n` +
+        `• ${ctx.t('tools.myplan.economy_bonus_label')}: ${bonus}${ctx.t('tools.myplan.multiplier_suffix')}\n\n` +
+        `${ctx.t('tools.myplan.upgrade_cta')}\n` +
+        `${ctx.t('tools.myplan.example_cost', { cost: formatRupiah(10000) })}`;
     await ctx.sock.sendMessage(ctx.jid, { text, mentions }, { quoted: ctx.msg });
     return;
 }

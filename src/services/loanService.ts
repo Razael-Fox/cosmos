@@ -1,5 +1,6 @@
 import { prisma } from '#db.js';
 import { formatRupiah } from '#utils/currency.js';
+import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 import { getBankAccountByUser } from '#services/bankService.js';
 import cron from 'node-cron';
 import dotenv from 'dotenv';
@@ -248,7 +249,7 @@ export async function assessLoanWithAI(
             const groq = getGroqClient();
             const systemPrompt = `You are a strict and professional credit risk underwriting officer for Cosmos Central Bank.
 Assess the loan application based on the user's financial profile.
-Use the Native Function Calling API. DILARANG KERAS mengetik tag XML seperti <function=...> secara manual di dalam teks balasan Anda!
+Use the Native Function Calling API. Strictly do NOT output raw XML tags such as <function=...> manually in your response text!
 All output strings must be in formal English.
 
 Scoring benchmarks:
@@ -763,7 +764,9 @@ export async function processOverdueLoans(sock?: any): Promise<{
 
             // Send notification if socket available
             if (sock) {
-                const notice = `Notice: You have failed to repay your loan by the due date. Your bank account has been temporarily restricted from further transactions until the outstanding balance of ${formatRupiah(totalDue)} is resolved.`;
+                const lang = await getChatLanguage(loan.user.id);
+                const t = getTranslator(lang);
+                const notice = t('tools.loan.overdue_blocked', { amount: formatRupiah(totalDue) });
                 sock.sendMessage(loan.user.id, { text: notice }).catch(() => {});
             }
         }
@@ -792,10 +795,15 @@ export async function processOverdueLoans(sock?: any): Promise<{
 
             // Send seizure notification
             if (sock) {
+                const lang = await getChatLanguage(loan.user.id);
+                const t = getTranslator(lang);
                 const assetsList = seizure.seizedItems
                     .map((item) => `1x ${item.name} (${formatRupiah(item.value)})`)
                     .join(', ');
-                const seizureNotice = `Your outstanding debt of ${formatRupiah(totalDue)} has triggered an automatic asset seizure. The system has confiscated the following assets to clear the balance: ${assetsList}. Your bank account restrictions have been lifted.`;
+                const seizureNotice = t('tools.loan.seizure_notification', {
+                    amount: formatRupiah(totalDue),
+                    assetsList
+                });
                 sock.sendMessage(loan.user.id, { text: seizureNotice }).catch(() => {});
             }
         }
@@ -824,9 +832,10 @@ export async function processLoanReminders(sock?: any): Promise<number> {
     for (const reminder of pendingReminders) {
         if (reminder.loan.status === 'ACTIVE') {
             if (sock) {
-                const reminderMsg =
-                    'Your loan payment is due in 5 days. Please ensure you have sufficient funds in your bank account to avoid penalties and asset seizure.';
                 const target = reminder.chatJid || reminder.userJid;
+                const lang = await getChatLanguage(target);
+                const t = getTranslator(lang);
+                const reminderMsg = t('tools.loan.reminder_5_days');
                 sock.sendMessage(target, { text: reminderMsg }).catch(() => {});
             }
         }

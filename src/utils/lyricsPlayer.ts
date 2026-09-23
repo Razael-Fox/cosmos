@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { WASocket } from '@whiskeysockets/baileys';
+import { getTranslator } from './i18n.js';
 
 export interface LyricLine {
     timeMs: number;
@@ -81,15 +82,14 @@ export async function playLyrics(
     speedMultiplier = 2,
     t?: (key: string, args?: Record<string, any>) => string
 ): Promise<string> {
+    const tr = t || getTranslator('id');
     // 1. Validation
     if (!songName) {
-        return t
-            ? t('media.playlyrics.invalid_format')
-            : 'Failed: Lyric filename or song name must be specified. Example: .playlyrics faded';
+        return tr('media.playlyrics.invalid_format');
     }
 
     if (isNaN(speedMultiplier) || speedMultiplier <= 0) {
-        return t ? t('media.playlyrics.multiplier_positive') : 'Failed: Speed multiplier must be a positive number.';
+        return tr('media.playlyrics.multiplier_positive');
     }
 
     const lyricsDir = path.resolve(process.cwd(), 'lyrics');
@@ -118,9 +118,7 @@ export async function playLyrics(
             content = fs.readFileSync(filePath, 'utf-8');
         } catch (err) {
             console.error('Error reading lyrics file:', err);
-            return t
-                ? t('media.playlyrics.read_failed', { song: songName })
-                : `Failed: Unable to read local lyric file "${songName}".`;
+            return tr('media.playlyrics.read_failed', { song: songName });
         }
     } else {
         // Try fetching online
@@ -135,19 +133,14 @@ export async function playLyrics(
                 console.error('Error saving fetched lyrics to local file:', err);
             }
         } else {
-            return t
-                ? t('media.playlyrics.not_found', { song: songName })
-                : `Failed: Synchronized lyrics for "${songName}" were not found locally or online.`;
+            return tr('media.playlyrics.not_found', { song: songName });
         }
     }
 
     const parsed = parseLyrics(content);
     if (parsed.length === 0) {
-        return t
-            ? t('media.playlyrics.no_timestamps', { song: songName })
-            : `Failed: Lyric for "${songName}" contains no lines with valid timestamps.`;
+        return tr('media.playlyrics.no_timestamps', { song: songName });
     }
-
     // 2. Stop existing session for this JID if running
     if (activeSessions.has(jid)) {
         await stopLyrics(jid, sock, t);
@@ -222,9 +215,7 @@ export async function playLyrics(
         }
     }
 
-    return t
-        ? t('media.playlyrics.started', { song: songName, multiplier: speedMultiplier, count: parsed.length })
-        : `Starting lyrics playback for "${songName}" with a speed multiplier of ${speedMultiplier}x (${parsed.length} lines)...`;
+    return tr('media.playlyrics.started', { song: songName, multiplier: speedMultiplier, count: parsed.length });
 }
 
 /**
@@ -235,9 +226,10 @@ export async function stopLyrics(
     sock: WASocket,
     t?: (key: string, args?: Record<string, any>) => string
 ): Promise<string> {
+    const tr = t || getTranslator('id');
     const session = activeSessions.get(jid);
     if (!session) {
-        return t ? t('media.stoplyrics.no_session') : 'Failed: There is no ongoing lyrics playback in this chat.';
+        return tr('media.stoplyrics.no_session');
     }
 
     // 1. Clear all timers first to prevent any race condition
@@ -256,7 +248,5 @@ export async function stopLyrics(
     // 3. Delete session
     activeSessions.delete(jid);
 
-    return t
-        ? t('media.stoplyrics.stopped', { song: session.songName })
-        : `Lyrics playback for "${session.songName}" has been successfully stopped.`;
+    return tr('media.stoplyrics.stopped', { song: session.songName });
 }

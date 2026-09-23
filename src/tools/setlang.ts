@@ -25,7 +25,7 @@ export const definition: ToolDefinition = {
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string> {
     const sender = getSenderJid(ctx.msg, ctx.sock);
     if (!sender) {
-        return 'Failed: Could not identify sender.';
+        return ctx.t('core.sender_identity_error');
     }
 
     let rawLang = args.language;

@@ -76,8 +76,8 @@ const useTool: ToolModule = {
                 if (currentPlayer.hp < 5) currentPlayer.hp++;
                 outputMsg = t('games.roulette.used_heal', {
                     player: currentPlayer.pushName,
-                    item: itemType === 'COLA' ? 'Cola' : 'Cigarettes',
-                    lives: renderHealthGauge(currentPlayer.hp, 5)
+                    item: itemType === 'COLA' ? t('games.roulette.item_cola') : t('games.roulette.item_cigarettes'),
+                    lives: renderHealthGauge(currentPlayer.hp, 5, t)
                 });
                 break;
             case 'HAND_SAW':

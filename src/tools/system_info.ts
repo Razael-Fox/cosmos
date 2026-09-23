@@ -1,6 +1,7 @@
 import os from 'os';
 import { ToolDefinition, ToolContext } from './types.js';
 import { renderCard, renderProgressBar } from '../utils/uiFormatter.js';
+import { formatUptimeDuration } from '../utils/menuFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'system_info',
@@ -21,25 +22,18 @@ function formatBytes(bytes: number): string {
     return `${gb.toFixed(2)} GB`;
 }
 
-function formatUptime(seconds: number): string {
-    const d = Math.floor(seconds / (3600 * 24));
-    const h = Math.floor((seconds % (3600 * 24)) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    return `${d > 0 ? `${d}d ` : ''}${h > 0 ? `${h}h ` : ''}${m > 0 ? `${m}m ` : ''}${s}s`;
-}
-
 export async function execute(_args: Record<string, any>, ctx: ToolContext): Promise<string> {
-    const systemUptime = formatUptime(os.uptime());
-    const botUptime = formatUptime(process.uptime());
+    const unknownStr = ctx.t('tools.system_info.unknown');
+    const systemUptime = formatUptimeDuration(os.uptime(), ctx.t);
+    const botUptime = formatUptimeDuration(process.uptime(), ctx.t);
     const cpus = os.cpus();
-    const cpuModel = cpus && cpus[0] ? cpus[0].model.trim() : 'Unknown';
+    const cpuModel = cpus && cpus[0] ? cpus[0].model.trim() : unknownStr;
     const cpuArch = os.arch();
     const totalMem = formatBytes(os.totalmem());
     const freeMem = formatBytes(os.freemem());
     const usedMem = formatBytes(os.totalmem() - os.freemem());
 
-    let latencyStr = 'Unknown';
+    let latencyStr = unknownStr;
     if (ctx && ctx.msg && ctx.msg.messageTimestamp) {
         let timestampVal = 0;
         const msgTs = ctx.msg.messageTimestamp as any;
@@ -71,33 +65,34 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
     });
 
     return renderCard({
-        title: 'SERVER TELEMETRY DASHBOARD',
+        title: ctx.t('tools.system_info.dashboard_title'),
         icon: '🖥️',
         headerStyle: 'light',
+        t: ctx.t,
         sections: [
             {
-                title: 'RUNTIME TELEMETRY',
+                title: ctx.t('tools.system_info.section_runtime'),
                 items: [
-                    { label: 'Latency', value: latencyStr },
-                    { label: 'Node.js', value: process.version }
+                    { label: ctx.t('tools.system_info.ping_label'), value: latencyStr },
+                    { label: ctx.t('tools.system_info.nodejs_label'), value: process.version }
                 ]
             },
             {
-                title: 'MEMORY UTILIZATION',
+                title: ctx.t('tools.system_info.section_memory'),
                 items: [
-                    { label: 'Total RAM', value: totalMem },
-                    { label: 'Used RAM', value: usedMem },
-                    { label: 'Free RAM', value: freeMem },
-                    { label: 'Usage Gauge', value: `${ramGauge} ${ramPercent.toFixed(1)}%` }
+                    { label: ctx.t('tools.system_info.total_ram_label'), value: totalMem },
+                    { label: ctx.t('tools.system_info.used_ram_label'), value: usedMem },
+                    { label: ctx.t('tools.system_info.free_ram_label'), value: freeMem },
+                    { label: ctx.t('tools.system_info.ram_label'), value: `${ramGauge} ${ramPercent.toFixed(1)}%` }
                 ]
             },
             {
-                title: 'HOST ENVIRONMENT',
+                title: ctx.t('tools.system_info.section_host'),
                 items: [
-                    { label: 'CPU', value: `${cpuModel} (${cpuArch})` },
-                    { label: 'Host OS', value: `${os.type()} ${os.release()}` },
-                    { label: 'Server Uptime', value: systemUptime },
-                    { label: 'Bot Uptime', value: botUptime }
+                    { label: ctx.t('tools.system_info.cpu_label'), value: `${cpuModel} (${cpuArch})` },
+                    { label: ctx.t('tools.system_info.os_label'), value: `${os.type()} ${os.release()}` },
+                    { label: ctx.t('tools.system_info.server_uptime_label'), value: systemUptime },
+                    { label: ctx.t('tools.system_info.bot_uptime_label'), value: botUptime }
                 ]
             }
         ]

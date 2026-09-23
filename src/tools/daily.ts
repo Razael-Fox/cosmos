@@ -112,7 +112,7 @@ const dailyTool: ToolModule = {
                 {
                     icon: '⏱️',
                     label: t('tools.daily.next_claim', 'Next Claim'),
-                    value: '24 Hours'
+                    value: t('tools.daily.twenty_four_hours')
                 }
             ],
             tips: [t('tools.daily.tip_multiply', 'Use .slot or .coinflip to multiply your daily earnings!')]

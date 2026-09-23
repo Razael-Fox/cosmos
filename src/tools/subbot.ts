@@ -117,16 +117,19 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             title: ctx.t('tools.subbot.status_title'),
             icon: '📊',
             headerStyle: 'heavy',
+            t: ctx.t,
             fields: [
                 { label: ctx.t('tools.subbot.device_number'), value: `+${status.phoneNumber}`, boldLabel: true },
                 {
                     label: ctx.t('tools.subbot.status_label'),
-                    value: status.isConnected ? '[ ✅ ONLINE ]' : '[ ❌ OFFLINE ]'
+                    value: status.isConnected
+                        ? ctx.t('tools.subbot.status_badge_online')
+                        : ctx.t('tools.subbot.status_badge_offline')
                 },
                 { label: ctx.t('tools.subbot.mode_label'), value: modeText },
                 { label: ctx.t('tools.subbot.uptime_label'), value: formatUptime(status.uptimeSec) }
             ],
-            tip: 'Use .config to adjust feature toggles and API keys.'
+            tip: ctx.t('tools.subbot.tip_config_subbot')
         });
     }
 
@@ -212,20 +215,23 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
         const items = list.map((b, idx) => ({
             label: `${idx + 1}. +${b.phoneNumber}`,
-            value: b.isConnected ? `[ ✅ ONLINE ] (${formatUptime(b.uptimeSec)})` : `[ ❌ OFFLINE ]`
+            value: b.isConnected
+                ? `${ctx.t('tools.subbot.status_badge_online')} (${formatUptime(b.uptimeSec)})`
+                : ctx.t('tools.subbot.status_badge_offline')
         }));
 
         return renderCard({
             title: ctx.t('tools.subbot.dashboard_title'),
             icon: '📋',
             headerStyle: 'heavy',
+            t: ctx.t,
             sections: [
                 {
-                    title: `Total Instances: ${list.length}`,
+                    title: ctx.t('tools.subbot.total_instances', { count: list.length }),
                     items
                 }
             ],
-            tip: 'Use .subbot status <number> for detailed metrics.'
+            tip: ctx.t('tools.subbot.tip_status_detail')
         });
     }
 
@@ -234,20 +240,21 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         title: ctx.t('tools.subbot.dashboard_title'),
         icon: '🤖',
         headerStyle: 'heavy',
-        body: 'Cosmos Autonomous Multi-Device Sub-Bot Engine',
+        t: ctx.t,
+        body: ctx.t('tools.subbot.engine_subtitle'),
         sections: [
             {
-                title: 'Available Commands',
+                title: ctx.t('tools.subbot.available_commands_title'),
                 items: [
-                    { label: '.subbot pair <number> <code>', value: 'Link device via 8-digit code' },
-                    { label: '.subbot pair <number> <qr>', value: 'Link device via dynamic QR scan' },
-                    { label: '.subbot status', value: 'Check connection and uptime' },
-                    { label: '.subbot stop', value: 'Disconnect sub-bot' },
-                    { label: '.subbot start', value: 'Reconnect existing sub-bot' },
-                    { label: '.subbot delete', value: 'Permanently remove sub-bot' }
+                    { label: '.subbot pair <number> <code>', value: ctx.t('tools.subbot.cmd_pair_code') },
+                    { label: '.subbot pair <number> <qr>', value: ctx.t('tools.subbot.cmd_pair_qr') },
+                    { label: '.subbot status', value: ctx.t('tools.subbot.cmd_status') },
+                    { label: '.subbot stop', value: ctx.t('tools.subbot.cmd_stop') },
+                    { label: '.subbot start', value: ctx.t('tools.subbot.cmd_start') },
+                    { label: '.subbot delete', value: ctx.t('tools.subbot.cmd_delete') }
                 ]
             }
         ],
-        tip: 'Send .cancel at any time during pairing to abort.'
+        tip: ctx.t('tools.subbot.tip_cancel_pairing')
     });
 }

@@ -2,6 +2,7 @@ import { PrismaClient } from '../generated/prisma/client.js';
 import { prisma } from '../db.js';
 import Chance from 'chance';
 import { formatRupiah, parseCurrencyAmount } from './currency.js';
+import { getTranslator } from './i18n.js';
 
 export { formatRupiah, formatNumberId, parseCurrencyAmount } from './currency.js';
 
@@ -99,10 +100,11 @@ export async function executeGamble(
     fixedBonus: number = 0,
     t?: (key: string, args?: Record<string, any>) => string
 ): Promise<GambleResult> {
+    const tr = t || getTranslator('id');
     if (mutex.has(jid)) {
         return {
             success: false,
-            error: t ? t('utilities.casino.processing') : 'Please wait, transaction is being processed.'
+            error: tr('utilities.casino.processing')
         };
     }
     mutex.add(jid);
@@ -114,30 +116,24 @@ export async function executeGamble(
     try {
         return await prisma.$transaction(async (tx) => {
             const user = await tx.user.findFirst({ where: { OR: [{ id: jid }, { lid: jid }] } });
-            if (!user) throw new Error(t ? t('utilities.casino.user_not_found') : 'User not found');
+            if (!user) throw new Error(tr('utilities.casino.user_not_found'));
 
             if (Number(user.balance) < bet) {
                 return {
                     success: false,
-                    error: t
-                        ? t('utilities.casino.insufficient_balance', { balance: formatRupiah(user.balance) })
-                        : `Insufficient balance. Your balance: ${formatRupiah(user.balance)}`
+                    error: tr('utilities.casino.insufficient_balance', { balance: formatRupiah(user.balance) })
                 };
             }
             if (bet < MIN_BET) {
                 return {
                     success: false,
-                    error: t
-                        ? t('utilities.casino.min_bet', { min: formatRupiah(MIN_BET) })
-                        : `Minimum bet is ${formatRupiah(MIN_BET)}.`
+                    error: tr('utilities.casino.min_bet', { min: formatRupiah(MIN_BET) })
                 };
             }
             if (bet > MAX_BET) {
                 return {
                     success: false,
-                    error: t
-                        ? t('utilities.casino.max_bet', { max: formatRupiah(MAX_BET) })
-                        : `Maximum bet is ${formatRupiah(MAX_BET)}.`
+                    error: tr('utilities.casino.max_bet', { max: formatRupiah(MAX_BET) })
                 };
             }
 
@@ -148,9 +144,7 @@ export async function executeGamble(
                     const remainingSeconds = ((5100 - diff) / 1000).toFixed(1);
                     return {
                         success: false,
-                        error: t
-                            ? t('utilities.casino.cooldown', { seconds: remainingSeconds })
-                            : `Please wait ${remainingSeconds} more seconds before betting again.`
+                        error: tr('utilities.casino.cooldown', { seconds: remainingSeconds })
                     };
                 }
             }

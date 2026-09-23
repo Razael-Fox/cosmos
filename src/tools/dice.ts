@@ -78,24 +78,25 @@ const diceTool: ToolModule = {
         const rollEmoji = `${DICE_EMOJIS[rolled - 1]} [ ${rolled} ]`;
 
         const text = renderCard({
-            title: 'HIGH STAKES DICE ROLL',
+            title: ctx.t('games.dice.card_title'),
             icon: '🎲',
             headerStyle: 'light',
+            t: ctx.t,
             fields: [
-                { icon: '👤', label: 'Your Guess', value: guessEmoji },
-                { icon: '🤖', label: 'House Roll', value: rollEmoji },
+                { icon: '👤', label: ctx.t('games.dice.label_guess'), value: guessEmoji },
+                { icon: '🤖', label: ctx.t('games.dice.label_house_roll'), value: rollEmoji },
                 {
                     icon: result.isWin ? '🎯' : '💀',
-                    label: 'Match Result',
-                    value: result.isWin ? 'Direct Hit (Win!)' : 'Missed (Lost)'
+                    label: ctx.t('games.dice.label_match_result'),
+                    value: result.isWin ? ctx.t('games.dice.direct_hit') : ctx.t('games.dice.missed')
                 },
-                { icon: '💵', label: 'Wager', value: formatRupiah(bet) },
+                { icon: '💵', label: ctx.t('games.dice.label_wager'), value: formatRupiah(bet) },
                 {
                     icon: result.isWin ? '📈' : '💸',
-                    label: result.isWin ? 'Payout (5x)' : 'Loss Incurred',
+                    label: result.isWin ? ctx.t('games.dice.label_payout') : ctx.t('games.dice.label_loss'),
                     value: result.isWin ? `+${formatRupiah(result.winAmount)}` : `-${formatRupiah(bet)}`
                 },
-                { icon: '💰', label: 'Current Balance', value: formatRupiah(result.newBalance) }
+                { icon: '💰', label: ctx.t('games.dice.label_balance'), value: formatRupiah(result.newBalance) }
             ]
         });
 

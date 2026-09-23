@@ -1,5 +1,5 @@
 import { WASocket } from '@whiskeysockets/baileys';
-import { gameSessions, handleElimination, nextTurn, checkReloadShells } from './roulette.js';
+import { gameSessions, handleElimination, nextTurn, checkReloadShells, formatRouletteItem } from './roulette.js';
 import { formatRupiah } from './currency.js';
 import { prisma } from '../db.js';
 import { getChatLanguage, getTranslator } from './i18n.js';
@@ -84,8 +84,8 @@ export function initRouletteAfkTimer(sock: WASocket) {
                         const nextP = session.players[session.turnIndex];
                         const inventoryStr =
                             nextP.inventory.length > 0
-                                ? nextP.inventory.map((i) => i.replace('_', ' ')).join(', ')
-                                : 'Empty';
+                                ? nextP.inventory.map((i) => formatRouletteItem(i, t)).join(', ')
+                                : t('games.roulette.inventory_empty');
                         outputMsg += t('games.roulette.turn_info', {
                             player: nextP.userId.split('@')[0],
                             lives: `${'❤️'.repeat(nextP.hp)}${'🖤'.repeat(5 - nextP.hp)}`,

@@ -1,20 +1,28 @@
 import { WASocket } from '@whiskeysockets/baileys';
-import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
+import { getTranslator } from '../utils/i18n.js';
+
+export function renderForexBroadcast(multiplier: number, reasoning: string, rate: number, lang: string = 'id'): string {
+    const t = getTranslator(lang);
+    return (
+        `${t('tools.broadcast.forex_title')}\n\n` +
+        `${t('tools.broadcast.forex_rate', { rate: formatRupiah(rate) })}\n` +
+        `${t('tools.broadcast.forex_trend')}\n\n` +
+        `${t('tools.broadcast.forex_adjustments_title')}\n` +
+        `• ${t('tools.broadcast.forex_inflation', { multiplier: `${multiplier}x` })}\n` +
+        `• ${t('tools.broadcast.forex_shop_loot')}\n\n` +
+        `_${t('tools.broadcast.forex_ai_note', { reasoning })}_`
+    );
+}
 
 export async function broadcastEconomicUpdate(sock: WASocket, multiplier: number, reasoning: string, rate: number) {
+    // Defer DB import to avoid top-level schema check during static tests / host environments
+    const { prisma } = await import('../db.js');
     const groups = await prisma.whitelistedGroup.findMany();
 
-    const message =
-        `*🏦 Cosmos Central Bank Update*\n\n` +
-        `*Current Exchange Rate:* $1 = ${formatRupiah(rate)}\n` +
-        `*Market Trend:* 📉 AI Evaluated\n\n` +
-        `*🔄 Economic Adjustments:*\n` +
-        `• Global Inflation Multiplier: *${multiplier}x*\n` +
-        `• Shop & Loot: ⬆️ *Adjusted proportionally*\n\n` +
-        `_🤖 AI Analyst Note: "${reasoning}"_`;
-
     for (const group of groups) {
+        const lang = group.language || 'id';
+        const message = renderForexBroadcast(multiplier, reasoning, rate, lang);
         await sock.sendMessage(group.jid, { text: message });
     }
 

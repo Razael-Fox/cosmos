@@ -1,5 +1,4 @@
 import { i18n, reloadI18n, SUPPORTED_LANGUAGES, type SupportedLanguage } from '../locales/i18n.config.js';
-import { prisma } from '../db.js';
 
 export { SUPPORTED_LANGUAGES };
 export type { SupportedLanguage };
@@ -64,6 +63,8 @@ export function getTranslator(
 }
 
 export async function getItemWithTranslation(itemId: string | number, lang: string) {
+    // Defer DB import to avoid top-level schema check during static tests / host environments
+    const { prisma } = await import('../db.js');
     const item = await prisma.item.findFirst({
         where: {
             OR: [{ id: String(itemId) }, { shortId: String(itemId) }]
@@ -83,8 +84,33 @@ export async function getItemWithTranslation(itemId: string | number, lang: stri
     };
 }
 
+export async function getPropertyWithTranslation(propertyId: string | number, lang: string) {
+    // Defer DB import to avoid top-level schema check during static tests / host environments
+    const { prisma } = await import('../db.js');
+    const property = await prisma.propertyCatalog.findFirst({
+        where: {
+            OR: [{ id: String(propertyId) }, { name: String(propertyId) }]
+        }
+    });
+    if (!property) return null;
+
+    const t = getTranslator(lang);
+    const slug = property.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    const key = `tools.properties.${slug}`;
+    const translatedName = t(`${key}.name`);
+    const translatedDesc = t(`${key}.description`);
+
+    return {
+        ...property,
+        name: translatedName !== `${key}.name` ? translatedName : property.name,
+        description: translatedDesc !== `${key}.description` ? translatedDesc : property.name
+    };
+}
+
 export async function getChatLanguage(chatJid: string): Promise<string> {
     try {
+        // Defer DB import to avoid top-level schema check during static tests / host environments
+        const { prisma } = await import('../db.js');
         if (chatJid.endsWith('@g.us')) {
             const group = await prisma.whitelistedGroup.findUnique({ where: { jid: chatJid } });
             if (group?.language) {

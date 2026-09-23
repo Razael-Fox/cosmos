@@ -11,6 +11,10 @@ export interface CancellableSession {
     chatJid: string;
     /** Human-readable description of what is being cancelled */
     description?: string;
+    /** i18n translation key for session description */
+    descriptionKey?: string;
+    /** Variables for descriptionKey interpolation */
+    descriptionVars?: Record<string, any>;
     /** Timestamp when the session was created */
     createdAt?: number;
     /**
@@ -114,10 +118,14 @@ export async function cancelActiveSession(
         if (typeof result === 'string') {
             return result;
         }
+        const desc =
+            t && session.descriptionKey
+                ? t(session.descriptionKey, session.descriptionVars)
+                : session.description || session.feature;
         if (t) {
-            return t('utilities.cancellation.session_cancelled', { feature: session.description || session.feature });
+            return t('utilities.cancellation.session_cancelled', { feature: desc });
         }
-        return `The active ${session.description || session.feature} operation has been successfully cancelled.`;
+        return `The active ${desc} operation has been successfully cancelled.`;
     } catch (err) {
         console.error(`[CancellationManager] Error during onCancel for ${session.sessionId}:`, err);
         if (t) {

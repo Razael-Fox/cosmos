@@ -143,12 +143,13 @@ const topTool: ToolModule = {
             }
 
             const headerCard = renderCard({
-                title: isRoulette ? 'ROULETTE HIGH ROLLERS' : 'CASINO HIGH ROLLERS',
+                title: isRoulette ? ctx.t('tools.top.header_roulette') : ctx.t('tools.top.header_casino'),
                 icon: '🏆',
                 headerStyle: 'heavy',
+                t: ctx.t,
                 fields: [
-                    { icon: '📍', label: 'Scope', value: 'Group Leaderboard' },
-                    { icon: '👥', label: 'Ranked Players', value: `${finalTopUsers.length}` }
+                    { icon: '📍', label: ctx.t('tools.top.scope_label'), value: ctx.t('tools.top.scope_value') },
+                    { icon: '👥', label: ctx.t('tools.top.ranked_players_label'), value: `${finalTopUsers.length}` }
                 ]
             });
 
@@ -163,32 +164,35 @@ const topTool: ToolModule = {
                     return {
                         rank: `${medal} ${index + 1}`,
                         title: `@${user.cleanId}${namePart}`,
-                        subtitle: `Wins: ${user.rouletteWins} • Matches: ${user.rouletteRounds}`
+                        subtitle: ctx.t('tools.top.wins_matches', {
+                            wins: user.rouletteWins,
+                            matches: user.rouletteRounds
+                        })
                     };
                 } else {
                     const netWorth = Number(user.balance);
                     const tier =
                         netWorth >= 10000000
-                            ? '💎 Diamond'
+                            ? ctx.t('tools.top.tier_diamond')
                             : netWorth >= 1000000
-                              ? '🥇 Gold'
+                              ? ctx.t('tools.top.tier_gold')
                               : netWorth >= 100000
-                                ? '🥈 Silver'
-                                : '🥉 Bronze';
+                                ? ctx.t('tools.top.tier_silver')
+                                : ctx.t('tools.top.tier_bronze');
                     return {
                         rank: `${medal} ${index + 1}`,
                         title: `@${user.cleanId}${namePart}`,
-                        value: `Balance: ${formatRupiah(user.balance)}`,
-                        subtitle: `Tier: ${tier}`
+                        value: ctx.t('tools.top.balance_label', { balance: formatRupiah(user.balance) }),
+                        subtitle: ctx.t('tools.top.tier_label', { tier })
                     };
                 }
             });
-
             const listCard = renderCatalogCard(
-                isRoulette ? 'ROULETTE CHAMPIONS' : 'TOP BILLIONAIRES',
+                isRoulette ? ctx.t('tools.top.catalog_roulette') : ctx.t('tools.top.catalog_casino'),
                 '👑',
                 items,
-                'Wager in .roulette or invest in .properties to climb the ranks!'
+                ctx.t('tools.top.tip_climb'),
+                ctx.t
             );
 
             const text = `${headerCard}\n\n${listCard}`;

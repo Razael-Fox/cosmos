@@ -27,7 +27,7 @@
         "typecheck": "tsc --noEmit",
         "lint": "eslint .",
         "format": "prettier --write .",
-        "validate:i18n": "tsx scripts/validate-i18n.ts",
+        "validate:i18n": "tsx scripts/validate-i18n.ts && tsx scripts/check-i18n-usage.ts",
         "release:pre": "tsx scripts/release.ts",
         "docker:build": "./scripts/docker-build.sh",
         "docker:up": "docker compose up -d",

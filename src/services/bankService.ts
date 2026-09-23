@@ -311,7 +311,7 @@ export async function depositToBank(
         }
         return {
             success: false,
-            error: err.message
+            error: t ? t('tools.bank.transaction_failed') : 'Transaction failed.'
         };
     }
 }
@@ -411,7 +411,7 @@ export async function withdrawFromBank(
         }
         return {
             success: false,
-            error: err.message
+            error: t ? t('tools.bank.transaction_failed') : 'Transaction failed.'
         };
     }
 }
@@ -682,7 +682,7 @@ export async function executeTransfer(
         }
         return {
             success: false,
-            error: err.message
+            error: t ? t('tools.bank.transaction_failed') : 'Transaction failed.'
         };
     }
 }

@@ -1,6 +1,7 @@
 import { prisma, getPrismaClient } from '#db.js';
 import { stopSubBot } from '#services/subBotService.js';
 import { TIER_LIMITS } from '#services/quotaService.js';
+import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 
 /**
  * Daily subscription expiry reconciliation (00:00 UTC).
@@ -49,11 +50,10 @@ export async function reconcileSubscriptions(): Promise<void> {
             const { activeConnections } = await import('#utils/connectionManager.js');
             const sock = activeConnections.get('default');
             if (sock) {
+                const lang = await getChatLanguage(sub.userId);
+                const t = getTranslator(lang);
                 await sock.sendMessage(sub.userId, {
-                    text:
-                        `⚠️ *Cosmos Subscription Expired*\n\n` +
-                        `Your paid plan has ended and your account is now on the Free Tier (2 sub-bots / 5 groups).\n` +
-                        `Excess sub-bots were paused (never deleted). Renew anytime at https://razael-fox.my.id/pricing`
+                    text: t('tools.sub.sub_expired_notice')
                 });
             }
         } catch (err) {

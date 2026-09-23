@@ -88,21 +88,27 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     if (!rawQuery) {
         // No argument: Show Category Overview with Dashboard Header
-        outputText = `${dashboardHeader}\n\n${formatCategoryOverview(menuService.getCategoryList(undefined, lang), t, '.')}`;
+        outputText = `${dashboardHeader}\n\n${formatCategoryOverview(menuService.getCategoryList(undefined, lang, t), t, '.')}`;
     } else if (rawQuery.toLowerCase() === 'all') {
         // "all": Full command catalog
-        outputText = `${dashboardHeader}\n\n${formatAllCommands(menuService.getCategoryList(undefined, lang), t, '.')}`;
+        outputText = `${dashboardHeader}\n\n${formatAllCommands(menuService.getCategoryList(undefined, lang, t), t, '.')}`;
     } else {
         // Lookup either command or category
         const foundCommand = menuService.findCommand(rawQuery, undefined, lang);
         if (foundCommand) {
             outputText = formatCommandDetail(foundCommand, t, '.', lang);
         } else {
-            const foundCategory = menuService.findCategory(rawQuery, undefined, lang);
+            const foundCategory = menuService.findCategory(rawQuery, undefined, lang, t);
             if (foundCategory) {
                 outputText = formatCategoryCommands(foundCategory, t, '.');
             } else {
-                outputText = formatNotFound('command', rawQuery, menuService.getCategoryList(undefined, lang), t, '.');
+                outputText = formatNotFound(
+                    'command',
+                    rawQuery,
+                    menuService.getCategoryList(undefined, lang, t),
+                    t,
+                    '.'
+                );
             }
         }
     }

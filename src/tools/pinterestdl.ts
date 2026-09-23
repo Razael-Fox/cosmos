@@ -242,14 +242,16 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         };
 
         const items: Array<{ label: string; value: string }> = [];
-        if (media.title) items.push({ label: 'Title', value: media.title.substring(0, 900) });
-        const mediaType = media.videos.size > 0 ? 'Video' : 'Image';
-        items.push({ label: 'Type', value: mediaType });
+        if (media.title)
+            items.push({ label: ctx.t('tools.downloader.title_label'), value: media.title.substring(0, 900) });
+        const mediaType = media.videos.size > 0 ? ctx.t('media.ytdl.value_video') : ctx.t('media.ytdl.value_image');
+        items.push({ label: ctx.t('media.ytdl.label_type'), value: mediaType });
 
         const caption = renderCard({
-            title: 'PINTEREST MEDIA',
+            title: ctx.t('media.pinterestdl.card_title'),
             icon: '📌',
             headerStyle: 'light',
+            t: ctx.t,
             sections: [
                 {
                     items

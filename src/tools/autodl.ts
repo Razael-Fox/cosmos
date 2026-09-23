@@ -123,12 +123,16 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const platformsToCheck = ['tiktok', 'ig', 'pin', 'yt', 'tg', 'twitter', 'fb', 'threads'];
         let msg = t('tools.autodl.status_title');
         for (const p of platformsToCheck) {
-            const status = isAutoDlEnabled(jid, p) ? '✅ ON' : '❌ OFF';
+            const status = isAutoDlEnabled(jid, p)
+                ? `✅ ${t('tools.autodl.state_on')}`
+                : `❌ ${t('tools.autodl.state_off')}`;
             msg += `- ${p.toUpperCase()}: ${status}\n`;
         }
 
         msg += `\n${t('tools.autodl.settings_title')}\n`;
-        const adStatus = isAutoDlEnabled(jid, 'autodelete') ? '✅ ON' : '❌ OFF';
+        const adStatus = isAutoDlEnabled(jid, 'autodelete')
+            ? `✅ ${t('tools.autodl.state_on')}`
+            : `❌ ${t('tools.autodl.state_off')}`;
         msg += `- AUTODELETE: ${adStatus}\n`;
 
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
@@ -142,7 +146,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
         if (success) {
             await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
-            return t('tools.autodl.all_success', { state: enabled ? 'ON' : 'OFF' });
+            return t('tools.autodl.all_success', {
+                state: enabled ? t('tools.autodl.state_on') : t('tools.autodl.state_off')
+            });
         } else {
             return t('tools.autodl.save_failed');
         }
@@ -151,11 +157,13 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         if (success) {
             await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
             if (platTarget === 'autodelete') {
-                return t('tools.autodl.autodelete_success', { state: enabled ? 'ON' : 'OFF' });
+                return t('tools.autodl.autodelete_success', {
+                    state: enabled ? t('tools.autodl.state_on') : t('tools.autodl.state_off')
+                });
             }
             return t('tools.autodl.platform_success', {
                 platform: platTarget.toUpperCase(),
-                state: enabled ? 'ON' : 'OFF'
+                state: enabled ? t('tools.autodl.state_on') : t('tools.autodl.state_off')
             });
         } else {
             return t('tools.autodl.save_failed');

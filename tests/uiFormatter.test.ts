@@ -143,6 +143,38 @@ async function runTests() {
     assert.strictEqual(badge, '[ ACTIVE ]');
     console.log('✓ renderHealthGauge and renderBadge passed.');
 
+    // [Test 9] Localized uiFormatter formatting with mock translator
+    console.log('[Test 9] Testing uiFormatter localization with translator function...');
+    const mockT = (key: string, vars?: Record<string, unknown> | string, fallback?: string) => {
+        const translations: Record<string, string> = {
+            'tools.ui.alert_titles.success': 'BERHASIL',
+            'tools.ui.alert_titles.error': 'KESALAHAN',
+            'tools.ui.tip_prefix': '💡 *Tips:*'
+        };
+        if (translations[key]) return translations[key];
+        if (key === 'tools.ui.hp_suffix' && vars) {
+            return `(${vars.current}/${vars.max} NYAWA)`;
+        }
+        return typeof vars === 'string' ? vars : fallback || key;
+    };
+
+    const localizedAlert = renderAlert({
+        type: 'success',
+        message: 'Transaksi selesai.',
+        t: mockT
+    });
+    assert.ok(localizedAlert.includes('╭───「 ✅ *BERHASIL* 」'));
+
+    const localizedCard = renderCard({
+        title: 'KARTU UJI',
+        tip: 'Gunakan .help untuk bantuan.',
+        t: mockT
+    });
+    assert.ok(localizedCard.includes('💡 *Tips:* Gunakan .help untuk bantuan.'));
+
+    const localizedGauge = renderHealthGauge(2, 5, mockT);
+    assert.strictEqual(localizedGauge, '[ ❤️❤️🖤🖤🖤 ] (2/5 NYAWA)');
+    console.log('✓ uiFormatter localization verified.');
     console.log('--- ALL UI FORMATTER TESTS PASSED! ---');
 }
 

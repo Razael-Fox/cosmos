@@ -24,8 +24,9 @@ const propertyCatalogTool: ToolModule = {
                 {
                     text: renderAlert({
                         type: 'info',
-                        title: 'PROPERTY CATALOG',
-                        message: ctx.t('tools.property_catalog.empty')
+                        title: ctx.t('tools.property_catalog.alert_title'),
+                        message: ctx.t('tools.property_catalog.empty'),
+                        t: ctx.t
                     })
                 },
                 { quoted: msg }
@@ -34,15 +35,19 @@ const propertyCatalogTool: ToolModule = {
         }
 
         const text = renderCatalogCard(
-            'COSMOS PROPERTY CATALOG',
+            ctx.t('tools.property_catalog.card_title'),
             '🏬',
             properties.map((p) => ({
                 title: p.name,
-                subtitle: `Type: ${p.typeCategory} • Depreciation: ${p.baseDepreciationRate * 100}%`,
+                subtitle: ctx.t('tools.property_catalog.subtitle', {
+                    type: p.typeCategory,
+                    depreciation: p.baseDepreciationRate * 100
+                }),
                 value: formatRupiah(Number(p.basePrice)),
-                badge: 'PROPERTY'
+                badge: ctx.t('tools.property_catalog.badge')
             })),
-            ctx.t('tools.property_catalog.buy_tip')
+            ctx.t('tools.property_catalog.buy_tip'),
+            ctx.t
         );
 
         await sock.sendMessage(jid, { text }, { quoted: msg });
