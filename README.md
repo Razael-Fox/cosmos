@@ -342,7 +342,7 @@ Cosmos uses a standard dot prefix (`.`) for all bot commands.
 | Command                 | Description                                                  |
 | :---------------------- | :----------------------------------------------------------- |
 | `.idcard`               | Generate or inspect official Virtual Identity Card (KTP).    |
-| `.apply-license`        | Take driving examination to obtain Driver's License.         |
+| `.apply license`        | Take driving examination to obtain Driver's License.         |
 | `.stt`                  | Transcribe voice notes and audio into text via Groq Whisper. |
 | `.rvo`                  | Read and inspect View-Once media messages.                   |
 | `.quoted`               | Fetch and quote replied-to messages.                         |

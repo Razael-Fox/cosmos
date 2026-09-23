@@ -1,5 +1,6 @@
 import { NormalizedTool, CategoryInfo } from '../services/menuService.js';
 import { resolveToolDescription } from '../tools/types.js';
+import { getDisplayName } from './commandFormat.js';
 
 export interface DashboardOptions {
     pushName?: string;
@@ -133,11 +134,11 @@ export function formatCategoryCommands(category: CategoryInfo, t: TranslatorFn, 
     const lines: string[] = [`╭───「 ${title} 」`, `│`];
 
     category.commands.forEach((cmd, idx) => {
-        const spaceIdx = cmd.usage.indexOf(' ');
+        const paramIdx = cmd.usage.search(/[<[]/);
         const cmdHeader =
-            spaceIdx !== -1
-                ? `*${cmd.usage.substring(0, spaceIdx)}* ${cmd.usage.substring(spaceIdx + 1)}`
-                : `*${cmd.usage}*`;
+            paramIdx !== -1
+                ? `*${cmd.usage.substring(0, paramIdx).trim()}* ${cmd.usage.substring(paramIdx).trim()}`
+                : `*${cmd.usage.trim()}*`;
         const desc = resolveToolDescription(cmd, t);
         lines.push(`│ ⭔ ${cmdHeader}`);
         lines.push(`│   _${desc}_`);
@@ -163,11 +164,11 @@ export function formatAllCommands(categories: CategoryInfo[], t: TranslatorFn, p
     for (const cat of categories) {
         const lines: string[] = [`╭───「 ${cat.icon} *${cat.name.toUpperCase()}* (${cat.count}) 」`];
         for (const cmd of cat.commands) {
-            const spaceIdx = cmd.usage.indexOf(' ');
+            const paramIdx = cmd.usage.search(/[<[]/);
             const cmdHeader =
-                spaceIdx !== -1
-                    ? `*${cmd.usage.substring(0, spaceIdx)}* ${cmd.usage.substring(spaceIdx + 1)}`
-                    : `*${cmd.usage}*`;
+                paramIdx !== -1
+                    ? `*${cmd.usage.substring(0, paramIdx).trim()}* ${cmd.usage.substring(paramIdx).trim()}`
+                    : `*${cmd.usage.trim()}*`;
             lines.push(`│ ⭔ ${cmdHeader}`);
         }
         lines.push(`╰───────────────────────────`);
@@ -183,8 +184,13 @@ export function formatAllCommands(categories: CategoryInfo[], t: TranslatorFn, p
 /**
  * Formats the single Command Inspector view (.help <command>).
  */
-export function formatCommandDetail(tool: NormalizedTool, t: TranslatorFn, _prefix: string = '.'): string {
-    const cleanName = tool.name.replace(/^\./, '');
+export function formatCommandDetail(
+    tool: NormalizedTool,
+    t: TranslatorFn,
+    _prefix: string = '.',
+    lang: string = 'id'
+): string {
+    const cleanName = getDisplayName(tool, lang);
     const displayCmd = `.${cleanName}`;
     const guideTitle = t('tools.menu.guide_title', { command: displayCmd });
     const cmdLabel = t('tools.menu.command_label');

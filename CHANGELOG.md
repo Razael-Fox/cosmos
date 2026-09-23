@@ -9,6 +9,15 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+### Added
+
+- **Canonical Space-Separated Multi-Word Commands & Localized Parent Titles (#26):**
+    - Supported space-separated multi-word command syntax (`.register id`, `.check id`, `.apply license`, `.apply job`) with two-token longest-match parser resolution.
+    - Localized Indonesian parent command titles in `.menu`, `.menu all`, `.menu <category>`, and `.help <command>`: renders `.buat ktp`, `.cek ktp`, `.pasang sim`, and `.lamar kerja` in Indonesian chats (`id`) and canonical space forms in English chats (`en`).
+    - Added full suite of Indonesian aliases (`.daftar id`, `.daftar ktp`, `.buat ktp`, `.cek id`, `.cek ktp`, `.lihat ktp`, `.pasang sim`, `.buat sim`, `.ajukan sim`, `.daftar sim`, `.lamar kerja`, `.lamar pekerjaan`, `.daftar kerja`).
+    - Integrated interactive job selection flow for bare `.lamar kerja` without target, prompting users to choose a position with `.cancel` support via `cancellationManager`.
+    - Added language-resolved deprecation notices for legacy hyphenated and concatenated triggers (`.register-id`, `.registerid`, `.check-id`, `.apply-license`, `.applylicense`, `.apply-job`, `.applyjob`).
+
 ---
 
 ## [RF-2609-11] - 2026-09-20

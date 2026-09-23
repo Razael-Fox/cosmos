@@ -5,10 +5,23 @@ import { getTranslator } from '#utils/i18n.js';
 import { prisma } from '#db.js';
 
 export const definition: ToolDefinition = {
-    name: 'apply-license',
+    name: 'apply license',
     title: 'Driver License Application',
+    displayNames: {
+        en: 'apply license',
+        id: 'pasang sim'
+    },
     category: 'Licensing',
-    aliases: ['applylicense', 'sim'],
+    aliases: [
+        'apply license',
+        'pasang sim',
+        'buat sim',
+        'ajukan sim',
+        'daftar sim',
+        'apply-license',
+        'applylicense',
+        'sim'
+    ],
     description: 'Apply for a virtual driver license. Requires a valid Virtual ID Card and age >= 17.',
     descriptionKey: 'tools.commands.apply_license.description',
     parameters: {

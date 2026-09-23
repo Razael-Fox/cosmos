@@ -14,8 +14,26 @@ import { renderAlert } from '../utils/uiFormatter.js';
 export const definition: ToolDefinition = {
     name: 'idcard',
     title: 'Virtual ID Card',
+    displayNames: {
+        en: 'register id',
+        id: 'buat ktp'
+    },
     category: 'General',
-    aliases: ['register-id', 'registerid', 'ktp', 'myid', 'check-id'],
+    aliases: [
+        'register id',
+        'check id',
+        'daftar id',
+        'daftar ktp',
+        'buat ktp',
+        'cek id',
+        'cek ktp',
+        'lihat ktp',
+        'register-id',
+        'check-id',
+        'registerid',
+        'ktp',
+        'myid'
+    ],
     description: 'View your Virtual ID Card or register a new identity card.',
     descriptionKey: 'tools.commands.idcard.description',
     parameters: {
@@ -41,7 +59,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    const commandPart = rawText.split(/\s+/)[0]?.toLowerCase() || '';
+    const rawTokens = rawText.toLowerCase().replace(/^\./, '').split(/\s+/);
+    const firstToken = rawTokens[0] || '';
+    const twoTokens = rawTokens.slice(0, 2).join(' ');
     const actionArg = (args.action || '').trim().toLowerCase();
 
     let customPhotoUrl: string | undefined = typeof args.photo === 'string' ? args.photo.trim() : undefined;
@@ -52,9 +72,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
     }
 
+    const registerTriggers = ['register id', 'register-id', 'registerid', 'daftar id', 'daftar ktp', 'buat ktp'];
+
     const isRegisterCommand =
-        commandPart === '.register-id' ||
-        commandPart === '.registerid' ||
+        registerTriggers.includes(twoTokens) ||
+        registerTriggers.includes(firstToken) ||
         actionArg === 'register' ||
         actionArg === 'daftar';
 

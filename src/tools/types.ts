@@ -3,6 +3,7 @@ import { WASocket, WAMessage } from '@whiskeysockets/baileys';
 export interface ToolDefinition {
     name: string;
     title?: string;
+    displayNames?: Partial<Record<'en' | 'id', string>>;
     category?: string;
     aliases?: string[];
     description: string;
@@ -46,7 +47,7 @@ export function resolveToolDescription(
     }
 
     // 2. Try conventional tools.commands.<cleanName>.description
-    const cleanName = def.name.replace(/^\./, '').replace(/-/g, '_');
+    const cleanName = def.name.replace(/^\./, '').replace(/[-\s]+/g, '_');
     const commandKey = `tools.commands.${cleanName}.description`;
     const translatedCommand = t(commandKey);
     if (translatedCommand && translatedCommand !== commandKey) {

@@ -89,7 +89,7 @@ async function runTests() {
     assert.strictEqual(authBefore.authorized, false);
     assert.strictEqual(
         authBefore.message,
-        'Access Denied. You must possess a Virtual ID Card to use this feature. Please register your identity first using the .register-id command.'
+        'Access Denied. You must possess a Virtual ID Card to use this feature. Please register your identity first using the .register id command.'
     );
 
     const mockCtxUnreg: any = {

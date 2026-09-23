@@ -79,7 +79,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             uptimeSeconds: process.uptime(),
             lang,
             prefix: '.',
-            totalCommands: menuService.getCatalogStats().totalCommands
+            totalCommands: menuService.getCatalogStats(undefined, lang).totalCommands
         },
         t
     );
@@ -88,21 +88,21 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     if (!rawQuery) {
         // No argument: Show Category Overview with Dashboard Header
-        outputText = `${dashboardHeader}\n\n${formatCategoryOverview(menuService.getCategoryList(), t, '.')}`;
+        outputText = `${dashboardHeader}\n\n${formatCategoryOverview(menuService.getCategoryList(undefined, lang), t, '.')}`;
     } else if (rawQuery.toLowerCase() === 'all') {
         // "all": Full command catalog
-        outputText = `${dashboardHeader}\n\n${formatAllCommands(menuService.getCategoryList(), t, '.')}`;
+        outputText = `${dashboardHeader}\n\n${formatAllCommands(menuService.getCategoryList(undefined, lang), t, '.')}`;
     } else {
         // Lookup either command or category
-        const foundCommand = menuService.findCommand(rawQuery);
+        const foundCommand = menuService.findCommand(rawQuery, undefined, lang);
         if (foundCommand) {
-            outputText = formatCommandDetail(foundCommand, t, '.');
+            outputText = formatCommandDetail(foundCommand, t, '.', lang);
         } else {
-            const foundCategory = menuService.findCategory(rawQuery);
+            const foundCategory = menuService.findCategory(rawQuery, undefined, lang);
             if (foundCategory) {
                 outputText = formatCategoryCommands(foundCategory, t, '.');
             } else {
-                outputText = formatNotFound('command', rawQuery, menuService.getCategoryList(), t, '.');
+                outputText = formatNotFound('command', rawQuery, menuService.getCategoryList(undefined, lang), t, '.');
             }
         }
     }

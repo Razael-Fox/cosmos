@@ -9,7 +9,9 @@ import { handleOfflineAiResponder } from '#utils/offlineAi.js';
 import { isUserRegistering, processRegistrationStep } from '#utils/idCard.js';
 import { processBankTransferConfirmation } from '#tools/bank.js';
 import { processLoanConfirmation } from '#tools/loan.js';
+import { processJobSelection } from '#tools/job.js';
 import { formatMentions } from '#utils/casino.js';
+import { getLegacyCanonical } from '#utils/commandFormat.js';
 import {
     hasCancellableSession,
     cancelActiveSession,
@@ -534,6 +536,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             if (handledStickerly) return;
         }
 
+        // Check if sender is in an active job application selection flow
+        if (senderRaw && !trimmedText.startsWith('.')) {
+            const handledJobSelect = await processJobSelection(sock, msg, senderRaw, jid, trimmedText, t);
+            if (handledJobSelect) return;
+        }
+
         if (isCommand) {
             let commandName: string;
             let argsStr: string;
@@ -549,6 +557,16 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 }
                 commandName = rawCmd;
                 argsStr = trimmedText.substring(parts[0].length).trim();
+
+                // Multi-word command resolution (attempt two-token lookup before single-token)
+                if (parts.length >= 2) {
+                    const twoTokenCandidate = `${rawCmd} ${parts[1]}`;
+                    if (toolsHandler.getTool(twoTokenCandidate)) {
+                        commandName = twoTokenCandidate;
+                        const match = trimmedText.match(/^\S+\s+\S+/);
+                        argsStr = match ? trimmedText.substring(match[0].length).trim() : '';
+                    }
+                }
             }
 
             if (commandName === '.addgroup' || commandName === '.addwhitelist') {
@@ -757,6 +775,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     const matches = result.match(/@(\d+)/g);
                     const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
                     await sock.sendMessage(jid, { text: result, mentions }, { quoted: msg });
+                }
+
+                const legacyCanonical = getLegacyCanonical(commandName);
+                if (legacyCanonical) {
+                    const deprecationMsg = t('tools.deprecation_notice', { canonical: legacyCanonical });
+                    await sock.sendMessage(jid, { text: deprecationMsg }, { quoted: msg });
                 }
                 return;
             }

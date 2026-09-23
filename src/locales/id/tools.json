@@ -1,4 +1,5 @@
 {
+    "deprecation_notice": "⚠️ Telah usang: Silakan gunakan {{canonical}} sebagai gantinya.",
     "balance": {
         "title": "💰 Saldo",
         "amount": "Saldo Anda saat ini: {{amount}}",
@@ -195,7 +196,7 @@
         "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}"
     },
     "apply_job": {
-        "specify_role": "Silakan tentukan posisi pekerjaan yang Anda lamar (contoh: .apply-job Developer).",
+        "specify_role": "Silakan tentukan posisi pekerjaan yang Anda lamar (contoh: .apply job Developer).",
         "success": "Lamaran Anda telah dikirim. Kontrak untuk '{{role}}' telah didaftarkan atas nama {{name}}, bertempat tinggal di {{address}}."
     },
     "apply_license": {
@@ -207,11 +208,13 @@
         "already_employed": "Anda sudah bekerja aktif sebagai {{jobName}}.",
         "require_pickaxe": "Lamaran Ditolak. Pekerjaan tambang membutuhkan Pickaxe di inventaris Anda. Anda dapat membelinya di .shop.",
         "require_macbook": "Lamaran Ditolak. Pekerjaan kantor membutuhkan MacBook di inventaris Anda. Anda dapat membelinya di .shop.",
-        "require_license": "Lamaran Ditolak. Pekerjaan sopir taksi membutuhkan SIM yang valid. Anda dapat memperolehnya lewat .apply-license atau .shop.",
+        "require_license": "Lamaran Ditolak. Pekerjaan sopir taksi membutuhkan SIM yang valid. Anda dapat memperolehnya lewat .apply license atau .shop.",
         "require_entrepreneur_device": "Lamaran Ditolak. Kewirausahaan membutuhkan kepemilikan MacBook atau iPhone di inventaris Anda.",
         "require_investment": "Lamaran Ditolak. Memulai bisnis memerlukan modal investasi awal sebesar {{amount}}. Saldo Anda saat ini {{currentBalance}}.",
         "not_employed": "Anda saat ini tidak memiliki pekerjaan aktif untuk diundurkan.",
         "specify_target": "Harap tentukan nama atau ID pekerjaan yang ingin dilamar (contoh: .job join 1 atau .job join Mining). Gunakan .job list untuk melihat daftar pekerjaan.",
+        "prompt_selection": "Silakan balas dengan ID atau nama posisi pekerjaan yang ingin Anda lamar (atau ketik *.cancel* untuk membatalkan).",
+        "selection_cancelled": "Pemilihan lamaran pekerjaan telah dibatalkan.",
         "join_success": "Selamat! Anda berhasil diterima bekerja sebagai *{{jobName}}*.\n• Gaji Pokok: {{salary}}\n• Cooldown Shift: {{cooldown}}\nKetik `.work` saat shift Anda siap.",
         "investment_deducted": "Modal awal bisnis sebesar {{amount}} telah dipotong dari saldo Anda.",
         "resign_success": "Anda telah berhasil mengundurkan diri dari posisi sebagai *{{jobName}}*. Anda sekarang berstatus belum bekerja.",
@@ -228,7 +231,7 @@
         "description_label": "Deskripsi",
         "directory_title": "BURSA TENAGA KERJA COSMOS",
         "directory_subtitle": "Katalog Karier & Pekerjaan Resmi",
-        "mandatory_idcard": "Wajib: KTP Virtual yang Valid (.register-id)",
+        "mandatory_idcard": "Wajib: KTP Virtual yang Valid (.register id)",
         "per_day": "hari",
         "per_week": "minggu",
         "per_delivery": "pengantaran",
@@ -419,7 +422,7 @@
     "idcard": {
         "duplicate": "Anda sudah memiliki KTP Virtual yang terdaftar (NIK: {{nik}}). Pendaftaran ganda tidak diizinkan. Mengambil kartu Anda sekarang...",
         "active_in_progress": "Anda sudah memiliki proses pendaftaran yang sedang aktif. Silakan balas pesan atau ketik *.cancel* untuk membatalkan.",
-        "not_registered": "Anda belum memiliki KTP Virtual. Silakan daftarkan identitas Anda terlebih dahulu menggunakan perintah *.register-id*.",
+        "not_registered": "Anda belum memiliki KTP Virtual. Silakan daftarkan identitas Anda terlebih dahulu menggunakan perintah *.register id*.",
         "fetching": "⏳ Mengambil KTP Virtual Anda...",
         "generate_error": "Terjadi kesalahan saat membuat KTP Virtual Anda. Silakan coba lagi nanti.",
         "card_title": "Berikut adalah KTP Virtual Anda.\n\n"
@@ -534,7 +537,7 @@
     },
     "loan": {
         "usage": "*🏦 Cosmos Central Bank - Fasilitas Pinjaman*\n\nPerintah yang tersedia:\n• *.loan apply <jumlah> [nama_agunan]* - Ajukan pinjaman dengan penilaian AI\n• *.loan pay [jumlah]* - Lunasi pinjaman aktif (default: lunasi semua)\n• *.loan status* - Lihat status pinjaman aktif dan batas waktu pelunasan\n• *.loan info* - Lihat skor kredit, reputasi, dan batas pinjaman Anda",
-        "no_id_card": "Akses Ditolak. Anda wajib memiliki KTP Virtual sebelum mengajukan pinjaman bank. Silakan daftarkan identitas Anda terlebih dahulu menggunakan perintah *.register-id*.",
+        "no_id_card": "Akses Ditolak. Anda wajib memiliki KTP Virtual sebelum mengajukan pinjaman bank. Silakan daftarkan identitas Anda terlebih dahulu menggunakan perintah *.register id*.",
         "no_bank_account": "Akses Ditolak. Anda wajib memiliki rekening bank aktif untuk mengajukan pinjaman. Silakan daftar menggunakan perintah *.bank register* terlebih dahulu.",
         "bank_account_frozen": "Transaksi gagal. Rekening bank Anda saat ini berstatus {{status}}. Harap selesaikan kewajiban Anda terlebih dahulu.",
         "invalid_amount": "Jumlah pinjaman tidak valid. Harap masukkan nominal yang valid lebih besar dari 0.",

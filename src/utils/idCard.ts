@@ -377,7 +377,7 @@ export async function requireIdCard(userJidOrLid: string, t?: (key: string, args
             idCard: null,
             message: t
                 ? t('utilities.idcard.access_denied')
-                : 'Access Denied. You must possess a Virtual ID Card to use this feature. Please register your identity first using the .register-id command.'
+                : 'Access Denied. You must possess a Virtual ID Card to use this feature. Please register your identity first using the .register id command.'
         };
     }
     return {

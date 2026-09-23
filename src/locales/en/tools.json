@@ -1,4 +1,5 @@
 {
+    "deprecation_notice": "⚠️ Deprecated: Please use {{canonical}} instead.",
     "balance": {
         "title": "💰 Balance",
         "amount": "Your current balance is {{amount}}",
@@ -195,7 +196,7 @@
         "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}"
     },
     "apply_job": {
-        "specify_role": "Please specify the job position you are applying for (e.g., .apply-job Developer).",
+        "specify_role": "Please specify the job position you are applying for (e.g., .apply job Developer).",
         "success": "Your application has been submitted. The contract for '{{role}}' has been registered under the name {{name}}, residing at {{address}}."
     },
     "apply_license": {
@@ -207,11 +208,13 @@
         "already_employed": "You are already actively employed as {{jobName}}.",
         "require_pickaxe": "Employment Denied. Mining requires owning a Pickaxe in your inventory. You can purchase one in the .shop.",
         "require_macbook": "Employment Denied. Office Work requires owning a MacBook in your inventory. You can purchase one in the .shop.",
-        "require_license": "Employment Denied. Taxi Driving requires a valid Driver's License. You can obtain one via .apply-license or .shop.",
+        "require_license": "Employment Denied. Taxi Driving requires a valid Driver's License. You can obtain one via .apply license or .shop.",
         "require_entrepreneur_device": "Employment Denied. Entrepreneurship requires owning a MacBook or iPhone in your inventory.",
         "require_investment": "Employment Denied. Starting an enterprise requires an initial capital investment of {{amount}}. Your current balance is {{currentBalance}}.",
         "not_employed": "You do not currently have an active job to resign from.",
         "specify_target": "Please specify a job name or ID to apply for (e.g. .job join 1 or .job join Mining). Use .job list to view positions.",
+        "prompt_selection": "Please reply with the job ID or job position you want to apply for (or type *.cancel* to abort).",
+        "selection_cancelled": "Job application selection has been cancelled.",
         "join_success": "Congratulations! You have been successfully hired as *{{jobName}}*.\n• Base Salary: {{salary}}\n• Shift Cooldown: {{cooldown}}\nType `.work` when your shift is ready.",
         "investment_deducted": "Deducted {{amount}} from your balance for your initial business capital.",
         "resign_success": "You have successfully resigned from your position as *{{jobName}}*. You are now unemployed.",
@@ -228,7 +231,7 @@
         "description_label": "Description",
         "directory_title": "COSMOS EMPLOYMENT EXCHANGE",
         "directory_subtitle": "Official Career & Job Catalog",
-        "mandatory_idcard": "Mandatory: Valid Virtual ID Card (.register-id)",
+        "mandatory_idcard": "Mandatory: Valid Virtual ID Card (.register id)",
         "per_day": "day",
         "per_week": "week",
         "per_delivery": "delivery",
@@ -419,7 +422,7 @@
     "idcard": {
         "duplicate": "You already possess a registered Virtual ID Card (NIK: {{nik}}). Duplicate registrations are not permitted. Fetching your card now...",
         "active_in_progress": "You already have an active registration in progress. Please reply to the prompt or type *.cancel* to abort.",
-        "not_registered": "You do not possess a Virtual ID Card yet. Please register your identity first using the *.register-id* command.",
+        "not_registered": "You do not possess a Virtual ID Card yet. Please register your identity first using the *.register id* command.",
         "fetching": "⏳ Fetching your Virtual ID Card...",
         "generate_error": "An error occurred while generating your Virtual ID Card. Please try again later.",
         "card_title": "Here is your Virtual ID Card.\n\n"
@@ -534,7 +537,7 @@
     },
     "loan": {
         "usage": "*🏦 Cosmos Central Bank - Loan Facility*\n\nAvailable commands:\n• *.loan apply <amount> [collateral_name]* - Apply for a loan with AI assessment\n• *.loan pay [amount]* - Repay your active loan (default: full amount)\n• *.loan status* - View your active loan and repayment deadline\n• *.loan info* - View your credit score, reputation, and borrowing limits",
-        "no_id_card": "Access Denied. You must possess a Virtual ID Card to apply for a bank loan. Please register your identity first using the *.register-id* command.",
+        "no_id_card": "Access Denied. You must possess a Virtual ID Card to apply for a bank loan. Please register your identity first using the *.register id* command.",
         "no_bank_account": "Access Denied. You must have an active bank account to apply for a loan. Please register using *.bank register* first.",
         "bank_account_frozen": "Transaction failed. Your bank account is currently {{status}}. Please resolve any outstanding obligations.",
         "invalid_amount": "Invalid loan amount. Please specify a valid amount greater than 0.",

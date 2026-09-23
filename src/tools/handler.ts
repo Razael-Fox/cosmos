@@ -14,7 +14,13 @@ class ToolsHandler {
         if (this.isLoaded) return;
         const distToolsPath = path.resolve(process.cwd(), 'dist', 'tools');
         const srcToolsPath = path.resolve(process.cwd(), 'src', 'tools');
-        const toolsPath = fs.existsSync(distToolsPath) ? distToolsPath : srcToolsPath;
+        const isTs = import.meta.url.endsWith('.ts');
+        const toolsPath =
+            isTs && fs.existsSync(srcToolsPath)
+                ? srcToolsPath
+                : fs.existsSync(distToolsPath)
+                  ? distToolsPath
+                  : srcToolsPath;
 
         const files = fs
             .readdirSync(toolsPath)
@@ -54,25 +60,39 @@ class ToolsHandler {
     getTool(nameOrAlias?: string): ToolModule | null {
         if (!nameOrAlias) return null;
         const normalized = nameOrAlias.trim().toLowerCase();
+        const undotted = normalized.startsWith('.') ? normalized.slice(1).trim() : normalized;
 
-        // 1. Search directly with raw lowercased input
-        if (this.tools.has(normalized)) {
-            return this.tools.get(normalized) || null;
-        }
+        // 1. Direct match with raw input or undotted
+        if (this.tools.has(normalized)) return this.tools.get(normalized) || null;
         if (this.aliases.has(normalized)) {
             const name = this.aliases.get(normalized)!;
             return this.tools.get(name) || null;
         }
 
-        // 2. If input starts with a dot, try matching without the dot prefix
-        if (normalized.startsWith('.')) {
-            const undotted = normalized.slice(1);
-            if (this.tools.has(undotted)) {
-                return this.tools.get(undotted) || null;
+        if (this.tools.has(undotted)) return this.tools.get(undotted) || null;
+        if (this.aliases.has(undotted)) {
+            const name = this.aliases.get(undotted)!;
+            return this.tools.get(name) || null;
+        }
+
+        // 2. Normalized matching (hyphens/underscores to spaces)
+        const spaceNormalized = undotted.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+        if (this.tools.has(spaceNormalized)) return this.tools.get(spaceNormalized) || null;
+        if (this.aliases.has(spaceNormalized)) {
+            const name = this.aliases.get(spaceNormalized)!;
+            return this.tools.get(name) || null;
+        }
+
+        // 3. Stripped matching (no spaces, hyphens, or underscores)
+        const stripped = undotted.replace(/[-_\s]+/g, '');
+        for (const [toolName, toolModule] of this.tools.entries()) {
+            if (toolName.replace(/[-_\s]+/g, '') === stripped) {
+                return toolModule;
             }
-            if (this.aliases.has(undotted)) {
-                const name = this.aliases.get(undotted)!;
-                return this.tools.get(name) || null;
+        }
+        for (const [aliasName, toolName] of this.aliases.entries()) {
+            if (aliasName.replace(/[-_\s]+/g, '') === stripped) {
+                return this.tools.get(toolName) || null;
             }
         }
 
@@ -95,9 +115,13 @@ class ToolsHandler {
     getGroqTools(): Array<{ type: string; function: any }> {
         const groqTools: Array<{ type: string; function: any }> = [];
         for (const toolModule of this.tools.values()) {
+            const def = { ...toolModule.definition };
+            if (def.name) {
+                def.name = def.name.replace(/[-\s]+/g, '_');
+            }
             groqTools.push({
                 type: 'function',
-                function: toolModule.definition
+                function: def
             });
         }
         return groqTools;
