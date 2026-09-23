@@ -1,4 +1,5 @@
 import { prisma } from '../db.js';
+import { getUser } from '../utils/casino.js';
 
 export type PurchaseErrorCode =
     'SUCCESS' | 'INSUFFICIENT_BALANCE' | 'NOT_FOUND' | 'UNAVAILABLE' | 'INVALID_QUANTITY' | 'DATABASE_ERROR';
@@ -85,17 +86,7 @@ export async function purchaseItem(
     }
 
     // Ensure user exists
-    let user = await prisma.user.findFirst({
-        where: {
-            OR: [{ id: userId }, { lid: userId }]
-        }
-    });
-
-    if (!user) {
-        user = await prisma.user.create({
-            data: { id: userId, balance: BigInt(10000) }
-        });
-    }
+    const user = await getUser(prisma as any, userId);
 
     const actualUserId = user.id;
     const totalCost = item.price * BigInt(quantity);

@@ -111,6 +111,7 @@ export async function getChatLanguage(chatJid: string): Promise<string> {
     try {
         // Defer DB import to avoid top-level schema check during static tests / host environments
         const { prisma } = await import('../db.js');
+        const { buildUserOrConditions } = await import('./casino.js');
         if (chatJid.endsWith('@g.us')) {
             const group = await prisma.whitelistedGroup.findUnique({ where: { jid: chatJid } });
             if (group?.language) {
@@ -119,7 +120,7 @@ export async function getChatLanguage(chatJid: string): Promise<string> {
         } else {
             const user = await prisma.user.findFirst({
                 where: {
-                    OR: [{ id: chatJid }, { lid: chatJid }]
+                    OR: buildUserOrConditions(chatJid)
                 }
             });
             if (user?.language) {

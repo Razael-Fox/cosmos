@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { getSessionByChatId } from '../utils/roulette.js';
-import { getSenderJid, MIN_BET, MAX_BET } from '../utils/casino.js';
+import { getSenderJid, buildUserOrConditions, MIN_BET, MAX_BET } from '../utils/casino.js';
 import { formatRupiah, parseCurrencyAmount } from '../utils/currency.js';
 import { prisma } from '../db.js';
 import { getTranslator } from '../utils/i18n.js';
@@ -23,7 +23,7 @@ const betTool: ToolModule = {
         const t = ctx?.t || getTranslator('en');
         const { msg, sock, jid } = ctx;
         const senderJid = getSenderJid(msg, sock);
-        const user = await prisma.user.findFirst({ where: { OR: [{ id: senderJid }, { lid: senderJid }] } });
+        const user = await prisma.user.findFirst({ where: { OR: buildUserOrConditions(senderJid) } });
         const amount = parseCurrencyAmount(String(args.input || ''), user?.balance);
 
         if (amount === null || isNaN(amount) || amount < MIN_BET) {

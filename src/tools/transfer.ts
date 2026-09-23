@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
-import { getSenderJid, resolveId, getUser } from '../utils/casino.js';
+import { getSenderJid, resolveId, getUser, cleanId } from '../utils/casino.js';
 import { formatRupiah, parseCurrencyAmount } from '../utils/currency.js';
 import { logTransaction } from '../utils/transactionLogger.js';
 import { getTranslator } from '../utils/i18n.js';
@@ -37,7 +37,7 @@ const transferTool: ToolModule = {
 
         const cleanTargetJid = await resolveId(targetJid, sock, msg.key.remoteJid);
 
-        if (cleanTargetJid === senderJid) {
+        if (cleanId(cleanTargetJid) === cleanId(senderJid)) {
             return t('tools.transfer.self_transfer');
         }
 

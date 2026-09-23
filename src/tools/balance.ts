@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
-import { getSenderJid, resolveId, getUser, formatMentions } from '../utils/casino.js';
+import { getSenderJid, resolveId, getUser, formatMentions, cleanId } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { getTranslator } from '../utils/i18n.js';
 import { renderCard } from '../utils/uiFormatter.js';
@@ -37,7 +37,7 @@ const balanceTool: ToolModule = {
         let queryJid = senderJid;
         let isCheckingOther = false;
 
-        if (targetJid && targetJid !== senderJid) {
+        if (targetJid && cleanId(targetJid) !== cleanId(senderJid)) {
             const ownerNumbers = getOwnerNumbers();
             const senderRaw = senderJid ? senderJid.split(':')[0].split('@')[0] : null;
             const isOwner = Boolean(msg.key.fromMe) || (senderRaw !== null && ownerNumbers.includes(senderRaw));

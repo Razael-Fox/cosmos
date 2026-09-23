@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { gameSessions, Player } from '../utils/roulette.js';
-import { getSenderJid, MIN_BET } from '../utils/casino.js';
+import { getSenderJid, buildUserOrConditions, MIN_BET } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { prisma } from '../db.js';
 import { getTranslator } from '../utils/i18n.js';
@@ -47,7 +47,7 @@ const joinGameTool: ToolModule = {
 
         const user = await prisma.user.findFirst({
             where: {
-                OR: [{ id: senderJid }, { lid: senderJid }]
+                OR: buildUserOrConditions(senderJid)
             }
         });
         const actualUserId = user ? user.id : senderJid;

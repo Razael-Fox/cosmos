@@ -1,7 +1,7 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah, parseCurrencyAmount } from '../utils/currency.js';
-import { getSenderJid } from '../utils/casino.js';
+import { getSenderJid, buildUserOrConditions } from '../utils/casino.js';
 import { Groq } from 'groq-sdk';
 
 function getGroqClient(): Groq {
@@ -51,7 +51,7 @@ const propertySellTool: ToolModule = {
 
         const user = await prisma.user.findFirst({
             where: {
-                OR: [{ id: userJid }, { lid: userJid }]
+                OR: buildUserOrConditions(userJid)
             }
         });
 

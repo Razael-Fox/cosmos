@@ -2,6 +2,7 @@ import { prisma } from '../db.js';
 import { requireIdCard } from '../utils/idCard.js';
 import { formatRupiah } from '../utils/currency.js';
 import { JobCatalog } from '../generated/prisma/client.js';
+import { buildUserOrConditions, getUser } from '../utils/casino.js';
 
 export const ENTREPRENEUR_INITIAL_INVESTMENT = 250000;
 
@@ -279,7 +280,7 @@ export interface UserJobStatus {
  */
 export async function getUserJobStatus(userJidOrLid: string): Promise<UserJobStatus | null> {
     const user = await prisma.user.findFirst({
-        where: { OR: [{ id: userJidOrLid }, { lid: userJidOrLid }] },
+        where: { OR: buildUserOrConditions(userJidOrLid) },
         include: { currentJob: true }
     });
 
@@ -329,15 +330,13 @@ export async function applyForJob(
 
     // 2. Resolve User
     let user = await prisma.user.findFirst({
-        where: { OR: [{ id: userJidOrLid }, { lid: userJidOrLid }] },
+        where: { OR: buildUserOrConditions(userJidOrLid) },
         include: { currentJob: true }
     });
 
     if (!user) {
-        user = await prisma.user.create({
-            data: { id: userJidOrLid },
-            include: { currentJob: true }
-        });
+        const createdUser = await getUser(prisma as any, userJidOrLid);
+        user = { ...createdUser, currentJob: null };
     }
 
     const actualUserId = user.id;
@@ -463,7 +462,7 @@ export interface ResignJobResult {
  */
 export async function resignJob(userJidOrLid: string, t: TranslateFn): Promise<ResignJobResult> {
     const user = await prisma.user.findFirst({
-        where: { OR: [{ id: userJidOrLid }, { lid: userJidOrLid }] },
+        where: { OR: buildUserOrConditions(userJidOrLid) },
         include: { currentJob: true }
     });
 
@@ -521,7 +520,7 @@ export async function executeWork(userJidOrLid: string, t: TranslateFn): Promise
 
     // 2. Resolve User & Current Job
     const user = await prisma.user.findFirst({
-        where: { OR: [{ id: userJidOrLid }, { lid: userJidOrLid }] },
+        where: { OR: buildUserOrConditions(userJidOrLid) },
         include: { currentJob: true }
     });
 

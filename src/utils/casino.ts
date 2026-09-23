@@ -8,24 +8,85 @@ export { formatRupiah, formatNumberId, parseCurrencyAmount } from './currency.js
 
 export const chance = new Chance();
 
+export const cleanId = (idStr: string | null | undefined): string => {
+    if (!idStr) return '';
+    return idStr.split(':')[0].split('@')[0];
+};
+
+export const lidToPnMap = new Map<string, string>();
+export const pnToLidMap = new Map<string, string>();
+
+export function buildUserOrConditions(jidOrLid: string): Array<{ id?: string; lid?: string }> {
+    if (!jidOrLid) return [];
+    const cleaned = cleanId(jidOrLid);
+    const mappedPn = lidToPnMap.get(cleaned);
+    const mappedLid = pnToLidMap.get(cleaned);
+
+    const isLid =
+        jidOrLid.includes('@lid') ||
+        Boolean(mappedPn) ||
+        (cleaned.length >= 13 && !jidOrLid.includes('@s.whatsapp.net') && !mappedLid);
+    const canonicalJid = cleaned && !isLid ? `${cleaned}@s.whatsapp.net` : null;
+    const mappedCanonicalJid = mappedPn ? `${mappedPn}@s.whatsapp.net` : null;
+
+    const conditions: Array<{ id?: string; lid?: string }> = [{ id: jidOrLid }, { lid: jidOrLid }];
+
+    if (cleaned) {
+        conditions.push({ id: cleaned });
+        conditions.push({ lid: cleaned });
+    }
+    if (canonicalJid) {
+        conditions.push({ id: canonicalJid });
+    }
+    if (isLid && cleaned) {
+        conditions.push({ lid: cleaned });
+        conditions.push({ lid: `${cleaned}@lid` });
+        conditions.push({ id: `${cleaned}@lid` });
+    }
+    if (mappedCanonicalJid) {
+        conditions.push({ id: mappedCanonicalJid });
+    }
+    if (mappedPn) {
+        conditions.push({ id: mappedPn });
+        conditions.push({ id: `${mappedPn}@s.whatsapp.net` });
+    }
+    if (mappedLid) {
+        conditions.push({ lid: mappedLid });
+        conditions.push({ lid: `${mappedLid}@lid` });
+        conditions.push({ id: `${mappedLid}@lid` });
+    }
+
+    return conditions;
+}
+
 export async function autoMergeAccounts(oldId: string, newId: string) {
     if (oldId === newId) return;
     try {
-        const oldUser = await prisma.user.findUnique({ where: { id: oldId } });
+        const oldConditions = buildUserOrConditions(oldId);
+        const newConditions = buildUserOrConditions(newId);
+
+        const oldUser = await prisma.user.findFirst({ where: { OR: oldConditions } });
         if (!oldUser) return; // Nothing to merge
 
-        const newUser = await prisma.user.findUnique({ where: { id: newId } });
+        const newUser = await prisma.user.findFirst({ where: { OR: newConditions } });
 
         if (!newUser) {
-            await prisma.user.update({ where: { id: oldId }, data: { id: newId } });
-            console.log(`[AutoMerge] Renamed ${oldId} to ${newId}`);
+            const cleanNew = cleanId(newId);
+            const canonicalNew = cleanNew.length <= 14 ? `${cleanNew}@s.whatsapp.net` : `${cleanNew}@lid`;
+            await prisma.user.update({ where: { id: oldUser.id }, data: { id: canonicalNew } });
+            console.log(`[AutoMerge] Renamed ${oldUser.id} to ${canonicalNew}`);
             return;
         }
 
+        if (oldUser.id === newUser.id) {
+            return;
+        }
+
+        const cleanOld = cleanId(oldId);
         await prisma.user.update({
-            where: { id: newId },
+            where: { id: newUser.id },
             data: {
-                lid: oldId,
+                lid: cleanOld,
                 balance: { increment: oldUser.balance },
                 totalWins: { increment: oldUser.totalWins },
                 totalLosses: { increment: oldUser.totalLosses },
@@ -36,8 +97,10 @@ export async function autoMergeAccounts(oldId: string, newId: string) {
                 rouletteAfk: { increment: oldUser.rouletteAfk }
             }
         });
-        await prisma.user.delete({ where: { id: oldId } });
-        console.log(`[AutoMerge] Merged stats from ${oldId} into ${newId}`);
+        await prisma.user.delete({ where: { id: oldUser.id } }).catch((err) => {
+            console.warn(`[AutoMerge] Could not delete oldUser ${oldUser.id} after merge:`, err.message);
+        });
+        console.log(`[AutoMerge] Merged stats from ${oldUser.id} into ${newUser.id}`);
     } catch (error) {
         console.error(`[AutoMerge] Error merging ${oldId} -> ${newId}:`, error);
     }
@@ -59,19 +122,51 @@ export async function getHouseVault(prisma: PrismaClient) {
 }
 
 export async function getUser(prisma: PrismaClient, jidOrLid: string, pushName?: string) {
+    if (!jidOrLid) throw new Error('Invalid user identifier');
+
+    const conditions = buildUserOrConditions(jidOrLid);
     let user = await prisma.user.findFirst({
-        where: { OR: [{ id: jidOrLid }, { lid: jidOrLid }] }
+        where: { OR: conditions }
     });
+
+    const cleaned = cleanId(jidOrLid);
+    const mappedPn = lidToPnMap.get(cleaned);
+    const mappedLid = pnToLidMap.get(cleaned);
+    const isLid =
+        jidOrLid.includes('@lid') ||
+        Boolean(mappedPn) ||
+        (cleaned.length >= 13 && !jidOrLid.includes('@s.whatsapp.net') && !mappedLid);
+
+    const targetId = mappedPn
+        ? `${mappedPn}@s.whatsapp.net`
+        : !isLid && cleaned
+          ? `${cleaned}@s.whatsapp.net`
+          : jidOrLid;
+    const targetLid = isLid ? cleaned : mappedLid || null;
 
     if (!user) {
         user = await prisma.user.create({
-            data: { id: jidOrLid, pushName: pushName || null }
+            data: {
+                id: targetId,
+                lid: targetLid,
+                pushName: pushName || null,
+                username: pushName || null
+            }
         });
-    } else if (pushName && user.pushName !== pushName) {
-        user = await prisma.user.update({
-            where: { id: user.id },
-            data: { pushName }
-        });
+    } else {
+        const updateData: { pushName?: string; lid?: string } = {};
+        if (pushName && user.pushName !== pushName) {
+            updateData.pushName = pushName;
+        }
+        if (targetLid && !user.lid) {
+            updateData.lid = targetLid;
+        }
+        if (Object.keys(updateData).length > 0) {
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: updateData
+            });
+        }
     }
     return user;
 }
@@ -115,7 +210,7 @@ export async function executeGamble(
 
     try {
         return await prisma.$transaction(async (tx) => {
-            const user = await tx.user.findFirst({ where: { OR: [{ id: jid }, { lid: jid }] } });
+            const user = await tx.user.findFirst({ where: { OR: buildUserOrConditions(jid) } });
             if (!user) throw new Error(tr('utilities.casino.user_not_found'));
 
             if (Number(user.balance) < bet) {
@@ -241,11 +336,6 @@ export async function executeGamble(
     }
 }
 
-export const cleanId = (idStr: string | null | undefined): string => {
-    if (!idStr) return '';
-    return idStr.split(':')[0].split('@')[0];
-};
-
 export const formatMentions = (ids: string | string[]): string[] => {
     const idArray = Array.isArray(ids) ? ids : [ids];
     const mentions: string[] = [];
@@ -258,8 +348,6 @@ export const formatMentions = (ids: string | string[]): string[] => {
     }
     return mentions;
 };
-
-export const lidToPnMap = new Map<string, string>();
 
 export const resolveId = async (
     idStr: string | null | undefined,
@@ -294,9 +382,10 @@ export const resolveId = async (
 
 export const getSenderJid = (msg: any, sock?: any): string => {
     // When the bot sends a command or message (fromMe in a DM or group),
-    // always return the bot's own cleaned JID.
+    // always return the bot's own canonical JID.
     if (msg.key.fromMe && sock?.user?.id) {
-        return cleanId(sock.user.id);
+        const botPhone = cleanId(sock.user.id);
+        return botPhone ? `${botPhone}@s.whatsapp.net` : '';
     }
 
     let jid = msg.key.participant || msg.key.remoteJid;
@@ -313,14 +402,22 @@ export const getSenderJid = (msg: any, sock?: any): string => {
             const cleanedAlt = cleanId(alt);
             if (!lidToPnMap.has(cleanedLid) || lidToPnMap.get(cleanedLid) !== cleanedAlt) {
                 lidToPnMap.set(cleanedLid, cleanedAlt);
+                pnToLidMap.set(cleanedAlt, cleanedLid);
                 // Fire and forget auto-merge in background
                 autoMergeAccounts(cleanedLid, cleanedAlt).catch(() => {});
             }
             jid = alt;
         } else if (lidToPnMap.has(cleanedLid)) {
             // Fallback to cache if WhatsApp didn't send participantAlt this time
-            return lidToPnMap.get(cleanedLid)!;
+            return `${lidToPnMap.get(cleanedLid)!}@s.whatsapp.net`;
         }
     }
-    return cleanId(jid);
+    const cleaned = cleanId(jid);
+    if (!cleaned) return '';
+    const mappedPn = lidToPnMap.get(cleaned);
+    if (mappedPn) {
+        return `${mappedPn}@s.whatsapp.net`;
+    }
+    const isLid = jid?.endsWith('@lid') || (cleaned.length >= 13 && !jid?.includes('@s.whatsapp.net'));
+    return isLid ? `${cleaned}@lid` : `${cleaned}@s.whatsapp.net`;
 };

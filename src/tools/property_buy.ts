@@ -1,7 +1,7 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { formatRupiah } from '../utils/currency.js';
-import { getSenderJid } from '../utils/casino.js';
+import { getSenderJid, getUser } from '../utils/casino.js';
 import { purchaseItem } from '../services/shopService.js';
 
 const buyTool: ToolModule = {
@@ -32,14 +32,7 @@ const buyTool: ToolModule = {
         if (!userJid) return;
 
         // Ensure user exists in database
-        let user = await prisma.user.findFirst({
-            where: {
-                OR: [{ id: userJid }, { lid: userJid }]
-            }
-        });
-        if (!user) {
-            user = await prisma.user.create({ data: { id: userJid, balance: BigInt(10000) } });
-        }
+        const user = await getUser(prisma, userJid, msg.pushName || undefined);
 
         let inputTarget = args.item_name;
         let inputQuantity =
