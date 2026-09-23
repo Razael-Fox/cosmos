@@ -162,7 +162,7 @@ ${
         ? 'Gunakan Rupiah (Rp) untuk mata uang dan format Indonesia untuk angka dan tanggal.'
         : 'Use Rupiah (Rp) for currency and Indonesian number/date formatting (required by business logic).'
 }
-Important: Gunakan Native Function Calling API. DILARANG KERAS mengetik tag XML seperti <function=...> secara manual di dalam teks balasan Anda! Return ONLY the text you want to send when not calling a tool.`;
+Important: Use the Native Function Calling API. Strictly do NOT output raw XML tags such as <function=...> manually in your response text! Return ONLY the text you want to send when not calling a tool.`;
 
         const groq = getGroqClient();
 

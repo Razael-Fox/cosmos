@@ -17,5 +17,21 @@
     "not_in_group": "Perintah ini hanya dapat digunakan di dalam grup chat.",
     "sender_identity_error": "Tidak dapat menentukan identitas pengirim Anda.",
     "tool_execution_error": "Maaf, terjadi kesalahan saat menjalankan {{tool}}.",
-    "group_already_whitelisted": "Grup ini sudah ada dalam whitelist."
+    "group_already_whitelisted": "Grup ini sudah ada dalam whitelist.",
+    "security_alert_title": "🔐 *Peringatan Keamanan Cosmos*",
+    "security_alert_body": "Aktivitas login ke akun web Cosmos Anda baru saja terdeteksi.",
+    "security_alert_ip": "• Alamat IP: {{ip}}",
+    "security_alert_country": "• Negara: {{country}}",
+    "security_alert_device": "• Perangkat: {{device}}",
+    "security_alert_browser": "• Peramban: {{browser}}",
+    "security_alert_status": "• Status: {{status}}",
+    "security_alert_status_new": "PERANGKAT BARU (tidak tepercaya)",
+    "security_alert_status_recognized": "Perangkat dikenali",
+    "security_alert_remedy": "Jika ini bukan Anda, harap segera ubah kata sandi Anda dan hubungi dukungan.",
+    "unknown": "Tidak Diketahui",
+    "unknown_device": "Perangkat tidak diketahui",
+    "ipc_otp": "🔐 *Kode Verifikasi Cosmos*\n\nKode sekali pakai Anda adalah: *{{code}}*\nKode ini kedaluwarsa dalam 5 menit. Jangan bagikan kode ini kepada siapa pun.",
+    "ipc_verified": "✅ *Pendaftaran Terverifikasi!*\n\nAkun Anda telah berhasil masuk ke dalam whitelist. Anda sekarang dapat melanjutkan di dasbor web.",
+    "ipc_sub_activated": "🎉 *Langganan Diaktifkan!*\n\nPaket: {{tier}}\nBerlaku Hingga: {{expiresAt}}\n\nTerima kasih telah mendukung Cosmos!",
+    "whitelist_limit_reached": "⚠️ *Batas Whitelist Tercapai!*\n\nPaket: {{tier}} Plan\n{{reason}}\n\nUntuk menambah grup:\n1. Hapus grup yang tidak aktif dengan: .delgroup\n2. Tingkatkan ke Partner Tier (hingga 25 grup): https://razael-fox.my.id/pricing"
 }

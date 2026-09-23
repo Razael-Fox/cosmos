@@ -29,7 +29,7 @@ const feverTimeTool: ToolModule = {
                 participant: '0@s.whatsapp.net'
             },
             message: {
-                conversation: '🔥 Cosmos EVENT ANNOUNCEMENT 🔥'
+                conversation: ctx.t('tools.fevertime.quote_announcement')
             }
         };
 

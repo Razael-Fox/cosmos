@@ -33,6 +33,7 @@
         "reward_received": "Hadiah Diterima",
         "streak_label": "Runtunan Harian",
         "next_claim": "Klaim Berikutnya",
+        "twenty_four_hours": "24 Jam",
         "cooldown_title": "HADIAH HARIAN SEDANG COOLDOWN",
         "cooldown_status": "Sudah diklaim hari ini!",
         "cooldown_progress": "Kemajuan Cooldown",
@@ -87,7 +88,27 @@
         "guide_title": "PANDUAN PERINTAH: {{command}}",
         "none": "Tidak ada",
         "banner_title": "COSMOS SYSTEM BOT",
-        "banner_body": "Multi-Device WhatsApp Bot Framework"
+        "banner_body": "Multi-Device WhatsApp Bot Framework",
+        "error_label": "Kesalahan",
+        "categories": {
+            "casino": "Kasino",
+            "games": "Permainan",
+            "economy_banking": "Ekonomi & Perbankan",
+            "employment": "Pekerjaan",
+            "downloaders": "Pengunduh",
+            "music_audio": "Musik & Audio",
+            "media_stickers": "Media & Stiker",
+            "ai_correction": "AI & Koreksi",
+            "tools_utilities": "Alat & Utilitas",
+            "settings": "Pengaturan",
+            "system_help": "Sistem & Bantuan"
+        },
+        "units": {
+            "d": "h",
+            "h": "j",
+            "m": "m",
+            "s": "d"
+        }
     },
     "help": {
         "title": "📜 Menu Bantuan Cosmos",
@@ -155,6 +176,13 @@
         "bot_uptime_label": "Uptime Bot",
         "nodejs_label": "Node.js",
         "hardware_title": "PERFORMA PERANGKAT KERAS",
+        "section_runtime": "TELEMETRI RUNTIME",
+        "section_memory": "PENGGUNAAN MEMORI",
+        "section_host": "LINGKUNGAN HOST",
+        "total_ram_label": "Total RAM",
+        "used_ram_label": "RAM Terpakai",
+        "free_ram_label": "RAM Bebas",
+        "unknown": "Tidak Diketahui",
         "cpu_label": "Model CPU",
         "ram_label": "Penggunaan RAM"
     },
@@ -172,7 +200,12 @@
         "income": "📈 *Total Pemasukan:* {{income}}",
         "payout": "📉 *Total Pengeluaran:* {{payout}}",
         "net_profit": "💰 *Keuntungan Bersih:* {{profit}}",
-        "quote": "🏦 Sistem Brankas Global Cosmos"
+        "quote": "🏦 Sistem Brankas Global Cosmos",
+        "card_title": "LAPORAN BRANKAS BANDAR",
+        "gross_income": "Total Pendapatan Kotor",
+        "payouts_issued": "Total Pembayaran Dikeluarkan",
+        "profit_margin": "Margin Laba Bersih",
+        "tip": "Cadangan brankas menjamin pembayaran kasino instan."
     },
     "top": {
         "group_only": "❌ Perintah ini hanya dapat digunakan dalam obrolan grup. Gunakan .topglobal untuk melihat papan peringkat global.",
@@ -183,7 +216,22 @@
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "failed": "❌ Gagal mengambil papan peringkat grup.",
         "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Menang / *{{matches}}* Pertandingan",
-        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}"
+        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
+        "header_roulette": "PENGAMBIL RISIKO TINGGI ROULETTE",
+        "header_casino": "PENGAMBIL RISIKO TINGGI KASINO",
+        "scope_label": "Cakupan",
+        "scope_value": "Papan Peringkat Grup",
+        "ranked_players_label": "Pemain Terperingkat",
+        "catalog_roulette": "JUARA ROULETTE",
+        "catalog_casino": "MILIARDER TERATAS",
+        "wins_matches": "Menang: {{wins}} • Pertandingan: {{matches}}",
+        "balance_label": "Saldo: {{balance}}",
+        "tier_label": "Tingkat: {{tier}}",
+        "tip_climb": "Bertaruh di .roulette atau investasi di .properties untuk menaikkan peringkat!",
+        "tier_diamond": "💎 Berlian",
+        "tier_gold": "🥇 Emas",
+        "tier_silver": "🥈 Perak",
+        "tier_bronze": "🥉 Perunggu"
     },
     "topglobal": {
         "roulette_title": "🌍 *Papan Peringkat Roulette Global* 🌍\n\n",
@@ -193,7 +241,22 @@
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "footer": "\n_Diperbarui setiap 5 menit._",
         "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Menang / *{{matches}}* Pertandingan",
-        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}"
+        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
+        "header_roulette": "PODIUM ROULETTE GLOBAL",
+        "header_casino": "PENGAMBIL RISIKO TINGGI GLOBAL",
+        "scope_label": "Cakupan",
+        "scope_value": "Papan Peringkat Global",
+        "ranked_players_label": "Pemain Terperingkat",
+        "catalog_roulette": "JUARA ROULETTE GLOBAL",
+        "catalog_casino": "MILIARDER GLOBAL TERATAS",
+        "wins_matches": "Menang: {{wins}} • Pertandingan: {{matches}}",
+        "balance_label": "Saldo: {{balance}}",
+        "tier_label": "Tingkat: {{tier}}",
+        "tip_climb": "Bertaruh di .roulette atau investasi di .properties untuk menaikkan peringkat!",
+        "tier_diamond": "💎 Berlian",
+        "tier_gold": "🥇 Emas",
+        "tier_silver": "🥈 Perak",
+        "tier_bronze": "🥉 Perunggu"
     },
     "apply_job": {
         "specify_role": "Silakan tentukan posisi pekerjaan yang Anda lamar (contoh: .apply job Developer).",
@@ -335,7 +398,18 @@
         "properties_buy_tip": "_Gunakan `.buy <nama_properti>` untuk membeli properti._",
         "no_items": "Tidak ada item yang ditemukan dalam kategori \"{{category}}\". Gunakan `.shop` untuk melihat kategori yang tersedia.",
         "header_title": "*🛍️ Toko Cosmos - {{title}}*",
-        "buy_tip": "_Untuk membeli item, gunakan: `.buy <short_id> [jumlah]`_"
+        "buy_tip": "_Untuk membeli item, gunakan: `.buy <short_id> [jumlah]`_",
+        "directory_title": "DIREKTORI TOKO COSMOS",
+        "available_categories": "KATEGORI YANG TERSEDIA",
+        "category_properties": "Properti",
+        "property_catalog_card_title": "KATALOG PROPERTI COSMOS",
+        "property_catalog_alert_title": "KATALOG PROPERTI",
+        "no_items_found_alert": "TIDAK ADA ITEM DITEMUKAN",
+        "property_subtitle": "Tipe: {{type}} • Depresiasi: {{depreciation}}%",
+        "property_badge": "PROPERTI",
+        "all_items_title": "Semua Item",
+        "items_suffix": "Item {{category}}",
+        "shop_header": "TOKO COSMOS - {{title}}"
     },
     "property_buy": {
         "specify_target": "Silakan tentukan item atau properti yang ingin Anda beli. Format: `.buy <short_id> [jumlah]`",
@@ -356,7 +430,11 @@
         "empty": "Katalog properti saat ini kosong.",
         "title": "*🏬 Katalog Properti Cosmos*\n\n",
         "usage": "_Gunakan perintah \"buy\" untuk membeli properti._",
-        "buy_tip": "_Gunakan perintah \"buy\" untuk membeli properti._"
+        "buy_tip": "_Gunakan perintah \"buy\" untuk membeli properti._",
+        "card_title": "KATALOG PROPERTI COSMOS",
+        "alert_title": "KATALOG PROPERTI",
+        "subtitle": "Tipe: {{type}} • Depresiasi: {{depreciation}}%",
+        "badge": "PROPERTI"
     },
     "inventory": {
         "title": "*📦 Inventaris Cosmos*\n\n",
@@ -374,7 +452,15 @@
         "original_value_label": "   Nilai Asli: {{price}}",
         "acquired_label": "   Diperoleh: {{date}}",
         "other_assets_header": "*Aset Lainnya:*",
-        "footer_tip": "_Gunakan `.shop` untuk membeli lebih banyak item atau `.sell <nama_properti>` untuk melikuidasi properti._"
+        "footer_tip": "_Gunakan `.shop` untuk membeli lebih banyak item atau `.sell <nama_properti>` untuk melikuidasi properti._",
+        "section_items": "ITEM & PERALATAN",
+        "section_properties": "PROPERTI DIMILIKI",
+        "section_other": "ASET LAINNYA",
+        "vault_title": "BRANKAS INVENTARIS PENGGUNA",
+        "unknown_item": "Item Tidak Diketahui",
+        "unknown_property": "Properti Tidak Diketahui",
+        "unknown_asset": "Aset",
+        "not_available": "T/A"
     },
     "property_sell": {
         "specify_property": "Silakan tentukan nama properti yang akan dijual. Format: /sell <nama_properti> <negosiasi_opsional>",
@@ -397,7 +483,9 @@
         "save_failed": "❌ Gagal menyimpan pengaturan auto-download.",
         "autodelete_success": "✅ Auto-delete untuk media dan tautan unduhan sekarang {{state}}.",
         "platform_success": "✅ Auto-download untuk {{platform}} telah di{{state}}kan.",
-        "settings_title": "*⚙️ Pengaturan*"
+        "settings_title": "*⚙️ Pengaturan*",
+        "state_on": "ON",
+        "state_off": "OFF"
     },
     "profile_photo": {
         "target_not_found": "Tidak dapat menentukan pengguna target. Silakan balas pesan, sebutkan seseorang, atau gunakan perintah secara langsung.",
@@ -454,12 +542,89 @@
     },
     "tglist": {
         "empty": "Belum ada chat privat Telegram yang terdaftar. Gunakan .tgadd untuk mendaftarkannya.",
-        "title": "*Chat Privat Telegram yang Terdaftar ({{count}}):*\n\n"
+        "title": "*Chat Privat Telegram yang Terdaftar ({{count}}):*\n\n",
+        "untitled": "Obrolan tanpa judul",
+        "chat_id_label": "ID Obrolan:",
+        "invite_label": "Tautan:"
     },
     "items": {
         "pedang_emas": {
             "name": "Pedang Emas",
             "description": "Pedang emas yang kuat"
+        },
+        "gorengan": {
+            "name": "Gorengan",
+            "description": "Gorengan khas Indonesia yang lezat. Memulihkan 1,5 nyawa."
+        },
+        "yakult": {
+            "name": "Yakult",
+            "description": "Minuman susu probiotik fermentasi. Memulihkan 2,5 nyawa."
+        },
+        "tolakangin": {
+            "name": "Tolak Angin",
+            "description": "Obat herbal untuk menyembuhkan debuff dan memulihkan 5 nyawa."
+        },
+        "indomie": {
+            "name": "Indomie Goreng",
+            "description": "Makanan kenyamanan legendaris. Memulihkan 10 nyawa."
+        },
+        "bambu": {
+            "name": "Bambu Runcing",
+            "description": "Tombak bambu tradisional untuk pertempuran."
+        },
+        "swallow": {
+            "name": "Sandal Swallow",
+            "description": "Sandal jepit karet legendaris. Bagus untuk pertahanan."
+        },
+        "sarung": {
+            "name": "Sarung BHS",
+            "description": "Sarung tenun berkualitas tinggi yang sangat bergengsi."
+        },
+        "pickaxe": {
+            "name": "Beliung (Pickaxe)",
+            "description": "Alat tambang kokoh yang dibutuhkan untuk menambang batu bara, besi, emas, dan berlian."
+        },
+        "macbook": {
+            "name": "MacBook",
+            "description": "Laptop berkinerja tinggi yang dibutuhkan untuk pekerjaan kantor dan teknologi."
+        },
+        "iphone": {
+            "name": "iPhone",
+            "description": "Ponsel pintar premium yang cocok untuk menjalankan bisnis digital."
+        },
+        "pixel9a": {
+            "name": "Google Pixel 9a",
+            "description": "Ponsel Android terjangkau yang cocok untuk menjalankan bisnis digital."
+        },
+        "driver_license": {
+            "name": "SIM (Surat Izin Mengemudi)",
+            "description": "Lisensi mengemudi resmi yang dibutuhkan untuk bekerja sebagai sopir taksi dan transportasi."
+        }
+    },
+    "properties": {
+        "honda_scoopy_motorcycle": {
+            "name": "Sepeda Motor Honda Scoopy",
+            "description": "Aset kendaraan skuter matik Honda Scoopy."
+        },
+        "rolex_submariner_watch": {
+            "name": "Jam Tangan Rolex Submariner",
+            "description": "Aset jam tangan mewah buatan Swiss."
+        },
+        "iphone_15_pro_max": {
+            "name": "iPhone 15 Pro Max",
+            "description": "Aset ponsel pintar flagship kelas atas."
+        },
+        "google_pixel_9a": {
+            "name": "Google Pixel 9a",
+            "description": "Aset ponsel pintar Android modern."
+        },
+        "macbook_pro_m3_max": {
+            "name": "MacBook Pro M3 Max",
+            "description": "Aset komputer laptop workstation bertenaga tinggi."
+        },
+        "bali_beach_villa": {
+            "name": "Villa Pantai Bali",
+            "description": "Aset properti villa mewah tepi pantai di Bali."
         }
     },
     "bank": {
@@ -580,7 +745,46 @@
         "seizure_notification": "Tagihan terutang Anda sebesar {{amount}} telah memicu penyitaan aset otomatis. Sistem telah menyita aset berikut untuk melunasi tagihan: {{assetsList}}. Pembekuan rekening bank Anda telah dicabut.",
         "disbursement_failed": "Transaksi pencairan pinjaman gagal.",
         "repay_failed": "Pembayaran pinjaman gagal.",
-        "legacy_approved": "Verifikasi identitas berhasil. Pinjaman sebesar {{amount}} telah disetujui dan didaftarkan dengan NIK: {{nik}}."
+        "legacy_approved": "Verifikasi identitas berhasil. Pinjaman sebesar {{amount}} telah disetujui dan didaftarkan dengan NIK: {{nik}}.",
+        "title_disbursed": "PINJAMAN DICAIRKAN",
+        "detail_approved_amount": "Jumlah Disetujui: +{{amount}}",
+        "detail_repayment_due": "Jatuh Tempo: {{dueDate}}",
+        "card_title_underwriting": "LAPORAN PENILAIAN KREDIT CCB",
+        "subtitle_underwriting": "Cosmos Central Bank telah menilai pengajuan pinjaman Anda:",
+        "label_applicant": "Pemohon",
+        "label_credit_score": "Skor Kredit",
+        "label_approved_loan": "Pinjaman Disetujui",
+        "label_interest_rate": "Suku Bunga",
+        "accrued_format": "{{rate}}% (Bunga: {{accrued}})",
+        "label_total_repayment": "Total Pembayaran",
+        "label_term_tenor": "Jangka Waktu & Tenor",
+        "tenor_format": "{{days}} Hari (Jatuh Tempo: {{dueDate}})",
+        "label_pledged_collateral": "Agunan Terdaftar",
+        "label_ai_note": "Catatan Penilai AI",
+        "instruction_confirm": "👉 Ketik *confirm* untuk menyetujui persyaratan dan mencairkan dana ke rekening bank Anda.",
+        "instruction_cancel": "❌ Ketik *.cancel* untuk menolak penawaran pinjaman ini.",
+        "title_repaid": "PINJAMAN DILUNASI",
+        "detail_amount_paid": "Jumlah Dibayar: {{amount}}",
+        "detail_outstanding_debt": "Sisa Tagihan: {{debt}}",
+        "card_title_active_status": "Status Pinjaman Aktif",
+        "label_original_principal": "Pokok Pinjaman Awal",
+        "label_total_amount_due": "Total Tagihan Terutang",
+        "label_repayment_due_date": "Tanggal Jatuh Tempo",
+        "label_time_remaining": "Sisa Waktu",
+        "label_loan_status": "Status Pinjaman",
+        "tip_repay": "Gunakan .loan pay untuk membayar tagihan pinjaman Anda.",
+        "card_title_credit_profile": "Profil Kredit & Pinjaman",
+        "label_max_loan_limit": "Batas Maksimum Pinjaman",
+        "label_estimated_net_worth": "Estimasi Kekayaan Bersih",
+        "label_wallet_cash": "Uang Tunai Dompet",
+        "label_bank_balance": "Saldo Bank",
+        "label_assets_value": "Nilai Aset",
+        "label_active_loans": "Pinjaman Aktif",
+        "label_repayments_defaults": "Pelunasan / Gagal Bayar",
+        "tip_apply": "Ajukan pinjaman menggunakan .loan apply <jumlah> [nama_agunan].",
+        "value_overdue": "TERLAMBAT",
+        "value_none": "Tidak Ada",
+        "days_suffix": "{{days}} hari"
     },
     "commands": {
         "addbalance": {
@@ -776,8 +980,49 @@
             "description": "Kelola langganan Cosmos. Admin: .sub add <phone> <tier> <days>."
         }
     },
+    "myplan": {
+        "title": "📊 *Langganan & Batasan Cosmos*",
+        "user_label": "Pengguna",
+        "plan_label": "Paket",
+        "status_label": "Status",
+        "tier_free": "Free Tier",
+        "tier_subsidized": "Subsidized Tier",
+        "tier_partner": "Partner Tier",
+        "status_owner": "Pemilik Bot (Tak Terbatas)",
+        "status_active": "Aktif",
+        "valid_until": " (Berlaku hingga {{date}})",
+        "groups_label": "Grup Terdaftar",
+        "subbots_label": "Sub-Bot Aktif",
+        "used_suffix": "terpakai",
+        "unlimited": "∞",
+        "custom_prefix_label": "Prefix Khusus",
+        "prefix_enabled": "Aktif",
+        "prefix_locked": "Terkunci (.)",
+        "economy_bonus_label": "Bonus Ekonomi",
+        "multiplier_suffix": "x Pengali",
+        "upgrade_cta": "Butuh lebih banyak sumber daya? Tingkatkan kapan saja di https://razael-fox.my.id/pricing",
+        "example_cost": "_Contoh biaya peningkatan: Tersubsidi {{cost}}/bulan._"
+    },
+    "broadcast": {
+        "forex_title": "*🏦 Pembaruan Cosmos Central Bank*",
+        "forex_rate": "*Nilai Tukar Saat Ini:* $1 = {{rate}}",
+        "forex_trend": "*Tren Pasar:* 📉 Dievaluasi oleh AI",
+        "forex_adjustments_title": "*🔄 Penyesuaian Ekonomi:*",
+        "forex_inflation": "Pengali Inflasi Global: *{{multiplier}}*",
+        "forex_shop_loot": "Toko & Rampasan: ⬆️ *Disesuaikan secara proporsional*",
+        "forex_ai_note": "🤖 Catatan Analis AI: \"{{reasoning}}\""
+    },
     "ui": {
         "tip_label": "Tips:",
+        "alert_titles": {
+            "success": "BERHASIL",
+            "warning": "PERINGATAN",
+            "error": "KESALAHAN",
+            "info": "INFORMASI",
+            "notice": "PEMBERITAHUAN"
+        },
+        "tip_prefix": "💡 *Tips:*",
+        "hp_suffix": "({{current}}/{{max}} HP)",
         "quick_actions": "Aksi Cepat:",
         "correct_syntax": "Sintaks Benar:",
         "valid_examples": "Contoh Valid:",
@@ -811,7 +1056,11 @@
         "duration_value": "15 Menit",
         "status_label": "Status",
         "status_boosted": "BOOST BESAR AKTIF",
-        "tip": "Gunakan .slot, .coinflip, atau .dice untuk mulai bermain!"
+        "tip": "Gunakan .slot, .coinflip, atau .dice untuk mulai bermain!",
+        "quote_announcement": "🔥 PENGUMUMAN EVENT Cosmos 🔥"
+    },
+    "rvo": {
+        "done": "Selesai."
     },
     "downloader": {
         "title": "COSMOS MEDIA DOWNLOADER",
@@ -864,7 +1113,27 @@
         "admin_only_list": "Hanya administrator bot utama yang dapat memeriksa seluruh daftar sub-bot.",
         "not_active": "Sub-bot +{{number}} saat ini tidak aktif.",
         "already_active_or_missing": "Sub-bot +{{number}} sudah aktif atau file basis datanya tidak ditemukan.",
-        "empty_list": "Belum ada instansi sub-bot yang dikonfigurasi pada host ini."
+        "empty_list": "Belum ada instansi sub-bot yang dikonfigurasi pada host ini.",
+        "invalid_phone_format": "❌ Format nomor telepon tidak valid. Harap gunakan format internasional (contoh: 628123456789).",
+        "quota_reached": "⚠️ *Kuota Sub-Bot Tercapai!*\n\nPaket: {{tier}} Plan\nSub-Bot Aktif: {{current}} / {{max}} instans\n\nUntuk menyambungkan sub-bot baru:\n1. Putuskan sambungan sub-bot yang ada dengan: .subbot stop <phone>\n2. Tingkatkan ke Partner Tier (hingga 12 sub-bot): https://razael-fox.my.id/pricing",
+        "status_online": "ONLINE",
+        "tip_config": "Gunakan .config untuk melihat dan menyesuaikan fitur sub-bot Anda.",
+        "linked_success": "✅ *Sub-Bot Berhasil Dihubungkan*\n\nNomor: +{{number}}\nStatus: ONLINE\n\nKelola kapan saja dari dasbor web Anda atau dengan perintah .subbot.",
+        "qr_generate_failed": "❌ Gagal membuat gambar kode QR.",
+        "status_badge_online": "[ ✅ ONLINE ]",
+        "status_badge_offline": "[ ❌ OFFLINE ]",
+        "tip_config_subbot": "Gunakan .config untuk menyesuaikan fitur dan kunci API.",
+        "tip_status_detail": "Gunakan .subbot status <nomor> untuk metrik terperinci.",
+        "engine_subtitle": "Mesin Sub-Bot Multi-Device Otonom Cosmos",
+        "available_commands_title": "Perintah yang Tersedia",
+        "cmd_pair_code": "Tautkan perangkat via kode 8 digit",
+        "cmd_pair_qr": "Tautkan perangkat via pemindaian QR dinamis",
+        "cmd_status": "Periksa koneksi dan waktu aktif",
+        "cmd_stop": "Putuskan sub-bot",
+        "cmd_start": "Hubungkan kembali sub-bot yang ada",
+        "cmd_delete": "Hapus sub-bot secara permanen",
+        "tip_cancel_pairing": "Kirim .cancel kapan saja saat penautan untuk membatalkan.",
+        "total_instances": "Total Instans: {{count}}"
     },
     "config": {
         "dashboard_title": "KONFIGURASI SUB-BOT",
@@ -894,7 +1163,29 @@
         "mode_invalid": "Mode tidak valid. Gunakan: .config mode public ATAU .config mode self",
         "prefix_invalid": "Awalan tidak valid. Harap berikan 1-3 karakter (contoh: .config prefix !)",
         "name_required": "Harap berikan nama bot (contoh: .config name Jarvis)",
-        "lang_invalid": "Bahasa tidak valid. Gunakan: .config lang id ATAU .config lang en"
+        "lang_invalid": "Bahasa tidak valid. Gunakan: .config lang id ATAU .config lang en",
+        "badge_enabled": "[ ✅ DIAKTIFKAN ]",
+        "badge_disabled": "[ ❌ DINONAKTIFKAN ]",
+        "badge_custom_key": "[ Kunci Khusus: {{key}} ]",
+        "badge_parent_default": "[ Default Bot Induk ]",
+        "feature_casino": "Kasino & Game",
+        "feature_bank": "Bank Sentral",
+        "feature_loan": "Pinjaman Bank (AI)",
+        "feature_jobs": "Karier & Gaji",
+        "feature_shop": "Toko & Properti",
+        "feature_downloaders": "Pengunduh Media",
+        "feature_autodl": "Unduh Otomatis",
+        "feature_autosticker": "Stiker Otomatis",
+        "feature_autocorrection": "Koreksi Otomatis",
+        "feature_offline_ai": "Agen AI Offline",
+        "feature_forex": "Siaran FOREX",
+        "feature_stt": "Transkrip Suara STT",
+        "provider_groq": "API AI Groq",
+        "provider_openrouter": "API OpenRouter",
+        "provider_eodhd": "Keuangan EODHD",
+        "tip_toggle": "*.config enable <fitur>* atau *.config disable <fitur>*",
+        "tip_api": "*.config api groq <kunci>* (atur kuota AI khusus)",
+        "tip_mode": "*.config mode self* (merespons hanya pemilik)"
     },
     "verify": {
         "usage": "Format tidak valid. Gunakan: .verify <TOKEN>",
@@ -907,7 +1198,13 @@
     },
     "sub": {
         "usage": "Format tidak valid. Gunakan: .sub add <phone> <tier: free|subsidized|partner> <days>",
-        "activated": "Langganan diaktifkan: {tier} untuk +{user} ({days} hari, berlaku hingga {validUntil}).",
-        "failed": "Gagal mengaktifkan langganan. Silakan coba lagi nanti."
+        "activated": "Langganan diaktifkan: {{tier}} untuk +{{user}} ({{days}} hari, berlaku hingga {{validUntil}}).",
+        "failed": "Gagal mengaktifkan langganan. Silakan coba lagi nanti.",
+        "sub_expired_notice": "⚠️ *Langganan Cosmos Kedaluwarsa*\n\nPaket berbayar Anda telah berakhir dan akun Anda sekarang berada pada Free Tier (2 sub-bot / 5 grup).\nSub-bot yang berlebih telah dijeda (tidak pernah dihapus). Perbarui kapan saja di https://razael-fox.my.id/pricing",
+        "sales_message": "Halo Penjualan Cosmos! Saya ingin berlangganan paket berbayar.\n\nPaket: {{plan}} Tier\nHarga: {{price}} / bulan\nNomor Tujuan: {{targetNumber}}\nRef Pesanan: {{orderRef}}\n\nSilakan kirim QRIS pembayaran / rincian rekening."
+    },
+    "quota": {
+        "group_limit_reached": "Batas maksimal grup telah tercapai untuk tier {{tier}} ({{current}}/{{max}}).",
+        "subbot_limit_reached": "Batas maksimal sub-bot aktif telah tercapai untuk tier {{tier}} ({{current}}/{{max}})."
     }
 }

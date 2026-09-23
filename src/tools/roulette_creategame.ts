@@ -67,7 +67,7 @@ const createGameTool: ToolModule = {
             feature: 'roulette',
             userJid: senderJid,
             chatJid: jid,
-            description: 'Buckshot Roulette lobby',
+            description: t('games.roulette.cancellation_desc'),
             onCancel: async () => {
                 const session = gameSessions.get(sessionId);
                 if (session && session.status === 'LOBBY') {
@@ -93,22 +93,26 @@ const createGameTool: ToolModule = {
         });
 
         return renderCard({
-            title: 'BUCKSHOT ROULETTE LOBBY',
+            title: t('games.roulette.card_title_lobby'),
             icon: '🔫',
             headerStyle: 'bold',
-            subtitle: 'Room successfully created',
+            subtitle: t('games.roulette.subtitle_created'),
+            t,
             sections: [
                 {
-                    title: 'LOBBY INFORMATION',
+                    title: t('games.roulette.lobby_info_title'),
                     items: [
-                        { label: 'Host', value: `@${creator.pushName}` },
-                        { label: 'Session ID', value: `\`${sessionId}\`` },
-                        { label: 'Status', value: 'Waiting for players (1/5)' },
-                        { label: 'Timeout', value: '30 seconds' }
+                        { label: t('games.roulette.label_host'), value: `@${creator.pushName}` },
+                        { label: t('games.roulette.label_session_id'), value: `\`${sessionId}\`` },
+                        {
+                            label: t('games.roulette.label_status'),
+                            value: t('games.roulette.status_waiting_players', { current: 1 })
+                        },
+                        { label: t('games.roulette.label_timeout'), value: t('games.roulette.timeout_duration') }
                     ]
                 }
             ],
-            tip: `Type .joingame ${sessionId} to join • Type .cancel to abort`
+            tip: t('games.roulette.tip_create', { sessionId })
         });
     }
 };

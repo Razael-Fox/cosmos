@@ -3,6 +3,7 @@ import { cleanId, lidToPnMap } from '#utils/casino.js';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { generateIdCardImage, DEFAULT_ID_CARD_PHOTO_URL, IdCardData } from '#utils/imageProcessing.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
+import { getTranslator } from '#utils/i18n.js';
 
 export interface RegistrationSession {
     userKey: string;
@@ -298,6 +299,7 @@ export function startRegistrationSession(
     remoteJid: string,
     t?: (key: string, args?: Record<string, any>) => string
 ): string {
+    const tr = t || getTranslator('id');
     const cleaned = cleanId(userKey);
     registrationSessions.set(cleaned, {
         userKey: cleaned,
@@ -313,15 +315,14 @@ export function startRegistrationSession(
         userJid: cleaned,
         chatJid: remoteJid,
         description: 'Virtual ID card registration',
+        descriptionKey: 'utilities.idcard.registration_desc',
         onCancel: async () => {
             registrationSessions.delete(cleaned);
-            return t ? t('utilities.idcard.cancelled') : 'Virtual ID card registration has been cancelled.';
+            return tr('utilities.idcard.cancelled');
         }
     });
 
-    return t
-        ? t('utilities.idcard.welcome')
-        : "Welcome to the Cosmos Identity System. Let's create your virtual ID card. Please reply with your *Full Name*.\n\nType *.cancel* at any time to abort the registration.";
+    return tr('utilities.idcard.welcome');
 }
 
 /**
@@ -371,13 +372,12 @@ export async function getIdCardByUser(userJidOrLid: string) {
  */
 export async function requireIdCard(userJidOrLid: string, t?: (key: string, args?: Record<string, any>) => string) {
     const idCard = await getIdCardByUser(userJidOrLid);
+    const tr = t || getTranslator('id');
     if (!idCard) {
         return {
             authorized: false,
             idCard: null,
-            message: t
-                ? t('utilities.idcard.access_denied')
-                : 'Access Denied. You must possess a Virtual ID Card to use this feature. Please register your identity first using the .register id command.'
+            message: tr('utilities.idcard.access_denied')
         };
     }
     return {
@@ -548,10 +548,11 @@ export async function processRegistrationStep(
     input: string,
     t?: (key: string, args?: Record<string, any>) => string
 ): Promise<boolean> {
+    const tr = t || getTranslator('id');
+    t = tr;
     const session = findRegistrationSession(userKey);
     if (!session) return false;
     const cleaned = session.userKey;
-
     // Chat isolation: only process in the chat where registration was initiated
     if (!isSameChat(session.remoteJid, remoteJid)) {
         return false;

@@ -35,15 +35,16 @@ const vaultTool: ToolModule = {
         };
 
         const text = renderCard({
-            title: 'HOUSE VAULT STATEMENT',
+            title: ctx.t('tools.vault.card_title'),
             icon: '🏛️',
             headerStyle: 'heavy',
+            t: ctx.t,
             fields: [
-                { icon: '📈', label: 'Total Gross Income', value: formatRupiah(vault.income) },
-                { icon: '📉', label: 'Total Payouts Issued', value: formatRupiah(vault.payout) },
-                { icon: '💎', label: 'Net Profit Margin', value: formatRupiah(vault.netProfit) }
+                { icon: '📈', label: ctx.t('tools.vault.gross_income'), value: formatRupiah(vault.income) },
+                { icon: '📉', label: ctx.t('tools.vault.payouts_issued'), value: formatRupiah(vault.payout) },
+                { icon: '💎', label: ctx.t('tools.vault.profit_margin'), value: formatRupiah(vault.netProfit) }
             ],
-            tips: ['House reserve guarantees instant casino payouts.']
+            tips: [ctx.t('tools.vault.tip')]
         });
 
         await new Promise((resolve) => setTimeout(resolve, 1000));

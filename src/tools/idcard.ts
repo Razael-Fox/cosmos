@@ -137,8 +137,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         if (isUserRegistering(senderJid, ctx.jid)) {
             return renderAlert({
                 type: 'info',
-                title: 'REGISTRATION IN PROGRESS',
-                message: t('utilities.idcard.active_in_progress')
+                title: t('utilities.idcard.alert_in_progress'),
+                message: t('utilities.idcard.active_in_progress'),
+                t
             });
         }
 
@@ -152,8 +153,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (!existing) {
         return renderAlert({
             type: 'warning',
-            title: 'IDENTITY NOT FOUND',
-            message: t('utilities.idcard.not_registered')
+            title: t('utilities.idcard.alert_not_found'),
+            message: t('utilities.idcard.not_registered'),
+            t
         });
     }
 

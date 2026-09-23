@@ -195,6 +195,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             title: t('tools.job.directory_title', 'COSMOS EMPLOYMENT EXCHANGE'),
             icon: '💼',
             headerStyle: 'heavy',
+            t,
             subtitle: t('tools.job.directory_subtitle', 'Official Career & Job Catalog'),
             tips: [t('tools.job.mandatory_idcard', 'Mandatory: Valid Virtual ID Card (.register id)')]
         });
@@ -234,7 +235,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             t('tools.job.catalog_title', 'AVAILABLE CAREER PATHS'),
             '📋',
             items,
-            t('tools.job.how_to_join', 'Type .job join <job_id> (e.g. .job join 1).')
+            t('tools.job.how_to_join', 'Type .job join <job_id> (e.g. .job join 1).'),
+            t
         );
 
         return `${headerCard}\n\n${catalogCard}`;
@@ -342,6 +344,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                     title: t('tools.job.status_unemployed_title', 'CAREER STATUS: UNEMPLOYED'),
                     icon: '💼',
                     headerStyle: 'light',
+                    t,
                     body: t('tools.job.status_unemployed', 'You do not currently hold a job position.'),
                     tips: [t('tools.job.tip_unemployed_list'), t('tools.job.tip_unemployed_join')]
                 });
@@ -362,6 +365,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 title: t('tools.job.status_employed_title', 'COSMOS EMPLOYMENT STATUS'),
                 icon: '💼',
                 headerStyle: 'heavy',
+                t,
                 fields: [
                     {
                         icon: '👷',

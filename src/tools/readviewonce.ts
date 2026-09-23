@@ -97,7 +97,7 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
             forwardingScore: 999,
             participant: '0@s.whatsapp.net',
             stanzaId: 'WHATSAPP_RVO',
-            quotedMessage: { conversation: 'Done.' },
+            quotedMessage: { conversation: ctx.t('tools.rvo.done') },
             mentionedJid: normalizedSender ? [normalizedSender] : []
         };
 

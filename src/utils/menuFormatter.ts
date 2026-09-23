@@ -1,6 +1,7 @@
 import { NormalizedTool, CategoryInfo } from '../services/menuService.js';
 import { resolveToolDescription } from '../tools/types.js';
 import { getDisplayName } from './commandFormat.js';
+import { normalizeLanguage, LANGUAGE_CONFIG } from './i18n.js';
 
 export interface DashboardOptions {
     pushName?: string;
@@ -22,23 +23,28 @@ export type TranslatorFn = (
 /**
  * Formats a duration in seconds into a human-readable string (e.g. 2d 14h 32m).
  */
-export function formatUptimeDuration(uptimeSeconds: number): string {
+export function formatUptimeDuration(uptimeSeconds: number, t?: TranslatorFn): string {
     const total = Math.max(0, Math.floor(uptimeSeconds));
     const days = Math.floor(total / 86400);
     const hours = Math.floor((total % 86400) / 3600);
     const minutes = Math.floor((total % 3600) / 60);
     const seconds = total % 60;
 
+    const dUnit = t ? t('tools.menu.units.d', 'd') : 'd';
+    const hUnit = t ? t('tools.menu.units.h', 'h') : 'h';
+    const mUnit = t ? t('tools.menu.units.m', 'm') : 'm';
+    const sUnit = t ? t('tools.menu.units.s', 's') : 's';
+
     if (days > 0) {
-        return `${days}d ${hours}h ${minutes}m`;
+        return `${days}${dUnit} ${hours}${hUnit} ${minutes}${mUnit}`;
     }
     if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
+        return `${hours}${hUnit} ${minutes}${mUnit} ${seconds}${sUnit}`;
     }
     if (minutes > 0) {
-        return `${minutes}m ${seconds}s`;
+        return `${minutes}${mUnit} ${seconds}${sUnit}`;
     }
-    return `${seconds}s`;
+    return `${seconds}${sUnit}`;
 }
 
 /**
@@ -64,9 +70,15 @@ export function formatDashboardHeader(options: DashboardOptions, t: TranslatorFn
     const pushName = `@${rawPushName}`;
     const role = options.isOwner ? t('tools.menu.role_owner') : t('tools.menu.role_member');
     const speed = `${Math.max(1, Math.round(options.speedMs ?? 42))}ms`;
-    const uptime = formatUptimeDuration(options.uptimeSeconds ?? process.uptime());
+    const uptime = formatUptimeDuration(options.uptimeSeconds ?? process.uptime(), t);
     const date = formatHeaderDate(options.date ?? new Date(), options.lang ?? 'en');
-    const langDisplay = options.lang === 'id' ? 'Bahasa Indonesia (id)' : 'English (en)';
+    const normLang = normalizeLanguage(options.lang);
+    const langConfig = LANGUAGE_CONFIG[normLang];
+    const langDisplay = langConfig
+        ? `${langConfig.nativeName} (${normLang})`
+        : options.lang === 'id'
+          ? 'Bahasa Indonesia (id)'
+          : 'English (en)';
     const totalCommands = options.totalCommands ?? 0;
 
     const title = t('tools.menu.dashboard_title');
@@ -236,5 +248,8 @@ export function formatNotFound(
     const tipLabel = t('tools.menu.tip_label');
     const catHint = t('tools.menu.category_hint', { prefix });
 
-    return [`*Error:* ${notFoundMsg}`, ``, `*${availLabel}*`, catList, ``, `💡 *${tipLabel}* ${catHint}`].join('\n');
+    const errorLabel = t ? t('tools.menu.error_label', 'Error') : 'Error';
+    return [`*${errorLabel}:* ${notFoundMsg}`, ``, `*${availLabel}*`, catList, ``, `💡 *${tipLabel}* ${catHint}`].join(
+        '\n'
+    );
 }

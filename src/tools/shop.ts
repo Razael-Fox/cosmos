@@ -46,7 +46,8 @@ const shopTool: ToolModule = {
                 distinct: ['type']
             });
 
-            const categoryList = ['Properties'];
+            const propertiesLabel = ctx.t('tools.shop.category_properties');
+            const categoryList = [propertiesLabel];
             for (const t of distinctItemTypes) {
                 // Capitalize first letter
                 const formatted = t.type.charAt(0).toUpperCase() + t.type.slice(1);
@@ -56,12 +57,13 @@ const shopTool: ToolModule = {
             }
 
             const text = renderCard({
-                title: 'COSMOS SHOP DIRECTORY',
+                title: ctx.t('tools.shop.directory_title'),
                 icon: '🏬',
                 headerStyle: 'light',
+                t: ctx.t,
                 sections: [
                     {
-                        title: 'AVAILABLE CATEGORIES',
+                        title: ctx.t('tools.shop.available_categories'),
                         items: categoryList.map((cat) => ({
                             label: cat,
                             value: `.shop ${cat.toLowerCase()}`
@@ -87,8 +89,9 @@ const shopTool: ToolModule = {
                     {
                         text: renderAlert({
                             type: 'info',
-                            title: 'PROPERTY CATALOG',
-                            message: ctx.t('tools.shop.properties_empty')
+                            title: ctx.t('tools.shop.property_catalog_alert_title'),
+                            message: ctx.t('tools.shop.properties_empty'),
+                            t: ctx.t
                         })
                     },
                     { quoted: msg }
@@ -97,15 +100,19 @@ const shopTool: ToolModule = {
             }
 
             const text = renderCatalogCard(
-                'COSMOS PROPERTY CATALOG',
+                ctx.t('tools.shop.property_catalog_card_title'),
                 '🏬',
                 properties.map((p) => ({
                     title: p.name,
-                    subtitle: `Type: ${p.typeCategory} • Depreciation: ${p.baseDepreciationRate * 100}%`,
+                    subtitle: ctx.t('tools.shop.property_subtitle', {
+                        type: p.typeCategory,
+                        depreciation: p.baseDepreciationRate * 100
+                    }),
                     value: formatRupiah(Number(p.basePrice)),
-                    badge: 'PROPERTY'
+                    badge: ctx.t('tools.shop.property_badge')
                 })),
-                ctx.t('tools.shop.properties_buy_tip')
+                ctx.t('tools.shop.properties_buy_tip'),
+                ctx.t
             );
             await sock.sendMessage(jid, { text }, { quoted: msg });
             return;
@@ -121,8 +128,9 @@ const shopTool: ToolModule = {
                 {
                     text: renderAlert({
                         type: 'warning',
-                        title: 'NO ITEMS FOUND',
-                        message: ctx.t('tools.shop.no_items', { category: rawCategory })
+                        title: ctx.t('tools.shop.no_items_found_alert'),
+                        message: ctx.t('tools.shop.no_items', { category: rawCategory }),
+                        t: ctx.t
                     })
                 },
                 { quoted: msg }
@@ -131,11 +139,13 @@ const shopTool: ToolModule = {
         }
 
         const headerTitle = filterCategory
-            ? `${filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1)} Items`
-            : 'All Items';
+            ? ctx.t('tools.shop.items_suffix', {
+                  category: filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1)
+              })
+            : ctx.t('tools.shop.all_items_title');
 
         const text = renderCatalogCard(
-            `COSMOS SHOP - ${headerTitle.toUpperCase()}`,
+            ctx.t('tools.shop.shop_header', { title: headerTitle.toUpperCase() }),
             '🛍️',
             items.map((item) => ({
                 title: `${item.name} (${item.shortId})`,
@@ -143,7 +153,8 @@ const shopTool: ToolModule = {
                 value: formatRupiah(item.price),
                 badge: item.type.toUpperCase()
             })),
-            ctx.t('tools.shop.buy_tip')
+            ctx.t('tools.shop.buy_tip'),
+            ctx.t
         );
 
         await sock.sendMessage(jid, { text }, { quoted: msg });

@@ -13,7 +13,7 @@ import {
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
 import { getTranslator } from '#utils/i18n.js';
 import { prisma } from '#db.js';
-import { renderCard, renderProgressBar, renderAlert, renderBadge } from '#utils/uiFormatter.js';
+import { renderCard, renderProgressBar, renderAlert, renderBadge, type TranslatorFn } from '#utils/uiFormatter.js';
 
 export interface PendingLoanApplication {
     userId: string;
@@ -70,7 +70,7 @@ export async function processLoanConfirmation(
     senderRaw: string,
     chatJid: string,
     text: string,
-    t: (key: string, args?: Record<string, any>) => string
+    t: TranslatorFn
 ): Promise<boolean> {
     const lower = text.trim().toLowerCase();
     if (lower !== 'confirm' && lower !== 'konfirmasi' && lower !== 'yes' && lower !== 'ya') {
@@ -112,9 +112,13 @@ export async function processLoanConfirmation(
 
     const card = renderAlert({
         type: 'success',
-        title: 'LOAN DISBURSED',
+        title: t('tools.loan.title_disbursed'),
         message: successMsg,
-        details: [`Approved Amount: +${formatRupiah(pending.amount)}`, `Repayment Due: ${formattedDueDate}`]
+        t,
+        details: [
+            t('tools.loan.detail_approved_amount', { amount: formatRupiah(pending.amount) }),
+            t('tools.loan.detail_repayment_due', { dueDate: formattedDueDate })
+        ]
     });
 
     await sock.sendMessage(chatJid, { text: card }, { quoted: msg });
@@ -351,40 +355,52 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 });
 
                 const promptCard = renderCard({
-                    title: 'CCB CREDIT UNDERWRITING REPORT',
+                    title: t('tools.loan.card_title_underwriting'),
                     icon: '🏛️',
                     headerStyle: 'heavy',
-                    subtitle: 'Cosmos Central Bank has assessed your loan application:',
+                    t,
+                    subtitle: t('tools.loan.subtitle_underwriting'),
                     fields: [
-                        { icon: '👤', label: 'Applicant', value: auth.idCard?.fullName || userId },
+                        { icon: '👤', label: t('tools.loan.label_applicant'), value: auth.idCard?.fullName || userId },
                         {
                             icon: '📊',
-                            label: 'Credit Score',
+                            label: t('tools.loan.label_credit_score'),
                             value: `${creditProfile.creditScore} / 1000 (${creditProfile.reputation})\n    ${renderProgressBar({ current: creditProfile.creditScore, max: 1000 })}`
                         },
-                        { icon: '💵', label: 'Approved Loan', value: formatRupiah(loanAmount) },
+                        { icon: '💵', label: t('tools.loan.label_approved_loan'), value: formatRupiah(loanAmount) },
                         {
                             icon: '📈',
-                            label: 'Interest Rate',
-                            value: `${(assessment.interestRate * 100).toFixed(1)}% (Accrued: ${formatRupiah(interestAmount)})`
+                            label: t('tools.loan.label_interest_rate'),
+                            value: t('tools.loan.accrued_format', {
+                                rate: (assessment.interestRate * 100).toFixed(1),
+                                accrued: formatRupiah(interestAmount)
+                            })
                         },
-                        { icon: '💰', label: 'Total Repayment', value: formatRupiah(totalRepayment) },
+                        {
+                            icon: '💰',
+                            label: t('tools.loan.label_total_repayment'),
+                            value: formatRupiah(totalRepayment)
+                        },
                         {
                             icon: '📅',
-                            label: 'Term & Tenor',
-                            value: `${assessment.termDays} Days (Due: ${formattedDueDate})`
+                            label: t('tools.loan.label_term_tenor'),
+                            value: t('tools.loan.tenor_format', {
+                                days: assessment.termDays,
+                                dueDate: formattedDueDate
+                            })
                         },
-                        { icon: '📦', label: 'Pledged Collateral', value: collateralName || 'None' },
-                        { icon: '🧠', label: 'AI Underwriter Note', value: `"${assessment.reasoning}"` }
+                        {
+                            icon: '📦',
+                            label: t('tools.loan.label_pledged_collateral'),
+                            value: collateralName || t('tools.loan.value_none')
+                        },
+                        { icon: '🧠', label: t('tools.loan.label_ai_note'), value: `"${assessment.reasoning}"` }
                     ]
                 });
 
-                return [
-                    promptCard,
-                    '',
-                    `👉 Type *confirm* to accept terms and disburse funds into your bank account.`,
-                    `❌ Type *.cancel* to reject this loan offer.`
-                ].join('\n');
+                return [promptCard, '', t('tools.loan.instruction_confirm'), t('tools.loan.instruction_cancel')].join(
+                    '\n'
+                );
             } finally {
                 activeAssessments.delete(cleanedSender);
             }
@@ -431,14 +447,15 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
             return renderAlert({
                 type: 'success',
-                title: 'LOAN REPAID',
+                title: t('tools.loan.title_repaid'),
                 message: t('tools.loan.repay_success', {
                     amount: formatRupiah(result.paidAmount ?? paymentToExecute),
                     outstandingBalance: formatRupiah(result.outstandingBalance ?? 0)
                 }),
+                t,
                 details: [
-                    `Amount Paid: ${formatRupiah(result.paidAmount ?? paymentToExecute)}`,
-                    `Outstanding Debt: ${formatRupiah(result.outstandingBalance ?? 0)}`
+                    t('tools.loan.detail_amount_paid', { amount: formatRupiah(result.paidAmount ?? paymentToExecute) }),
+                    t('tools.loan.detail_outstanding_debt', { debt: formatRupiah(result.outstandingBalance ?? 0) })
                 ]
             });
         }
@@ -463,9 +480,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
             const diffMs = dueDate.getTime() - Date.now();
             const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-            const timeRemaining = diffMs > 0 ? `${daysRemaining} days` : 'OVERDUE';
+            const timeRemaining =
+                diffMs > 0 ? t('tools.loan.days_suffix', { days: daysRemaining }) : t('tools.loan.value_overdue');
 
-            let collateral = 'None';
+            let collateral = t('tools.loan.value_none');
             if (activeLoan.collateralItems) {
                 try {
                     const parsed = JSON.parse(activeLoan.collateralItems);
@@ -478,23 +496,24 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             return renderCard({
-                title: 'Active Loan Status',
+                title: t('tools.loan.card_title_active_status'),
                 icon: '📋',
                 headerStyle: 'heavy',
+                t,
                 fields: [
-                    { icon: '💵', label: 'Original Principal', value: formatRupiah(principal) },
+                    { icon: '💵', label: t('tools.loan.label_original_principal'), value: formatRupiah(principal) },
                     {
                         icon: '📈',
-                        label: 'Interest Rate',
+                        label: t('tools.loan.label_interest_rate'),
                         value: `${(activeLoan.interestRate * 100).toFixed(1)}% (${formatRupiah(interestAmount)})`
                     },
-                    { icon: '💰', label: 'Total Amount Due', value: formatRupiah(totalDue) },
-                    { icon: '📅', label: 'Repayment Due Date', value: formattedDueDate },
-                    { icon: '⏱️', label: 'Time Remaining', value: timeRemaining },
-                    { icon: '📦', label: 'Pledged Collateral', value: collateral },
-                    { icon: '🏛️', label: 'Loan Status', value: renderBadge(activeLoan.status) }
+                    { icon: '💰', label: t('tools.loan.label_total_amount_due'), value: formatRupiah(totalDue) },
+                    { icon: '📅', label: t('tools.loan.label_repayment_due_date'), value: formattedDueDate },
+                    { icon: '⏱️', label: t('tools.loan.label_time_remaining'), value: timeRemaining },
+                    { icon: '📦', label: t('tools.loan.label_pledged_collateral'), value: collateral },
+                    { icon: '🏛️', label: t('tools.loan.label_loan_status'), value: renderBadge(activeLoan.status) }
                 ],
-                tips: ['Use .loan pay to repay your outstanding debt.']
+                tips: [t('tools.loan.tip_repay')]
             });
         }
 
@@ -510,28 +529,49 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const activeLoanCount = creditProfile.activeLoan ? 1 : 0;
 
             return renderCard({
-                title: 'Credit & Loan Profile',
+                title: t('tools.loan.card_title_credit_profile'),
                 icon: '📊',
                 headerStyle: 'heavy',
+                t,
                 fields: [
                     {
                         icon: '📊',
-                        label: 'Credit Score',
+                        label: t('tools.loan.label_credit_score'),
                         value: `${creditProfile.creditScore}/1000 (${creditProfile.reputation})\n    ${renderProgressBar({ current: creditProfile.creditScore, max: 1000 })}`
                     },
-                    { icon: '💳', label: 'Maximum Loan Limit', value: formatRupiah(creditProfile.maxBorrowLimit) },
-                    { icon: '💎', label: 'Estimated Net Worth', value: formatRupiah(creditProfile.netWorth) },
-                    { icon: '💵', label: 'Wallet Cash', value: formatRupiah(creditProfile.walletBalance) },
-                    { icon: '🏦', label: 'Bank Balance', value: formatRupiah(creditProfile.bankBalance) },
-                    { icon: '📦', label: 'Assets Value', value: formatRupiah(creditProfile.assetsValue) },
-                    { icon: '📋', label: 'Active Loans', value: `${activeLoanCount}` },
+                    {
+                        icon: '💳',
+                        label: t('tools.loan.label_max_loan_limit'),
+                        value: formatRupiah(creditProfile.maxBorrowLimit)
+                    },
+                    {
+                        icon: '💎',
+                        label: t('tools.loan.label_estimated_net_worth'),
+                        value: formatRupiah(creditProfile.netWorth)
+                    },
+                    {
+                        icon: '💵',
+                        label: t('tools.loan.label_wallet_cash'),
+                        value: formatRupiah(creditProfile.walletBalance)
+                    },
+                    {
+                        icon: '🏦',
+                        label: t('tools.loan.label_bank_balance'),
+                        value: formatRupiah(creditProfile.bankBalance)
+                    },
+                    {
+                        icon: '📦',
+                        label: t('tools.loan.label_assets_value'),
+                        value: formatRupiah(creditProfile.assetsValue)
+                    },
+                    { icon: '📋', label: t('tools.loan.label_active_loans'), value: `${activeLoanCount}` },
                     {
                         icon: '📜',
-                        label: 'Repayments / Defaults',
+                        label: t('tools.loan.label_repayments_defaults'),
                         value: `${creditProfile.totalRepayments} / ${creditProfile.totalDefaults}`
                     }
                 ],
-                tips: ['Apply for a loan using .loan apply <amount> [collateral_name].']
+                tips: [t('tools.loan.tip_apply')]
             });
         }
 

@@ -130,11 +130,31 @@ const shootTool: ToolModule = {
                 outputMsg += `\n${reloadMsg}`;
                 // After reload, we need to show the next turn info again because it might have gotten buried
                 const nextP = session.players[session.turnIndex];
+                const formatItem = (item: string) => {
+                    switch (item) {
+                        case 'COLA':
+                            return t('games.roulette.item_cola');
+                        case 'CIGARETTES':
+                            return t('games.roulette.item_cigarettes');
+                        case 'HAND_SAW':
+                            return t('games.roulette.item_hand_saw');
+                        case 'HANDCUFFS':
+                            return t('games.roulette.item_handcuffs');
+                        case 'MAGNIFYING_GLASS':
+                            return t('games.roulette.item_magnifying_glass');
+                        case 'INVERTER':
+                            return t('games.roulette.item_inverter');
+                        default:
+                            return item.replace('_', ' ');
+                    }
+                };
                 const inventoryStr =
-                    nextP.inventory.length > 0 ? nextP.inventory.map((i) => i.replace('_', ' ')).join(', ') : 'Empty';
+                    nextP.inventory.length > 0
+                        ? nextP.inventory.map(formatItem).join(', ')
+                        : t('games.roulette.inventory_empty');
                 outputMsg += t('games.roulette.turn_info', {
                     player: nextP.pushName,
-                    lives: renderHealthGauge(nextP.hp, 5),
+                    lives: renderHealthGauge(nextP.hp, 5, t),
                     inventory: inventoryStr
                 });
             }

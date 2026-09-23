@@ -135,21 +135,20 @@ async function notifyOwnerOfPendingChat(ctx: ToolContext, telegramUrl: string, r
     if (!ownerJid || ownerJid === ctx.jid) return;
 
     let text =
-        '🔒 *Private Telegram Content Request*\n\n' +
-        'A user requested media from a private Telegram chat that has not been added to the database yet.\n\n' +
-        `*Requested Link:* ${telegramUrl}\n`;
+        `${ctx.t('media.telegramdl.owner_request_title')}\n\n` +
+        `${ctx.t('media.telegramdl.owner_request_body')}\n\n` +
+        `${ctx.t('media.telegramdl.owner_request_link', { link: telegramUrl })}\n`;
 
     if (ref.chatId && ref.messageId !== null) {
-        text += `*Internal Chat ID:* \`\`\`${ref.chatId}\`\`\`\n*Message ID:* \`\`\`${ref.messageId}\`\`\`\n`;
+        text +=
+            `${ctx.t('media.telegramdl.owner_request_chat_id', { chatId: ref.chatId })}\n` +
+            `${ctx.t('media.telegramdl.owner_request_message_id', { messageId: ref.messageId })}\n`;
     }
 
     text +=
-        `*Requester Username:* ${requesterName}\n` +
-        (requesterNumber ? `*WhatsApp Number:* ${requesterNumber}\n` : '') +
-        '\n*Next Steps:*\n' +
-        '1. If an invite link is available, run `.tgadd <invite-link>` so the dummy account joins automatically.\n' +
-        '2. Otherwise, join the group manually using the dummy account, then register it with `.tgadd <link-or-chat-id>`.\n' +
-        '3. The requester may retry the same command afterwards.';
+        `${ctx.t('media.telegramdl.owner_request_user', { name: requesterName })}\n` +
+        (requesterNumber ? `${ctx.t('media.telegramdl.owner_request_phone', { number: requesterNumber })}\n` : '') +
+        `\n${ctx.t('media.telegramdl.owner_request_next_steps')}`;
 
     try {
         await ctx.sock.sendMessage(ownerJid, { text });

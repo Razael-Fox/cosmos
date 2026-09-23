@@ -1,7 +1,11 @@
 import { prisma } from '../db.js';
 
+export type PurchaseErrorCode =
+    'SUCCESS' | 'INSUFFICIENT_BALANCE' | 'NOT_FOUND' | 'UNAVAILABLE' | 'INVALID_QUANTITY' | 'DATABASE_ERROR';
+
 export interface PurchaseResult {
     success: boolean;
+    code: PurchaseErrorCode;
     message: string;
     item?: {
         name: string;
@@ -52,6 +56,7 @@ export async function purchaseItem(
     if (quantity <= 0 || !Number.isInteger(quantity)) {
         return {
             success: false,
+            code: 'INVALID_QUANTITY',
             message: 'Invalid purchase quantity. Quantity must be a positive integer.'
         };
     }
@@ -66,6 +71,7 @@ export async function purchaseItem(
     if (!item) {
         return {
             success: false,
+            code: 'NOT_FOUND',
             message: `Item "${itemIdOrShortId}" was not found.`
         };
     }
@@ -73,6 +79,7 @@ export async function purchaseItem(
     if (!item.isAvailable) {
         return {
             success: false,
+            code: 'UNAVAILABLE',
             message: `*${item.name}* is currently unavailable in the shop.`
         };
     }
@@ -96,6 +103,7 @@ export async function purchaseItem(
     if (user.balance < totalCost) {
         return {
             success: false,
+            code: 'INSUFFICIENT_BALANCE',
             message: `Insufficient balance to complete the purchase.`
         };
     }
@@ -145,6 +153,7 @@ export async function purchaseItem(
 
         return {
             success: true,
+            code: 'SUCCESS',
             message: `Purchase successful.`,
             item: {
                 name: item.name,
@@ -160,12 +169,14 @@ export async function purchaseItem(
         if (err.message === 'INSUFFICIENT_FUNDS') {
             return {
                 success: false,
+                code: 'INSUFFICIENT_BALANCE',
                 message: `Insufficient balance to complete the purchase.`
             };
         }
         console.error('Error during purchase transaction:', err);
         return {
             success: false,
+            code: 'DATABASE_ERROR',
             message: 'A database error occurred while processing the transaction.'
         };
     }

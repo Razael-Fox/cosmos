@@ -64,7 +64,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             tier,
             days: String(days),
             user: phone,
-            validUntil: expiresAt ? expiresAt.toDateString() : 'Unlimited'
+            validUntil: expiresAt ? expiresAt.toDateString() : ctx.t('tools.myplan.unlimited')
         });
     } catch (err) {
         console.error('[Sub] Activation failed:', err);

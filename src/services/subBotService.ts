@@ -8,8 +8,9 @@ import { getPrismaClient, disconnectPrismaClient } from '#db.js';
 import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
 import { loadConfig, clearConfigCache, isFeatureEnabled } from '#services/subBotConfigService.js';
 import { renderCard } from '#utils/uiFormatter.js';
-import { formatRupiah } from '#utils/currency.js';
 import { getPrimaryOwnerNumber } from '#utils/owner.js';
+import { renderForexBroadcast } from '#services/broadcast.js';
+import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 
 export const MAX_SUB_BOTS = 50;
 
@@ -134,7 +135,7 @@ export async function requestPairing(
 ): Promise<string | void> {
     const cleanNumber = getCleanNumber(targetNumber);
     if (!cleanNumber || cleanNumber.length < 8) {
-        return '❌ Invalid phone number format. Please provide international format (e.g. 628123456789).';
+        return t('tools.subbot.invalid_phone_format');
     }
 
     const primaryNumber = getPrimaryOwnerNumber() || '';
@@ -171,14 +172,11 @@ export async function requestPairing(
         const privileged = isOwnerId(userJid);
         const check = await executeWithUserLock(userJid, () => QuotaService.canPairSubBot(userJid, privileged));
         if (!check.allowed) {
-            return (
-                `⚠️ *Sub-Bot Quota Reached!*\n\n` +
-                `Tier: ${check.tier} Plan\n` +
-                `Active Sub-Bots: ${check.current} / ${check.max} instances\n\n` +
-                `To pair a new sub-bot:\n` +
-                `1. Disconnect an existing sub-bot using: .subbot stop <phone>\n` +
-                `2. Upgrade to the Partner Tier (up to 12 sub-bots): https://razael-fox.my.id/pricing`
-            );
+            return t('tools.subbot.quota_reached', {
+                tier: check.tier,
+                current: check.current,
+                max: check.max
+            });
         }
     } catch (err) {
         console.error('[SubBot] Quota check failed, allowing pairing to proceed:', err);
@@ -312,7 +310,7 @@ export async function requestPairing(
                 console.error('[SubBot] Error generating QR buffer:', err);
                 await parentSock.sendMessage(
                     chatJid,
-                    { text: '❌ Failed to generate QR code image.' },
+                    { text: t('tools.subbot.qr_generate_failed') },
                     { quoted: parentMsg }
                 );
             }
@@ -350,9 +348,9 @@ export async function requestPairing(
                 body: t('tools.subbot.pairing_success'),
                 fields: [
                     { label: t('tools.subbot.device_number'), value: `+${cleanNumber}` },
-                    { label: t('tools.subbot.status_label'), value: 'ONLINE' }
+                    { label: t('tools.subbot.status_label'), value: t('tools.subbot.status_online') }
                 ],
-                tip: 'Use .config to view and customize your sub-bot features.'
+                tip: t('tools.subbot.tip_config')
             });
 
             await parentSock.sendMessage(chatJid, { text: successCard }, { quoted: parentMsg });
@@ -460,7 +458,9 @@ export async function requestPairingHeadless(
         description: `Sub-bot pairing for +${cleanNumber}`,
         onCancel: async () => {
             abortPairing(cleanNumber);
-            return 'Sub-bot pairing cancelled.';
+            const lang = await getChatLanguage(requesterJid);
+            const t = getTranslator(lang);
+            return t('tools.subbot.pairing_cancelled');
         }
     });
 
@@ -533,12 +533,10 @@ export async function requestPairingHeadless(
             try {
                 const defaultSock = activeConnections.get('default');
                 if (defaultSock && requesterJid) {
+                    const requesterLang = await getChatLanguage(requesterJid);
+                    const tRequester = getTranslator(requesterLang);
                     await defaultSock.sendMessage(requesterJid, {
-                        text:
-                            `✅ *Sub-Bot Linked Successfully*\n\n` +
-                            `Number: +${cleanNumber}\n` +
-                            `Status: ONLINE\n\n` +
-                            `Manage it anytime from your web dashboard or with .subbot commands.`
+                        text: tRequester('tools.subbot.linked_success', { number: cleanNumber })
                     });
                 }
             } catch (err) {
@@ -704,15 +702,6 @@ export function listAllSubBots() {
 }
 
 export async function broadcastSubBotForex(multiplier: number, reasoning: string, rate: number): Promise<void> {
-    const message =
-        `*🏦 Cosmos Central Bank Update*\n\n` +
-        `*Current Exchange Rate:* $1 = ${formatRupiah(rate)}\n` +
-        `*Market Trend:* 📉 AI Evaluated\n\n` +
-        `*🔄 Economic Adjustments:*\n` +
-        `• Global Inflation Multiplier: *${multiplier}x*\n` +
-        `• Shop & Loot: ⬆️ *Adjusted proportionally*\n\n` +
-        `_🤖 AI Analyst Note: "${reasoning}"_`;
-
     for (const [sessionId, sock] of activeConnections.entries()) {
         if (!sessionId.startsWith('sub_')) continue;
         const cleanNumber = sessionId.replace(/^sub_/, '');
@@ -725,6 +714,8 @@ export async function broadcastSubBotForex(multiplier: number, reasoning: string
             const subPrisma = getPrismaClient(sessionId);
             const groups = await subPrisma.whitelistedGroup.findMany();
             for (const group of groups) {
+                const lang = group.language || 'id';
+                const message = renderForexBroadcast(multiplier, reasoning, rate, lang);
                 await sock.sendMessage(group.jid, { text: message });
             }
         } catch (err) {

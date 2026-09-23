@@ -197,13 +197,15 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     // Default: Display visual CGDS configuration card
     const c = loadConfig(targetNumber);
     const f = c.features;
-    const badge = (val: boolean) => (val ? '[ ✅ ENABLED ]' : '[ ❌ DISABLED ]');
-    const apiBadge = (k: string | null) => (k ? `[ Custom Key: ${maskApiKey(k)} ]` : '[ Parent Bot Default ]');
+    const badge = (val: boolean) => (val ? ctx.t('tools.config.badge_enabled') : ctx.t('tools.config.badge_disabled'));
+    const apiBadge = (k: string | null) =>
+        k ? ctx.t('tools.config.badge_custom_key', { key: maskApiKey(k) }) : ctx.t('tools.config.badge_parent_default');
 
     const card = renderCard({
         title: ctx.t('tools.config.dashboard_title'),
         icon: '⚙️',
         headerStyle: 'heavy',
+        t: ctx.t,
         fields: [
             { label: ctx.t('tools.config.device_label'), value: `+${targetNumber}`, boldLabel: true },
             { label: ctx.t('tools.config.name_label'), value: c.botName, boldLabel: true },
@@ -216,34 +218,30 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             {
                 title: ctx.t('tools.config.internal_features'),
                 items: [
-                    { label: 'Casino & Games', value: badge(f.casino) },
-                    { label: 'Central Bank', value: badge(f.bank) },
-                    { label: 'Bank Loans (AI)', value: badge(f.loan) },
-                    { label: 'Careers & Salary', value: badge(f.jobs) },
-                    { label: 'Shop & Property', value: badge(f.shop && f.property) },
-                    { label: 'Media Downloaders', value: badge(f.downloaders) },
-                    { label: 'Auto-Downloader', value: badge(f.autodl) },
-                    { label: 'Auto-Sticker', value: badge(f.autosticker) },
-                    { label: 'Auto-Correction', value: badge(f.autocorrection) },
-                    { label: 'Offline AI Agent', value: badge(f.offlineAi) },
-                    { label: 'FOREX Broadcast', value: badge(f.forexAnnouncement) },
-                    { label: 'Voice STT Transcribe', value: badge(f.stt) }
+                    { label: ctx.t('tools.config.feature_casino'), value: badge(f.casino) },
+                    { label: ctx.t('tools.config.feature_bank'), value: badge(f.bank) },
+                    { label: ctx.t('tools.config.feature_loan'), value: badge(f.loan) },
+                    { label: ctx.t('tools.config.feature_jobs'), value: badge(f.jobs) },
+                    { label: ctx.t('tools.config.feature_shop'), value: badge(f.shop && f.property) },
+                    { label: ctx.t('tools.config.feature_downloaders'), value: badge(f.downloaders) },
+                    { label: ctx.t('tools.config.feature_autodl'), value: badge(f.autodl) },
+                    { label: ctx.t('tools.config.feature_autosticker'), value: badge(f.autosticker) },
+                    { label: ctx.t('tools.config.feature_autocorrection'), value: badge(f.autocorrection) },
+                    { label: ctx.t('tools.config.feature_offline_ai'), value: badge(f.offlineAi) },
+                    { label: ctx.t('tools.config.feature_forex'), value: badge(f.forexAnnouncement) },
+                    { label: ctx.t('tools.config.feature_stt'), value: badge(f.stt) }
                 ]
             },
             {
                 title: ctx.t('tools.config.api_integrations'),
                 items: [
-                    { label: 'Groq AI API', value: apiBadge(c.apiKeys.groq) },
-                    { label: 'OpenRouter API', value: apiBadge(c.apiKeys.openrouter) },
-                    { label: 'EODHD Financial', value: apiBadge(c.apiKeys.eodhd) }
+                    { label: ctx.t('tools.config.provider_groq'), value: apiBadge(c.apiKeys.groq) },
+                    { label: ctx.t('tools.config.provider_openrouter'), value: apiBadge(c.apiKeys.openrouter) },
+                    { label: ctx.t('tools.config.provider_eodhd'), value: apiBadge(c.apiKeys.eodhd) }
                 ]
             }
         ],
-        tips: [
-            '*.config enable <feature>* or *.config disable <feature>*',
-            '*.config api groq <key>* (set dedicated AI quota)',
-            '*.config mode self* (respond only to owner)'
-        ]
+        tips: [ctx.t('tools.config.tip_toggle'), ctx.t('tools.config.tip_api'), ctx.t('tools.config.tip_mode')]
     });
 
     return card;

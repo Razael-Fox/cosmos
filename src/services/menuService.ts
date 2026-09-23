@@ -22,6 +22,7 @@ export interface NormalizedTool {
 }
 
 export interface CategoryInfo {
+    id: string;
     name: string;
     icon: string;
     count: number;
@@ -41,6 +42,19 @@ export const CANONICAL_CATEGORY_ORDER: readonly string[] = [
     'Settings',
     'System & Help'
 ];
+export const CATEGORY_SLUGS: Record<string, string> = {
+    Casino: 'casino',
+    Games: 'games',
+    'Economy & Banking': 'economy_banking',
+    Employment: 'employment',
+    Downloaders: 'downloaders',
+    'Music & Audio': 'music_audio',
+    'Media & Stickers': 'media_stickers',
+    'AI & Correction': 'ai_correction',
+    'Tools & Utilities': 'tools_utilities',
+    Settings: 'settings',
+    'System & Help': 'system_help'
+};
 
 export const CATEGORY_ICONS: Record<string, string> = {
     Casino: '🎰',
@@ -83,7 +97,25 @@ const CATEGORY_MAP: Record<string, string> = {
     general: 'System & Help',
     'system & help': 'System & Help',
     system: 'System & Help',
-    help: 'System & Help'
+    help: 'System & Help',
+    kasino: 'Casino',
+    permainan: 'Games',
+    ekonomi: 'Economy & Banking',
+    perbankan: 'Economy & Banking',
+    pekerjaan: 'Employment',
+    kerja: 'Employment',
+    pengunduh: 'Downloaders',
+    musik: 'Music & Audio',
+    stiker: 'Media & Stickers',
+    pengaturan: 'Settings',
+    bantuan: 'System & Help',
+    sistem: 'System & Help',
+    economy_banking: 'Economy & Banking',
+    music_audio: 'Music & Audio',
+    media_stickers: 'Media & Stickers',
+    ai_correction: 'AI & Correction',
+    tools_utilities: 'Tools & Utilities',
+    system_help: 'System & Help'
 };
 
 export class MenuService {
@@ -291,7 +323,11 @@ export class MenuService {
     /**
      * Aggregates tools into canonical categories with counts and icons.
      */
-    public getCategoryList(customTools?: ToolModule[], lang: string = 'id'): CategoryInfo[] {
+    public getCategoryList(
+        customTools?: ToolModule[],
+        lang: string = 'id',
+        t?: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string
+    ): CategoryInfo[] {
         const tools = this.getTools(customTools, lang);
         const groupMap = new Map<string, NormalizedTool[]>();
 
@@ -308,8 +344,11 @@ export class MenuService {
         for (const catName of CANONICAL_CATEGORY_ORDER) {
             const cmds = groupMap.get(catName) || [];
             if (cmds.length > 0) {
+                const slug = CATEGORY_SLUGS[catName] || catName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+                const displayName = t ? t(`tools.menu.categories.${slug}`, catName) : catName;
                 categoryList.push({
-                    name: catName,
+                    id: slug,
+                    name: displayName,
                     icon: this.getCategoryIcon(catName),
                     count: cmds.length,
                     commands: cmds
@@ -323,8 +362,11 @@ export class MenuService {
         for (const remName of remainingKeys) {
             const cmds = groupMap.get(remName) || [];
             if (cmds.length > 0) {
+                const slug = remName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+                const displayName = t ? t(`tools.menu.categories.${slug}`, remName) : remName;
                 categoryList.push({
-                    name: remName,
+                    id: slug,
+                    name: displayName,
                     icon: this.getCategoryIcon(remName),
                     count: cmds.length,
                     commands: cmds
@@ -422,14 +464,24 @@ export class MenuService {
     /**
      * Finds a category by exact or partial name.
      */
-    public findCategory(query: string, customTools?: ToolModule[], lang: string = 'id'): CategoryInfo | null {
+    public findCategory(
+        query: string,
+        customTools?: ToolModule[],
+        lang: string = 'id',
+        t?: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string
+    ): CategoryInfo | null {
         if (!query) return null;
         const clean = query.trim().toLowerCase();
         const canonical = this.normalizeCategory(clean);
-        const categories = this.getCategoryList(customTools, lang);
+        const categories = this.getCategoryList(customTools, lang, t);
 
-        // 1. Exact canonical match
-        const exactCanonical = categories.find((c) => c.name.toLowerCase() === canonical.toLowerCase());
+        // 1. Exact canonical or slug match
+        const exactCanonical = categories.find(
+            (c) =>
+                c.name.toLowerCase() === canonical.toLowerCase() ||
+                c.id === clean ||
+                c.id === canonical.toLowerCase().replace(/[^a-z0-9]+/g, '_')
+        );
         if (exactCanonical) return exactCanonical;
 
         // 2. Exact match against category names
@@ -437,7 +489,7 @@ export class MenuService {
         if (exact) return exact;
 
         // 3. Substring match
-        const substring = categories.find((c) => c.name.toLowerCase().includes(clean));
+        const substring = categories.find((c) => c.name.toLowerCase().includes(clean) || c.id.includes(clean));
         if (substring) return substring;
 
         return null;

@@ -70,7 +70,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             } catch (err: any) {
                 console.error('[Stickerly] Direct pack fetch error:', err);
                 return `❌ ${ctx.t('media.stickerly.error_fetch_pack', {
-                    error: err?.message || 'Unknown error'
+                    error: err?.message || ctx.t('core.unknown_error')
                 })}`;
             }
         }
@@ -86,7 +86,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
         console.error('[Stickerly] Search API error:', err?.message || 'Unknown error');
         return `❌ ${ctx.t('media.stickerly.error_search', {
-            error: err?.message || 'Unknown error'
+            error: err?.message || ctx.t('core.unknown_error')
         })}`;
     }
 
@@ -202,7 +202,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         feature: 'stickerly',
         userJid: senderRaw,
         chatJid: ctx.jid,
-        description: `Sticker.ly search for "${rawQuery}"`,
+        description: ctx.t('media.stickerly.cancellation_desc', { query: rawQuery }),
         onCancel: async (sock) => {
             const currentSession = getStickerlySession(senderRaw, ctx.jid);
             if (currentSession) {

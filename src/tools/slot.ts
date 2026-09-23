@@ -98,7 +98,7 @@ const slotTool: ToolModule = {
 
         const slotBox = [
             '     ╭───────────────╮',
-            `     │  ${slot1} │ ${slot2} │ ${slot3}  │${result.isWin ? ' ◄ [ JACKPOT ]' : ''}`,
+            `     │  ${slot1} │ ${slot2} │ ${slot3}  │${result.isWin ? ` ◄ [ ${ctx.t('games.slot.jackpot_tag')} ]` : ''}`,
             '     ╰───────────────╯'
         ].join('\n');
 
@@ -107,26 +107,35 @@ const slotTool: ToolModule = {
             fields.push(
                 {
                     icon: '🏆',
-                    label: 'Result',
-                    value: `3x ${winItem.symbol} (${winItem.multiplier}x Multiplier + ${formatRupiah(winItem.bonus)} Bonus)`
+                    label: ctx.t('games.slot.label_result'),
+                    value: ctx.t('games.slot.win_result', {
+                        symbol: winItem.symbol,
+                        multiplier: winItem.multiplier,
+                        bonus: formatRupiah(winItem.bonus)
+                    })
                 },
-                { icon: '💵', label: 'Bet Placed', value: formatRupiah(bet) },
-                { icon: '🎉', label: 'Payout Won', value: `+${formatRupiah(result.winAmount)}` },
-                { icon: '💰', label: 'New Balance', value: formatRupiah(result.newBalance) }
+                { icon: '💵', label: ctx.t('games.slot.label_bet_placed'), value: formatRupiah(bet) },
+                {
+                    icon: '🎉',
+                    label: ctx.t('games.slot.label_payout_won'),
+                    value: `+${formatRupiah(result.winAmount)}`
+                },
+                { icon: '💰', label: ctx.t('games.slot.label_new_balance'), value: formatRupiah(result.newBalance) }
             );
         } else {
             fields.push(
-                { icon: '❌', label: 'Result', value: 'No Match (Loss)' },
-                { icon: '💵', label: 'Bet Placed', value: formatRupiah(bet) },
-                { icon: '💸', label: 'Loss Amount', value: `-${formatRupiah(bet)}` },
-                { icon: '💰', label: 'New Balance', value: formatRupiah(result.newBalance) }
+                { icon: '❌', label: ctx.t('games.slot.label_result'), value: ctx.t('games.slot.no_match') },
+                { icon: '💵', label: ctx.t('games.slot.label_bet_placed'), value: formatRupiah(bet) },
+                { icon: '💸', label: ctx.t('games.slot.label_loss_amount'), value: `-${formatRupiah(bet)}` },
+                { icon: '💰', label: ctx.t('games.slot.label_new_balance'), value: formatRupiah(result.newBalance) }
             );
         }
 
         const text = renderCard({
-            title: 'COSMOS VEGAS SLOTS',
+            title: ctx.t('games.slot.card_title'),
             icon: '🎰',
             headerStyle: 'heavy',
+            t: ctx.t,
             body: ['', slotBox, ''],
             fields
         });

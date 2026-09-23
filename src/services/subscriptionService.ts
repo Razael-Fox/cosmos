@@ -22,16 +22,28 @@ export function canonicalJidForPhone(phone: string): string {
     return `${clean}@s.whatsapp.net`;
 }
 
-export function buildSalesLink(salesPhone: string, plan: SubscriptionTierName, targetNumber: string): string {
+export function buildSalesLink(
+    salesPhone: string,
+    plan: SubscriptionTierName,
+    targetNumber: string,
+    t?: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string
+): string {
     const orderRef = `COSMOS-SUB-${Math.floor(Date.now() / 1000)}`;
     const price = formatRupiah(Number(TIER_PRICES[plan]));
-    const message =
-        `Hello Cosmos Sales! I would like to subscribe to a paid tier.\n\n` +
-        `Plan: ${plan.charAt(0) + plan.slice(1).toLowerCase()} Tier\n` +
-        `Price: ${price} / month\n` +
-        `Target Number: ${targetNumber}\n` +
-        `Order Ref: ${orderRef}\n\n` +
-        `Please send the payment QRIS / account details.`;
+    const planName = plan.charAt(0) + plan.slice(1).toLowerCase();
+    const message = t
+        ? t('tools.sub.sales_message', {
+              plan: planName,
+              price,
+              targetNumber,
+              orderRef
+          })
+        : `Hello Cosmos Sales! I would like to subscribe to a paid tier.\n\n` +
+          `Plan: ${planName} Tier\n` +
+          `Price: ${price} / month\n` +
+          `Target Number: ${targetNumber}\n` +
+          `Order Ref: ${orderRef}\n\n` +
+          `Please send the payment QRIS / account details.`;
     return `https://wa.me/${salesPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 }
 

@@ -64,9 +64,9 @@ const inventoryTool: ToolModule = {
 
         if (shopItems.length > 0) {
             sections.push({
-                title: 'ITEMS & EQUIPMENT',
+                title: ctx.t('tools.inventory.section_items'),
                 items: shopItems.map((inv) => {
-                    const itemName = inv.item?.name || inv.name || 'Unknown Item';
+                    const itemName = inv.item?.name || inv.name || ctx.t('tools.inventory.unknown_item');
                     const shortId = inv.item?.shortId ? ` (${inv.item.shortId})` : '';
                     const type = inv.item?.type || inv.typeCategory || 'Item';
                     const typeFormatted = type.charAt(0).toUpperCase() + type.slice(1);
@@ -80,10 +80,12 @@ const inventoryTool: ToolModule = {
 
         if (properties.length > 0) {
             sections.push({
-                title: 'OWNED PROPERTIES',
+                title: ctx.t('tools.inventory.section_properties'),
                 items: properties.map((inv) => {
-                    const propName = inv.property?.name || inv.name || 'Unknown Property';
-                    const originalPrice = inv.originalPrice ? formatRupiah(inv.originalPrice) : 'N/A';
+                    const propName = inv.property?.name || inv.name || ctx.t('tools.inventory.unknown_property');
+                    const originalPrice = inv.originalPrice
+                        ? formatRupiah(inv.originalPrice)
+                        : ctx.t('tools.inventory.not_available');
                     return {
                         label: propName,
                         value: originalPrice
@@ -94,18 +96,19 @@ const inventoryTool: ToolModule = {
 
         if (legacyItems.length > 0) {
             sections.push({
-                title: 'OTHER ASSETS',
+                title: ctx.t('tools.inventory.section_other'),
                 items: legacyItems.map((inv) => ({
-                    label: inv.name || 'Asset',
+                    label: inv.name || ctx.t('tools.inventory.unknown_asset'),
                     value: `x${inv.quantity}`
                 }))
             });
         }
 
         const text = renderCard({
-            title: 'USER INVENTORY VAULT',
+            title: ctx.t('tools.inventory.vault_title'),
             icon: '📦',
             headerStyle: 'light',
+            t: ctx.t,
             sections,
             tip: ctx.t('tools.inventory.footer_tip')
         });

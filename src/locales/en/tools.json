@@ -33,6 +33,7 @@
         "reward_received": "Reward Received",
         "streak_label": "Daily Streak",
         "next_claim": "Next Claim",
+        "twenty_four_hours": "24 Hours",
         "cooldown_title": "DAILY REWARD ON COOLDOWN",
         "cooldown_status": "Already claimed today!",
         "cooldown_progress": "Cooldown Progress",
@@ -87,7 +88,27 @@
         "guide_title": "COMMAND GUIDE: {{command}}",
         "none": "None",
         "banner_title": "COSMOS SYSTEM BOT",
-        "banner_body": "Multi-Device WhatsApp Bot Framework"
+        "banner_body": "Multi-Device WhatsApp Bot Framework",
+        "error_label": "Error",
+        "categories": {
+            "casino": "Casino",
+            "games": "Games",
+            "economy_banking": "Economy & Banking",
+            "employment": "Employment",
+            "downloaders": "Downloaders",
+            "music_audio": "Music & Audio",
+            "media_stickers": "Media & Stickers",
+            "ai_correction": "AI & Correction",
+            "tools_utilities": "Tools & Utilities",
+            "settings": "Settings",
+            "system_help": "System & Help"
+        },
+        "units": {
+            "d": "d",
+            "h": "h",
+            "m": "m",
+            "s": "s"
+        }
     },
     "help": {
         "title": "📜 Cosmos Help Menu",
@@ -155,6 +176,13 @@
         "bot_uptime_label": "Bot Uptime",
         "nodejs_label": "Node.js",
         "hardware_title": "HARDWARE PERFORMANCE",
+        "section_runtime": "RUNTIME TELEMETRY",
+        "section_memory": "MEMORY UTILIZATION",
+        "section_host": "HOST ENVIRONMENT",
+        "total_ram_label": "Total RAM",
+        "used_ram_label": "Used RAM",
+        "free_ram_label": "Free RAM",
+        "unknown": "Unknown",
         "cpu_label": "CPU Model",
         "ram_label": "RAM Usage"
     },
@@ -172,7 +200,12 @@
         "income": "📈 *Total Income:* {{income}}",
         "payout": "📉 *Total Payout:* {{payout}}",
         "net_profit": "💰 *Net Profit:* {{profit}}",
-        "quote": "🏦 Cosmos Global Vault System"
+        "quote": "🏦 Cosmos Global Vault System",
+        "card_title": "HOUSE VAULT STATEMENT",
+        "gross_income": "Total Gross Income",
+        "payouts_issued": "Total Payouts Issued",
+        "profit_margin": "Net Profit Margin",
+        "tip": "House reserve guarantees instant casino payouts."
     },
     "top": {
         "group_only": "❌ This command can only be used in a group chat. Use .topglobal to see the global leaderboard.",
@@ -183,7 +216,22 @@
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "failed": "❌ Failed to fetch group leaderboard.",
         "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Wins / *{{matches}}* Matches",
-        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}"
+        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
+        "header_roulette": "ROULETTE HIGH ROLLERS",
+        "header_casino": "CASINO HIGH ROLLERS",
+        "scope_label": "Scope",
+        "scope_value": "Group Leaderboard",
+        "ranked_players_label": "Ranked Players",
+        "catalog_roulette": "ROULETTE CHAMPIONS",
+        "catalog_casino": "TOP BILLIONAIRES",
+        "wins_matches": "Wins: {{wins}} • Matches: {{matches}}",
+        "balance_label": "Balance: {{balance}}",
+        "tier_label": "Tier: {{tier}}",
+        "tip_climb": "Wager in .roulette or invest in .properties to climb the ranks!",
+        "tier_diamond": "💎 Diamond",
+        "tier_gold": "🥇 Gold",
+        "tier_silver": "🥈 Silver",
+        "tier_bronze": "🥉 Bronze"
     },
     "topglobal": {
         "roulette_title": "🌍 *Global Roulette Leaderboard* 🌍\n\n",
@@ -193,7 +241,22 @@
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "footer": "\n_Updated every 5 minutes._",
         "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Wins / *{{matches}}* Matches",
-        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}"
+        "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
+        "header_roulette": "GLOBAL ROULETTE PODIUM",
+        "header_casino": "GLOBAL HIGH ROLLERS",
+        "scope_label": "Scope",
+        "scope_value": "Global Leaderboard",
+        "ranked_players_label": "Ranked Players",
+        "catalog_roulette": "GLOBAL ROULETTE CHAMPIONS",
+        "catalog_casino": "TOP GLOBAL BILLIONAIRES",
+        "wins_matches": "Wins: {{wins}} • Matches: {{matches}}",
+        "balance_label": "Balance: {{balance}}",
+        "tier_label": "Tier: {{tier}}",
+        "tip_climb": "Wager in .roulette or invest in .properties to climb the ranks!",
+        "tier_diamond": "💎 Diamond",
+        "tier_gold": "🥇 Gold",
+        "tier_silver": "🥈 Silver",
+        "tier_bronze": "🥉 Bronze"
     },
     "apply_job": {
         "specify_role": "Please specify the job position you are applying for (e.g., .apply job Developer).",
@@ -335,7 +398,18 @@
         "properties_buy_tip": "_Use `.buy <property_name>` to purchase a property._",
         "no_items": "No items found in category \"{{category}}\". Use `.shop` to see available categories.",
         "header_title": "*🛍️ Cosmos Shop - {{title}}*",
-        "buy_tip": "_To purchase an item, use: `.buy <short_id> [quantity]`_"
+        "buy_tip": "_To purchase an item, use: `.buy <short_id> [quantity]`_",
+        "directory_title": "COSMOS SHOP DIRECTORY",
+        "available_categories": "AVAILABLE CATEGORIES",
+        "category_properties": "Properties",
+        "property_catalog_card_title": "COSMOS PROPERTY CATALOG",
+        "property_catalog_alert_title": "PROPERTY CATALOG",
+        "no_items_found_alert": "NO ITEMS FOUND",
+        "property_subtitle": "Type: {{type}} • Depreciation: {{depreciation}}%",
+        "property_badge": "PROPERTY",
+        "all_items_title": "All Items",
+        "items_suffix": "{{category}} Items",
+        "shop_header": "COSMOS SHOP - {{title}}"
     },
     "property_buy": {
         "specify_target": "Please specify the item or property you want to buy. Format: `.buy <short_id> [quantity]`",
@@ -356,7 +430,11 @@
         "empty": "The property catalog is currently empty.",
         "title": "*🏬 Cosmos Property Catalog*\n\n",
         "usage": "_Use the \"buy\" command to purchase a property._",
-        "buy_tip": "_Use the \"buy\" command to purchase a property._"
+        "buy_tip": "_Use the \"buy\" command to purchase a property._",
+        "card_title": "COSMOS PROPERTY CATALOG",
+        "alert_title": "PROPERTY CATALOG",
+        "subtitle": "Type: {{type}} • Depreciation: {{depreciation}}%",
+        "badge": "PROPERTY"
     },
     "inventory": {
         "title": "*📦 Cosmos Inventory*\n\n",
@@ -374,7 +452,15 @@
         "original_value_label": "   Original Value: {{price}}",
         "acquired_label": "   Acquired: {{date}}",
         "other_assets_header": "*Other Assets:*",
-        "footer_tip": "_Use `.shop` to buy more items or `.sell <property_name>` to liquidate properties._"
+        "footer_tip": "_Use `.shop` to buy more items or `.sell <property_name>` to liquidate properties._",
+        "section_items": "ITEMS & EQUIPMENT",
+        "section_properties": "OWNED PROPERTIES",
+        "section_other": "OTHER ASSETS",
+        "vault_title": "USER INVENTORY VAULT",
+        "unknown_item": "Unknown Item",
+        "unknown_property": "Unknown Property",
+        "unknown_asset": "Asset",
+        "not_available": "N/A"
     },
     "property_sell": {
         "specify_property": "Please specify the property name to sell. Format: /sell <property_name> <optional_negotiation>",
@@ -397,7 +483,9 @@
         "save_failed": "❌ Failed to save auto-download settings.",
         "autodelete_success": "✅ Auto-delete for downloaded media and links is now {{state}}.",
         "platform_success": "✅ Auto-download for {{platform}} has been turned {{state}}.",
-        "settings_title": "*⚙️ Settings*"
+        "settings_title": "*⚙️ Settings*",
+        "state_on": "ON",
+        "state_off": "OFF"
     },
     "profile_photo": {
         "target_not_found": "Could not determine the target user. Please quote a message, mention someone, or use the command directly.",
@@ -454,12 +542,89 @@
     },
     "tglist": {
         "empty": "No private Telegram chats have been registered yet. Use .tgadd to register one.",
-        "title": "*Registered Private Telegram Chats ({{count}}):*\n\n"
+        "title": "*Registered Private Telegram Chats ({{count}}):*\n\n",
+        "untitled": "Untitled chat",
+        "chat_id_label": "Chat ID:",
+        "invite_label": "Invite:"
     },
     "items": {
         "pedang_emas": {
             "name": "Golden Sword",
             "description": "A powerful golden sword"
+        },
+        "gorengan": {
+            "name": "Gorengan",
+            "description": "Authentic Indonesian fried snacks. Restores 1.5 health."
+        },
+        "yakult": {
+            "name": "Yakult",
+            "description": "A probiotic dairy drink. Restores 2.5 health."
+        },
+        "tolakangin": {
+            "name": "Tolak Angin",
+            "description": "Herbal remedy to cure debuffs and restore 5 health."
+        },
+        "indomie": {
+            "name": "Indomie Goreng",
+            "description": "The ultimate comfort food. Restores 10 health."
+        },
+        "bambu": {
+            "name": "Bambu Runcing",
+            "description": "A traditional bamboo spear for combat."
+        },
+        "swallow": {
+            "name": "Sandal Swallow",
+            "description": "Legendary rubber sandals. Good for defense."
+        },
+        "sarung": {
+            "name": "Sarung BHS",
+            "description": "A high-quality woven sarong, perfect for flexing."
+        },
+        "pickaxe": {
+            "name": "Pickaxe",
+            "description": "A sturdy mining pickaxe required to mine coal, iron, gold, and diamonds."
+        },
+        "macbook": {
+            "name": "MacBook",
+            "description": "A high-performance laptop required for office work and technology ventures."
+        },
+        "iphone": {
+            "name": "iPhone",
+            "description": "A premium mobile smartphone suitable for running digital enterprises."
+        },
+        "pixel9a": {
+            "name": "Google Pixel 9a",
+            "description": "An affordable Android smartphone suitable for running digital enterprises."
+        },
+        "driver_license": {
+            "name": "Driver's License",
+            "description": "An official driver license required for taxi and commercial transport work."
+        }
+    },
+    "properties": {
+        "honda_scoopy_motorcycle": {
+            "name": "Honda Scoopy Motorcycle",
+            "description": "Honda Scoopy scooter vehicle asset."
+        },
+        "rolex_submariner_watch": {
+            "name": "Rolex Submariner Watch",
+            "description": "Luxury Swiss watch asset."
+        },
+        "iphone_15_pro_max": {
+            "name": "iPhone 15 Pro Max",
+            "description": "High-end flagship smartphone asset."
+        },
+        "google_pixel_9a": {
+            "name": "Google Pixel 9a",
+            "description": "Modern Android smartphone asset."
+        },
+        "macbook_pro_m3_max": {
+            "name": "MacBook Pro M3 Max",
+            "description": "Workstation laptop computer asset."
+        },
+        "bali_beach_villa": {
+            "name": "Bali Beach Villa",
+            "description": "Luxury seaside real estate villa."
         }
     },
     "bank": {
@@ -580,7 +745,46 @@
         "seizure_notification": "Your outstanding debt of {{amount}} has triggered an automatic asset seizure. The system has confiscated the following assets to clear the balance: {{assetsList}}. Your bank account restrictions have been lifted.",
         "disbursement_failed": "Loan disbursement transaction failed.",
         "repay_failed": "Repayment failed.",
-        "legacy_approved": "Identity verification successful. A loan of {{amount}} has been approved and registered under NIK: {{nik}}."
+        "legacy_approved": "Identity verification successful. A loan of {{amount}} has been approved and registered under NIK: {{nik}}.",
+        "title_disbursed": "LOAN DISBURSED",
+        "detail_approved_amount": "Approved Amount: +{{amount}}",
+        "detail_repayment_due": "Repayment Due: {{dueDate}}",
+        "card_title_underwriting": "CCB CREDIT UNDERWRITING REPORT",
+        "subtitle_underwriting": "Cosmos Central Bank has assessed your loan application:",
+        "label_applicant": "Applicant",
+        "label_credit_score": "Credit Score",
+        "label_approved_loan": "Approved Loan",
+        "label_interest_rate": "Interest Rate",
+        "accrued_format": "{{rate}}% (Accrued: {{accrued}})",
+        "label_total_repayment": "Total Repayment",
+        "label_term_tenor": "Term & Tenor",
+        "tenor_format": "{{days}} Days (Due: {{dueDate}})",
+        "label_pledged_collateral": "Pledged Collateral",
+        "label_ai_note": "AI Underwriter Note",
+        "instruction_confirm": "👉 Type *confirm* to accept terms and disburse funds into your bank account.",
+        "instruction_cancel": "❌ Type *.cancel* to reject this loan offer.",
+        "title_repaid": "LOAN REPAID",
+        "detail_amount_paid": "Amount Paid: {{amount}}",
+        "detail_outstanding_debt": "Outstanding Debt: {{debt}}",
+        "card_title_active_status": "Active Loan Status",
+        "label_original_principal": "Original Principal",
+        "label_total_amount_due": "Total Amount Due",
+        "label_repayment_due_date": "Repayment Due Date",
+        "label_time_remaining": "Time Remaining",
+        "label_loan_status": "Loan Status",
+        "tip_repay": "Use .loan pay to repay your outstanding debt.",
+        "card_title_credit_profile": "Credit & Loan Profile",
+        "label_max_loan_limit": "Maximum Loan Limit",
+        "label_estimated_net_worth": "Estimated Net Worth",
+        "label_wallet_cash": "Wallet Cash",
+        "label_bank_balance": "Bank Balance",
+        "label_assets_value": "Assets Value",
+        "label_active_loans": "Active Loans",
+        "label_repayments_defaults": "Repayments / Defaults",
+        "tip_apply": "Apply for a loan using .loan apply <amount> [collateral_name].",
+        "value_overdue": "OVERDUE",
+        "value_none": "None",
+        "days_suffix": "{{days}} days"
     },
     "commands": {
         "addbalance": {
@@ -776,8 +980,49 @@
             "description": "Manage Cosmos subscriptions. Admin: .sub add <phone> <tier> <days>."
         }
     },
+    "myplan": {
+        "title": "📊 *Cosmos Subscription & Limits*",
+        "user_label": "User",
+        "plan_label": "Plan",
+        "status_label": "Status",
+        "tier_free": "Free Tier",
+        "tier_subsidized": "Subsidized Tier",
+        "tier_partner": "Partner Tier",
+        "status_owner": "Bot Owner (Unlimited)",
+        "status_active": "Active",
+        "valid_until": " (Valid until {{date}})",
+        "groups_label": "Whitelisted Groups",
+        "subbots_label": "Active Sub-Bots",
+        "used_suffix": "used",
+        "unlimited": "∞",
+        "custom_prefix_label": "Custom Prefix",
+        "prefix_enabled": "Enabled",
+        "prefix_locked": "Locked (.)",
+        "economy_bonus_label": "Economy Bonus",
+        "multiplier_suffix": "x Multiplier",
+        "upgrade_cta": "Need more resources? Upgrade anytime at https://razael-fox.my.id/pricing",
+        "example_cost": "_Example upgrade cost: Subsidized {{cost}}/month._"
+    },
+    "broadcast": {
+        "forex_title": "*🏦 Cosmos Central Bank Update*",
+        "forex_rate": "*Current Exchange Rate:* $1 = {{rate}}",
+        "forex_trend": "*Market Trend:* 📉 AI Evaluated",
+        "forex_adjustments_title": "*🔄 Economic Adjustments:*",
+        "forex_inflation": "Global Inflation Multiplier: *{{multiplier}}*",
+        "forex_shop_loot": "Shop & Loot: ⬆️ *Adjusted proportionally*",
+        "forex_ai_note": "🤖 AI Analyst Note: \"{{reasoning}}\""
+    },
     "ui": {
         "tip_label": "Tip:",
+        "alert_titles": {
+            "success": "SUCCESS",
+            "warning": "WARNING",
+            "error": "ERROR",
+            "info": "INFORMATION",
+            "notice": "NOTICE"
+        },
+        "tip_prefix": "💡 *Tip:*",
+        "hp_suffix": "({{current}}/{{max}} HP)",
         "quick_actions": "Quick Actions:",
         "correct_syntax": "Correct Syntax:",
         "valid_examples": "Valid Examples:",
@@ -811,7 +1056,11 @@
         "duration_value": "15 Minutes",
         "status_label": "Status",
         "status_boosted": "MASSIVE BOOST ACTIVE",
-        "tip": "Use .slot, .coinflip, or .dice to start playing!"
+        "tip": "Use .slot, .coinflip, or .dice to start playing!",
+        "quote_announcement": "🔥 Cosmos EVENT ANNOUNCEMENT 🔥"
+    },
+    "rvo": {
+        "done": "Done."
     },
     "downloader": {
         "title": "COSMOS MEDIA DOWNLOADER",
@@ -864,7 +1113,27 @@
         "admin_only_list": "Only the primary bot administrator can inspect all connected sub-bots.",
         "not_active": "Sub-bot +{{number}} is not currently active.",
         "already_active_or_missing": "Sub-bot +{{number}} is already active or missing database files.",
-        "empty_list": "No sub-bot instances configured on this host."
+        "empty_list": "No sub-bot instances configured on this host.",
+        "invalid_phone_format": "❌ Invalid phone number format. Please provide international format (e.g. 628123456789).",
+        "quota_reached": "⚠️ *Sub-Bot Quota Reached!*\n\nTier: {{tier}} Plan\nActive Sub-Bots: {{current}} / {{max}} instances\n\nTo pair a new sub-bot:\n1. Disconnect an existing sub-bot using: .subbot stop <phone>\n2. Upgrade to the Partner Tier (up to 12 sub-bots): https://razael-fox.my.id/pricing",
+        "status_online": "ONLINE",
+        "tip_config": "Use .config to view and customize your sub-bot features.",
+        "linked_success": "✅ *Sub-Bot Linked Successfully*\n\nNumber: +{{number}}\nStatus: ONLINE\n\nManage it anytime from your web dashboard or with .subbot commands.",
+        "qr_generate_failed": "❌ Failed to generate QR code image.",
+        "status_badge_online": "[ ✅ ONLINE ]",
+        "status_badge_offline": "[ ❌ OFFLINE ]",
+        "tip_config_subbot": "Use .config to adjust feature toggles and API keys.",
+        "tip_status_detail": "Use .subbot status <number> for detailed metrics.",
+        "engine_subtitle": "Cosmos Autonomous Multi-Device Sub-Bot Engine",
+        "available_commands_title": "Available Commands",
+        "cmd_pair_code": "Link device via 8-digit code",
+        "cmd_pair_qr": "Link device via dynamic QR scan",
+        "cmd_status": "Check connection and uptime",
+        "cmd_stop": "Disconnect sub-bot",
+        "cmd_start": "Reconnect existing sub-bot",
+        "cmd_delete": "Permanently remove sub-bot",
+        "tip_cancel_pairing": "Send .cancel at any time during pairing to abort.",
+        "total_instances": "Total Instances: {{count}}"
     },
     "config": {
         "dashboard_title": "SUB-BOT CONFIGURATION",
@@ -894,7 +1163,29 @@
         "mode_invalid": "Invalid mode. Use: .config mode public OR .config mode self",
         "prefix_invalid": "Invalid prefix. Please provide 1-3 characters (e.g. .config prefix !)",
         "name_required": "Please provide a bot name (e.g. .config name Jarvis)",
-        "lang_invalid": "Invalid language. Use: .config lang id OR .config lang en"
+        "lang_invalid": "Invalid language. Use: .config lang id OR .config lang en",
+        "badge_enabled": "[ ✅ ENABLED ]",
+        "badge_disabled": "[ ❌ DISABLED ]",
+        "badge_custom_key": "[ Custom Key: {{key}} ]",
+        "badge_parent_default": "[ Parent Bot Default ]",
+        "feature_casino": "Casino & Games",
+        "feature_bank": "Central Bank",
+        "feature_loan": "Bank Loans (AI)",
+        "feature_jobs": "Careers & Salary",
+        "feature_shop": "Shop & Property",
+        "feature_downloaders": "Media Downloaders",
+        "feature_autodl": "Auto-Downloader",
+        "feature_autosticker": "Auto-Sticker",
+        "feature_autocorrection": "Auto-Correction",
+        "feature_offline_ai": "Offline AI Agent",
+        "feature_forex": "FOREX Broadcast",
+        "feature_stt": "Voice STT Transcribe",
+        "provider_groq": "Groq AI API",
+        "provider_openrouter": "OpenRouter API",
+        "provider_eodhd": "EODHD Financial",
+        "tip_toggle": "*.config enable <feature>* or *.config disable <feature>*",
+        "tip_api": "*.config api groq <key>* (set dedicated AI quota)",
+        "tip_mode": "*.config mode self* (respond only to owner)"
     },
     "verify": {
         "usage": "Invalid format. Use: .verify <TOKEN>",
@@ -907,7 +1198,13 @@
     },
     "sub": {
         "usage": "Invalid format. Use: .sub add <phone> <tier: free|subsidized|partner> <days>",
-        "activated": "Subscription activated: {tier} for +{user} ({days} days, valid until {validUntil}).",
-        "failed": "Failed to activate subscription. Please try again later."
+        "activated": "Subscription activated: {{tier}} for +{{user}} ({{days}} days, valid until {{validUntil}}).",
+        "failed": "Failed to activate subscription. Please try again later.",
+        "sub_expired_notice": "⚠️ *Cosmos Subscription Expired*\n\nYour paid plan has ended and your account is now on the Free Tier (2 sub-bots / 5 groups).\nExcess sub-bots were paused (never deleted). Renew anytime at https://razael-fox.my.id/pricing",
+        "sales_message": "Hello Cosmos Sales! I would like to subscribe to a paid tier.\n\nPlan: {{plan}} Tier\nPrice: {{price}} / month\nTarget Number: {{targetNumber}}\nOrder Ref: {{orderRef}}\n\nPlease send the payment QRIS / account details."
+    },
+    "quota": {
+        "group_limit_reached": "Maximum group limit reached for {{tier}} tier ({{current}}/{{max}}).",
+        "subbot_limit_reached": "Maximum active sub-bot limit reached for {{tier}} tier ({{current}}/{{max}})."
     }
 }

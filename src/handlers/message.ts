@@ -374,10 +374,14 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         if (quotedMsg) {
             const extText = quotedMsg.extendedTextMessage;
             const quotedText = quotedMsg.conversation || extText?.text || extText?.matchedText || '';
+            const quotedLower = quotedText.toLowerCase();
             if (
-                (quotedText.toLowerCase().includes('reply with a number') ||
-                    quotedText.toLowerCase().includes('balas dengan angka')) &&
-                (quotedText.includes('results for') || quotedText.includes('hasil teratas untuk'))
+                quotedLower.includes('(1-') ||
+                quotedLower.includes('reply with a number') ||
+                quotedLower.includes('balas dengan nomor') ||
+                quotedLower.includes('balas dengan angka') ||
+                quotedLower.includes('results for') ||
+                quotedLower.includes('hasil teratas untuk')
             ) {
                 isPlayReply = true;
             }
@@ -613,19 +617,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     if (!result || !result.allowed) {
                         const reason = result?.reason ?? '';
                         const tierLabel = result?.tier ?? 'FREE';
-                        await sock.sendMessage(
-                            jid,
-                            {
-                                text:
-                                    `⚠️ *Whitelist Limit Reached!*\n\n` +
-                                    `Tier: ${tierLabel} Plan\n` +
-                                    `${reason}\n\n` +
-                                    `To add more groups:\n` +
-                                    `1. Remove an inactive group using: .delgroup\n` +
-                                    `2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing`
-                            },
-                            { quoted: msg }
-                        );
+                        await sock.sendMessage(jid, {
+                            text: t('core.whitelist_limit_reached', {
+                                tier: tierLabel,
+                                reason
+                            })
+                        });
                         return;
                     }
                     await sock.sendMessage(jid, { text: t('core.group_add_success') });
@@ -871,10 +868,8 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
             await sock.sendPresenceUpdate('composing', jid);
             const result = await toolsHandler.execute('sticker_maker', {}, { sock, msg, jid, t });
-            if (result && typeof result === 'string') {
-                if (result.startsWith('Failed') || result.startsWith('Error') || result.startsWith('Gagal')) {
-                    await sock.sendMessage(jid, { text: result }, { quoted: msg });
-                }
+            if (result && typeof result === 'string' && result.trim().length > 0 && !result.startsWith('✅')) {
+                await sock.sendMessage(jid, { text: result }, { quoted: msg });
             }
             return;
         }

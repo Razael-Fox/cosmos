@@ -17,5 +17,21 @@
     "not_in_group": "This command can only be used in a group chat.",
     "sender_identity_error": "Could not determine your sender identity.",
     "tool_execution_error": "Sorry, there was an error executing {{tool}}.",
-    "group_already_whitelisted": "This group is already whitelisted."
+    "group_already_whitelisted": "This group is already whitelisted.",
+    "security_alert_title": "🔐 *Cosmos Security Alert*",
+    "security_alert_body": "A login to your Cosmos web account was just detected.",
+    "security_alert_ip": "• IP Address: {{ip}}",
+    "security_alert_country": "• Country: {{country}}",
+    "security_alert_device": "• Device: {{device}}",
+    "security_alert_browser": "• Browser: {{browser}}",
+    "security_alert_status": "• Status: {{status}}",
+    "security_alert_status_new": "NEW DEVICE (untrusted)",
+    "security_alert_status_recognized": "Recognized device",
+    "security_alert_remedy": "If this was not you, please change your password immediately and contact support.",
+    "unknown": "Unknown",
+    "unknown_device": "Unknown device",
+    "ipc_otp": "🔐 *Cosmos Verification Code*\n\nYour one-time code is: *{{code}}*\nIt expires in 5 minutes. Do not share this code with anyone.",
+    "ipc_verified": "✅ *Registration Verified!*\n\nYour account has been whitelisted successfully. You may now proceed on the web dashboard.",
+    "ipc_sub_activated": "🎉 *Subscription Activated!*\n\nTier: {{tier}}\nValid Until: {{expiresAt}}\n\nThank you for supporting Cosmos!",
+    "whitelist_limit_reached": "⚠️ *Whitelist Limit Reached!*\n\nTier: {{tier}} Plan\n{{reason}}\n\nTo add more groups:\n1. Remove an inactive group using: .delgroup\n2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing"
 }

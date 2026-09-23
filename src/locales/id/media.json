@@ -48,10 +48,19 @@
         "unexpected_error": "Kesalahan: Terjadi masalah yang tidak diharapkan saat mengunduh video Telegram.",
         "video_retrieved": "✅ Video Telegram berhasil diambil.",
         "photo_retrieved": "✅ Foto Telegram berhasil diambil.",
-        "video_downloaded": "✅ Video Telegram berhasil diunduh."
+        "video_downloaded": "✅ Video Telegram berhasil diunduh.",
+        "owner_request_title": "🔒 *Permintaan Konten Privat Telegram*",
+        "owner_request_body": "Pengguna meminta media dari obrolan privat Telegram yang belum ditambahkan ke database.",
+        "owner_request_link": "*Tautan Diminta:* {{link}}",
+        "owner_request_chat_id": "*ID Obrolan Internal:* ```{{chatId}}```",
+        "owner_request_message_id": "*ID Pesan:* ```{{messageId}}```",
+        "owner_request_user": "*Nama Pemohon:* {{name}}",
+        "owner_request_phone": "*Nomor WhatsApp:* {{number}}",
+        "owner_request_next_steps": "*Langkah Selanjutnya:*\n1. Jika tautan undangan tersedia, jalankan `.tgadd <tautan-undangan>` agar akun dummy bergabung secara otomatis.\n2. Jika tidak, bergabunglah ke grup secara manual menggunakan akun dummy, lalu daftarkan dengan `.tgadd <tautan-atau-id-chat>`.\n3. Pemohon dapat mencoba kembali perintah yang sama setelahnya."
     },
     "pinterestdl": {
-        "document_version": "Versi dokumen"
+        "document_version": "Versi dokumen",
+        "card_title": "MEDIA PINTEREST"
     },
     "play": {
         "results_title": "Berikut adalah hasil teratas untuk *{{query}}*.\nSilakan balas dengan nomor (1-{{count}}) ke pesan ini untuk mengunduh:\n",
@@ -92,6 +101,10 @@
         "processing": "Memproses paket stiker: *\"{{name}}\"* ({{count}} stiker)...",
         "wastickers_caption": "📦 *{{name}}* ({{count}} stiker)\nKetuk untuk mengimpor dengan Sticker Maker / WhatsApp!",
         "error_fetch_pack": "Gagal mengambil rincian paket stiker: {{error}}",
-        "error_process_pack": "Gagal memproses dan membuat paket stiker: {{error}}"
+        "error_process_pack": "Gagal memproses dan membuat paket stiker: {{error}}",
+        "cancellation_desc": "Pencarian Sticker.ly untuk \"{{query}}\"",
+        "untitled_pack": "Paket Tanpa Judul",
+        "error_no_stickers": "Paket stiker tidak berisi stiker apa pun.",
+        "error_download_failed": "Gagal mengunduh stiker dari paket."
     }
 }

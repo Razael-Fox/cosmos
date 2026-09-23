@@ -9,17 +9,22 @@ const localesDir = path.resolve(__dirname, '../src/locales');
 const baseLanguage = 'id';
 const targetLanguages = ['en'];
 
-function getAllKeyPaths(obj: Record<string, any>, prefix = ''): string[] {
-    let keys: string[] = [];
+function getLeafEntries(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
+    const entries: Record<string, string> = {};
     for (const [k, v] of Object.entries(obj)) {
         const fullKey = prefix ? `${prefix}.${k}` : k;
         if (v && typeof v === 'object' && !Array.isArray(v)) {
-            keys = keys.concat(getAllKeyPaths(v, fullKey));
+            Object.assign(entries, getLeafEntries(v, fullKey));
         } else {
-            keys.push(fullKey);
+            entries[fullKey] = String(v ?? '');
         }
     }
-    return keys;
+    return entries;
+}
+
+function extractVariables(text: string): string[] {
+    const matches = text.match(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g) || [];
+    return [...new Set(matches.map((m) => m.replace(/[{}]/g, '').trim()))].sort();
 }
 
 function validateI18n(): boolean {
@@ -36,16 +41,26 @@ function validateI18n(): boolean {
 
     for (const file of baseFiles) {
         const baseFilePath = path.join(baseDir, file);
-        let baseContent: Record<string, any>;
+        let baseContent: Record<string, unknown>;
         try {
             baseContent = JSON.parse(fs.readFileSync(baseFilePath, 'utf-8'));
-        } catch (err: any) {
-            console.error(`[i18n-validator] Failed to parse ${baseFilePath}:`, err.message);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error(`[i18n-validator] Failed to parse ${baseFilePath}:`, msg);
             hasError = true;
             continue;
         }
 
-        const baseKeys = getAllKeyPaths(baseContent);
+        const baseEntries = getLeafEntries(baseContent);
+        const baseKeys = Object.keys(baseEntries);
+
+        // Check for empty values in base language
+        for (const [k, val] of Object.entries(baseEntries)) {
+            if (!val.trim()) {
+                console.error(`[i18n-validator] [${baseLanguage}/${file}] Empty value for key: ${k}`);
+                hasError = true;
+            }
+        }
 
         for (const targetLang of targetLanguages) {
             const targetFilePath = path.join(localesDir, targetLang, file);
@@ -55,16 +70,18 @@ function validateI18n(): boolean {
                 continue;
             }
 
-            let targetContent: Record<string, any>;
+            let targetContent: Record<string, unknown>;
             try {
                 targetContent = JSON.parse(fs.readFileSync(targetFilePath, 'utf-8'));
-            } catch (err: any) {
-                console.error(`[i18n-validator] Failed to parse ${targetFilePath}:`, err.message);
+            } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : String(err);
+                console.error(`[i18n-validator] Failed to parse ${targetFilePath}:`, msg);
                 hasError = true;
                 continue;
             }
 
-            const targetKeys = getAllKeyPaths(targetContent);
+            const targetEntries = getLeafEntries(targetContent);
+            const targetKeys = Object.keys(targetEntries);
 
             const missingKeys = baseKeys.filter((k) => !targetKeys.includes(k));
             const extraKeys = targetKeys.filter((k) => !baseKeys.includes(k));
@@ -77,15 +94,36 @@ function validateI18n(): boolean {
             }
 
             if (extraKeys.length > 0) {
-                console.warn(
-                    `[i18n-validator] [${targetLang}/${file}] Extra ${extraKeys.length} keys:\n  - ${extraKeys.join('\n  - ')}`
+                console.error(
+                    `[i18n-validator] [${targetLang}/${file}] Extra ${extraKeys.length} keys (not in ${baseLanguage}):\n  - ${extraKeys.join('\n  - ')}`
                 );
+                hasError = true;
+            }
+
+            // Check for empty values and variable set parity
+            for (const key of baseKeys) {
+                if (targetEntries[key] !== undefined) {
+                    const targetVal = targetEntries[key];
+                    if (!targetVal.trim()) {
+                        console.error(`[i18n-validator] [${targetLang}/${file}] Empty value for key: ${key}`);
+                        hasError = true;
+                    }
+
+                    const baseVars = extractVariables(baseEntries[key]);
+                    const targetVars = extractVariables(targetVal);
+                    if (baseVars.join(',') !== targetVars.join(',')) {
+                        console.error(
+                            `[i18n-validator] [${targetLang}/${file}] Variable mismatch for "${key}":\n  ${baseLanguage}: [${baseVars.join(', ')}]\n  ${targetLang}: [${targetVars.join(', ')}]`
+                        );
+                        hasError = true;
+                    }
+                }
             }
         }
     }
 
     if (!hasError) {
-        console.log('✓ [i18n-validator] All translation keys are in sync across all supported languages.');
+        console.log('✓ [i18n-validator] All translation keys, values, and interpolation variables are in sync.');
         return true;
     }
     return false;

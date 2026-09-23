@@ -100,7 +100,7 @@ const buyTool: ToolModule = {
             const purchaseResult = await purchaseItem(user.id, matchedItem.shortId, inputQuantity);
 
             if (!purchaseResult.success) {
-                if (purchaseResult.message.includes('Insufficient balance')) {
+                if (purchaseResult.code === 'INSUFFICIENT_BALANCE') {
                     const totalCost = matchedItem.price * BigInt(inputQuantity);
                     const freshUser = await prisma.user.findUnique({ where: { id: user.id } });
                     const currentBalance = freshUser ? freshUser.balance : user.balance;

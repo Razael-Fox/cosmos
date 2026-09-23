@@ -81,27 +81,28 @@ const coinflipTool: ToolModule = {
         }
 
         const flipped = result.isWin ? guess : guess === 'heads' ? 'tails' : 'heads';
-        const flippedEmoji = flipped === 'heads' ? '🦅 Heads' : '🪙 Tails';
+        const flippedEmoji = flipped === 'heads' ? t('games.coinflip.heads') : t('games.coinflip.tails');
 
         const text = renderCard({
-            title: 'COINFLIP ARENA',
+            title: t('games.coinflip.card_title'),
             icon: '🪙',
             headerStyle: 'light',
+            t,
             fields: [
-                { icon: '👤', label: 'Your Guess', value: guess.toUpperCase() },
-                { icon: '🎯', label: 'Landed Result', value: flippedEmoji },
+                { icon: '👤', label: t('games.coinflip.label_guess'), value: guess.toUpperCase() },
+                { icon: '🎯', label: t('games.coinflip.label_landed'), value: flippedEmoji },
                 {
                     icon: result.isWin ? '🏆' : '💀',
-                    label: 'Match Outcome',
-                    value: result.isWin ? 'Direct Win!' : 'Defeat (Lost)'
+                    label: t('games.coinflip.label_outcome'),
+                    value: result.isWin ? t('games.coinflip.direct_win') : t('games.coinflip.defeat')
                 },
-                { icon: '💵', label: 'Wager Placed', value: formatRupiah(bet) },
+                { icon: '💵', label: t('games.coinflip.label_wager'), value: formatRupiah(bet) },
                 {
                     icon: result.isWin ? '📈' : '💸',
-                    label: result.isWin ? 'Payout (2x)' : 'Loss Incurred',
+                    label: result.isWin ? t('games.coinflip.label_payout') : t('games.coinflip.label_loss'),
                     value: result.isWin ? `+${formatRupiah(result.winAmount)}` : `-${formatRupiah(bet)}`
                 },
-                { icon: '💰', label: 'Current Balance', value: formatRupiah(result.newBalance) }
+                { icon: '💰', label: t('games.coinflip.label_balance'), value: formatRupiah(result.newBalance) }
             ]
         });
 

@@ -72,10 +72,29 @@ const startGameTool: ToolModule = {
         const blankCount = session.shells.length - liveCount;
 
         const firstPlayer = session.players[session.turnIndex];
+        const formatItem = (item: string) => {
+            switch (item) {
+                case 'COLA':
+                    return t('games.roulette.item_cola');
+                case 'CIGARETTES':
+                    return t('games.roulette.item_cigarettes');
+                case 'HAND_SAW':
+                    return t('games.roulette.item_hand_saw');
+                case 'HANDCUFFS':
+                    return t('games.roulette.item_handcuffs');
+                case 'MAGNIFYING_GLASS':
+                    return t('games.roulette.item_magnifying_glass');
+                case 'INVERTER':
+                    return t('games.roulette.item_inverter');
+                default:
+                    return item.replace('_', ' ');
+            }
+        };
+
         const inventoryStr =
             firstPlayer.inventory.length > 0
-                ? firstPlayer.inventory.map((i) => i.replace('_', ' ')).join(', ')
-                : 'Empty';
+                ? firstPlayer.inventory.map(formatItem).join(', ')
+                : t('games.roulette.inventory_empty');
 
         const roundMsg = t('games.roulette.round_begins', {
             live: liveCount,
@@ -84,7 +103,7 @@ const startGameTool: ToolModule = {
             player: firstPlayer.pushName,
             lives: `${'❤️'.repeat(firstPlayer.hp)}${'🖤'.repeat(5 - firstPlayer.hp)}`,
             inventory: inventoryStr,
-            status: 'None'
+            status: t('games.roulette.status_none')
         });
 
         return roundMsg;
