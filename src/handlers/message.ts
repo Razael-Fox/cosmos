@@ -262,9 +262,27 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
         (async () => {
             try {
-                // Delete legacy duplicate record if any exists to avoid UNIQUE constraint conflicts
+                // Merge and delete legacy duplicate record if any exists to avoid UNIQUE constraint conflicts and preserve balance
                 if (cleanDigits && cleanDigits !== canonicalJid) {
-                    await prisma.user.delete({ where: { id: cleanDigits } }).catch(() => {});
+                    const legacyUser = await prisma.user.findUnique({ where: { id: cleanDigits } }).catch(() => null);
+                    if (legacyUser) {
+                        const extraBalance =
+                            legacyUser.balance > BigInt(10000) ? legacyUser.balance - BigInt(10000) : BigInt(0);
+                        if (extraBalance > BigInt(0) || legacyUser.lastDailyClaim) {
+                            await prisma.user
+                                .update({
+                                    where: { id: canonicalJid },
+                                    data: {
+                                        ...(extraBalance > BigInt(0) ? { balance: { increment: extraBalance } } : {}),
+                                        ...(legacyUser.lastDailyClaim
+                                            ? { lastDailyClaim: legacyUser.lastDailyClaim }
+                                            : {})
+                                    }
+                                })
+                                .catch(() => {});
+                        }
+                        await prisma.user.delete({ where: { id: cleanDigits } }).catch(() => {});
+                    }
                 }
 
                 const user = await prisma.user.findUnique({ where: { id: canonicalJid } });
