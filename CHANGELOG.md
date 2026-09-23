@@ -11,6 +11,31 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-13] - 2026-09-23
+
+### Added
+
+- **Comprehensive Internationalization Remediation Across Tools & Services (#27):**
+    - **100% Fully-Keyed Output:** Remediated all remaining unlocalized and partially localized tools (`system_info.ts`, `myplan.ts`, `slot.ts`, `dice.ts`, `coinflip.ts`, `vault.ts`, `top.ts`, `topglobal.ts`, `shop.ts`, `property_catalog.ts`, `property_inventory.ts`, `loan.ts`, `idcard.ts`, `config.ts`, `subbot.ts`, `setlang.ts`, `subscription.ts`, `roulette_creategame.ts`, `roulette_joingame.ts`, `roulette_startgame.ts`, `roulette_shoot.ts`, `roulette_use.ts`, `pinterestdl.ts`, `tglist.ts`, `autodl.ts`, `daily.ts`, `fevertime.ts`, `stickerly.ts`, `telegramdl.ts`, `readviewonce.ts`), achieving 0 unlocalized tools repository-wide.
+    - **Shared Renderers Localization Layer (`src/utils/uiFormatter.ts`, `src/utils/menuFormatter.ts`):** Made `t?: TranslatorFn` an optional non-breaking parameter in `CardOptions`, `AlertOptions`, `renderCatalogCard`, and `renderHealthGauge` with Formal English fallbacks; localized alert titles (`SUCCESS`, `WARNING`, `ERROR`, `INFORMATION`, `NOTICE`), tip prefixes, and health gauges.
+    - **Menu Category Slug vs. Display Label Separation (`src/services/menuService.ts`):** Established immutable category IDs/slugs (`cat.id`) for category routing (`.menu <category>`) while rendering localized titles via `tools.menu.categories.<slug>`, supporting both English and Indonesian category names and aliases.
+    - **Push & Background Notification Localization:** Localized web login security alerts (`securityAlertService.ts`), web registration OTP and verification notices (`ipcServer.ts`), subscription expiry notifications (`subscriptionChecker.ts`), sub-bot pairing push receipts (`subBotService.ts`), and background loan overdue/seizure warnings (`loanService.ts`).
+    - **Dynamic Per-Group Broadcast Language Resolution:** Refactored duplicate forex broadcast templates across `broadcast.ts` and `subBotService.ts` into a unified `renderForexBroadcast(...)` helper resolving per-group language settings (`group.language || 'id'`).
+    - **Database Catalog Translations (`src/utils/i18n.ts`):** Added `getPropertyWithTranslation(...)` and backfilled all 12 initial shop items and 6 property catalog entries across `src/locales/id/tools.json` and `src/locales/en/tools.json`.
+    - **Global Cancellation Manager Key Support (`src/utils/cancellationManager.ts`):** Added `descriptionKey` and `descriptionVars` to `CancellableSession` to dynamically resolve translated cancellation messages.
+    - **Hardened i18n Guardrails & Host Testing:**
+        - Decoupled direct database imports in `i18n.ts` and `broadcast.ts` with deferred dynamic imports, preventing `SQLITE_CANTOPEN` errors during host test execution.
+        - Hardened `scripts/validate-i18n.ts` with strict bidirectional key symmetry, empty/whitespace value detection, and interpolation variable set parity validation (`{{var}}`).
+        - Added static AST/regex key usage scanner (`scripts/check-i18n-usage.ts`) wired into `pnpm run validate:i18n`.
+        - Created isolated card unit tests (`tests/i18n_cards.test.ts`) covering all formatters and localized cards.
+
+### Changed
+
+- **Eliminated Fragile Logic Couplings on English Prose:**
+    - Refactored `shopService.ts` to return typed `PurchaseResult.code` values (`INSUFFICIENT_BALANCE`, `NOT_FOUND`, `UNAVAILABLE`, `INVALID_QUANTITY`, `DATABASE_ERROR`), decoupling `property_buy.ts` from English substring matching.
+    - Decoupled `message.ts` pagination and auto-sticker handling from language-dependent error prefix checks.
+    - Corrected mixed-language AI prompts in `loanService.ts` and `offlineAi.ts` to Formal English directives enforcing Native Function Calling without raw XML tags.
+
 ## [RF-2609-12] - 2026-09-23
 
 ### Added
@@ -454,7 +479,10 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-10...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-13...HEAD
+[RF-2609-13]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-12...RF-2609-13
+[RF-2609-12]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-11...RF-2609-12
+[RF-2609-11]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-10...RF-2609-11
 [RF-2609-10]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-09...RF-2609-10
 [RF-2609-09]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-08...RF-2609-09
 [RF-2609-08]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-07...RF-2609-08
