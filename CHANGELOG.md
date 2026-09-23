@@ -11,6 +11,27 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-14] - 2026-09-23
+
+### Fixed
+
+- **LID/JID Identity Unification — Balance Loss After `.claim` (`src/utils/casino.ts`, multiple tools & services):**
+    - Fixed a critical bug where `.slot` (and other gambling tools) incorrectly reported "Insufficient balance" immediately after a successful `.claim` for users identified via WhatsApp LID.
+    - **Root cause:** `getSenderJid` applied a `length > 14` heuristic to detect LID identifiers, but 14-digit LIDs (e.g. `14392720638086`) failed the check and were incorrectly treated as phone numbers, producing a phantom JID (`14392720638086@s.whatsapp.net`). `.claim` wrote the rewarded balance to the phantom record while subsequent gambling commands resolved the canonical phone-number JID (starterpack 10,000) — triggering a false insufficient-balance error.
+    - Corrected LID detection heuristic from `length > 14` to `length >= 13` in `getSenderJid`, `buildUserOrConditions`, and `getUser`.
+    - Added `pnToLidMap` alongside the existing `lidToPnMap` for bidirectional LID ↔ phone-number resolution; both maps are populated on every message that carries `participantAlt`.
+    - `buildUserOrConditions` now emits all identifier variants (canonical JID, bare digits, full LID, `@lid`-suffixed LID, and mapped phone number from both directions) so any incoming format unambiguously hits the single canonical database record.
+    - `getSenderJid` returns the cached canonical JID even on subsequent messages where `participantAlt` is absent (cache-fallback path).
+    - `getUser` resolves `targetId`/`targetLid` from in-memory maps before falling back to raw input, preventing phantom user creation.
+    - `getChatLanguage` (`src/utils/i18n.ts`) updated to use `buildUserOrConditions` for LID-safe language preference lookup.
+    - All user `findFirst` calls in `src/services/jobs.ts` migrated to `buildUserOrConditions`; type-safe `getUser` fallback on join-job path.
+    - `src/services/shopService.ts` migrated from raw `findFirst` to `getUser`.
+    - `src/tools/balance.ts` and `src/tools/transfer.ts` use `cleanId()` comparison to prevent false self-check/self-transfer denials when sender and target share digits but differ in domain suffix.
+    - `src/tools/property_buy.ts`, `property_inventory.ts`, `property_sell.ts`, `roulette_bet.ts`, `roulette_joingame.ts` all migrated to `buildUserOrConditions`.
+    - Added end-to-end regression test `tests/claim_and_gamble_lifecycle.test.ts` covering the full `.claim` → `.slot 20k` lifecycle across LID, canonical JID, and bare-digit identifier variants with phantom-user and balance-preservation assertions.
+
+---
+
 ## [RF-2609-13] - 2026-09-23
 
 ### Added
@@ -479,7 +500,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-13...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-14...HEAD
+[RF-2609-14]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-13...RF-2609-14
 [RF-2609-13]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-12...RF-2609-13
 [RF-2609-12]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-11...RF-2609-12
 [RF-2609-11]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-10...RF-2609-11
