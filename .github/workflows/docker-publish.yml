@@ -21,6 +21,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Checkout api worktree
+        uses: actions/checkout@v4
+        with:
+          ref: api
+          path: .worktrees/api
+
+      - name: Checkout website worktree
+        uses: actions/checkout@v4
+        with:
+          ref: website
+          path: .worktrees/website
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
