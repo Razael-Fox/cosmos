@@ -9,6 +9,10 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+---
+
+## [RF-2609-12] - 2026-09-23
+
 ### Added
 
 - **Canonical Space-Separated Multi-Word Commands & Localized Parent Titles (#26):**
