@@ -195,7 +195,7 @@ export function Navbar() {
                             <div className="flex items-center gap-2">
                                 <Link
                                     href="/dashboard"
-                                    className="px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-all flex items-center gap-2 border border-border"
+                                    className="relative z-10 px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-all flex items-center gap-2 border border-border cursor-pointer select-none pointer-events-auto"
                                 >
                                     <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0 flex items-center justify-center">
                                         {avatarUrl && !avatarError ? (
@@ -226,7 +226,7 @@ export function Navbar() {
                                 <button
                                     type="button"
                                     onClick={handleLogout}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                                    className="relative z-10 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer select-none pointer-events-auto"
                                 >
                                     <SignOut className="w-4 h-4" />
                                     <span>{t.nav.logout}</span>
@@ -255,7 +255,7 @@ export function Navbar() {
                         {isAuthenticated ? (
                             <Link
                                 href="/dashboard"
-                                className="p-1 rounded-xl bg-secondary/80 border border-border flex items-center justify-center transition-colors"
+                                className="relative z-10 p-1 rounded-xl bg-secondary/80 border border-border flex items-center justify-center transition-colors cursor-pointer select-none pointer-events-auto"
                                 aria-label={t.nav.dashboard}
                             >
                                 <div className="w-7 h-7 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0 flex items-center justify-center">
