@@ -245,6 +245,13 @@ async function runTests() {
         personaPrompt.includes('STRICTLY FORBIDDEN from typing manual XML'),
         'Must enforce anti-XML function calling'
     );
+    assert(
+        personaPrompt.includes('<cosmos_commands_knowledge>'),
+        'Persona prompt must include cosmos_commands_knowledge tag'
+    );
+    assert(personaPrompt.includes('.brat'), 'Commands knowledge base must contain .brat documentation');
+    assert(personaPrompt.includes('.contact'), 'Commands knowledge base must contain .contact documentation');
+    assert(personaPrompt.includes('.bank'), 'Commands knowledge base must contain .bank documentation');
     console.log('  ✔ Untrusted context framing and prompt generation passed.');
 
     // =========================================================================

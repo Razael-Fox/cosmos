@@ -20,6 +20,7 @@ RUN pnpm config set package-import-method copy && \
 COPY src ./src
 COPY scripts ./scripts
 COPY assets ./assets
+COPY docs ./docs
 RUN pnpm build
 
 # -------------------------------------------------------------
@@ -104,7 +105,8 @@ COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/package.json ./bot/pack
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/node_modules ./bot/node_modules
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/prisma ./bot/prisma
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/assets ./bot/assets
-
+COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/docs ./bot/docs
+COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/docs ./docs
 # Package API Gateway
 COPY --from=builder-api --chown=cosmos:cosmos /build/api/dist ./api/dist
 COPY --from=builder-api --chown=cosmos:cosmos /build/api/package.json ./api/package.json
