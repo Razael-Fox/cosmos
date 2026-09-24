@@ -2,7 +2,7 @@
 
 import React, { useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { Check, WhatsappLogo, Sparkle, Lightning, ShieldCheck } from '@phosphor-icons/react';
+import { Check, WhatsappLogo } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import type { SubscriptionTier } from '@/lib/types';
 import { Container } from '@/components/ui/container';
@@ -74,7 +74,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
             desc: t.pricing.free.desc,
             features: t.pricing.free.features,
             isPopular: false,
-            icon: <Sparkle className="w-5 h-5 text-primary" />,
             ctaText: freeCtaText,
             action: onSelectFree ? onSelectFree : undefined,
             href: onSelectFree ? undefined : freeHref
@@ -86,7 +85,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
             desc: t.pricing.subsidized.desc,
             features: t.pricing.subsidized.features,
             isPopular: true,
-            icon: <Lightning className="w-5 h-5 text-amber-500" weight="fill" />,
             ctaText: t.pricing.subsidized.cta,
             action: () => handleSubscribe('Nova Plan (Subsidized)', t.pricing.subsidized.price)
         },
@@ -97,7 +95,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
             desc: t.pricing.partner.desc,
             features: t.pricing.partner.features,
             isPopular: false,
-            icon: <ShieldCheck className="w-5 h-5 text-indigo-500" weight="fill" />,
             ctaText: t.pricing.partner.cta,
             action: () => handleSubscribe('Zenith Plan (Partner)', t.pricing.partner.price)
         }
@@ -151,10 +148,6 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
                             )}
 
                             <div className="space-y-6">
-                                <div>
-                                    <div className="w-fit p-2.5 rounded-2xl bg-muted border border-border">{plan.icon}</div>
-                                </div>
-
                                 <div>
                                     <h3 className="text-2xl font-bold text-foreground font-heading">{plan.name}</h3>
                                     <p className="text-xs text-muted-foreground mt-1 min-h-[36px] leading-relaxed">
