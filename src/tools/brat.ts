@@ -4,6 +4,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { sendStickerFromBuffer } from './sticker_maker.js';
 import { cleanId } from '#utils/casino.js';
 import { unwrapMonospace } from '#utils/monospace.js';
+
 const BRAT_BASE_URL = 'https://api.siputzx.my.id/api/m/brat';
 const DEFAULT_DELAY = 500;
 const MIN_DELAY = 50;
@@ -16,7 +17,7 @@ export const definition: ToolDefinition = {
     category: 'Media & Stickers',
     aliases: ['.brat', '.bratanimasi', '.bratanimated', 'brat animasi', 'brat animated'],
     description:
-        'Generates a Brat-style text sticker or animated sticker with customizable delay. Use quotes or --static to keep text starting with "animasi"/"animated" non-animated.',
+        'Create Brat text stickers or animated stickers with customizable delay. Usage: .brat <text> or .brat animated <text> [-d <ms>]. Example: .brat Hello World, .brat animated -d 300 Hello, or .brat "animasi keren" for literal static text.',
     descriptionKey: 'tools.commands.brat.description',
     parameters: {
         type: 'object',
@@ -47,7 +48,8 @@ export interface ParsedBratInput {
 
 /**
  * Parses user input text or quoted text and detects whether animated mode is requested,
- * extracts optional delay, and handles intentional literal static overrides (e.g. quotes or --static).
+ * extracts optional delay (supporting dash parameters -d <ms>, -d<ms>, --delay <ms>, -<digits>ms),
+ * and handles intentional literal static overrides (e.g. quotes, monospace, or -s / --static).
  */
 export function parseBratInput(rawText: string, defaultAnimated = false): ParsedBratInput {
     let text = rawText.trim();
@@ -55,45 +57,57 @@ export function parseBratInput(rawText: string, defaultAnimated = false): Parsed
     let delay = DEFAULT_DELAY;
     let forceStatic = false;
 
-    // Check for explicit static flags (e.g., --static, -s, --no-anim)
-    if (/(?:^|\s+)--(?:static|no-anim)(?:\s+|$)/i.test(text)) {
+    // Check for explicit static flags (e.g., -s, --static, --no-anim)
+    if (/(?:^|\s+)-(?:s|static)(?:\s+|$)/i.test(text)) {
+        forceStatic = true;
+        text = text.replace(/(?:^|\s+)-(?:s|static)(?:\s+|$)/i, ' ').trim();
+    } else if (/(?:^|\s+)--(?:static|no-anim)(?:\s+|$)/i.test(text)) {
         forceStatic = true;
         text = text.replace(/(?:^|\s+)--(?:static|no-anim)(?:\s+|$)/i, ' ').trim();
-    } else if (/(?:^|\s+)-s(?:\s+|$)/i.test(text)) {
-        forceStatic = true;
-        text = text.replace(/(?:^|\s+)-s(?:\s+|$)/i, ' ').trim();
     }
 
-    // Check for WhatsApp monospace or quoted literal string (e.g. .brat ```animasi keren``` or .brat `animasi keren`)
-    // If the text is wrapped in monospace backticks or quotes, it signifies the user intended the literal text.
+    // Check for WhatsApp monospace or quoted literal string (e.g. .brat ```animasi keren``` or .brat "animasi keren")
     const unwrapped = unwrapMonospace(text);
     if (unwrapped.wasWrapped) {
         text = unwrapped.text;
         forceStatic = true;
     }
 
-    // Extract delay parameter: --delay=500, --delay 500, -d 500, -d=500, or delay:500
-    const delayFlagRegex = /(?:^|\s+)(?:--(?:delay|d)|-d)(?:=|\s+)(\d+)(?:\s+|$)/i;
-    const delayFlagMatch = text.match(delayFlagRegex);
-    if (delayFlagMatch) {
-        const parsedDelay = parseInt(delayFlagMatch[1], 10);
+    // Extract delay parameter:
+    // 1. Dash format with flag: -d <ms>, -d=<ms>, -d<ms>, --delay <ms>, --delay=<ms>
+    const dashFlagRegex = /(?:^|\s+)(?:--(?:delay|d)|-d)(?:=|\s*)(\d+)(?:\s+|$)/i;
+    const dashFlagMatch = text.match(dashFlagRegex);
+    if (dashFlagMatch) {
+        const parsedDelay = parseInt(dashFlagMatch[1], 10);
         if (!Number.isNaN(parsedDelay)) {
             delay = Math.min(Math.max(parsedDelay, MIN_DELAY), MAX_DELAY);
         }
-        text = text.replace(delayFlagRegex, ' ').trim();
+        text = text.replace(dashFlagRegex, ' ').trim();
     } else {
-        const colonDelayRegex = /(?:^|\s+)delay:(\d+)(?:\s+|$)/i;
-        const colonMatch = text.match(colonDelayRegex);
-        if (colonMatch) {
-            const parsedDelay = parseInt(colonMatch[1], 10);
+        // 2. Dash format with unit suffix: -<ms>ms or -<ms> (e.g. -300ms or -300) when animated
+        const dashUnitRegex = /(?:^|\s+)-(\d{2,4})(?:ms)?(?:\s+|$)/i;
+        const dashUnitMatch = text.match(dashUnitRegex);
+        if (dashUnitMatch) {
+            const parsedDelay = parseInt(dashUnitMatch[1], 10);
             if (!Number.isNaN(parsedDelay)) {
                 delay = Math.min(Math.max(parsedDelay, MIN_DELAY), MAX_DELAY);
             }
-            text = text.replace(colonDelayRegex, ' ').trim();
+            text = text.replace(dashUnitRegex, ' ').trim();
+        } else {
+            // 3. Alternative colon syntax: delay:<ms>
+            const colonDelayRegex = /(?:^|\s+)delay:(\d+)(?:\s+|$)/i;
+            const colonMatch = text.match(colonDelayRegex);
+            if (colonMatch) {
+                const parsedDelay = parseInt(colonMatch[1], 10);
+                if (!Number.isNaN(parsedDelay)) {
+                    delay = Math.min(Math.max(parsedDelay, MIN_DELAY), MAX_DELAY);
+                }
+                text = text.replace(colonDelayRegex, ' ').trim();
+            }
         }
     }
 
-    // Check for trailing animated flags (--animated, --animasi, -a, -anim)
+    // Check for animated flags (--animated, --animasi, -a, -anim)
     if (!forceStatic) {
         if (/(?:^|\s+)--(?:animated|animasi)(?:\s+|$)/i.test(text)) {
             isAnimated = true;
@@ -104,11 +118,6 @@ export function parseBratInput(rawText: string, defaultAnimated = false): Parsed
         }
 
         // Check for animated prefix e.g. "animasi <delay?> <text>" or "animated <delay?> <text>"
-        // Supports:
-        //   "animasi 300 halo dunia"
-        //   "animated 300 hello world"
-        //   "animasi halo dunia"
-        //   "animated hello world"
         const animatedPrefixWithDelayRegex = /^(?:animasi|animated)\s+(\d{2,4})\s+(.+)$/i;
         const prefixDelayMatch = text.match(animatedPrefixWithDelayRegex);
         if (prefixDelayMatch) {
@@ -235,11 +244,6 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
 
     if (!input) {
         // Try extracting text from the command message body
-        // Examples:
-        // ".brat hello world"
-        // ".brat animasi hello world"
-        // ".brat "animasi keren""
-        // ".bratanimasi hello world"
         if (rawMsgText) {
             const parts = rawMsgText.split(/\s+/);
             if (twoWordTrigger === 'brat animasi' || twoWordTrigger === 'brat animated') {
@@ -250,7 +254,14 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         }
 
         // If still empty or user only gave flags (e.g. .brat animasi without text), check if quoting a text message
-        if (!input || input === 'animasi' || input === 'animated' || input === '--animated' || input === '--animasi') {
+        if (
+            !input ||
+            input === 'animasi' ||
+            input === 'animated' ||
+            input === '--animated' ||
+            input === '--animasi' ||
+            input === '-a'
+        ) {
             const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
             if (quotedMsg) {
                 const quotedText = quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || '';
@@ -261,7 +272,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         }
     }
 
-    // Parse input for flags, delay, and disambiguation
+    // Parse input for flags, dash delay, and disambiguation
     const parsed = parseBratInput(input, commandIsAnimated);
     input = parsed.text;
     if (parsed.isAnimated) {
@@ -274,7 +285,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         delay = parsed.delay;
     }
 
-    // If input became empty after stripping prefix/flag (e.g. user typed ".brat animasi --delay 300" replying to a message)
+    // If input became empty after stripping prefix/flag (e.g. user typed ".brat animated -d 300" replying to a message)
     if (!input) {
         const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (quotedMsg) {
@@ -285,6 +296,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         }
     }
 
+    // If still no text provided, return comprehensive tutorial guide
     if (!input) {
         return ctx.t('media.brat.usage');
     }

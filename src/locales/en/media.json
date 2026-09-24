@@ -37,7 +37,7 @@
         "queue_full": "Sticker processing queue is full. Please try again in a few moments."
     },
     "brat": {
-        "usage": "Please provide text to create a Brat sticker. Example: *.brat Hello World*, *.brat animated Hello World*, or *.brat \"animasi keren\"* for literal text.",
+        "usage": "🎨 *Brat Sticker Generator*\n\nGenerate Brat text stickers or animated stickers directly on WhatsApp.\n\n*Command Formats:*\n• *.brat <text>* — Static Brat sticker\n• *.brat animated <text>* — Animated Brat sticker\n• *.brat animated -d <ms> <text>* — Animated sticker with custom delay\n• *.brat \"animasi keren\"* — Literal static text (or use ```monospace```)\n\n*Dash Delay Options:*\n• `-d 300` or `-d=300` (50–5000 ms, default 500 ms)\n• `-300ms` or `-300`\n• `--delay 300`\n\n*Examples:*\n• *.brat Hello World*\n• *.brat animated -d 250 Hello World*\n• *.brat animated 300 Hello World*\n• *.brat \"animasi keren\"* (forces static)\n\n_Tip: You can also reply to any message with `.brat` or `.brat animated -d 300`._",
         "failed": "Failed to create Brat sticker: {{error}}"
     },
     "telegramdl": {

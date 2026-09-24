@@ -803,7 +803,7 @@
             "description": "Cosmos Central Bank system for secure savings, transfers, and balance inquiries."
         },
         "brat": {
-            "description": "Generates a Brat-style text sticker or animated sticker with customizable delay."
+            "description": "Create Brat text stickers or animated stickers with customizable delay. Usage: .brat <text> or .brat animated <text> [-d <ms>]. Example: .brat Hello World, .brat animated -d 300 Hello, or .brat \"animasi keren\" for literal static text."
         },
         "cancel": {
             "description": "Cancel an active multi-step operation, interactive prompt, or pending confirmation in the current chat."

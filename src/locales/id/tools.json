@@ -803,7 +803,7 @@
             "description": "Sistem Cosmos Central Bank untuk tabungan aman, transfer, dan pengecekan saldo."
         },
         "brat": {
-            "description": "Membuat stiker teks atau stiker animasi bergaya Brat dengan jeda animasi yang dapat disesuaikan."
+            "description": "Membuat stiker teks atau stiker animasi bergaya Brat dengan jeda animasi yang dapat disesuaikan. Penggunaan: .brat <teks> atau .brat animasi <teks> [-d <ms>]. Contoh: .brat Halo Dunia, .brat animasi -d 300 Halo, atau .brat \"animasi keren\" untuk teks statis harfiah."
         },
         "cancel": {
             "description": "Membatalkan proses multi-langkah yang aktif, prompt interaktif, atau konfirmasi tertunda di obrolan saat ini."

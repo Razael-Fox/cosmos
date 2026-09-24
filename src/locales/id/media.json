@@ -37,7 +37,7 @@
         "queue_full": "Antrean pemrosesan stiker sedang penuh. Silakan coba lagi dalam beberapa saat."
     },
     "brat": {
-        "usage": "Silakan masukkan teks untuk membuat stiker Brat. Contoh: *.brat Hello World*, *.brat animasi Hello World*, atau *.brat \"animasi keren\"* untuk teks harfiah.",
+        "usage": "🎨 *Pembuat Stiker Brat*\n\nBuat stiker teks atau stiker animasi bergaya Brat langsung di WhatsApp.\n\n*Format Perintah:*\n• *.brat <teks>* — Stiker Brat statis\n• *.brat animasi <teks>* — Stiker Brat animasi\n• *.brat animasi -d <ms> <teks>* — Stiker animasi dengan jeda khusus\n• *.brat \"animasi keren\"* — Teks harfiah statis (atau gunakan ```monospace```)\n\n*Opsi Jeda Dash (-):*\n• `-d 300` atau `-d=300` (rentang 50–5000 md, default 500 md)\n• `-300ms` atau `-300`\n• `--delay 300`\n\n*Contoh Penggunaan:*\n• *.brat Halo Dunia*\n• *.brat animasi -d 250 Halo Dunia*\n• *.brat animasi 300 Halo Dunia*\n• *.brat \"animasi keren\"* (memaksa statis)\n\n_Tips: Anda juga dapat membalas pesan apa saja dengan `.brat` atau `.brat animasi -d 300`._",
         "failed": "Gagal membuat stiker Brat: {{error}}"
     },
     "telegramdl": {

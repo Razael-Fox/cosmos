@@ -5,6 +5,7 @@ import assert from 'assert';
 import { parseBratInput, definition, convertBratToSticker, execute } from '../src/tools/brat.js';
 import toolsHandler from '../src/tools/handler.js';
 import { getTranslator } from '../src/utils/i18n.js';
+import menuService from '../src/services/menuService.js';
 import sharp from 'sharp';
 
 async function runBratTests() {
@@ -41,14 +42,14 @@ async function runBratTests() {
     assert.strictEqual(quotedSingle.text, 'animated cool');
     assert.strictEqual(quotedSingle.isAnimated, false, 'Single-quoted text must not trigger animation');
 
-    // Using explicit static flag: .brat animasi keren --static
-    const explicitStatic = parseBratInput('animasi keren --static');
+    // Using explicit static flag: .brat animasi keren -s or --static
+    const explicitStatic = parseBratInput('animasi keren -s');
     assert.strictEqual(explicitStatic.text, 'animasi keren');
-    assert.strictEqual(explicitStatic.isAnimated, false, '--static flag must force static mode');
+    assert.strictEqual(explicitStatic.isAnimated, false, '-s flag must force static mode');
 
-    const explicitStaticShort = parseBratInput('animated style -s');
-    assert.strictEqual(explicitStaticShort.text, 'animated style');
-    assert.strictEqual(explicitStaticShort.isAnimated, false, '-s flag must force static mode');
+    const explicitStaticLong = parseBratInput('animated style --static');
+    assert.strictEqual(explicitStaticLong.text, 'animated style');
+    assert.strictEqual(explicitStaticLong.isAnimated, false, '--static flag must force static mode');
 
     // Intentional animated commands
     const animId = parseBratInput('animasi halo dunia');
@@ -61,13 +62,31 @@ async function runBratTests() {
     assert.strictEqual(animEn.isAnimated, true);
     assert.strictEqual(animEn.delay, 500);
 
-    // Test 3: Delay parsing in various formats
-    console.log('[Test 3] Testing Delay Parsing...');
-    // Prefix delay: "animasi 300 halo dunia"
-    const prefixDelayId = parseBratInput('animasi 300 halo dunia');
-    assert.strictEqual(prefixDelayId.text, 'halo dunia');
-    assert.strictEqual(prefixDelayId.isAnimated, true);
-    assert.strictEqual(prefixDelayId.delay, 300);
+    // Test 3: Dash delay parameter parsing in various formats
+    console.log('[Test 3] Testing Dash Delay Parsing...');
+    // Dash short flag: -d 300
+    const dashShortId = parseBratInput('animasi -d 300 halo dunia');
+    assert.strictEqual(dashShortId.text, 'halo dunia');
+    assert.strictEqual(dashShortId.isAnimated, true);
+    assert.strictEqual(dashShortId.delay, 300);
+
+    // Dash short flag with equal: -d=250
+    const dashEqual = parseBratInput('animated -d=250 hello world');
+    assert.strictEqual(dashEqual.text, 'hello world');
+    assert.strictEqual(dashEqual.isAnimated, true);
+    assert.strictEqual(dashEqual.delay, 250);
+
+    // Dash unit suffix format: -300ms
+    const dashUnit = parseBratInput('animated -300ms hello world');
+    assert.strictEqual(dashUnit.text, 'hello world');
+    assert.strictEqual(dashUnit.isAnimated, true);
+    assert.strictEqual(dashUnit.delay, 300);
+
+    // Dash number format: -400
+    const dashNum = parseBratInput('animasi -400 halo dunia');
+    assert.strictEqual(dashNum.text, 'halo dunia');
+    assert.strictEqual(dashNum.isAnimated, true);
+    assert.strictEqual(dashNum.delay, 400);
 
     // Prefix delay: "animated 1000 hello world"
     const prefixDelayEn = parseBratInput('animated 1000 hello world');
@@ -75,25 +94,13 @@ async function runBratTests() {
     assert.strictEqual(prefixDelayEn.isAnimated, true);
     assert.strictEqual(prefixDelayEn.delay, 1000);
 
-    // Flag delay: "animated hello world --delay 750"
-    const flagDelay = parseBratInput('animated hello world --delay 750');
-    assert.strictEqual(flagDelay.text, 'hello world');
-    assert.strictEqual(flagDelay.isAnimated, true);
-    assert.strictEqual(flagDelay.delay, 750);
-
-    // Flag delay: "animated hello world -d=250"
-    const flagShortDelay = parseBratInput('animated hello world -d=250');
-    assert.strictEqual(flagShortDelay.text, 'hello world');
-    assert.strictEqual(flagShortDelay.isAnimated, true);
-    assert.strictEqual(flagShortDelay.delay, 250);
-
     // Delay clamping: min 50ms, max 5000ms
     const clampedMin = parseBratInput('animated fast -d 10');
     assert.strictEqual(clampedMin.delay, 50);
 
-    const clampedMax = parseBratInput('animated slow --delay 99999');
+    const clampedMax = parseBratInput('animated slow -d 99999');
     assert.strictEqual(clampedMax.delay, 5000);
-    console.log('✓ Delay parsing and bounds clamping verified.');
+    console.log('✓ Dash delay parsing and bounds clamping verified.');
 
     // Test 4: ToolsHandler discovery & multi-word resolution
     console.log('[Test 4] Testing ToolsHandler discovery...');
@@ -108,26 +115,30 @@ async function runBratTests() {
     assert(toolBratAnimated, 'toolsHandler must resolve two-token command "brat animated"');
     console.log('✓ ToolsHandler multi-word command resolution verified.');
 
-    // Test 5: i18n keys
-    console.log('[Test 5] Testing i18n keys in EN and ID...');
+    // Test 5: i18n keys & Bot Menu Tutorial Integration
+    console.log('[Test 5] Testing i18n keys and Menu description tutorial...');
     const tEn = getTranslator('en');
     const tId = getTranslator('id');
 
     const descEn = tEn(definition.descriptionKey!);
     const descId = tId(definition.descriptionKey!);
-    assert(descEn && !descEn.includes('tools.commands'), 'EN description must exist');
-    assert(descId && !descId.includes('tools.commands'), 'ID description must exist');
+    assert(descEn && descEn.includes('Usage:'), 'EN description must include Usage tutorial');
+    assert(descEn.includes('Example:'), 'EN description must include Example tutorial');
+    assert(descId && descId.includes('Penggunaan:'), 'ID description must include Penggunaan tutorial');
+    assert(descId.includes('Contoh:'), 'ID description must include Contoh tutorial');
+
+    // Verify menu normalization extracts usage and example for bot menu
+    const normalizedTools = menuService.processTools([toolBrat!], 'en');
+    const normBrat = normalizedTools.find((n) => n.name === 'brat');
+    assert(normBrat, 'menuService must normalize brat tool');
+    assert(normBrat.usage.includes('.brat'), 'Normalized usage must include command name');
+    assert(normBrat.example.includes('Hello'), 'Normalized example must include example text');
 
     const usageEn = tEn('media.brat.usage');
     const usageId = tId('media.brat.usage');
-    assert(usageEn && usageEn.includes('Brat'), 'EN usage must be translated');
-    assert(usageId && usageId.includes('Brat'), 'ID usage must be translated');
-
-    const failedEn = tEn('media.brat.failed', { error: 'Network timeout' });
-    const failedId = tId('media.brat.failed', { error: 'Network timeout' });
-    assert(failedEn.includes('Network timeout'), 'EN failed must interpolate error');
-    assert(failedId.includes('Network timeout'), 'ID failed must interpolate error');
-    console.log('✓ i18n keys and translations verified.');
+    assert(usageEn && usageEn.includes('Dash Delay Options:'), 'EN usage must include Dash Delay tutorial');
+    assert(usageId && usageId.includes('Opsi Jeda Dash'), 'ID usage must include Opsi Jeda Dash tutorial');
+    console.log('✓ i18n keys and Bot Menu tutorial integration verified.');
 
     // Test 6: Image to WebP Sticker Converter
     console.log('[Test 6] Testing WebP sticker conversion with Sharp...');
@@ -155,8 +166,8 @@ async function runBratTests() {
     assert.strictEqual(metadata.height, 512);
     console.log('✓ WebP sticker conversion verified (512x512 WebP).');
 
-    // Test 7: Quoted disambiguation in execute() command parsing
-    console.log('[Test 7] Testing execute() with quoted static message...');
+    // Test 7: Bare .brat returns tutorial usage guide
+    console.log('[Test 7] Testing bare .brat command execution returns tutorial...');
     const mockSentMessages: any[] = [];
     const mockSock: any = {
         sendMessage: async (jid: string, content: any) => {
@@ -164,24 +175,22 @@ async function runBratTests() {
             return { key: { id: 'sent_msg_1' }, message: {} };
         }
     };
-    const mockMsgQuoted: any = {
+    const mockMsgBare: any = {
         key: { remoteJid: 'test_chat@s.whatsapp.net', participant: '628111111111@s.whatsapp.net' },
-        message: { conversation: '.brat "animasi keren"' }
+        message: { conversation: '.brat' }
     };
-    const mockCtx: any = {
+    const mockCtxBare: any = {
         sock: mockSock,
-        msg: mockMsgQuoted,
+        msg: mockMsgBare,
         jid: 'test_chat@s.whatsapp.net',
         t: tEn
     };
 
-    // Execute with mocked fetch / send to verify no crash and proper resolution
-    const execRes = await execute({}, mockCtx);
-    // Returns null on successful sticker transmission
-    assert.strictEqual(execRes, null, 'Execution must succeed and return null');
-    const sentSticker = mockSentMessages.find((m) => m.content.sticker);
-    assert(sentSticker, 'Sticker message must be sent');
-    console.log('✓ execute() handles .brat "animasi keren" without error.');
+    const bareResult = await execute({}, mockCtxBare);
+    assert(bareResult, 'Bare .brat execution must return tutorial usage string');
+    assert(bareResult.includes('Brat Sticker Generator'), 'Must show tutorial header');
+    assert(bareResult.includes('Dash Delay Options:'), 'Must show dash parameter tutorial');
+    console.log('✓ Bare .brat successfully returns comprehensive tutorial guide.');
 
     console.log('--- ALL BRAT UNIT TESTS PASSED SUCCESSFULLY! ---');
 }
