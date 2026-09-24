@@ -195,6 +195,7 @@ export function Navbar() {
                             <div className="flex items-center gap-2">
                                 <Link
                                     href="/dashboard"
+                                    onClick={() => router.push('/dashboard')}
                                     className="relative z-10 px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-all flex items-center gap-2 border border-border cursor-pointer select-none pointer-events-auto"
                                 >
                                     <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0 flex items-center justify-center">
@@ -255,6 +256,7 @@ export function Navbar() {
                         {isAuthenticated ? (
                             <Link
                                 href="/dashboard"
+                                onClick={() => router.push('/dashboard')}
                                 className="relative z-10 p-1 rounded-xl bg-secondary/80 border border-border flex items-center justify-center transition-colors cursor-pointer select-none pointer-events-auto"
                                 aria-label={t.nav.dashboard}
                             >

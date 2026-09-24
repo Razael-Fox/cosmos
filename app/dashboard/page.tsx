@@ -233,11 +233,32 @@ export default function DashboardPage() {
             const storedUser = getStoredUser();
             if (storedUser && isMounted) {
                 setUserProfile(storedUser);
+                setIsLoading(false);
             }
+
+            const withTimeout = <T,>(p: Promise<T>, fallback: T, ms = 4000): Promise<T> => {
+                return Promise.race([
+                    p,
+                    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+                ]);
+            };
 
             try {
                 const [subData, botsData, groupsData, profileRes, participatingData] = await Promise.all([
-                    getSubscriptionStatus().catch(() => ({
+                    withTimeout(
+                        getSubscriptionStatus(),
+                        {
+                            tier: 'FREE' as const,
+                            status: 'ACTIVE' as const,
+                            maxSubBots: 2,
+                            maxGroups: 5,
+                            customPrefix: false,
+                            startedAt: new Date().toISOString(),
+                            expiresAt: null,
+                            currentSubBots: 0,
+                            currentGroups: 0
+                        }
+                    ).catch(() => ({
                         tier: 'FREE' as const,
                         status: 'ACTIVE' as const,
                         maxSubBots: 2,
@@ -248,10 +269,19 @@ export default function DashboardPage() {
                         currentSubBots: 0,
                         currentGroups: 0
                     })),
-                    listSubBots().catch(() => []),
-                    listGroups().catch(() => []),
-                    getUserProfile().catch(() => null),
-                    listParticipatingGroups().catch(() => null)
+                    withTimeout(listSubBots(), []).catch(() => []),
+                    withTimeout(listGroups(), []).catch(() => []),
+                    withTimeout(getUserProfile(), { user: storedUser || ({
+                        id: 'user@s.whatsapp.net',
+                        username: 'Member',
+                        email: null,
+                        isWhitelisted: true,
+                        language: 'ID',
+                        balance: 0,
+                        creditScore: 500,
+                        createdAt: new Date().toISOString()
+                    } as UserProfile) }).catch(() => null),
+                    withTimeout(listParticipatingGroups(), { groups: [], quota: { current: 0, max: 5, available: 5, tier: 'FREE', isLimitReached: false } }).catch(() => null)
                 ]);
 
                 if (isMounted) {

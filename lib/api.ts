@@ -65,6 +65,7 @@ export function getStoredToken(): string | null {
 export function setStoredToken(token: string): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    window.dispatchEvent(new Event('storage'));
 }
 
 /**
@@ -87,6 +88,7 @@ export function getStoredUser(): import('./types').UserProfile | null {
 export function setStoredUser(user: import('./types').UserProfile): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event('storage'));
 }
 
 /**
@@ -96,6 +98,7 @@ export function clearStoredToken(): void {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
+    window.dispatchEvent(new Event('storage'));
 }
 
 /**
