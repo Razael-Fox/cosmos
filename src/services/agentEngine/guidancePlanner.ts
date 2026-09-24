@@ -133,12 +133,11 @@ export class AgentGuidancePlanner {
             }
 
             // 3. Keep extractedParameters.recipientToken synchronized with verified token
-            if (brief.extractedParameters?.recipientToken) {
-                if (brief.target?.recipientToken) {
-                    brief.extractedParameters.recipientToken = brief.target.recipientToken;
-                } else {
-                    delete brief.extractedParameters.recipientToken;
-                }
+            if (brief.target?.recipientToken) {
+                brief.extractedParameters = brief.extractedParameters || {};
+                brief.extractedParameters.recipientToken = brief.target.recipientToken;
+            } else if (brief.extractedParameters?.recipientToken) {
+                delete brief.extractedParameters.recipientToken;
             }
 
             // 3b. Self-healing message parameter extractor for forwarded quoted messages

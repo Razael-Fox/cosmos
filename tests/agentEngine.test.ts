@@ -8,7 +8,7 @@ import { AgentConfirmationManager } from '../src/services/agentEngine/confirmati
 import { AgentLocationStager } from '../src/services/agentEngine/locationStager.js';
 import { AgentRateLimiter } from '../src/services/agentEngine/rateLimiter.js';
 import { AgentGroqClient } from '../src/services/agentEngine/groqClient.js';
-import { AgentEntityResolver } from '../src/services/agentEngine/entityResolver.js';
+import { AgentEntityResolver, cleanTargetQuery, scoreTargetMatch } from '../src/services/agentEngine/entityResolver.js';
 import { buildSaraGuidancePrompt } from '../src/services/agentEngine/prompts/saraGuidance.js';
 import { buildSaraPersonaPrompt } from '../src/services/agentEngine/prompts/saraPersona.js';
 import { maskPhoneNumber, cleanPhoneNumber, toCanonicalJid } from '../src/utils/phone.js';
@@ -637,9 +637,54 @@ async function runTests() {
                 id: '120363002@g.us',
                 subject: 'Secret Admins',
                 participants: [{ id: '628999999999@s.whatsapp.net', admin: 'admin' }]
+            },
+            '120363400831325507@g.us': {
+                id: '120363400831325507@g.us',
+                subject: 'Party ML(MaLas)',
+                participants: [{ id: userA, admin: null }]
             }
         })
     };
+
+    // Fuzzy matching score & prefix cleaning verification
+    assert.strictEqual(cleanTargetQuery('ke group Party ML (MaLas)'), 'Party ML (MaLas)');
+    assert.strictEqual(cleanTargetQuery('grup Party ML (MaLas)'), 'Party ML (MaLas)');
+    assert.strictEqual(cleanTargetQuery('"Party ML (MaLas)"'), 'Party ML (MaLas)');
+    assert(scoreTargetMatch('Party ML (MaLas)', 'Party ML(MaLas)') >= 90, 'Spaced parentheses must score >= 90');
+    assert(
+        scoreTargetMatch('Party\u202fML (MaLas)', 'Party ML(MaLas)') >= 90,
+        'Narrow no-break space must score >= 90'
+    );
+    assert(scoreTargetMatch('Party ML', 'Party ML(MaLas)') >= 75, 'Prefix must score >= 75');
+
+    // Party ML (MaLas) with space / narrow no-break space / prefix must resolve to Party ML(MaLas)
+    const partyTarget1 = await AgentEntityResolver.resolveRecipientToken(
+        'Party ML (MaLas)',
+        userA,
+        groupMockSock as unknown as WASocket,
+        false
+    );
+    assert(partyTarget1 !== null, 'Party ML (MaLas) with space before parenthesis must resolve');
+    assert.strictEqual(partyTarget1.resolvedJid, '120363400831325507@g.us');
+    assert.strictEqual(partyTarget1.aliasMatch, 'Party ML(MaLas)');
+
+    const partyTarget2 = await AgentEntityResolver.resolveRecipientToken(
+        'Party\u202fML (MaLas)',
+        userA,
+        groupMockSock as unknown as WASocket,
+        false
+    );
+    assert(partyTarget2 !== null, 'Party\\u202fML (MaLas) with narrow no-break space must resolve');
+    assert.strictEqual(partyTarget2.resolvedJid, '120363400831325507@g.us');
+
+    const partyTarget3 = await AgentEntityResolver.resolveRecipientToken(
+        'ke group Party ML (MaLas)',
+        userA,
+        groupMockSock as unknown as WASocket,
+        false
+    );
+    assert(partyTarget3 !== null, 'ke group Party ML (MaLas) must resolve');
+    assert.strictEqual(partyTarget3.resolvedJid, '120363400831325507@g.us');
 
     // Member userA should resolve 'Dev Team'
     const devTarget = await AgentEntityResolver.resolveRecipientToken(
@@ -696,6 +741,11 @@ async function runTests() {
             '120363001@g.us': {
                 id: '120363001@g.us',
                 subject: 'Dev Team',
+                participants: [{ id: userA, admin: null }]
+            },
+            '120363400831325507@g.us': {
+                id: '120363400831325507@g.us',
+                subject: 'Party ML(MaLas)',
                 participants: [{ id: userA, admin: null }]
             }
         })
@@ -756,6 +806,41 @@ async function runTests() {
     );
     console.log('  ✔ End-to-end quoted message group forwarding succeeded! Dispatched text:\n', quotedDispatch.text);
     console.log('  ✔ Sara reply to caller:\n', quotedForwardResponse);
+    // =========================================================================
+    // 15. Real-World User Scenario: Spaced group name with parentheses
+    // =========================================================================
+    console.log('[Test 15] Testing real-world user scenario: .sara kirim pesan ke group Party ML (MaLas)...');
+    AgentRateLimiter.clearAll();
+    const partyUserMsg = {
+        key: { remoteJid: userA, participant: userA, fromMe: false },
+        pushName: 'Ir. Razael',
+        message: {
+            conversation:
+                'kirim pesan ke group Party ML (MaLas) dengan pesan "tips: command .spack mencari sticker pack di sticker.ly"'
+        }
+    };
+
+    const partyPromptText =
+        'kirim pesan ke group Party ML (MaLas) dengan pesan "tips: command .spack mencari sticker pack di sticker.ly"';
+
+    const partyResponse = await CosmosAgentEngine.processMessage(
+        e2eGroupSock as unknown as WASocket,
+        partyUserMsg as unknown as WAMessage,
+        userA,
+        partyPromptText,
+        'id'
+    );
+
+    assert(partyResponse, 'CosmosAgentEngine must respond to Party ML group send command');
+    const msgToParty = groupDispatchedMessages.find((m) => m.destJid === '120363400831325507@g.us');
+    assert(msgToParty, 'Message must be dispatched to group 120363400831325507@g.us');
+    assert(
+        msgToParty.text.includes('tips: command .spack mencari sticker pack di sticker.ly'),
+        'Dispatched text must contain the tips message'
+    );
+    assert(msgToParty.text.includes('Sent by Razael via Sara AI'), 'Dispatched text must contain Razael attribution');
+    console.log('  ✔ Real-world user scenario succeeded! Dispatched text:\n', msgToParty.text);
+    console.log('  ✔ Sara reply to caller:\n', partyResponse);
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('======================================================\n');
