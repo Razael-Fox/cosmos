@@ -803,7 +803,7 @@
             "description": "Sistem Cosmos Central Bank untuk tabungan aman, transfer, dan pengecekan saldo."
         },
         "brat": {
-            "description": "Membuat stiker teks atau stiker animasi bergaya Brat."
+            "description": "Membuat stiker teks atau stiker animasi bergaya Brat dengan jeda animasi yang dapat disesuaikan."
         },
         "cancel": {
             "description": "Membatalkan proses multi-langkah yang aktif, prompt interaktif, atau konfirmasi tertunda di obrolan saat ini."

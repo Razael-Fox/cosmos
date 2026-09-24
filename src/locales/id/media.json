@@ -37,7 +37,7 @@
         "queue_full": "Antrean pemrosesan stiker sedang penuh. Silakan coba lagi dalam beberapa saat."
     },
     "brat": {
-        "usage": "Silakan masukkan teks untuk membuat stiker Brat. Contoh: *.brat Hello World* atau *.brat animasi Hello World* (atau balas sebuah pesan).",
+        "usage": "Silakan masukkan teks untuk membuat stiker Brat. Contoh: *.brat Hello World*, *.brat animasi Hello World*, atau *.brat \"animasi keren\"* untuk teks harfiah.",
         "failed": "Gagal membuat stiker Brat: {{error}}"
     },
     "telegramdl": {

@@ -37,7 +37,7 @@
         "queue_full": "Sticker processing queue is full. Please try again in a few moments."
     },
     "brat": {
-        "usage": "Please provide text to create a Brat sticker. Example: *.brat Hello World* or *.brat animasi Hello World* (or reply to a message).",
+        "usage": "Please provide text to create a Brat sticker. Example: *.brat Hello World*, *.brat animated Hello World*, or *.brat \"animasi keren\"* for literal text.",
         "failed": "Failed to create Brat sticker: {{error}}"
     },
     "telegramdl": {
