@@ -195,6 +195,17 @@ export function ensureDatabaseSchema(dbPath: string): void {
                 CONSTRAINT "SubBotInstance_ownerJid_fkey" FOREIGN KEY ("ownerJid") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
             );
             CREATE INDEX IF NOT EXISTS "SubBotInstance_ownerJid_idx" ON "SubBotInstance"("ownerJid");
+            CREATE TABLE IF NOT EXISTS "UserContactBook" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "ownerJid" TEXT NOT NULL,
+                "alias" TEXT NOT NULL,
+                "encryptedJid" TEXT NOT NULL,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "UserContactBook_ownerJid_fkey" FOREIGN KEY ("ownerJid") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "UserContactBook_ownerJid_alias_key" ON "UserContactBook"("ownerJid", "alias");
+            CREATE INDEX IF NOT EXISTS "UserContactBook_ownerJid_idx" ON "UserContactBook"("ownerJid");
         `);
 
         ensureColumnExists(db, 'User', 'currentJobId', 'INTEGER');
