@@ -36,6 +36,10 @@
         "invalid_webp_header": "Buffer stiker bukan format WebP yang valid.",
         "queue_full": "Antrean pemrosesan stiker sedang penuh. Silakan coba lagi dalam beberapa saat."
     },
+    "brat": {
+        "usage": "Silakan masukkan teks untuk membuat stiker Brat. Contoh: *.brat Hello World* atau *.brat animasi Hello World* (atau balas sebuah pesan).",
+        "failed": "Gagal membuat stiker Brat: {{error}}"
+    },
     "telegramdl": {
         "invalid_url": "Kesalahan: Silakan masukkan tautan posting Telegram yang valid (misalnya https://t.me/channel/123).",
         "group_registered": "Grup Telegram tersebut telah terdaftar di basis data. Silakan berikan tautan kiriman tertentu yang ingin Anda unduh (misalnya https://t.me/c/{{chatId}}/123).",

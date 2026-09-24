@@ -802,6 +802,9 @@
         "bank": {
             "description": "Cosmos Central Bank system for secure savings, transfers, and balance inquiries."
         },
+        "brat": {
+            "description": "Generates a Brat-style text sticker or animated sticker."
+        },
         "cancel": {
             "description": "Cancel an active multi-step operation, interactive prompt, or pending confirmation in the current chat."
         },

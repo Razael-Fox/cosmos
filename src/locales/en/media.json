@@ -36,6 +36,10 @@
         "invalid_webp_header": "Sticker buffer is not a valid WebP format.",
         "queue_full": "Sticker processing queue is full. Please try again in a few moments."
     },
+    "brat": {
+        "usage": "Please provide text to create a Brat sticker. Example: *.brat Hello World* or *.brat animasi Hello World* (or reply to a message).",
+        "failed": "Failed to create Brat sticker: {{error}}"
+    },
     "telegramdl": {
         "invalid_url": "Error: Please provide a valid Telegram post link (for example https://t.me/channel/123).",
         "group_registered": "That Telegram group has already been added to the database. Please provide the link of the specific post you wish to download (for example https://t.me/c/{{chatId}}/123).",
