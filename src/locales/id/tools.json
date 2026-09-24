@@ -805,6 +805,12 @@
         "cancel": {
             "description": "Membatalkan proses multi-langkah yang aktif, prompt interaktif, atau konfirmasi tertunda di obrolan saat ini."
         },
+        "contact": {
+            "description": "Kelola kontak zero-knowledge pribadi untuk asisten AI dan perpesanan aman."
+        },
+        "sara": {
+            "description": "Panggil Sara, asisten AI cerdas, untuk mengobrol, mencari informasi, atau menjalankan tindakan yang diizinkan."
+        },
         "coinflip": {
             "description": "Bermain lempar koin. Contoh: .coinflip heads 1.000.000"
         },

@@ -29,6 +29,8 @@ import {
     removeScheduledDeletions,
     processStickerlySelection
 } from '#utils/stickerlySession.js';
+import { AgentConfirmationManager } from '#services/agentEngine/confirmationManager.js';
+import { AgentLocationStager } from '#services/agentEngine/locationStager.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
     const name = toolName.toLowerCase();
@@ -538,6 +540,30 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 const handled = await processRegistrationStep(sock, msg, senderRaw, jid, trimmedText, t);
                 if (handled) return;
             }
+        }
+
+        // Check if sender is confirming a pending AI agent action (.confirm / confirm)
+        if (senderRaw) {
+            const handledAgentConfirm = await AgentConfirmationManager.processConfirmation(
+                sock,
+                msg,
+                senderRaw,
+                jid,
+                trimmedText
+            );
+            if (handledAgentConfirm) return;
+        }
+
+        // Check if sender is sharing/forwarding a location in an active agent location sharing flow
+        if (senderRaw) {
+            const handledLocationForward = await AgentLocationStager.processLocationForwarding(
+                sock,
+                msg,
+                senderRaw,
+                jid,
+                trimmedText
+            );
+            if (handledLocationForward) return;
         }
 
         // Check if sender is confirming a pending bank transfer

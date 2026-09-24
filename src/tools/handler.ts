@@ -111,17 +111,71 @@ class ToolsHandler {
         }
         return Array.from(uniqueTools);
     }
+    /**
+     * @deprecated Deprecated in favor of CosmosAgentEngine scoped tool registry.
+     * Retained only for legacy compatibility.
+     */
+    getGroqTools(): Array<{
+        type: string;
+        function: { name: string; description: string; parameters: Record<string, unknown> };
+    }> {
+        const EXCLUDED_GROQ_TOOLS: Record<string, true> = {
+            addbalance: true,
+            forceupdate: true,
+            config: true,
+            subbot: true,
+            idcard: true,
+            cancel: true,
+            transfer: true,
+            bank: true,
+            loan: true,
+            tgadd: true,
+            tgdel: true,
+            tgpair: true,
+            setgrouplang: true,
+            setlang: true,
+            startautocorrection: true,
+            stopautocorrection: true,
+            togglesticker: true,
+            roulette_start: true,
+            roulette_join: true,
+            roulette_shoot: true,
+            roulette_spin: true,
+            roulette_use: true,
+            roulette_stats: true,
+            roulette_leaderboard: true,
+            roulette_cancel: true,
+            slot: true,
+            coinflip: true,
+            dice: true,
+            property_buy: true,
+            property_sell: true,
+            shop: true
+        };
 
-    getGroqTools(): Array<{ type: string; function: any }> {
-        const groqTools: Array<{ type: string; function: any }> = [];
+        const groqTools: Array<{
+            type: string;
+            function: { name: string; description: string; parameters: Record<string, unknown> };
+        }> = [];
+        const seenNames = new Set<string>();
+
         for (const toolModule of this.tools.values()) {
-            const def = { ...toolModule.definition };
-            if (def.name) {
-                def.name = def.name.replace(/[-\s]+/g, '_');
-            }
+            const def = toolModule.definition;
+            if (!def || !def.name) continue;
+
+            const cleanName = def.name.replace(/^[.-]+/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+            if (!cleanName || seenNames.has(cleanName)) continue;
+            if (def.owner === true) continue;
+            if (EXCLUDED_GROQ_TOOLS[cleanName.toLowerCase()]) continue;
+
+            seenNames.add(cleanName);
             groqTools.push({
                 type: 'function',
-                function: def
+                function: {
+                    name: cleanName,
+                    description: def.description || '',
+                    parameters: (def.parameters as Record<string, unknown>) || { type: 'object', properties: {} }
+                }
             });
         }
         return groqTools;
