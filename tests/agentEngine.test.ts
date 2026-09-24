@@ -17,6 +17,7 @@ import { CosmosAgentEngine } from '../src/services/agentEngine/index.js';
 import { bankTool } from '../src/services/agentEngine/tools/bank.js';
 import { sendMessageTool } from '../src/services/agentEngine/tools/sendMessage.js';
 import { prisma } from '../src/db.js';
+import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/tools/contact.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import type { AgentExecutionContext } from '../src/services/agentEngine/types.js';
 
@@ -841,6 +842,91 @@ async function runTests() {
     assert(msgToParty.text.includes('Sent by Razael via Sara AI'), 'Dispatched text must contain Razael attribution');
     console.log('  ✔ Real-world user scenario succeeded! Dispatched text:\n', msgToParty.text);
     console.log('  ✔ Sara reply to caller:\n', partyResponse);
+
+    // =========================================================================
+    // 16. Contact Book Monospace & Spaced Names Test
+    // =========================================================================
+    console.log('[Test 16] Testing .contact add & del with WhatsApp monospace formatting...');
+
+    // Parsing checks
+    const parsed1 = parseContactAddArgs('`Ls Friends` 123456789');
+    assert.strictEqual(parsed1.alias, 'Ls Friends');
+    assert.strictEqual(parsed1.phoneInput, '123456789');
+
+    const parsed2 = parseContactAddArgs('```Ls Friends``` +62 812 3456 789');
+    assert.strictEqual(parsed2.alias, 'Ls Friends');
+    assert.strictEqual(parsed2.phoneInput, '+62 812 3456 789');
+
+    const parsed3 = parseContactAddArgs('Mom 6281234567890');
+    assert.strictEqual(parsed3.alias, 'Mom');
+    assert.strictEqual(parsed3.phoneInput, '6281234567890');
+
+    const parsed4 = parseContactAddArgs('`Ls Friends`');
+    assert.strictEqual(parsed4.alias, 'Ls Friends');
+    assert.strictEqual(parsed4.phoneInput, '');
+
+    assert.strictEqual(parseContactDelArgs('`Ls Friends`'), 'Ls Friends');
+    assert.strictEqual(parseContactDelArgs('```Ls Friends```'), 'Ls Friends');
+    assert.strictEqual(parseContactDelArgs('Ls Friends'), 'Ls Friends');
+
+    // End-to-end tool execution check
+    const contactTestUser = '628199999999@s.whatsapp.net';
+    await prisma.user.upsert({
+        where: { id: contactTestUser },
+        create: { id: contactTestUser, pushName: 'Contact Tester' },
+        update: {}
+    });
+
+    let lastContactSentText = '';
+    const contactMockSock = {
+        user: { id: '6285136533136:1@s.whatsapp.net' },
+        sendMessage: async (_dest: string, content: { text: string }) => {
+            lastContactSentText = content.text;
+            return { key: { id: 'mock-msg-id' } };
+        }
+    };
+
+    const contactMockMsg = {
+        key: { remoteJid: contactTestUser, participant: contactTestUser, fromMe: false },
+        message: { conversation: '.contact add `Ls Friends` 123456789' }
+    };
+
+    const contactCtx = {
+        sock: contactMockSock as unknown as WASocket,
+        msg: contactMockMsg as unknown as WAMessage,
+        jid: contactTestUser,
+        t: (k: string) => k
+    };
+
+    // Execute add
+    await contactTool.execute({ rawText: 'add `Ls Friends` 123456789' }, contactCtx);
+    assert(lastContactSentText.includes('Ls Friends'), 'Success message must mention Ls Friends');
+    assert(lastContactSentText.includes('12345****6789'), 'Success message must contain masked number');
+
+    const savedEntry = await prisma.userContactBook.findUnique({
+        where: {
+            ownerJid_alias: {
+                ownerJid: contactTestUser,
+                alias: 'ls friends'
+            }
+        }
+    });
+    assert(savedEntry, 'Contact "ls friends" must exist in database');
+
+    // Execute delete
+    await contactTool.execute({ rawText: 'del `Ls Friends`' }, contactCtx);
+    assert(lastContactSentText.includes('deleted'), 'Delete message must confirm deletion');
+
+    const deletedEntry = await prisma.userContactBook.findUnique({
+        where: {
+            ownerJid_alias: {
+                ownerJid: contactTestUser,
+                alias: 'ls friends'
+            }
+        }
+    });
+    assert.strictEqual(deletedEntry, null, 'Contact "ls friends" must be deleted from database');
+    console.log('  ✔ .contact add and del with WhatsApp monospace verified successfully.');
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('======================================================\n');

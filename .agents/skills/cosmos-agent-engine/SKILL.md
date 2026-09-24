@@ -103,14 +103,14 @@ Semua perintah dan tool AI dikelompokkan secara ketat pada `ToolAiPolicy`:
 
 ## 6. Sanitasi & Normalisasi Nomor Telepon Internasional (`src/utils/phone.ts`)
 
-1. **Multi-Token Spaced Parsing:** Perintah `.contact add <alias> <phoneNumber>` menggabungkan seluruh sisa token (`parts.slice(2).join(' ')`), sehingga nomor berjarak seperti `+94 77 837 0112` terbaca utuh.
+1. **Multi-Token Spaced Parsing:** Perintah `.contact add <alias> <phoneNumber>` menggabungkan seluruh sisa token (`parts.slice(2).join(' ')`), sehingga nomor berjarak seperti `+94 77 837 0112` terbaca utuh. Mendukung alias dengan spasi menggunakan format monospace WhatsApp (`\`name\``atau`\`\`\`name\`\`\`).
 2. **Scrubbing Karakter:** Menghapus seluruh karakter non-angka (`\s`, `-`, `()`, `+`, `.`, dll.).
 3. **Standarisasi Internasional & Lokal:**
     - Mempertahankan kode negara E.164 saat tanda `+` dihilangkan (`+94 77 837 0112` $\rightarrow$ `94778370112`).
     - Mengubah awalan lokal Indonesia `0...` menjadi `62...` (`081234567890` $\rightarrow$ `6281234567890`).
     - Memperbaiki salah ketik awalan ganda `6208...` menjadi `628...`.
     - Menghapus kode keluar internasional `00...` (`0094...` $\rightarrow$ `94...`).
-4. **Validasi Panjang E.164:** Memastikan panjang digit valid antara 10 hingga 15 digit sebelum disimpan ke database.
+4. **Validasi Panjang E.164:** Memastikan panjang digit valid antara 8 hingga 15 digit sebelum disimpan ke database.
 
 ---
 

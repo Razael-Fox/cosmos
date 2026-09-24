@@ -4,6 +4,41 @@ import { getSenderJid, getUser } from '../utils/casino.js';
 import { encryptString, decryptString } from '../services/storageEncryption.js';
 import { cleanPhoneNumber, toCanonicalJid, maskPhoneNumber } from '../utils/phone.js';
 
+/**
+ * Parses alias and phone number from the rest of the arguments.
+ * Supports WhatsApp monospace format (e.g. `Ls Friends` or ```Ls Friends```)
+ * as well as standard unquoted single-word alias format.
+ */
+export function parseContactAddArgs(rest: string): { alias: string; phoneInput: string } {
+    let alias: string;
+    let phoneInput: string;
+
+    const monospaceMatch = rest.match(/^(?:```([\s\S]+?)```|`([^`]+)`|"([^"]+)"|'([^']+)')\s*(.*)$/);
+    if (monospaceMatch) {
+        alias = (monospaceMatch[1] ?? monospaceMatch[2] ?? monospaceMatch[3] ?? monospaceMatch[4] ?? '').trim();
+        phoneInput = (monospaceMatch[5] ?? '').trim();
+    } else {
+        const parts = rest.split(/\s+/).filter(Boolean);
+        alias = (parts[0] || '').trim();
+        phoneInput = parts.slice(1).join(' ').trim();
+    }
+
+    alias = alias.replace(/\s+/g, ' ');
+    return { alias, phoneInput };
+}
+
+/**
+ * Parses alias for deletion, unwrapping any monospace backticks or quotes if present.
+ */
+export function parseContactDelArgs(rest: string): string {
+    let alias = rest;
+    const match = rest.match(/^(?:```([\s\S]+?)```|`([^`]+)`|"([^"]+)"|'([^']+)')$/);
+    if (match) {
+        alias = match[1] ?? match[2] ?? match[3] ?? match[4] ?? '';
+    }
+    return alias.trim().replace(/\s+/g, ' ');
+}
+
 const contactTool: ToolModule = {
     definition: {
         name: 'contact',
@@ -16,7 +51,7 @@ const contactTool: ToolModule = {
             properties: {
                 rawText: {
                     type: 'string',
-                    description: 'Subcommand and parameters (e.g., add Mom 6281234567890, list, del Mom)'
+                    description: 'Subcommand and parameters (e.g., add `Ls Friends` 123456789, list, del `Ls Friends`)'
                 }
             }
         }
@@ -30,25 +65,29 @@ const contactTool: ToolModule = {
         await getUser(prisma, senderJid);
 
         const rawText = typeof args.rawText === 'string' ? args.rawText.trim() : '';
-        const parts = rawText.split(/\s+/).filter(Boolean);
-        const subCommand = parts[0]?.toLowerCase() || '';
+        const subCommandMatch = rawText.match(/^([a-zA-Z]+)(?:\s+([\s\S]*))?$/);
+        const subCommand = subCommandMatch ? subCommandMatch[1].toLowerCase() : '';
+        const rest = subCommandMatch && subCommandMatch[2] ? subCommandMatch[2].trim() : '';
 
         if (subCommand === 'add') {
-            const alias = parts[1];
-            const phoneInput = parts.slice(2).join(' ').trim();
+            const { alias, phoneInput } = parseContactAddArgs(rest);
 
             if (!alias || !phoneInput) {
                 await sock.sendMessage(
                     msg.key.remoteJid!,
                     {
-                        text: '❌ Invalid format.\nUsage: *.contact add <alias> <phoneNumber>*\nExample: *.contact add Mom 6281234567890*'
+                        text:
+                            '❌ Invalid format.\n' +
+                            'Usage: *.contact add <alias> <phoneNumber>*\n' +
+                            'Example: *.contact add Mom 6281234567890*\n' +
+                            'With spaces: *.contact add `Ls Friends` 123456789*'
                     },
                     { quoted: msg }
                 );
                 return;
             }
 
-            const cleanAlias = alias.trim().toLowerCase();
+            const cleanAlias = alias.toLowerCase();
             if (cleanAlias.length < 2 || cleanAlias.length > 32) {
                 await sock.sendMessage(
                     msg.key.remoteJid!,
@@ -59,10 +98,10 @@ const contactTool: ToolModule = {
             }
 
             const digits = cleanPhoneNumber(phoneInput);
-            if (digits.length < 10 || digits.length > 15) {
+            if (digits.length < 8 || digits.length > 15) {
                 await sock.sendMessage(
                     msg.key.remoteJid!,
-                    { text: '❌ Invalid phone number. Please enter a valid 10-15 digit phone number.' },
+                    { text: '❌ Invalid phone number. Please enter a valid 8-15 digit phone number.' },
                     { quoted: msg }
                 );
                 return;
@@ -110,7 +149,10 @@ const contactTool: ToolModule = {
                 await sock.sendMessage(
                     msg.key.remoteJid!,
                     {
-                        text: '📋 *Your Saved Contacts*\n\nYou do not have any registered contacts yet.\nAdd one with: *.contact add <alias> <phoneNumber>*'
+                        text:
+                            '📋 *Your Saved Contacts*\n\nYou do not have any registered contacts yet.\n' +
+                            'Add one with: *.contact add <alias> <phoneNumber>*\n' +
+                            'Example: *.contact add `Ls Friends` 123456789*'
                     },
                     { quoted: msg }
                 );
@@ -134,17 +176,22 @@ const contactTool: ToolModule = {
         }
 
         if (subCommand === 'del' || subCommand === 'delete' || subCommand === 'rm') {
-            const alias = parts[1];
+            const alias = parseContactDelArgs(rest);
             if (!alias) {
                 await sock.sendMessage(
                     msg.key.remoteJid!,
-                    { text: '❌ Please specify the alias to delete.\nUsage: *.contact del <alias>*' },
+                    {
+                        text:
+                            '❌ Please specify the alias to delete.\n' +
+                            'Usage: *.contact del <alias>*\n' +
+                            'Example: *.contact del Mom* or *.contact del `Ls Friends`*'
+                    },
                     { quoted: msg }
                 );
                 return;
             }
 
-            const cleanAlias = alias.trim().toLowerCase();
+            const cleanAlias = alias.toLowerCase();
             const existing = await prisma.userContactBook.findUnique({
                 where: {
                     ownerJid_alias: {
@@ -185,12 +232,13 @@ const contactTool: ToolModule = {
             `📖 *Personal Contact Book Manager*\n\n` +
             `Securely manage personal contacts for AI messaging without exposing real numbers to LLMs.\n\n` +
             `*Commands:*\n` +
-            `• *.contact add <alias> <number>* — Save or update contact\n` +
+            `• *.contact add <alias> <number>* — Save or update contact (use \`name\` for spaces)\n` +
             `• *.contact list* — View all saved contacts (masked)\n` +
             `• *.contact del <alias>* — Delete a contact\n\n` +
-            `*Example:*\n` +
+            `*Examples:*\n` +
             `_.contact add Mom 6281234567890_\n` +
-            `_.sara please send a message to Mom saying I will be home soon._`;
+            `_.contact add \`Ls Friends\` 123456789_\n` +
+            `_.sara please send a message to Ls Friends saying I will be home soon._`;
 
         await sock.sendMessage(msg.key.remoteJid!, { text: usage }, { quoted: msg });
     }
