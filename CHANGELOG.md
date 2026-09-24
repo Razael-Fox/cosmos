@@ -11,6 +11,38 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-17] - 2026-09-24
+
+### Added
+
+- **Brat Text & Animated Sticker Generator (`src/tools/brat.ts`):**
+    - Added `.brat` command supporting static image stickers (`https://api.siputzx.my.id/api/m/brat?text=...&delay=500`) and animated GIF stickers (`isAnimated=true`).
+    - Multi-word and flag triggers: `.bratanimasi`, `.bratanimated`, `brat animasi`, `brat animated`, `.brat animated <text>`, `-a`, `--animated`, `--animasi`.
+    - Dash parameter delay configuration: `-d <ms>`, `-d=<ms>`, `-<ms>ms`, `-<ms>`, and `--delay <ms>` (range: 50–5000 ms, default 500 ms).
+    - Quoting/replied-message fallback: easily generate stickers from referenced text messages.
+    - Comprehensive interactive tutorial card displayed when executing bare `.brat`.
+
+- **Global WhatsApp Monospace & String Filtering Utility (`src/utils/monospace.ts`):**
+    - Implemented centralized `extractLeadingMonospace`, `unwrapMonospace`, and `isMonospaceWrapped` utilities.
+    - Standardized support for WhatsApp triple backtick (` ```...``` `), single inline backtick (`` `...` ``), double quotes (`"..."`), and single quotes (`'...'`).
+    - Literal text disambiguation: allows users to generate literal text containing reserved keywords (e.g. `.brat "animasi keren"` or `.brat ```animasi keren``` `) without accidentally triggering animated mode.
+    - Added repository-wide rule **Rule AC** in `AGENTS.md` and new specialized agent skill in `.agents/skills/whatsapp-monospace-filtering/SKILL.md`.
+
+- **Full-Deep Commands Context & Knowledge Base for Sara AI (`docs/COMMANDS_CONTEXT.md`):**
+    - Created exhaustive command documentation across all 69 tools, covering exact syntax, parameters, subcommands, flags, limits, and examples.
+    - Injected into Sara Persona Execution prompt (`saraPersona.ts`) under `<cosmos_commands_knowledge>`.
+    - Grounded Sara AI's responses with factual command syntax, eliminating hallucinations when users ask how to use bot features.
+
+### Changed
+
+- **Refactored Contact Book Tool (`src/tools/contact.ts`):**
+    - Replaced fragmented ad-hoc regex with `extractLeadingMonospace` and `unwrapMonospace` for multi-word alias management with spaces (e.g. `.contact add `Ls Friends` 123456789`).
+
+- **Menu and Help System Reflection (`src/services/menuService.ts`, `src/tools/brat.ts`):**
+    - Updated brat tool definition and bilingual descriptions in `src/locales/{en,id}/tools.json` and `src/locales/{en,id}/media.json` to feature usage and example tutorials in `.menu` and `.help brat`.
+
+---
+
 ## [RF-2609-16] - 2026-09-24
 
 ### Fixed
@@ -551,7 +583,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-16...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-17...HEAD
+[RF-2609-17]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-16...RF-2609-17
 [RF-2609-16]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-15...RF-2609-16
 [RF-2609-15]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-14...RF-2609-15
 [RF-2609-14]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-13...RF-2609-14
