@@ -507,6 +507,76 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };
         }
+        case '/internal/broadcast': {
+            const message = String(body.message || '').trim();
+            const delayMs = typeof body.delayMs === 'number' ? body.delayMs : 300_000; // default 5 minutes
+            if (!message) return { status: 400, data: { error: 'MESSAGE_REQUIRED' } };
+
+            const sock = activeConnections.get('default');
+            if (!sock) return { status: 503, data: { error: 'BOT_OFFLINE' } };
+
+            // Query all participating groups from the default socket
+            let groupIds: string[] = [];
+            try {
+                const participating = await sock.groupFetchAllParticipating();
+                groupIds = Object.keys(participating).filter((id) => id.endsWith('@g.us'));
+            } catch (err) {
+                console.warn(
+                    '[IPC Broadcast] Failed to fetch participating groups via socket, falling back to DB:',
+                    err
+                );
+            }
+
+            // Fallback / merge with whitelisted groups in DB
+            if (groupIds.length === 0) {
+                try {
+                    const whitelisted = await prisma.whitelistedGroup.findMany();
+                    groupIds = whitelisted.map((g) => g.jid);
+                } catch (err) {
+                    console.error('[IPC Broadcast] Failed to query DB whitelisted groups:', err);
+                }
+            }
+
+            if (groupIds.length === 0) {
+                return { status: 200, data: { ok: true, count: 0, message: 'NO_GROUPS_FOUND' } };
+            }
+
+            // Launch background broadcast loop without blocking the IPC response
+            (async () => {
+                console.log(
+                    `[IPC Broadcast] Starting broadcast to ${groupIds.length} groups with ${delayMs}ms delay...`
+                );
+                for (let i = 0; i < groupIds.length; i++) {
+                    const gid = groupIds[i];
+                    try {
+                        await sock.sendMessage(gid, { text: message });
+                        console.log(`[IPC Broadcast] [${i + 1}/${groupIds.length}] Sent to ${gid}`);
+                    } catch (sendErr: unknown) {
+                        const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+                        console.error(`[IPC Broadcast] Failed to send to ${gid}:`, errMsg);
+                    }
+
+                    // Wait delayMs between groups if not the last group
+                    if (i < groupIds.length - 1 && delayMs > 0) {
+                        console.log(`[IPC Broadcast] Waiting ${delayMs}ms before next group...`);
+                        await new Promise((resolve) => setTimeout(resolve, delayMs));
+                    }
+                }
+                console.log('[IPC Broadcast] Finished broadcasting to all groups.');
+            })().catch((bgErr) => {
+                console.error('[IPC Broadcast] Background task error:', bgErr);
+            });
+
+            return {
+                status: 200,
+                data: {
+                    ok: true,
+                    queued: groupIds.length,
+                    groups: groupIds,
+                    delayMs
+                }
+            };
+        }
         default:
             return { status: 404, data: { error: 'UNKNOWN_IPC_PATH' } };
     }
