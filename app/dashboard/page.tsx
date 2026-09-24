@@ -190,7 +190,6 @@ export default function DashboardPage() {
     const [addingGroupJid, setAddingGroupJid] = useState<string | null>(null);
     const [showManualJidInput, setShowManualJidInput] = useState(false);
     const [refreshCount, setRefreshCount] = useState(0);
-    const [isBotsExpanded, setIsBotsExpanded] = useState(false);
     const [isGroupsExpanded, setIsGroupsExpanded] = useState(false);
 
     const groupNameMap = useMemo(() => {
@@ -721,63 +720,81 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Sub-Bots Quota & Connected Bots Combined Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-5 shadow-xs flex flex-col justify-between">
+                        <div className="p-6 rounded-3xl bg-card border border-border shadow-xs flex flex-col justify-between h-full">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                        {t.dashboard.planCard.subBotsQuota}
-                                    </span>
-                                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
-                                        <DeviceMobile className="w-5 h-5" weight="duotone" />
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                                            <DeviceMobile className="w-5 h-5" weight="duotone" />
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                                                {t.dashboard.planCard.subBotsQuota}
+                                            </span>
+                                            <span className="text-[11px] text-muted-foreground font-mono">
+                                                {t.dashboard.botsSlotsLeft.replace(
+                                                    '{count}',
+                                                    String(Math.max(0, maxBots - currentBotsCount))
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black text-foreground font-mono">
+                                            {currentBotsCount}
+                                            <span className="text-xs font-normal text-muted-foreground">
+                                                /{maxBots}
+                                            </span>
+                                        </span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <div className="flex items-baseline justify-between">
-                                        <span className="text-3xl font-black text-foreground font-mono">
-                                            {currentBotsCount}{' '}
-                                            <span className="text-sm font-normal text-muted-foreground">
-                                                / {maxBots}
-                                            </span>
-                                        </span>
-                                        <span className="text-xs font-semibold text-muted-foreground font-mono">
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-[11px] font-medium text-muted-foreground">
                                             {Math.round((currentBotsCount / maxBots) * 100)}% {t.dashboard.usedSuffix}
                                         </span>
+                                        {isBotsQuotaFull && (
+                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                Full
+                                            </span>
+                                        )}
                                     </div>
 
+                                    {/* Segmented capacity meter */}
                                     <div
-                                        className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
+                                        className="flex gap-1.5 w-full"
                                         role="progressbar"
                                         aria-valuenow={currentBotsCount}
                                         aria-valuemin={0}
                                         aria-valuemax={maxBots}
                                         aria-label={t.dashboard.planCard.subBotsQuota}
                                     >
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-300 ${
-                                                isBotsQuotaFull ? 'bg-amber-500' : 'bg-primary'
-                                            }`}
-                                            style={{ width: `${Math.min(100, (currentBotsCount / maxBots) * 100)}%` }}
-                                        />
+                                        {Array.from({ length: maxBots }).map((_, idx) => {
+                                            const isFilled = idx < currentBotsCount;
+                                            const usageRatio = currentBotsCount / maxBots;
+                                            let barColor = 'bg-primary';
+                                            if (usageRatio >= 1) {
+                                                barColor = 'bg-amber-500';
+                                            } else if (usageRatio >= 0.7) {
+                                                barColor = 'bg-amber-500/80';
+                                            } else {
+                                                barColor = 'bg-emerald-500';
+                                            }
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                                                        isFilled ? barColor : 'bg-muted'
+                                                    }`}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
-                                <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                                    <span>
-                                        {t.dashboard.botsSlotsLeft.replace(
-                                            '{count}',
-                                            String(Math.max(0, maxBots - currentBotsCount))
-                                        )}
-                                    </span>
-                                    {isBotsQuotaFull && (
-                                        <Link href="/pricing" className="text-primary font-semibold hover:underline">
-                                            Upgrade →
-                                        </Link>
-                                    )}
-                                </div>
-
-                                {/* Connected Sub-Bots List Inside Card */}
-                                <div className="pt-3 border-t border-border/80 space-y-2.5">
+                                {/* Connected Sub-Bots List Section */}
+                                <div className="pt-3 border-t border-border/80 space-y-2">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-foreground font-heading">
                                             {t.dashboard.subbotsCard.title}
@@ -788,89 +805,99 @@ export default function DashboardPage() {
                                     </div>
 
                                     {subBots.length === 0 ? (
-                                        <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/60 text-center">
-                                            <p className="text-xs text-muted-foreground">
+                                        <div className="p-4 rounded-2xl bg-muted/20 border border-dashed border-border/80 text-center space-y-1">
+                                            <p className="text-xs font-medium text-foreground">
                                                 {t.dashboard.subbotsCard.noBots}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                {t.dashboard.subbotsCard.noBotsDesc}
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-1.5">
-                                            {(isBotsExpanded ? subBots : subBots.slice(0, 4)).map((bot) => (
-                                                <div
-                                                    key={bot.id}
-                                                    className="p-2.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between gap-2.5 hover:bg-muted/60 transition-colors"
-                                                >
-                                                    <div className="min-w-0 flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full shrink-0 bg-emerald-500" />
-                                                        <div className="min-w-0">
-                                                            <p className="font-mono font-semibold text-xs text-foreground truncate">
-                                                                {bot.id}
-                                                            </p>
-                                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                                                <span>
-                                                                    Prefix:{' '}
-                                                                    <code className="font-bold text-foreground">
-                                                                        {bot.customPrefix || '.'}
-                                                                    </code>
-                                                                </span>
-                                                                <span>•</span>
-                                                                <span className="text-emerald-500 font-semibold">
-                                                                    {bot.status}
-                                                                </span>
+                                        <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-0.5">
+                                            {subBots.map((bot) => {
+                                                const isConnected =
+                                                    bot.status?.toLowerCase() === 'connected' ||
+                                                    bot.status?.toLowerCase() === 'active';
+                                                return (
+                                                    <div
+                                                        key={bot.id}
+                                                        className="p-2.5 rounded-xl bg-muted/30 border border-border/60 flex items-center justify-between gap-2.5 hover:bg-muted/50 hover:border-border transition-all"
+                                                    >
+                                                        <div className="min-w-0 flex items-center gap-2.5">
+                                                            <div className="relative flex items-center justify-center shrink-0">
+                                                                {isConnected && (
+                                                                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                                                                )}
+                                                                <span
+                                                                    className={`relative inline-flex rounded-full h-2 w-2 ${
+                                                                        isConnected ? 'bg-emerald-500' : 'bg-muted-foreground/60'
+                                                                    }`}
+                                                                />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="font-mono font-semibold text-xs text-foreground truncate">
+                                                                    {formatRedactedPhone(bot.id)}
+                                                                </p>
+                                                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                                                    <span>
+                                                                        Prefix:{' '}
+                                                                        <code className="font-bold text-foreground">
+                                                                            {bot.customPrefix || '.'}
+                                                                        </code>
+                                                                    </span>
+                                                                    <span>•</span>
+                                                                    <span
+                                                                        className={`font-semibold capitalize ${
+                                                                            isConnected
+                                                                                ? 'text-emerald-500'
+                                                                                : 'text-muted-foreground'
+                                                                        }`}
+                                                                    >
+                                                                        {bot.status}
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBotToDelete(bot.id)}
+                                                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
+                                                            title={t.dashboard.subbotsCard.deleteBtn}
+                                                            aria-label={t.dashboard.subbotsCard.deleteBtn}
+                                                        >
+                                                            <Trash className="w-3.5 h-3.5" />
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setBotToDelete(bot.id)}
-                                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
-                                                        title={t.dashboard.subbotsCard.deleteBtn}
-                                                        aria-label={t.dashboard.subbotsCard.deleteBtn}
-                                                    >
-                                                        <Trash className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                            {/* Expand / Collapse Button if > 4 Sub-Bots */}
-                                            {subBots.length > 4 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsBotsExpanded((prev) => !prev)}
-                                                    className="w-full py-1.5 px-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                                                >
-                                                    {isBotsExpanded ? (
-                                                        <>
-                                                            <span>{t.dashboard.subbotsCard.collapseBtn || 'Collapse'}</span>
-                                                            <CaretUp className="w-3.5 h-3.5" />
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span>
-                                                                {(t.dashboard.subbotsCard.expandBtn || 'View All ({count})').replace(
-                                                                    '{count}',
-                                                                    String(subBots.length)
-                                                                )}
-                                                            </span>
-                                                            <CaretDown className="w-3.5 h-3.5" />
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => setShowPairModal(true)}
-                                disabled={isBotsQuotaFull}
-                                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer mt-2"
-                            >
-                                <Plus className="w-3.5 h-3.5" weight="bold" />
-                                <span>{t.dashboard.subbotsCard.pairBtn}</span>
-                            </button>
+                            {/* Contextual Action CTA: Upgrade if Full, otherwise Pair */}
+                            <div className="pt-3 mt-3 border-t border-border/70">
+                                {isBotsQuotaFull ? (
+                                    <Link
+                                        href="/pricing"
+                                        className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-xs transition-colors"
+                                    >
+                                        <Sparkle className="w-3.5 h-3.5" weight="fill" />
+                                        <span>{t.dashboard.planCard.upgradeBtn}</span>
+                                        <ArrowSquareOut className="w-3.5 h-3.5" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPairModal(true)}
+                                        className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" weight="bold" />
+                                        <span>{t.dashboard.subbotsCard.pairBtn}</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Whitelist Groups Quota & Group List Combined Card */}
