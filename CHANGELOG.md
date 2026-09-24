@@ -11,6 +11,26 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-16] - 2026-09-24
+
+### Fixed
+
+- **Owner Contact Resolution & Token Hallucination Defense (`CosmosAgentEngine`):**
+    - Pre-minted zero-knowledge contact tokens for the bot owner (`Razael`, `Owner`, `subBotOwnerName`) in `SaraPromptContextResolver`, enabling any user to send messages to the owner via `.sara message Razael ...`.
+    - Added owner and system alias resolution (`razael`, `owner`, `pemilik`, `creator`, `developer`) in `AgentEntityResolver.resolveRecipientToken`.
+    - Implemented token validity verification (`EphemeralTokenStore.isValidToken`) and hallucination defense in `AgentGuidancePlanner.plan` to intercept and discard hallucinated `contact_ref_...` tokens from Tier 1.
+    - Added dynamic fallback in Guidance Planner to resolve missing or invalid tokens from `rawAlias` via `AgentEntityResolver`.
+    - Guarded against invoking `send_message` or `send_location` with invalid tokens, preventing technical leaks (_"token penerima tidak valid atau sudah kedaluwarsa"_).
+    - Added sender attribution caption (`— Sent by ${cleanSenderName} via Sara AI`) to `sendMessageTool` when dispatching messages to third parties.
+
+### Changed
+
+- **Natural, Non-Stiff Sara Persona Architecture:**
+    - Redesigned `buildSaraPersonaPrompt` and `offlineAi.ts` system prompts with emotional intelligence (EQ), natural WhatsApp texting cadence, and conversational acknowledgment.
+    - Banished robotic bot clichés (_"Certainly!", "As an AI...", "Tentu saja!"_) in favor of natural conversational phrasing in Indonesian and English.
+
+---
+
 ## [RF-2609-15] - 2026-09-24
 
 ### Added
@@ -531,7 +551,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-15...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-16...HEAD
+[RF-2609-16]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-15...RF-2609-16
 [RF-2609-15]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-14...RF-2609-15
 [RF-2609-14]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-13...RF-2609-14
 [RF-2609-13]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-12...RF-2609-13
