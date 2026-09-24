@@ -5,6 +5,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import { isAutoWhitelistEnabled } from './services/systemConfigService.js';
 
 dotenv.config();
 
@@ -589,7 +590,14 @@ export async function isGroupWhitelisted(jid: string): Promise<boolean> {
         const group = await prisma.whitelistedGroup.findUnique({
             where: { jid }
         });
-        return !!group;
+        if (group) return true;
+
+        if (isAutoWhitelistEnabled()) {
+            await addGroup(jid, null);
+            console.log(`[AutoWhitelist] Auto-whitelisted group on activity: ${jid}`);
+            return true;
+        }
+        return false;
     } catch {
         return false;
     }

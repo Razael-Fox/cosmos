@@ -100,6 +100,7 @@ storage/scheduled_stories/*
 !storage/scheduled_stories/.gitkeep
 storage/active_sessions.json
 storage/presence.json
+storage/system_config.json
 storage/transaction/*
 !storage/transaction/.gitkeep
 storage/sub-bot/*

@@ -984,6 +984,15 @@
         },
         "sub": {
             "description": "Manage Cosmos subscriptions. Admin: .sub add <phone> <tier> <days>."
+        },
+        "whitelist": {
+            "description": "Manage Cosmos group whitelisting, view participating groups, batch-whitelist, or configure auto-whitelisting."
+        },
+        "listgroup": {
+            "description": "View all participating WhatsApp groups and their whitelist status."
+        },
+        "whitelistall": {
+            "description": "Batch-whitelist all available groups the bot is participating in at once."
         }
     },
     "myplan": {
@@ -1212,5 +1221,18 @@
     "quota": {
         "group_limit_reached": "Maximum group limit reached for {{tier}} tier ({{current}}/{{max}}).",
         "subbot_limit_reached": "Maximum active sub-bot limit reached for {{tier}} tier ({{current}}/{{max}})."
+    },
+    "whitelist": {
+        "list_title": "Available WhatsApp Groups",
+        "no_groups": "The bot is not currently participating in any WhatsApp groups.",
+        "list_summary": "Total: {{total}} groups ({{whitelisted}} Whitelisted, {{unwhitelisted}} Not Whitelisted) • Auto-Whitelist: {{autoWl}}\n💡 Use .whitelistall to whitelist all groups at once.",
+        "all_title": "Batch Whitelist Status",
+        "all_already_whitelisted": "All {{count}} participating groups are already whitelisted!",
+        "all_success_title": "Batch Whitelist Complete",
+        "all_success_body": "Successfully whitelisted {{added}} new group(s)! All available groups are now active.",
+        "auto_title": "Auto-Whitelist Settings",
+        "auto_enabled_body": "Auto-whitelisting on group join has been *ENABLED*.\n\nEvery group the bot joins or is currently in will automatically be whitelisted without needing .addgroup.",
+        "auto_disabled_body": "Auto-whitelisting on group join has been *DISABLED*.\n\nNew groups will require manual approval using .addgroup or .whitelistall.",
+        "dashboard_title": "Group Whitelist Suite"
     }
 }

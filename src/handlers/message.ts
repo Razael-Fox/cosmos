@@ -725,8 +725,16 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 }
 
                 if (jid.endsWith('@g.us') && !isOwner) {
-                    const whitelisted = await isGroupWhitelisted(jid);
-                    if (!whitelisted) return;
+                    const isWhitelistCmd =
+                        tool.definition?.name === 'whitelist' ||
+                        commandName === '.whitelist' ||
+                        commandName === '.listgroup' ||
+                        commandName === '.grouplist' ||
+                        commandName === '.groups';
+                    if (!isWhitelistCmd) {
+                        const whitelisted = await isGroupWhitelisted(jid);
+                        if (!whitelisted) return;
+                    }
                 }
 
                 console.log('Command executed', { command: commandName, jid });

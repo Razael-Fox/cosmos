@@ -984,6 +984,15 @@
         },
         "sub": {
             "description": "Kelola langganan Cosmos. Admin: .sub add <phone> <tier> <days>."
+        },
+        "whitelist": {
+            "description": "Kelola whitelist grup Cosmos, lihat grup yang diikuti, batch-whitelist, atau atur auto-whitelist."
+        },
+        "listgroup": {
+            "description": "Lihat semua grup WhatsApp yang diikuti bot beserta status whitelist-nya."
+        },
+        "whitelistall": {
+            "description": "Whitelist sekaligus semua grup yang diikuti bot dalam satu perintah."
         }
     },
     "myplan": {
@@ -1212,5 +1221,18 @@
     "quota": {
         "group_limit_reached": "Batas maksimal grup telah tercapai untuk tier {{tier}} ({{current}}/{{max}}).",
         "subbot_limit_reached": "Batas maksimal sub-bot aktif telah tercapai untuk tier {{tier}} ({{current}}/{{max}})."
+    },
+    "whitelist": {
+        "list_title": "Daftar Grup WhatsApp",
+        "no_groups": "Bot saat ini tidak bergabung dalam grup WhatsApp mana pun.",
+        "list_summary": "Total: {{total}} grup ({{whitelisted}} Masuk Whitelist, {{unwhitelisted}} Belum Whitelist) • Auto-Whitelist: {{autoWl}}\n💡 Gunakan .whitelistall untuk whitelist semua grup sekaligus.",
+        "all_title": "Status Batch Whitelist",
+        "all_already_whitelisted": "Semua {{count}} grup yang diikuti sudah masuk dalam whitelist!",
+        "all_success_title": "Batch Whitelist Selesai",
+        "all_success_body": "Berhasil menambahkan {{added}} grup baru ke whitelist! Semua grup yang tersedia kini aktif.",
+        "auto_title": "Pengaturan Auto-Whitelist",
+        "auto_enabled_body": "Auto-whitelist saat bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup baru yang diikuti bot akan otomatis masuk whitelist tanpa perlu .addgroup.",
+        "auto_disabled_body": "Auto-whitelist saat bergabung grup telah *DINONAKTIFKAN*.\n\nGrup baru memerlukan persetujuan manual menggunakan .addgroup atau .whitelistall.",
+        "dashboard_title": "Suite Manajemen Whitelist Grup"
     }
 }
