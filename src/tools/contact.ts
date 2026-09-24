@@ -3,7 +3,7 @@ import { prisma } from '../db.js';
 import { getSenderJid, getUser } from '../utils/casino.js';
 import { encryptString, decryptString } from '../services/storageEncryption.js';
 import { cleanPhoneNumber, toCanonicalJid, maskPhoneNumber } from '../utils/phone.js';
-
+import { extractLeadingMonospace, unwrapMonospace } from '../utils/monospace.js';
 /**
  * Parses alias and phone number from the rest of the arguments.
  * Supports WhatsApp monospace format (e.g. `Ls Friends` or ```Ls Friends```)
@@ -13,10 +13,10 @@ export function parseContactAddArgs(rest: string): { alias: string; phoneInput: 
     let alias: string;
     let phoneInput: string;
 
-    const monospaceMatch = rest.match(/^(?:```([\s\S]+?)```|`([^`]+)`|"([^"]+)"|'([^']+)')\s*(.*)$/);
-    if (monospaceMatch) {
-        alias = (monospaceMatch[1] ?? monospaceMatch[2] ?? monospaceMatch[3] ?? monospaceMatch[4] ?? '').trim();
-        phoneInput = (monospaceMatch[5] ?? '').trim();
+    const extraction = extractLeadingMonospace(rest);
+    if (extraction.matched) {
+        alias = extraction.extracted;
+        phoneInput = extraction.remainder;
     } else {
         const parts = rest.split(/\s+/).filter(Boolean);
         alias = (parts[0] || '').trim();
@@ -31,12 +31,8 @@ export function parseContactAddArgs(rest: string): { alias: string; phoneInput: 
  * Parses alias for deletion, unwrapping any monospace backticks or quotes if present.
  */
 export function parseContactDelArgs(rest: string): string {
-    let alias = rest;
-    const match = rest.match(/^(?:```([\s\S]+?)```|`([^`]+)`|"([^"]+)"|'([^']+)')$/);
-    if (match) {
-        alias = match[1] ?? match[2] ?? match[3] ?? match[4] ?? '';
-    }
-    return alias.trim().replace(/\s+/g, ' ');
+    const unwrapped = unwrapMonospace(rest);
+    return unwrapped.text.replace(/\s+/g, ' ');
 }
 
 const contactTool: ToolModule = {

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ToolDefinition, ToolContext } from './types.js';
 import { sendStickerFromBuffer } from './sticker_maker.js';
 import { cleanId } from '#utils/casino.js';
-
+import { unwrapMonospace } from '#utils/monospace.js';
 const BRAT_BASE_URL = 'https://api.siputzx.my.id/api/m/brat';
 const DEFAULT_DELAY = 500;
 const MIN_DELAY = 50;
@@ -64,12 +64,11 @@ export function parseBratInput(rawText: string, defaultAnimated = false): Parsed
         text = text.replace(/(?:^|\s+)-s(?:\s+|$)/i, ' ').trim();
     }
 
-    // Check for quoted literal string (e.g. .brat "animasi keren" or .brat 'animasi keren')
-    // If the entire text was wrapped in quotes, it signifies the user intended the literal text.
-    const quotedMatch = text.match(/^["'`]([\s\S]+)["'`]$/);
-    if (quotedMatch) {
-        text = quotedMatch[1].trim();
-        // Quoted text overrides animated prefix detection
+    // Check for WhatsApp monospace or quoted literal string (e.g. .brat ```animasi keren``` or .brat `animasi keren`)
+    // If the text is wrapped in monospace backticks or quotes, it signifies the user intended the literal text.
+    const unwrapped = unwrapMonospace(text);
+    if (unwrapped.wasWrapped) {
+        text = unwrapped.text;
         forceStatic = true;
     }
 
