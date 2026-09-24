@@ -8,6 +8,36 @@ import { EphemeralTokenStore } from '../tokenStore.js';
 import { toCanonicalJid } from '../../../utils/phone.js';
 import { loadConfig } from '../../subBotConfigService.js';
 
+interface GroupCacheEntry {
+    timestamp: number;
+    groups: Record<string, any>;
+}
+const groupCache = new Map<string, GroupCacheEntry>();
+const GROUP_CACHE_TTL_MS = 60_000;
+
+export async function getCachedParticipatingGroups(sock: WASocket): Promise<Record<string, any>> {
+    const cacheKey = sock.user?.id || 'default_socket';
+    const cached = groupCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < GROUP_CACHE_TTL_MS) {
+        return cached.groups;
+    }
+
+    try {
+        if (typeof sock.groupFetchAllParticipating === 'function') {
+            const fetched = await sock.groupFetchAllParticipating();
+            if (fetched && typeof fetched === 'object') {
+                groupCache.set(cacheKey, { timestamp: now, groups: fetched });
+                return fetched;
+            }
+        }
+    } catch (err) {
+        console.warn('[SaraPromptContextResolver] Failed to fetch participating groups:', err);
+    }
+
+    return cached?.groups || {};
+}
+
 export class SaraPromptContextResolver {
     public static async resolveContext(
         sock: WASocket,
@@ -230,6 +260,64 @@ export class SaraPromptContextResolver {
         } catch (ownerTokenErr) {
             console.error('[SaraPromptContextResolver] Failed to mint owner contact token:', ownerTokenErr);
         }
+        // Zero-Knowledge Group Pre-Minter:
+        // Query participating groups, enforce membership authorization (or bot owner permission),
+        // and mint ephemeral 128-bit tokens. Raw group IDs are NEVER exposed to the LLM.
+        const knownGroupTokens: Array<{ groupName: string; token: string }> = [];
+        try {
+            const allGroups = await getCachedParticipatingGroups(sock);
+            const callerClean = cleanId(callerJid);
+            const callerLidClean = callerLid ? cleanId(callerLid) : undefined;
+
+            for (const [groupId, meta] of Object.entries(allGroups)) {
+                if (!groupId || !groupId.endsWith('@g.us') || !meta) continue;
+
+                // Participant authorization check:
+                // Caller must be bot owner, OR verified participant of the group, OR in current group chat
+                let isParticipant = isOwner || (isGroup && chatJid === groupId);
+                let isCallerAdmin = isOwner;
+
+                if (!isParticipant && Array.isArray(meta.participants)) {
+                    for (const p of meta.participants) {
+                        const pIdClean = cleanId(p.id);
+                        const pLidClean = p.lid ? cleanId(p.lid) : undefined;
+                        if (
+                            pIdClean === callerClean ||
+                            (callerLidClean && pIdClean === callerLidClean) ||
+                            (pLidClean && pLidClean === callerClean) ||
+                            (callerLidClean && pLidClean && pLidClean === callerLidClean)
+                        ) {
+                            isParticipant = true;
+                            if (p.admin === 'admin' || p.admin === 'superadmin') {
+                                isCallerAdmin = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (!isParticipant) continue;
+
+                // If group is set to announcement-only (only admins can send), check admin or owner status
+                if (meta.announce && !isCallerAdmin && !isOwner) {
+                    continue;
+                }
+
+                const groupSubject = meta.subject ? String(meta.subject).trim() : 'Group';
+                const token = EphemeralTokenStore.mintToken(
+                    groupId,
+                    callerJid,
+                    new Set(['send_message', 'send_location'])
+                );
+
+                knownGroupTokens.push({
+                    groupName: groupSubject,
+                    token
+                });
+            }
+        } catch (groupTokenErr) {
+            console.error('[SaraPromptContextResolver] Failed to mint group tokens:', groupTokenErr);
+        }
 
         return {
             callerName,
@@ -247,6 +335,8 @@ export class SaraPromptContextResolver {
             subBotOwnerName,
             isSubBotOwnerSession,
             knownContactTokens,
+            knownGroupTokens,
+            sock,
             referencedMessage
         };
     }

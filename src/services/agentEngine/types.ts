@@ -23,6 +23,8 @@ export interface SaraPromptContext {
     subBotOwnerName?: string;
     isSubBotOwnerSession?: boolean;
     knownContactTokens: Array<{ alias: string; token: string }>;
+    knownGroupTokens?: Array<{ groupName: string; token: string }>;
+    sock?: WASocket;
     referencedMessage?: {
         senderJid: string;
         senderName: string;

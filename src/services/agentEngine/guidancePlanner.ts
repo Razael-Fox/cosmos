@@ -119,7 +119,10 @@ export class AgentGuidancePlanner {
                 try {
                     const resolved = await AgentEntityResolver.resolveRecipientToken(
                         brief.target.rawAlias,
-                        ctx.callerJid
+                        ctx.callerJid,
+                        ctx.sock,
+                        ctx.isOwner,
+                        ctx.callerLid
                     );
                     if (resolved) {
                         brief.target.recipientToken = resolved.recipientToken;
@@ -138,6 +141,16 @@ export class AgentGuidancePlanner {
                 }
             }
 
+            // 3b. Self-healing message parameter extractor for forwarded quoted messages
+            if (
+                (brief.intent === 'SEND_MESSAGE' || brief.primaryTool === 'send_message') &&
+                (!brief.extractedParameters?.message ||
+                    String(brief.extractedParameters.message).trim().length === 0) &&
+                ctx.referencedMessage?.text
+            ) {
+                brief.extractedParameters = brief.extractedParameters || {};
+                brief.extractedParameters.message = ctx.referencedMessage.text;
+            }
             // 4. Guard against dispatching message/location without a valid recipient token
             if (
                 (brief.primaryTool === 'send_message' || brief.primaryTool === 'send_location') &&
@@ -148,8 +161,8 @@ export class AgentGuidancePlanner {
                     const targetAlias = brief.target?.rawAlias;
                     brief.primaryTool = null;
                     brief.guidanceInstructions = targetAlias
-                        ? `Decline the request gracefully with Sara persona. Explain politely that no contact was found for "${targetAlias}". Ask the user for the contact's phone number or registered alias. NEVER mention internal tokens, nonces, or error codes.`
-                        : 'Decline the request gracefully with Sara persona. Ask the user who they would like to send the message to. NEVER mention internal tokens, nonces, or error codes.';
+                        ? `Decline the request gracefully with Sara persona. Explain politely that no contact or participating group was found for "${targetAlias}". Ask the user for the contact's phone number or ensure they share that group with Sara. NEVER mention internal tokens, nonces, or error codes.`
+                        : 'Decline the request gracefully with Sara persona. Ask the user who or which group they would like to send the message to. NEVER mention internal tokens, nonces, or error codes.';
                 }
             }
 

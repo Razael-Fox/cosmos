@@ -56,13 +56,15 @@ CosmosAgentEngine memisahkan perencanaan intent dari eksekusi tool untuk mencega
 
 ---
 
-## 2. Zero-Knowledge Personal Contact Security (Ephemeral Nonces)
+## 2. Zero-Knowledge Personal Contact & Group Security (Ephemeral Nonces)
 
-1. **Prinsip Nol-Eksposur:** Nomor telepon mentah pengguna pribadi (Ibu, Ayah, kerabat) **DILARANG KERAS** diekspos ke dalam prompt LLM Tier 1 maupun Tier 2.
-2. **128-Bit Ephemeral Nonces:** Setiap kontak dipetakan menjadi token acak kriptografis di server RAM (`contact_ref_${crypto.randomBytes(16).toString('hex')}`).
-3. **Bound to Caller:** Token hanya valid untuk `callerJid` yang memintanya; upaya resolusi oleh pengguna lain (`userB`) otomatis ditolak sebagai pelanggaran keamanan.
+1. **Prinsip Nol-Eksposur:** Nomor telepon mentah pengguna pribadi (Ibu, Ayah, kerabat) maupun JID grup mentah (`@g.us`) **DILARANG KERAS** diekspos ke dalam prompt LLM Tier 1 maupun Tier 2.
+2. **128-Bit Ephemeral Nonces:** Setiap kontak dan target grup dipetakan menjadi token acak kriptografis di server RAM (`contact_ref_${crypto.randomBytes(16).toString('hex')}`).
+3. **Bound to Caller & Group Participant Gate:**
+    - Token kontak dan grup hanya valid untuk `callerJid` yang memintanya; upaya resolusi oleh pengguna lain (`userB`) otomatis ditolak sebagai pelanggaran keamanan.
+    - **Otorisasi Target Grup:** Caller hanya dapat mengirim/meneruskan pesan ke grup WhatsApp di mana mereka terdaftar sebagai anggota/partisipan aktif (`isUserParticipant`), kecuali caller adalah Pemilik Bot (`isOwner`) yang memiliki hak akses global ke seluruh grup yang diikuti bot. Upaya pengiriman ke grup tertutup tanpa keanggotaan otomatis diblokir (`resolveRecipientToken` me-return `null`).
 4. **Capability Scoping:** Setiap token memiliki batasan izin tool (`allowedTools: Set<string>`).
-5. **RAM Protection & LRU Eviction:** Tokon store dibatasi maksimal 10.000 token server-wide dan 10 token per pengguna dengan TTL efemeral 3 menit.
+5. **RAM Protection & LRU Eviction:** Token store dibatasi maksimal 10.000 token server-wide dan 10 token per pengguna dengan TTL efemeral 3 menit.
 6. **Enkripsi At-Rest:** Nomor telepon kontak disimpan di database SQLite pada tabel `UserContactBook` menggunakan enkripsi AES-256-GCM via `encryptString()` / `decryptString()`.
 
 ---

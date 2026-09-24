@@ -5,7 +5,8 @@ import { EphemeralTokenStore } from './tokenStore.js';
 import { cleanPhoneNumber, toCanonicalJid } from '../../utils/phone.js';
 import { isOwnerId, getPrimaryOwnerNumber } from '../../utils/owner.js';
 import { loadConfig } from '../subBotConfigService.js';
-
+import { cleanId } from '../../utils/casino.js';
+import { getCachedParticipatingGroups } from './prompts/contextResolver.js';
 export interface ResolvedTarget {
     recipientToken: string;
     aliasMatch?: string;
@@ -20,7 +21,9 @@ export class AgentEntityResolver {
     public static async resolveRecipientToken(
         query: string,
         callerJid: string,
-        _sock?: WASocket
+        sock?: WASocket,
+        isOwner?: boolean,
+        callerLid?: string
     ): Promise<ResolvedTarget | null> {
         if (!query || typeof query !== 'string') return null;
 
@@ -140,6 +143,91 @@ export class AgentEntityResolver {
                 aliasMatch: 'direct_number',
                 resolvedJid: canonicalJid
             };
+        }
+
+        // 4. WhatsApp Group Target Resolution
+        if (sock) {
+            try {
+                const effectiveIsOwner = isOwner !== undefined ? isOwner : isOwnerId(callerJid);
+                const callerClean = cleanId(callerJid);
+                const callerLidClean = callerLid ? cleanId(callerLid) : undefined;
+
+                // Normalize query by removing common group prefixes
+                const normalizedGroupQuery = cleanQuery
+                    .replace(/^(grup|group)\s+/i, '')
+                    .replace(/^the\s+/i, '')
+                    .trim();
+
+                const allGroups = await getCachedParticipatingGroups(sock);
+                for (const [groupId, meta] of Object.entries(allGroups)) {
+                    if (!groupId || !groupId.endsWith('@g.us') || !meta) continue;
+
+                    const groupSubject = meta.subject ? String(meta.subject).trim() : '';
+                    const cleanSubject = groupSubject.toLowerCase();
+
+                    // Check if query matches group subject
+                    const isDirectMatch =
+                        cleanSubject === cleanQuery ||
+                        cleanSubject === normalizedGroupQuery ||
+                        (normalizedGroupQuery.length >= 3 && cleanSubject.includes(normalizedGroupQuery)) ||
+                        (cleanQuery.length >= 3 && cleanSubject.includes(cleanQuery));
+
+                    if (!isDirectMatch) continue;
+
+                    // Verify caller authorization for this group
+                    let isParticipant = effectiveIsOwner;
+                    let isCallerAdmin = effectiveIsOwner;
+
+                    if (!isParticipant && Array.isArray(meta.participants)) {
+                        for (const p of meta.participants) {
+                            const pIdClean = cleanId(p.id);
+                            const pLidClean = p.lid ? cleanId(p.lid) : undefined;
+                            if (
+                                pIdClean === callerClean ||
+                                (callerLidClean && pIdClean === callerLidClean) ||
+                                (pLidClean && pLidClean === callerClean) ||
+                                (callerLidClean && pLidClean && pLidClean === callerLidClean)
+                            ) {
+                                isParticipant = true;
+                                if (p.admin === 'admin' || p.admin === 'superadmin') {
+                                    isCallerAdmin = true;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!isParticipant) {
+                        console.warn(
+                            `[AgentEntityResolver] Blocked group token resolution for caller ${callerJid} into group ${groupId} (not a participant)`
+                        );
+                        return null;
+                    }
+
+                    // Check announcement group restriction
+                    if (meta.announce && !isCallerAdmin && !effectiveIsOwner) {
+                        console.warn(
+                            `[AgentEntityResolver] Blocked group token resolution for caller ${callerJid} into announcement group ${groupId} (not admin)`
+                        );
+                        return null;
+                    }
+
+                    const token = EphemeralTokenStore.mintToken(
+                        groupId,
+                        callerJid,
+                        new Set(['send_message', 'send_location'])
+                    );
+
+                    return {
+                        recipientToken: token,
+                        aliasMatch: groupSubject,
+                        pushName: groupSubject,
+                        resolvedJid: groupId
+                    };
+                }
+            } catch (groupErr) {
+                console.error('[AgentEntityResolver] Error resolving group alias:', groupErr);
+            }
         }
 
         return null;

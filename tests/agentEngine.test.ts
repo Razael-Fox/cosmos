@@ -620,6 +620,142 @@ async function runTests() {
     assert(msgToOwner.text.includes('Sent by Hachimi via Sara AI'), 'Message must contain sender attribution');
     console.log('  ✔ End-to-end messaging to Razael succeeded! Dispatched text:\n', msgToOwner.text);
     console.log('  ✔ Sara reply to caller:\n', ownerMsgResponse);
+
+    // =========================================================================
+    // 13. Group Target Resolution & Participant Security Gate
+    // =========================================================================
+    console.log('[Test 13] Testing group target resolution & participant security gate...');
+    const groupMockSock = {
+        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        groupFetchAllParticipating: async () => ({
+            '120363001@g.us': {
+                id: '120363001@g.us',
+                subject: 'Dev Team',
+                participants: [{ id: userA, admin: null }]
+            },
+            '120363002@g.us': {
+                id: '120363002@g.us',
+                subject: 'Secret Admins',
+                participants: [{ id: '628999999999@s.whatsapp.net', admin: 'admin' }]
+            }
+        })
+    };
+
+    // Member userA should resolve 'Dev Team'
+    const devTarget = await AgentEntityResolver.resolveRecipientToken(
+        'Dev Team',
+        userA,
+        groupMockSock as unknown as WASocket,
+        false
+    );
+    assert(devTarget !== null, 'Dev Team must resolve for member userA');
+    assert(devTarget.recipientToken.startsWith('contact_ref_'), 'Resolved Dev Team must have recipientToken');
+    assert.strictEqual(devTarget.resolvedJid, '120363001@g.us');
+    assert.strictEqual(
+        EphemeralTokenStore.isValidToken(devTarget.recipientToken, userA, 'send_message'),
+        true,
+        'Dev Team token must be valid for send_message'
+    );
+
+    // Non-member userA should be blocked from resolving 'Secret Admins'
+    const secretTarget = await AgentEntityResolver.resolveRecipientToken(
+        'Secret Admins',
+        userA,
+        groupMockSock as unknown as WASocket,
+        false
+    );
+    assert.strictEqual(secretTarget, null, 'Non-member userA must be blocked from resolving Secret Admins');
+
+    // Bot Owner should resolve 'Secret Admins' globally
+    const ownerSecretTarget = await AgentEntityResolver.resolveRecipientToken(
+        'Secret Admins',
+        userA,
+        groupMockSock as unknown as WASocket,
+        true
+    );
+    assert(ownerSecretTarget !== null, 'Bot owner must resolve Secret Admins');
+    assert.strictEqual(ownerSecretTarget.resolvedJid, '120363002@g.us');
+    console.log('  ✔ Group target resolution and participant security gate passed.');
+
+    // =========================================================================
+    // 14. End-to-End Group Message Forwarding & Quoted Forwarding
+    // =========================================================================
+    console.log('[Test 14] Testing live CosmosAgentEngine turn: group message forwarding...');
+    AgentRateLimiter.clearAll();
+
+    const groupDispatchedMessages: Array<{ destJid: string; text: string }> = [];
+    const e2eGroupSock = {
+        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        sendMessage: async (jid: string, content: { text: string }) => {
+            groupDispatchedMessages.push({ destJid: jid, text: content.text });
+            return { key: { id: `mock_group_msg_${Date.now()}` } };
+        },
+        sendPresenceUpdate: async () => {},
+        groupMetadata: async () => ({ subject: 'Test Chat', participants: [] }),
+        groupFetchAllParticipating: async () => ({
+            '120363001@g.us': {
+                id: '120363001@g.us',
+                subject: 'Dev Team',
+                participants: [{ id: userA, admin: null }]
+            }
+        })
+    };
+
+    // Direct prompt to forward message to group
+    const groupForwardResponse = await CosmosAgentEngine.processMessage(
+        e2eGroupSock as unknown as WASocket,
+        hachimiMsg as unknown as WAMessage,
+        userA,
+        'forward "Deploy completed successfully" to Dev Team',
+        'en'
+    );
+
+    assert(groupForwardResponse, 'CosmosAgentEngine must return a response for group forward');
+    const msgToDevTeam = groupDispatchedMessages.find((m) => m.destJid === '120363001@g.us');
+    assert(msgToDevTeam, 'Message must be dispatched to group 120363001@g.us');
+    assert(msgToDevTeam.text.includes('Deploy completed successfully'), 'Message must contain requested text');
+    assert(msgToDevTeam.text.includes('Sent by Hachimi via Sara AI'), 'Message must contain sender attribution');
+    console.log('  ✔ End-to-end direct group forwarding succeeded! Dispatched text:\n', msgToDevTeam.text);
+    console.log('  ✔ Sara reply to caller:\n', groupForwardResponse);
+
+    // Forwarding quoted message to group
+    AgentRateLimiter.clearAll();
+    const quotedMsgToForward = {
+        key: { remoteJid: userA, participant: userA, fromMe: false },
+        pushName: 'Hachimi',
+        message: {
+            extendedTextMessage: {
+                text: 'please forward this message to Dev Team',
+                contextInfo: {
+                    quotedMessage: { conversation: 'Release RF-2609-17 is ready' },
+                    participant: '628333333333@s.whatsapp.net',
+                    stanzaId: 'STG_QUOTED_1'
+                }
+            }
+        }
+    };
+
+    const quotedForwardResponse = await CosmosAgentEngine.processMessage(
+        e2eGroupSock as unknown as WASocket,
+        quotedMsgToForward as unknown as WAMessage,
+        userA,
+        'please forward this message to Dev Team',
+        'en'
+    );
+
+    assert(quotedForwardResponse, 'CosmosAgentEngine must return a response for quoted forward');
+    const quotedDispatch = groupDispatchedMessages.filter((m) => m.destJid === '120363001@g.us').pop();
+    assert(quotedDispatch, 'Quoted message must be dispatched to Dev Team');
+    assert(
+        quotedDispatch.text.includes('Release RF-2609-17 is ready'),
+        'Dispatched text must include quoted message text'
+    );
+    assert(
+        quotedDispatch.text.includes('Sent by Hachimi via Sara AI'),
+        'Dispatched text must include sender attribution'
+    );
+    console.log('  ✔ End-to-end quoted message group forwarding succeeded! Dispatched text:\n', quotedDispatch.text);
+    console.log('  ✔ Sara reply to caller:\n', quotedForwardResponse);
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('======================================================\n');
