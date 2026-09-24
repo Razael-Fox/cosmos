@@ -14,6 +14,10 @@ import { buildSaraPersonaPrompt } from '../src/services/agentEngine/prompts/sara
 import { maskPhoneNumber, cleanPhoneNumber, toCanonicalJid } from '../src/utils/phone.js';
 import { cancelActiveSession, hasCancellableSession } from '../src/utils/cancellationManager.js';
 import { CosmosAgentEngine } from '../src/services/agentEngine/index.js';
+import { bankTool } from '../src/services/agentEngine/tools/bank.js';
+import { prisma } from '../src/db.js';
+import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
+import type { AgentExecutionContext } from '../src/services/agentEngine/types.js';
 
 async function runTests() {
     console.log('--- STARTING COSMOS AGENT ENGINE TEST SUITE ---');
@@ -304,6 +308,93 @@ async function runTests() {
     assert.strictEqual(cancelExecuted, false, 'Cancelled action must not execute');
     assert.strictEqual(AgentConfirmationManager.findAction(userA, 'chat_test@g.us'), undefined);
     console.log('  ✔ Interactive confirmation manager and cancellation integration passed.');
+    // Test Bank Tool interactive confirmation & atomic mutation execution
+    console.log('[Test 8b] Testing bankTool staged confirmation and _confirmed execution...');
+
+    // Setup user with bank account in database
+    const bankUserJid = '628777777777@s.whatsapp.net';
+    const targetUserJid = '628888888888@s.whatsapp.net';
+
+    await prisma.user.upsert({
+        where: { id: bankUserJid },
+        create: { id: bankUserJid, balance: BigInt(50000) },
+        update: { balance: BigInt(50000) }
+    });
+    await prisma.bankAccount.upsert({
+        where: { accountNumber: '1111222233' },
+        create: {
+            accountNumber: '1111222233',
+            userJid: bankUserJid,
+            balance: BigInt(100000),
+            status: 'ACTIVE'
+        },
+        update: { balance: BigInt(100000), status: 'ACTIVE' }
+    });
+    await prisma.user.upsert({
+        where: { id: targetUserJid },
+        create: { id: targetUserJid, balance: BigInt(0) },
+        update: {}
+    });
+    await prisma.bankAccount.upsert({
+        where: { accountNumber: '4444555566' },
+        create: {
+            accountNumber: '4444555566',
+            userJid: targetUserJid,
+            balance: BigInt(20000),
+            status: 'ACTIVE'
+        },
+        update: { balance: BigInt(20000), status: 'ACTIVE' }
+    });
+
+    const bankExecCtx: AgentExecutionContext = {
+        sock: mockSock as unknown as WASocket,
+        msg: mockMsg as unknown as WAMessage,
+        chatJid: 'chat_test@g.us',
+        callerJid: bankUserJid,
+        callerName: 'BankUser',
+        isOwner: false,
+        locale: 'en',
+        t: (k: string) => k
+    };
+
+    // 1. Initial unconfirmed withdraw -> requiresConfirmation
+    const unconfirmedWithdraw = await bankTool.execute({ action: 'withdraw', amount: 30000 }, bankExecCtx);
+    assert.strictEqual(unconfirmedWithdraw.requiresConfirmation, true);
+    assert(unconfirmedWithdraw.confirmationPrompt?.includes('Rp30.000'));
+
+    // 2. Confirmed withdraw -> executes atomic deduction and wallet increment
+    const confirmedWithdraw = await bankTool.execute(
+        { action: 'withdraw', amount: 30000, _confirmed: true },
+        bankExecCtx
+    );
+    assert.strictEqual(confirmedWithdraw.success, true);
+    assert.strictEqual((confirmedWithdraw.data as Record<string, unknown>).newBankBalance, 70000);
+    assert.strictEqual((confirmedWithdraw.data as Record<string, unknown>).newWalletBalance, 80000);
+
+    // 3. Initial unconfirmed transfer -> requiresConfirmation
+    const unconfirmedTransfer = await bankTool.execute(
+        { action: 'transfer', amount: 20000, targetAccount: '4444555566' },
+        bankExecCtx
+    );
+    assert.strictEqual(unconfirmedTransfer.requiresConfirmation, true);
+
+    // 4. Confirmed transfer -> executes atomic transfer with fee
+    const confirmedTransfer = await bankTool.execute(
+        { action: 'transfer', amount: 20000, targetAccount: '4444555566', _confirmed: true },
+        bankExecCtx
+    );
+    if (!confirmedTransfer.success) {
+        console.error('Confirmed transfer error:', confirmedTransfer.error);
+    }
+    assert.strictEqual(confirmedTransfer.success, true);
+    // 70000 - 20000 - 500 fee = 49500
+    assert.strictEqual((confirmedTransfer.data as Record<string, unknown>).newBankBalance, 49500);
+
+    const updatedTargetAccount = await prisma.bankAccount.findUnique({
+        where: { accountNumber: '4444555566' }
+    });
+    assert.strictEqual(Number(updatedTargetAccount?.balance), 40000);
+    console.log('  ✔ Staged bank confirmation & atomic execution verification passed.');
 
     // =========================================================================
     // 9. Remote Location Forwarding & Delegation Flow (Mode B "shareloc")

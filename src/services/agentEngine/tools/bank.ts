@@ -58,8 +58,8 @@ export const bankTool: AgentTool = {
             };
         }
 
-        // For withdraw and transfer: require explicit interactive confirmation
-        if (action === 'withdraw' || action === 'transfer') {
+        // For withdraw and transfer: require explicit interactive confirmation unless _confirmed is true
+        if ((action === 'withdraw' || action === 'transfer') && !args._confirmed) {
             const formatted = formatRupiah(amount);
             const prompt =
                 action === 'withdraw'
@@ -77,6 +77,226 @@ export const bankTool: AgentTool = {
                     prompt
                 }
             };
+        }
+
+        if (action === 'withdraw') {
+            if (Number(user.bankAccount.balance) < amount) {
+                return {
+                    success: false,
+                    error: `Insufficient bank balance. You have ${formatRupiah(Number(user.bankAccount.balance))}, but attempted to withdraw ${formatRupiah(amount)}.`
+                };
+            }
+
+            try {
+                const updated = await prisma.$transaction(async (tx) => {
+                    const freshAccount = await tx.bankAccount.findUnique({
+                        where: { accountNumber: user.bankAccount!.accountNumber }
+                    });
+
+                    if (!freshAccount || freshAccount.status !== 'ACTIVE' || Number(freshAccount.balance) < amount) {
+                        throw new Error('INSUFFICIENT_BANK_BALANCE');
+                    }
+
+                    const newBank = BigInt(freshAccount.balance) - BigInt(amount);
+                    const freshUser = await tx.user.findUnique({ where: { id: ctx.callerJid } });
+                    const newWallet = BigInt(freshUser?.balance ?? 0) + BigInt(amount);
+
+                    await tx.bankAccount.update({
+                        where: { accountNumber: freshAccount.accountNumber },
+                        data: { balance: newBank }
+                    });
+
+                    await tx.user.update({
+                        where: { id: ctx.callerJid },
+                        data: { balance: newWallet }
+                    });
+
+                    await tx.bankTransaction.create({
+                        data: {
+                            accountNumber: freshAccount.accountNumber,
+                            type: 'WITHDRAWAL',
+                            amount: BigInt(amount),
+                            description: 'Agent Engine Cash Withdrawal'
+                        }
+                    });
+
+                    await tx.activityLog.create({
+                        data: {
+                            userId: ctx.callerJid,
+                            type: 'WITHDRAWAL',
+                            amount: BigInt(amount),
+                            description: `Agent cash withdrawal of ${formatRupiah(amount)}`
+                        }
+                    });
+
+                    return {
+                        newWallet: Number(newWallet),
+                        newBank: Number(newBank)
+                    };
+                });
+
+                return {
+                    success: true,
+                    data: {
+                        action: 'withdraw',
+                        amount,
+                        newWalletBalance: updated.newWallet,
+                        newBankBalance: updated.newBank,
+                        formattedWallet: formatRupiah(updated.newWallet),
+                        formattedBank: formatRupiah(updated.newBank)
+                    }
+                };
+            } catch (err: unknown) {
+                const errorMsg = err instanceof Error ? err.message : String(err);
+                return {
+                    success: false,
+                    error: `Withdrawal failed: ${errorMsg}`
+                };
+            }
+        }
+
+        if (action === 'transfer') {
+            if (!targetAccount) {
+                return {
+                    success: false,
+                    error: 'Target account number is required for bank transfers.'
+                };
+            }
+
+            const cleanTarget = targetAccount.replace(/\D/g, '');
+            if (!cleanTarget) {
+                return {
+                    success: false,
+                    error: `Invalid target account number: "${targetAccount}".`
+                };
+            }
+
+            if (cleanTarget === user.bankAccount.accountNumber) {
+                return {
+                    success: false,
+                    error: 'You cannot transfer funds to your own bank account.'
+                };
+            }
+
+            const BANK_TRANSFER_FEE = 500;
+            const totalRequired = amount + BANK_TRANSFER_FEE;
+
+            if (Number(user.bankAccount.balance) < totalRequired) {
+                return {
+                    success: false,
+                    error: `Insufficient bank balance. You need ${formatRupiah(totalRequired)} (including ${formatRupiah(BANK_TRANSFER_FEE)} admin fee), but your balance is ${formatRupiah(Number(user.bankAccount.balance))}.`
+                };
+            }
+
+            try {
+                const updated = await prisma.$transaction(async (tx) => {
+                    const freshSender = await tx.bankAccount.findUnique({
+                        where: { accountNumber: user.bankAccount!.accountNumber }
+                    });
+
+                    if (
+                        !freshSender ||
+                        freshSender.status !== 'ACTIVE' ||
+                        Number(freshSender.balance) < totalRequired
+                    ) {
+                        throw new Error('INSUFFICIENT_BANK_FUNDS');
+                    }
+
+                    const freshTarget = await tx.bankAccount.findUnique({
+                        where: { accountNumber: cleanTarget },
+                        include: {
+                            user: {
+                                include: { idCard: true }
+                            }
+                        }
+                    });
+
+                    if (!freshTarget || freshTarget.status !== 'ACTIVE') {
+                        throw new Error('TARGET_ACCOUNT_NOT_FOUND_OR_FROZEN');
+                    }
+
+                    const newSenderBalance = BigInt(freshSender.balance) - BigInt(totalRequired);
+                    const newTargetBalance = BigInt(freshTarget.balance) + BigInt(amount);
+
+                    await tx.bankAccount.update({
+                        where: { accountNumber: freshSender.accountNumber },
+                        data: { balance: newSenderBalance }
+                    });
+
+                    await tx.bankAccount.update({
+                        where: { accountNumber: freshTarget.accountNumber },
+                        data: { balance: newTargetBalance }
+                    });
+                    await tx.bankTransaction.create({
+                        data: {
+                            accountNumber: freshSender.accountNumber,
+                            type: 'TRANSFER_OUT',
+                            amount: BigInt(amount),
+                            relatedAccount: freshTarget.accountNumber,
+                            description: `Agent Bank Transfer to ${freshTarget.accountNumber}`
+                        }
+                    });
+
+                    await tx.bankTransaction.create({
+                        data: {
+                            accountNumber: freshSender.accountNumber,
+                            type: 'FEE',
+                            amount: BigInt(BANK_TRANSFER_FEE),
+                            relatedAccount: freshTarget.accountNumber,
+                            description: `Transfer Admin Fee to ${freshTarget.accountNumber}`
+                        }
+                    });
+
+                    await tx.bankTransaction.create({
+                        data: {
+                            accountNumber: freshTarget.accountNumber,
+                            type: 'TRANSFER_IN',
+                            amount: BigInt(amount),
+                            relatedAccount: freshSender.accountNumber,
+                            description: `Agent Bank Transfer from ${freshSender.accountNumber}`
+                        }
+                    });
+
+                    await tx.activityLog.create({
+                        data: {
+                            userId: ctx.callerJid,
+                            type: 'TRANSFER_OUT',
+                            amount: BigInt(amount),
+                            description: `Agent transfer of ${formatRupiah(amount)} to ${freshTarget.accountNumber}`
+                        }
+                    });
+
+                    const targetRecipientName =
+                        freshTarget.user.idCard?.fullName ||
+                        freshTarget.user.pushName ||
+                        freshTarget.user.id.split('@')[0];
+
+                    return {
+                        newSenderBalance: Number(newSenderBalance),
+                        targetRecipientName,
+                        targetAccountNumber: freshTarget.accountNumber
+                    };
+                });
+
+                return {
+                    success: true,
+                    data: {
+                        action: 'transfer',
+                        amount,
+                        targetAccount: updated.targetAccountNumber,
+                        recipientName: updated.targetRecipientName,
+                        fee: BANK_TRANSFER_FEE,
+                        newBankBalance: updated.newSenderBalance,
+                        formattedBank: formatRupiah(updated.newSenderBalance)
+                    }
+                };
+            } catch (err: unknown) {
+                const errorMsg = err instanceof Error ? err.message : String(err);
+                return {
+                    success: false,
+                    error: `Transfer failed: ${errorMsg}`
+                };
+            }
         }
 
         if (action === 'deposit') {
