@@ -522,9 +522,8 @@ export default function DashboardPage() {
                                     <div className="w-full h-full bg-gradient-to-r from-emerald-600/20 via-primary/20 to-indigo-600/20" />
                                 )}
 
-                                {/* Subtle Dark/Light Gradient for text contrast */}
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40" />
-
+                                {/* Subtle soft gradient overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent pointer-events-none" />
                                 {/* WhatsApp Profile Header Pill Bar (inside banner) */}
                                 <div className="absolute top-3.5 inset-x-4 flex items-center justify-between z-10">
                                     <span className="text-[11px] font-bold uppercase tracking-wider text-white drop-shadow-sm flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
@@ -553,8 +552,15 @@ export default function DashboardPage() {
                                     </span>
                                 </div>
 
-                                {/* Bottom Blur Blend Effect on the Banner */}
-                                <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-card via-card/75 to-transparent backdrop-blur-[3px] pointer-events-none" />
+                                {/* Smooth frosted-glass fog transition at the bottom */}
+                                <div
+                                    className="absolute bottom-0 inset-x-0 h-16 pointer-events-none backdrop-blur-[6px]"
+                                    style={{
+                                        maskImage: 'linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%)',
+                                        WebkitMaskImage: 'linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%)'
+                                    }}
+                                />
+                                <div className="absolute bottom-0 inset-x-0 h-14 bg-gradient-to-t from-card via-card/50 to-transparent pointer-events-none" />
                             </div>
 
                             {/* Card Content (Avatar, Username, Plan Status) */}
