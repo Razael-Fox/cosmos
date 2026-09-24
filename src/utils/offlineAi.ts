@@ -175,7 +175,7 @@ Important: Use the Native Function Calling API. Strictly do NOT output raw XML t
         // Retrieve the conversation context (includes summary and recent messages)
         const chatContext = await getConversationContext(jid, groq);
 
-        let modelToUse = 'llama3-70b-8192'; // Use model that supports tool calling well
+        let modelToUse = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
         if (finalImages.length > 0) {
             modelToUse = 'llama-3.2-90b-vision-preview'; // Vision model
             const lastMsg = chatContext[chatContext.length - 1];

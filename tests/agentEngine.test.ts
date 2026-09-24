@@ -13,6 +13,7 @@ import { buildSaraGuidancePrompt } from '../src/services/agentEngine/prompts/sar
 import { buildSaraPersonaPrompt } from '../src/services/agentEngine/prompts/saraPersona.js';
 import { maskPhoneNumber, cleanPhoneNumber, toCanonicalJid } from '../src/utils/phone.js';
 import { cancelActiveSession, hasCancellableSession } from '../src/utils/cancellationManager.js';
+import { CosmosAgentEngine } from '../src/services/agentEngine/index.js';
 
 async function runTests() {
     console.log('--- STARTING COSMOS AGENT ENGINE TEST SUITE ---');
@@ -384,6 +385,40 @@ async function runTests() {
     assert.strictEqual(cooldownCheck.allowed, false);
     assert.strictEqual(cooldownCheck.reason, 'COOLDOWN');
     console.log('  ✔ Rate limiter and concurrency lock passed.');
+
+    // =========================================================================
+    // 11. End-to-End CosmosAgentEngine Turn (Balance Inquiry)
+    // =========================================================================
+    console.log('[Test 11] Testing live CosmosAgentEngine turn with model fallback...');
+    AgentRateLimiter.clearAll();
+
+    let lastSentMessage = '';
+    const e2eSock = {
+        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        sendMessage: async (_jid: string, content: { text: string }) => {
+            lastSentMessage = content.text;
+            return { key: { id: 'mock_msg_e2e' } };
+        },
+        sendPresenceUpdate: async () => {},
+        groupMetadata: async () => ({ subject: 'Test Chat', participants: [] })
+    };
+
+    const e2eMsg = {
+        key: { remoteJid: userA, participant: userA, fromMe: false },
+        pushName: 'Alice'
+    };
+
+    const e2eResponse = await CosmosAgentEngine.processMessage(
+        e2eSock as any,
+        e2eMsg as any,
+        userA,
+        'what is my current wallet and bank balance?',
+        'en'
+    );
+
+    assert(e2eResponse, 'CosmosAgentEngine must return a response');
+    assert(lastSentMessage.length > 0, 'Response message must be dispatched via sock.sendMessage');
+    console.log('  ✔ End-to-end turn succeeded with response:\n', e2eResponse);
 
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
