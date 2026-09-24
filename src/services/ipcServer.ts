@@ -7,7 +7,7 @@ import { dispatchLoginSecurityAlert } from './securityAlertService.js';
 import { activeConnections } from '#utils/connectionManager.js';
 import { getUserPresence } from './presenceService.js';
 import { getChatLanguage, getTranslator } from '#utils/i18n.js';
-import type { WASocket, GroupMetadata } from '@whiskeysockets/baileys';
+import { getBinaryNodeChild, type WASocket, type GroupMetadata, type BinaryNode } from '@whiskeysockets/baileys';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
 
@@ -407,9 +407,52 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             try {
                 const preview = await sock.profilePictureUrl(jid, 'preview').catch(() => null);
                 const url = preview || (await sock.profilePictureUrl(jid, 'image').catch(() => null));
-                return { status: 200, data: { ok: true, pictureUrl: url || null } };
+
+                let coverUrl: string | null = null;
+                try {
+                    const socketWithQuery = sock as unknown as {
+                        query?: (node: BinaryNode) => Promise<BinaryNode>;
+                    };
+                    if (typeof socketWithQuery.query === 'function') {
+                        const bizRes = await socketWithQuery
+                            .query({
+                                tag: 'iq',
+                                attrs: {
+                                    to: 's.whatsapp.net',
+                                    xmlns: 'w:biz',
+                                    type: 'get'
+                                },
+                                content: [
+                                    {
+                                        tag: 'business_profile',
+                                        attrs: { v: '244' },
+                                        content: [
+                                            {
+                                                tag: 'profile',
+                                                attrs: { jid }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            })
+                            .catch(() => null);
+
+                        if (bizRes) {
+                            const profileNode = getBinaryNodeChild(bizRes, 'business_profile');
+                            const profile = profileNode ? getBinaryNodeChild(profileNode, 'profile') : undefined;
+                            const coverNode = profile ? getBinaryNodeChild(profile, 'cover_photo') : undefined;
+                            const foundCoverUrl = coverNode?.attrs?.url || coverNode?.attrs?.direct_path || null;
+                            if (foundCoverUrl) {
+                                coverUrl = String(foundCoverUrl);
+                            }
+                        }
+                    }
+                } catch {
+                    /* non-fatal fallback */
+                }
+                return { status: 200, data: { ok: true, pictureUrl: url || null, coverUrl: coverUrl || null } };
             } catch {
-                return { status: 200, data: { ok: true, pictureUrl: null } };
+                return { status: 200, data: { ok: true, pictureUrl: null, coverUrl: null } };
             }
         }
         case '/internal/users/presence': {
