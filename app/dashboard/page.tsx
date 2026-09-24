@@ -19,8 +19,6 @@ import {
     Info,
     WhatsappLogo,
     Sparkle,
-    Lightning,
-    ShieldCheck,
     Lock,
     Sliders
 } from '@phosphor-icons/react';
@@ -552,9 +550,8 @@ export default function DashboardPage() {
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent pointer-events-none" />
                                 {/* WhatsApp Profile Header Pill Bar (inside banner) */}
                                 <div className="absolute top-3.5 inset-x-4 flex items-center justify-between z-10">
-                                    <span className="text-[11px] font-bold uppercase tracking-wider text-white drop-shadow-sm flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-                                        <WhatsappLogo className="w-3.5 h-3.5 text-emerald-400" weight="fill" />
-                                        <span>{t.dashboard.userProfileCard?.title || 'WhatsApp Profile'}</span>
+                                    <span className="text-[11px] font-bold uppercase tracking-wider text-white drop-shadow-sm px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                                        {t.dashboard.userProfileCard?.title || 'WhatsApp Profile'}
                                     </span>
                                     <span
                                         className={`text-[11px] px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 backdrop-blur-md border shadow-xs ${
@@ -650,15 +647,8 @@ export default function DashboardPage() {
                                 {/* Plan Status Info */}
                                 <div className="mt-4 pt-3.5 border-t border-border/70 space-y-2.5">
                                     <div className="flex items-center justify-between text-xs">
-                                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                                            {subscription?.tier === 'PARTNER' ? (
-                                                <ShieldCheck className="w-3.5 h-3.5 text-indigo-500 shrink-0" weight="fill" />
-                                            ) : subscription?.tier === 'SUBSIDIZED' ? (
-                                                <Lightning className="w-3.5 h-3.5 text-amber-500 shrink-0" weight="fill" />
-                                            ) : (
-                                                <Sparkle className="w-3.5 h-3.5 text-primary shrink-0" />
-                                            )}
-                                            <span>{t.dashboard.userProfileCard?.planStatus || 'Plan Status'}</span>
+                                        <span className="text-muted-foreground font-medium">
+                                            {t.dashboard.userProfileCard?.planStatus || 'Plan Status'}
                                         </span>
                                         <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground border border-border/60">
                                             {subscription?.expiresAt
