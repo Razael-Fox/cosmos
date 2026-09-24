@@ -29,6 +29,7 @@ import {
     removeScheduledDeletions,
     processStickerlySelection
 } from '#utils/stickerlySession.js';
+import { hasActivePlaySession, getActivePlaySession } from '#utils/playSession.js';
 import { AgentConfirmationManager } from '#services/agentEngine/confirmationManager.js';
 import { AgentLocationStager } from '#services/agentEngine/locationStager.js';
 
@@ -405,6 +406,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             ) {
                 isPlayReply = true;
             }
+        } else if (senderRaw && hasActivePlaySession(senderRaw, jid)) {
+            const queryNum = parseInt(trimmedText, 10);
+            const playSess = getActivePlaySession(senderRaw, jid);
+            if (playSess && queryNum > 0 && queryNum <= playSess.results.length) {
+                isPlayReply = true;
+            }
         }
     }
 
@@ -459,11 +466,13 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     );
 
     const isStickerlyActiveInChat = hasActiveStickerlySession(jid);
+    const isPlayActiveInChat = Boolean(senderRaw && hasActivePlaySession(senderRaw, jid));
     const isInInteractiveSession = Boolean(
         (senderRaw && isCancelKeyword && (hasCancellableSession(senderRaw, jid) || isStickerlyActiveInChat)) ||
         (senderRaw && !isQuotingCommand && isUserRegistering(senderRaw, jid)) ||
         (senderRaw && hasCancellableSession(senderRaw, jid)) ||
-        isStickerlyActiveInChat
+        isStickerlyActiveInChat ||
+        isPlayActiveInChat
     );
 
     const isAutoStickerTrigger = Boolean(

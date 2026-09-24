@@ -12,7 +12,14 @@ import {
 import cancelTool from '../src/tools/cancel.js';
 import { startRegistrationSession, isUserRegistering, cancelRegistrationSession } from '../src/utils/idCard.js';
 import createGameTool from '../src/tools/roulette_creategame.js';
-
+import {
+    registerPlaySession,
+    getActivePlaySession,
+    hasActivePlaySession,
+    clearPlaySession,
+    clearAllPlaySessions
+} from '../src/utils/playSession.js';
+import { getTranslator } from '../src/utils/i18n.js';
 async function runTests() {
     console.log('--- STARTING GLOBAL CANCELLATION SYSTEM TESTS ---');
 
@@ -147,7 +154,7 @@ async function runTests() {
     const idUser = '628333333333';
     const idChat = 'id_test_chat@g.us';
 
-    startRegistrationSession(idUser, idChat);
+    startRegistrationSession(idUser, idChat, getTranslator('en'));
     assert.strictEqual(isUserRegistering(idUser, idChat), true);
     assert.strictEqual(hasCancellableSession(idUser, idChat), true);
 
@@ -161,18 +168,17 @@ async function runTests() {
     };
 
     const idCancelResult = await cancelTool.execute({}, idCtx);
-    assert.strictEqual(idCancelResult, 'Virtual ID card registration has been cancelled.');
+    assert.strictEqual(idCancelResult, 'Virtual ID Card registration has been cancelled.');
     assert.strictEqual(isUserRegistering(idUser, idChat), false);
     assert.strictEqual(hasCancellableSession(idUser, idChat), false);
 
     // Direct cancelRegistrationSession check
-    startRegistrationSession('temp_reg_user', idChat);
+    startRegistrationSession('temp_reg_user', idChat, getTranslator('en'));
     assert.strictEqual(isUserRegistering('temp_reg_user', idChat), true);
     cancelRegistrationSession('temp_reg_user', idChat);
     assert.strictEqual(isUserRegistering('temp_reg_user', idChat), false);
     assert.strictEqual(hasCancellableSession('temp_reg_user', idChat), false);
     console.log('✓ Virtual ID Card cancellation integration verified.');
-
     // [Test 5] Integration with Buckshot Roulette Lobby Cancellation & Bet Refund
     console.log('[Test 5] Testing Buckshot Roulette lobby cancellation integration...');
     const rouletteHost = '628444444444';
@@ -209,6 +215,113 @@ async function runTests() {
     });
     console.log('✓ Buckshot Roulette lobby cancellation integration verified.');
 
+    // [Test 6] Integration with YouTube Music Player (.play) Cancellation State
+    console.log('[Test 6] Testing YouTube Music Player (.play) cancellation integration...');
+    const playUser = '628555555555';
+    const playChat = 'play_test_chat@g.us';
+    const tEn = getTranslator('en');
+
+    clearAllPlaySessions();
+    assert.strictEqual(hasActivePlaySession(playUser, playChat), false);
+    assert.strictEqual(hasCancellableSession(playUser, playChat), false);
+
+    const searchResults = [
+        { index: 1, title: 'Song 1', url: 'https://youtube.com/watch?v=1111' },
+        { index: 2, title: 'Song 2', url: 'https://youtube.com/watch?v=2222' },
+        { index: 3, title: 'Song 3', url: 'https://youtube.com/watch?v=3333' }
+    ];
+
+    let lastDeletedMessageKey: any = null;
+    const playMockSock: any = {
+        sendMessage: async (targetJid: string, content: any) => {
+            if (content.delete) {
+                lastDeletedMessageKey = content.delete;
+            }
+            return { key: { remoteJid: targetJid, id: 'MOCK_SENT_KEY' } };
+        }
+    };
+
+    // Register play session
+    registerPlaySession(
+        {
+            userJid: playUser,
+            chatJid: playChat,
+            query: 'test query',
+            results: searchResults,
+            enableLyrics: false,
+            messageKey: { remoteJid: playChat, fromMe: true, id: 'SEARCH_MSG_KEY_123' },
+            createdAt: Date.now()
+        },
+        tEn
+    );
+
+    assert.strictEqual(hasActivePlaySession(playUser, playChat), true);
+    assert.strictEqual(hasCancellableSession(playUser, playChat), true);
+    const currentSess = getActivePlaySession(playUser, playChat);
+    assert.strictEqual(currentSess?.results.length, 3);
+    assert.strictEqual(currentSess?.query, 'test query');
+
+    // Cancel via cancelTool
+    const playCtx: any = {
+        sock: playMockSock,
+        msg: {
+            key: { remoteJid: playChat, participant: `${playUser}@s.whatsapp.net`, fromMe: false },
+            message: { conversation: '.cancel' }
+        },
+        jid: playChat,
+        t: tEn
+    };
+
+    const playCancelRes = await cancelTool.execute({}, playCtx);
+    assert.strictEqual(playCancelRes, 'YouTube music playback selection has been cancelled.');
+    assert.strictEqual(hasActivePlaySession(playUser, playChat), false);
+    assert.strictEqual(hasCancellableSession(playUser, playChat), false);
+    assert.deepStrictEqual(lastDeletedMessageKey, { remoteJid: playChat, fromMe: true, id: 'SEARCH_MSG_KEY_123' });
+
+    // Test clearPlaySession directly (simulating selection completion)
+    registerPlaySession(
+        {
+            userJid: playUser,
+            chatJid: playChat,
+            query: 'song choice',
+            results: searchResults,
+            enableLyrics: false,
+            createdAt: Date.now()
+        },
+        tEn
+    );
+    assert.strictEqual(hasActivePlaySession(playUser, playChat), true);
+    assert.strictEqual(hasCancellableSession(playUser, playChat), true);
+    clearPlaySession(playUser, playChat);
+    assert.strictEqual(hasActivePlaySession(playUser, playChat), false);
+    assert.strictEqual(hasCancellableSession(playUser, playChat), false);
+
+    // Test download phase cancellation
+    let downloadAborted = false;
+    const abortController = new AbortController();
+    registerCancellableSession({
+        sessionId: `play_dl_${playUser}_123`,
+        feature: 'play',
+        userJid: playUser,
+        chatJid: playChat,
+        descriptionKey: 'media.play.download_cancellation_desc',
+        descriptionVars: { query: 'test song' },
+        description: 'YouTube audio download for "test song"',
+        onCancel: async () => {
+            abortController.abort();
+            downloadAborted = true;
+            return tEn('media.play.download_cancelled');
+        }
+    });
+
+    assert.strictEqual(hasCancellableSession(playUser, playChat), true);
+    const dlCancelRes = await cancelTool.execute({}, playCtx);
+    assert.strictEqual(dlCancelRes, 'YouTube audio download has been cancelled.');
+    assert.strictEqual(downloadAborted, true);
+    assert.strictEqual(abortController.signal.aborted, true);
+    assert.strictEqual(hasCancellableSession(playUser, playChat), false);
+
+    console.log('✓ YouTube Music Player (.play) cancellation integration verified.');
     console.log('--- ALL GLOBAL CANCELLATION TESTS PASSED SUCCESSFULLY! ---');
 }
 

@@ -64,7 +64,11 @@
     },
     "play": {
         "results_title": "Here are the top results for *{{query}}*.\nPlease reply with a number (1-{{count}}) to this message to download:\n",
-        "flags_lyrics": "(Flags: --lyrics)\n"
+        "flags_lyrics": "(Flags: --lyrics)\n",
+        "cancellation_desc": "YouTube music search for \"{{query}}\"",
+        "cancelled": "YouTube music playback selection has been cancelled.",
+        "download_cancellation_desc": "YouTube audio download for \"{{query}}\"",
+        "download_cancelled": "YouTube audio download has been cancelled."
     },
     "playlyrics": {
         "invalid_format": "Failed: Invalid command format. Usage: `.playlyrics 'song name' | [multiplier]`",

@@ -64,7 +64,11 @@
     },
     "play": {
         "results_title": "Berikut adalah hasil teratas untuk *{{query}}*.\nSilakan balas dengan nomor (1-{{count}}) ke pesan ini untuk mengunduh:\n",
-        "flags_lyrics": "(Bendera: --lyrics)\n"
+        "flags_lyrics": "(Bendera: --lyrics)\n",
+        "cancellation_desc": "Pencarian musik YouTube untuk \"{{query}}\"",
+        "cancelled": "Pemilihan pemutaran musik YouTube telah dibatalkan.",
+        "download_cancellation_desc": "Pengunduhan audio YouTube untuk \"{{query}}\"",
+        "download_cancelled": "Pengunduhan audio YouTube telah dibatalkan."
     },
     "playlyrics": {
         "invalid_format": "Gagal: Format perintah tidak valid. Penggunaan: `.playlyrics 'nama lagu' | [pengali]`",

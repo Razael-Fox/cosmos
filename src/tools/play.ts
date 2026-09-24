@@ -5,7 +5,9 @@ import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
 import { playLyrics } from '#utils/lyricsPlayer.js';
-
+import { cleanId } from '#utils/casino.js';
+import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
+import { registerPlaySession, getActivePlaySession, clearPlaySession, PlaySearchResult } from '#utils/playSession.js';
 const execAsync = promisify(exec);
 
 export const definition: ToolDefinition = {
@@ -64,16 +66,27 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
     }
 
-    // Check if the query is a number and quoted text contains a list of songs
+    // Check if the query is a number and quoted text contains a list of songs or active play session exists
     const queryNum = parseInt(query, 10);
-    if (
+    const activeSession = senderJid ? getActivePlaySession(senderJid, ctx.jid) : undefined;
+    if (!isNaN(queryNum) && queryNum > 0 && activeSession && queryNum <= activeSession.results.length) {
+        enableLyrics = activeSession.enableLyrics;
+        originalQueryStr = activeSession.results[queryNum - 1].title || activeSession.query;
+        query = activeSession.results[queryNum - 1].url;
+        if (!stanzaIdToDelete && activeSession.messageKey?.id) {
+            stanzaIdToDelete = activeSession.messageKey.id;
+        }
+        clearPlaySession(activeSession.userJid, ctx.jid);
+    } else if (
         !isNaN(queryNum) &&
         queryNum > 0 &&
         queryNum <= 10 &&
         (quotedText.toLowerCase().includes('reply with a number') ||
-            quotedText.toLowerCase().includes('balas dengan angka'))
+            quotedText.toLowerCase().includes('balas dengan nomor') ||
+            quotedText.toLowerCase().includes('balas dengan angka') ||
+            quotedText.toLowerCase().includes('(1-'))
     ) {
-        if (quotedText.includes('(Flags: --lyrics)')) {
+        if (quotedText.includes('(Flags: --lyrics)') || quotedText.includes('(Bendera: --lyrics)')) {
             enableLyrics = true;
         }
 
@@ -89,6 +102,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const urlMatch = matchLine.match(/(https?:\/\/[^\s]+)/);
             if (urlMatch) {
                 query = urlMatch[1]; // Override query with the extracted URL
+                if (senderJid) {
+                    clearPlaySession(senderJid, ctx.jid);
+                }
             } else {
                 await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
                 return;
@@ -136,7 +152,38 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 replyText += `${index + 1}. ${res}\n`;
             });
 
-            await ctx.sock.sendMessage(ctx.jid, { text: replyText.trim() }, { quoted: ctx.msg });
+            const sentMsg = await ctx.sock.sendMessage(ctx.jid, { text: replyText.trim() }, { quoted: ctx.msg });
+
+            // Parse results into structured list
+            const parsedResults: PlaySearchResult[] = results.map((res, index) => {
+                const urlMatch = res.match(/(https?:\/\/[^\s]+)/);
+                const songUrl = urlMatch ? urlMatch[1] : '';
+                const title = res
+                    .replace(/(https?:\/\/[^\s]+)/, '')
+                    .replace(/\s*-\s*$/, '')
+                    .trim();
+                return {
+                    index: index + 1,
+                    title,
+                    url: songUrl
+                };
+            });
+
+            // Register active play session for cancellation and interactive selection
+            if (senderJid) {
+                registerPlaySession(
+                    {
+                        userJid: senderJid,
+                        chatJid: ctx.jid,
+                        query,
+                        results: parsedResults,
+                        enableLyrics,
+                        messageKey: sentMsg?.key,
+                        createdAt: Date.now()
+                    },
+                    ctx.t
+                );
+            }
 
             await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
             return;
@@ -155,6 +202,38 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
         const timestamp = Date.now();
         const outTemplate = path.join(storagePath, `play_${timestamp}_%(id)s.%(ext)s`);
+        const abortController = new AbortController();
+        const cleanSender = cleanId(senderJid).toLowerCase();
+        const dlSessionId = `play_dl_${cleanSender}_${timestamp}`;
+
+        // Register download with cancellationManager so .cancel can abort in-flight download
+        if (cleanSender) {
+            registerCancellableSession({
+                sessionId: dlSessionId,
+                feature: 'play',
+                userJid: cleanSender,
+                chatJid: ctx.jid,
+                descriptionKey: 'media.play.download_cancellation_desc',
+                descriptionVars: { query: originalQueryStr || query },
+                description: `YouTube audio download for "${originalQueryStr || query}"`,
+                onCancel: async () => {
+                    abortController.abort();
+                    try {
+                        const files = fs.readdirSync(storagePath);
+                        for (const file of files) {
+                            if (file.startsWith(`play_${timestamp}_`)) {
+                                fs.unlinkSync(path.join(storagePath, file));
+                            }
+                        }
+                    } catch (cleanupErr) {
+                        console.error('[Play Tool] Error cleaning up partial download:', cleanupErr);
+                    }
+                    return ctx.t
+                        ? ctx.t('media.play.download_cancelled')
+                        : 'YouTube audio download has been cancelled.';
+                }
+            });
+        }
 
         try {
             const ffmpegLoc = ffmpeg ? `--ffmpeg-location "${ffmpeg}"` : '';
@@ -163,10 +242,13 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             let stdout = '';
             let stderr = '';
             try {
-                const result = await execAsync(command);
+                const result = await execAsync(command, { signal: abortController.signal });
                 stdout = result.stdout;
                 stderr = result.stderr;
             } catch (err: any) {
+                if (abortController.signal.aborted || err?.name === 'AbortError') {
+                    return;
+                }
                 stdout = err.stdout || '';
                 stderr = err.stderr || '';
                 if (err.code !== 101) {
@@ -212,9 +294,16 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 return;
             }
         } catch (error: any) {
+            if (abortController.signal.aborted || error?.name === 'AbortError') {
+                return;
+            }
             console.error('[Play Tool] Execution error:', error);
             await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
             return;
+        } finally {
+            if (cleanSender) {
+                unregisterCancellableSession(dlSessionId);
+            }
         }
     }
 }
