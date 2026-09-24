@@ -18,7 +18,12 @@ import {
     CaretDown,
     CaretUp,
     Info,
-    WhatsappLogo
+    WhatsappLogo,
+    Sparkle,
+    Lightning,
+    ShieldCheck,
+    Lock,
+    Sliders
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { getRandomTimeQuote } from '@/lib/timeQuotes';
@@ -578,32 +583,61 @@ export default function DashboardPage() {
                                 </div>
 
                                 {/* Plan Status Info */}
-                                <div className="mt-4 pt-3 border-t border-border/80 space-y-1">
+                                <div className="mt-4 pt-3.5 border-t border-border/70 space-y-2.5">
                                     <div className="flex items-center justify-between text-xs">
-                                        <span className="text-muted-foreground font-medium">
-                                            {t.dashboard.userProfileCard?.planStatus || 'Plan Status'}
+                                        <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                                            {subscription?.tier === 'PARTNER' ? (
+                                                <ShieldCheck className="w-3.5 h-3.5 text-indigo-500 shrink-0" weight="fill" />
+                                            ) : subscription?.tier === 'SUBSIDIZED' ? (
+                                                <Lightning className="w-3.5 h-3.5 text-amber-500 shrink-0" weight="fill" />
+                                            ) : (
+                                                <Sparkle className="w-3.5 h-3.5 text-primary shrink-0" />
+                                            )}
+                                            <span>{t.dashboard.userProfileCard?.planStatus || 'Plan Status'}</span>
                                         </span>
-                                        <span className="text-muted-foreground font-mono">
+                                        <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground border border-border/60">
                                             {subscription?.expiresAt
                                                 ? `${t.dashboard.validUntilPrefix} ${new Date(subscription.expiresAt).toLocaleDateString(dateLocale)}`
                                                 : t.dashboard.planCard.perpetual}
                                         </span>
                                     </div>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-foreground font-heading">
-                                            {subscription?.tier === 'PARTNER'
-                                                ? 'Zenith'
-                                                : subscription?.tier === 'SUBSIDIZED'
-                                                  ? 'Nova'
-                                                  : 'Pulse'}
-                                        </span>
-                                        <span className="text-[11px] text-muted-foreground">
-                                            (
-                                            {subscription?.customPrefix
-                                                ? t.dashboard.planCard.allowed
-                                                : t.dashboard.planCard.locked}
-                                            )
-                                        </span>
+
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-2xl font-black text-foreground font-heading tracking-tight">
+                                                {subscription?.tier === 'PARTNER'
+                                                    ? 'Zenith'
+                                                    : subscription?.tier === 'SUBSIDIZED'
+                                                      ? 'Nova'
+                                                      : 'Pulse'}
+                                            </span>
+                                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider font-mono">
+                                                {subscription?.tier === 'PARTNER'
+                                                    ? 'Partner'
+                                                    : subscription?.tier === 'SUBSIDIZED'
+                                                      ? 'Subsidized'
+                                                      : 'Free'}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors border ${
+                                                subscription?.customPrefix
+                                                    ? 'bg-primary/10 text-primary border-primary/20'
+                                                    : 'bg-muted/50 text-muted-foreground border-border/60'
+                                            }`}
+                                        >
+                                            {subscription?.customPrefix ? (
+                                                <Sliders className="w-3 h-3 shrink-0" />
+                                            ) : (
+                                                <Lock className="w-3 h-3 shrink-0 text-muted-foreground/80" />
+                                            )}
+                                            <span>
+                                                {subscription?.customPrefix
+                                                    ? t.dashboard.planCard.allowed
+                                                    : t.dashboard.planCard.locked}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

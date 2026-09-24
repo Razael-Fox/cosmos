@@ -276,7 +276,7 @@ const rawDictionary = {
                 planStatus: 'Status Paket',
                 currentTier: 'Paket Saat Ini',
                 upgradeBtn: 'Upgrade Paket',
-                perpetual: 'Permanen (Free)',
+                perpetual: 'Permanen',
                 online: 'Online',
                 offline: 'Offline'
             },
@@ -285,13 +285,13 @@ const rawDictionary = {
                 currentTier: 'Paket Saat Ini',
                 status: 'Status',
                 expiresAt: 'Berlaku Hingga',
-                perpetual: 'Permanen (Free)',
+                perpetual: 'Permanen',
                 upgradeBtn: 'Upgrade Paket',
                 subBotsQuota: 'Kuota Sub-Bot',
                 groupsQuota: 'Kuota Whitelist Grup',
                 prefixFeature: 'Prefix Kustom',
-                allowed: 'Tersedia',
-                locked: 'Terkunci (Hanya .)'
+                allowed: 'Prefix Kustom Aktif',
+                locked: 'Prefix Default (.)'
             },
             subbotsCard: {
                 title: 'Sub-Bot Multi-Device Terhubung',
@@ -688,7 +688,7 @@ const rawDictionary = {
                 planStatus: 'Plan Status',
                 currentTier: 'Current Plan',
                 upgradeBtn: 'Upgrade Plan',
-                perpetual: 'Perpetual (Free)',
+                perpetual: 'Perpetual',
                 online: 'Online',
                 offline: 'Offline'
             },
@@ -697,13 +697,13 @@ const rawDictionary = {
                 currentTier: 'Current Plan',
                 status: 'Status',
                 expiresAt: 'Valid Until',
-                perpetual: 'Perpetual (Free)',
+                perpetual: 'Perpetual',
                 upgradeBtn: 'Upgrade Plan',
                 subBotsQuota: 'Sub-Bot Quota',
                 groupsQuota: 'Group Whitelist Quota',
                 prefixFeature: 'Custom Prefix',
-                allowed: 'Enabled',
-                locked: 'Locked (Default .)'
+                allowed: 'Custom Prefix Active',
+                locked: 'Default Prefix (.)'
             },
             subbotsCard: {
                 title: 'Connected Multi-Device Sub-Bots',
