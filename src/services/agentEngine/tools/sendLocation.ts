@@ -69,10 +69,11 @@ export const sendLocationTool: AgentTool = {
                     address
                 }
             });
-
-            if (customNote) {
-                await ctx.sock.sendMessage(realJid, { text: customNote });
-            }
+            const rawSenderName =
+                ctx.callerName && ctx.callerName !== 'User' ? ctx.callerName : ctx.subBotOwnerName || 'Razael';
+            const cleanSenderName = rawSenderName.replace(/^(Ir\.|Dr\.|Drs\.|Prof\.)\s*/i, '').trim() || rawSenderName;
+            const attributionCaption = customNote || `${cleanSenderName} sent this from a different number — Sara AI`;
+            await ctx.sock.sendMessage(realJid, { text: attributionCaption });
 
             // Invalidate token upon terminal execution
             EphemeralTokenStore.consumeToken(recipientToken, ctx.callerJid);
@@ -82,7 +83,7 @@ export const sendLocationTool: AgentTool = {
                 data: {
                     messageId: sentLoc?.key?.id,
                     location: { latitude: lat, longitude: lon, name, address },
-                    hasNote: Boolean(customNote)
+                    attributionNote: attributionCaption
                 }
             };
         } catch (err: unknown) {

@@ -159,10 +159,11 @@ export class AgentLocationStager {
                             : undefined
                 }
             });
-
-            const attributionCaption = `${session.subBotOwnerName} sent this — Sara AI`;
+            const rawOwnerName =
+                session.subBotOwnerName && session.subBotOwnerName !== 'Owner' ? session.subBotOwnerName : 'Razael';
+            const cleanSenderName = rawOwnerName.replace(/^(Ir\.|Dr\.|Drs\.|Prof\.)\s*/i, '').trim() || rawOwnerName;
+            const attributionCaption = `${cleanSenderName} sent this from a different number — Sara AI`;
             await sock.sendMessage(realJid, { text: attributionCaption });
-
             // Confirm back to sender
             await sock.sendMessage(
                 chatJid,

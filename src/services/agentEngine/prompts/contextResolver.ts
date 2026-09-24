@@ -2,7 +2,7 @@ import { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { SaraPromptContext } from '../types.js';
 import { prisma, dbContext } from '../../../db.js';
 import { getSenderJid, cleanId } from '../../../utils/casino.js';
-import { isOwnerId } from '../../../utils/owner.js';
+import { isOwnerId, getPrimaryOwnerNumber } from '../../../utils/owner.js';
 import { decryptString } from '../../storageEncryption.js';
 import { EphemeralTokenStore } from '../tokenStore.js';
 import { loadConfig } from '../../subBotConfigService.js';
@@ -57,6 +57,24 @@ export class SaraPromptContextResolver {
             }
         }
 
+        if (!subBotOwnerName) {
+            const primaryOwner = getPrimaryOwnerNumber();
+            if (primaryOwner) {
+                try {
+                    const ownerUser = await prisma.user.findFirst({
+                        where: {
+                            OR: [{ id: `${primaryOwner}@s.whatsapp.net` }, { id: primaryOwner }]
+                        }
+                    });
+                    subBotOwnerName = ownerUser?.pushName || ownerUser?.username || 'Razael';
+                } catch {
+                    subBotOwnerName = 'Razael';
+                }
+            } else {
+                subBotOwnerName = sock.user?.name || 'Razael';
+            }
+        }
+
         // Fetch User and ID Card status
         let user = null;
         let hasIdCard = false;
@@ -70,7 +88,8 @@ export class SaraPromptContextResolver {
             // Proceed with null user
         }
 
-        const callerName = msg.pushName || user?.pushName || user?.username || 'User';
+        const rawCallerName = msg.pushName || user?.pushName || user?.username || subBotOwnerName || 'Razael';
+        const callerName = rawCallerName.replace(/^(Ir\.|Dr\.|Drs\.|Prof\.)\s*/i, '').trim() || rawCallerName;
 
         // Chat Context
         const isGroup = chatJid.endsWith('@g.us');
