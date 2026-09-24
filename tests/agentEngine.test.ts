@@ -24,6 +24,10 @@ async function runTests() {
     console.log('[Test 1] Testing phone normalization & privacy masking...');
     assert.strictEqual(cleanPhoneNumber('081234567890'), '6281234567890');
     assert.strictEqual(cleanPhoneNumber('+62 812-3456-7890'), '6281234567890');
+    assert.strictEqual(cleanPhoneNumber('+62 0812-3456-7890'), '6281234567890');
+    assert.strictEqual(cleanPhoneNumber('+94 77 837 0112'), '94778370112');
+    assert.strictEqual(cleanPhoneNumber('0094 77 837 0112'), '94778370112');
+    assert.strictEqual(toCanonicalJid('+94 77 837 0112'), '94778370112@s.whatsapp.net');
     assert.strictEqual(toCanonicalJid('081234567890'), '6281234567890@s.whatsapp.net');
 
     // Masking check: 62812****7890
@@ -357,7 +361,7 @@ async function runTests() {
         if (s.destJid !== targetRecipientJid) return false;
         const payload = s.payload;
         if (payload && typeof payload === 'object' && 'text' in payload && typeof payload.text === 'string') {
-            return payload.text.includes('Razael sent this — Sara AI');
+            return payload.text.includes('Razael sent this from a different number — Sara AI');
         }
         return false;
     });

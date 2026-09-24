@@ -9,10 +9,24 @@
 export function cleanPhoneNumber(input: string): string {
     if (!input) return '';
     const cleaned = input.split('@')[0].split(':')[0].trim();
+    // Strip all non-digit characters (+, spaces, hyphens, parentheses, etc.)
     let digits = cleaned.replace(/\D/g, '');
+
+    // Handle international exit code "00" (e.g., 0094... or 0062...)
+    if (digits.startsWith('00')) {
+        digits = digits.slice(2);
+    }
+
+    // Handle Indonesian local leading 0 (e.g., 0812... -> 62812...)
     if (digits.startsWith('0')) {
         digits = '62' + digits.slice(1);
     }
+
+    // Handle accidental redundant prefix: 620812... -> 62812...
+    if (digits.startsWith('6208')) {
+        digits = '628' + digits.slice(4);
+    }
+
     return digits;
 }
 

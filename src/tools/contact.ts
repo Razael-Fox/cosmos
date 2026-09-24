@@ -35,7 +35,7 @@ const contactTool: ToolModule = {
 
         if (subCommand === 'add') {
             const alias = parts[1];
-            const phoneInput = parts[2];
+            const phoneInput = parts.slice(2).join(' ').trim();
 
             if (!alias || !phoneInput) {
                 await sock.sendMessage(
