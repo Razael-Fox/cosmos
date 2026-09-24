@@ -458,3 +458,12 @@ model LoanReminder {
   @@index([remindAt, sent])
 }
 
+model GroupNsfwSetting {
+  jid       String   @id
+  enabled   Boolean  @default(false)
+  updatedBy String?
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([enabled])
+}
+
