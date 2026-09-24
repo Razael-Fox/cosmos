@@ -636,12 +636,14 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
         }
 
         let profilePictureUrl: string | null = null;
+        let coverPictureUrl: string | null = null;
         try {
-            profilePictureUrl = await fetchProfilePictureViaIpc(user.id);
+            const photoRes = await fetchProfilePictureViaIpc(user.id);
+            profilePictureUrl = photoRes.pictureUrl;
+            coverPictureUrl = photoRes.coverUrl ?? null;
         } catch {
             /* non-fatal */
         }
-
         let presence: 'online' | 'offline' = 'offline';
         try {
             const presRes = await fetchUserPresenceViaIpc(user.id);
@@ -655,13 +657,13 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             .catch(() => null);
         const nik = idCard?.nik ?? null;
 
-        return reply.send({ user: serializeUser(user, profilePictureUrl, presence, nik) });
+        return reply.send({ user: serializeUser(user, profilePictureUrl, presence, nik, coverPictureUrl) });
     });
 
     // GET /api/v1/auth/profile-photo
     fastify.get('/profile-photo', { preHandler: [authenticateJwt] }, async (req, reply) => {
-        const pictureUrl = await fetchProfilePictureViaIpc(req.user.id);
-        return reply.send({ pictureUrl });
+        const { pictureUrl, coverUrl } = await fetchProfilePictureViaIpc(req.user.id);
+        return reply.send({ pictureUrl, coverUrl: coverUrl ?? null });
     });
 
     // GET /api/v1/auth/presence

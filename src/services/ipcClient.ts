@@ -164,17 +164,23 @@ export async function fetchParticipatingGroupsViaIpc(
     );
 }
 
-export async function fetchProfilePictureViaIpc(jid: string, userJid?: string): Promise<string | null> {
+export async function fetchProfilePictureViaIpc(
+    jid: string,
+    userJid?: string
+): Promise<{ pictureUrl: string | null; coverUrl?: string | null }> {
     try {
-        const res = await sendIpcCommand<{ ok: boolean; pictureUrl?: string | null }>(
+        const res = await sendIpcCommand<{ ok: boolean; pictureUrl?: string | null; coverUrl?: string | null }>(
             '/internal/users/photo',
             { jid, userJid },
             config.BOT_IPC_SOCKET,
             6000
         );
-        return res.data?.pictureUrl ?? null;
+        return {
+            pictureUrl: res.data?.pictureUrl ?? null,
+            coverUrl: res.data?.coverUrl ?? null
+        };
     } catch {
-        return null;
+        return { pictureUrl: null, coverUrl: null };
     }
 }
 

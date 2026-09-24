@@ -27,6 +27,7 @@ export interface UserProfile {
     lastLoginAt?: string | null;
     createdAt: string;
     profilePictureUrl?: string | null;
+    coverPictureUrl?: string | null;
     avatarPlaceholderUrl: string;
     presence?: 'online' | 'offline' | null;
 }
@@ -35,7 +36,8 @@ export function serializeUser(
     user: User,
     profilePictureUrl?: string | null,
     presence?: 'online' | 'offline' | null,
-    nik?: string | null
+    nik?: string | null,
+    coverPictureUrl?: string | null
 ): UserProfile {
     return {
         id: user.id,
@@ -51,6 +53,7 @@ export function serializeUser(
         lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
         createdAt: user.createdAt.toISOString(),
         profilePictureUrl: profilePictureUrl ?? null,
+        coverPictureUrl: coverPictureUrl ?? null,
         avatarPlaceholderUrl: getAvatarPlaceholderUrl(nik, user.id),
         presence: presence ?? null
     };
