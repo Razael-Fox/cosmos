@@ -76,7 +76,7 @@ const FAQ_CONTENT: Record<'id' | 'en', { title: string; subtitle: string; items:
         items: [
             {
                 q: 'Bagaimana cara pembayaran paket berbayar?',
-                a: 'Cosmos menggunakan alur direct manual sales. Ketika Anda mengklik "Pilih Subsidized" atau "Pilih Partner", Anda akan langsung diarahkan ke chat WhatsApp Sales Representative dengan pesan pra-isi yang menyertakan referensi pesanan unik. Tim sales akan mengirimkan QRIS atau rekening bank untuk pembayaran instan.'
+                a: 'Cosmos menggunakan alur direct manual sales. Ketika Anda mengklik "Pilih Nova" atau "Pilih Zenith", Anda akan langsung diarahkan ke chat WhatsApp Sales Representative dengan pesan pra-isi yang menyertakan referensi pesanan unik. Tim sales akan mengirimkan QRIS atau rekening bank untuk pembayaran instan.'
             },
             {
                 q: 'Berapa lama proses aktivasi setelah pembayaran dikonfirmasi?',
@@ -88,7 +88,7 @@ const FAQ_CONTENT: Record<'id' | 'en', { title: string; subtitle: string; items:
             },
             {
                 q: 'Apa yang terjadi jika masa aktif langganan habis?',
-                a: 'Terdapat masa tenggang (grace period) dan pengingat otomatis via WhatsApp 3 hari sebelum berakhir. Jika tidak diperpanjang, akun akan kembali ke kuota paket Free secara bertahap tanpa kehilangan data profil utama.'
+                a: 'Terdapat masa tenggang (grace period) dan pengingat otomatis via WhatsApp 3 hari sebelum berakhir. Jika tidak diperpanjang, akun akan kembali ke kuota paket Pulse (Free) secara bertahap tanpa kehilangan data profil utama.'
             }
         ]
     },
@@ -98,7 +98,7 @@ const FAQ_CONTENT: Record<'id' | 'en', { title: string; subtitle: string; items:
         items: [
             {
                 q: 'How do I pay for a paid plan?',
-                a: 'Cosmos uses a direct manual sales flow. When you click "Choose Subsidized" or "Choose Partner", you are redirected to a WhatsApp chat with our Sales Representative carrying a pre-filled message with a unique order reference. The sales team will send QRIS or bank account details for instant payment.'
+                a: 'Cosmos uses a direct manual sales flow. When you click "Choose Nova" or "Choose Zenith", you are redirected to a WhatsApp chat with our Sales Representative carrying a pre-filled message with a unique order reference. The sales team will send QRIS or bank account details for instant payment.'
             },
             {
                 q: 'How long does activation take after payment confirmation?',
@@ -110,15 +110,15 @@ const FAQ_CONTENT: Record<'id' | 'en', { title: string; subtitle: string; items:
             },
             {
                 q: 'What happens when my subscription expires?',
-                a: 'There is a grace period with automatic WhatsApp reminders 3 days before expiry. If not renewed, your account gradually returns to Free plan quotas without losing core profile data.'
+                a: 'There is a grace period with automatic WhatsApp reminders 3 days before expiry. If not renewed, your account gradually returns to Pulse (Free) plan quotas without losing core profile data.'
             }
         ]
     }
 };
 
 const TABLE_HEADERS: Record<'id' | 'en', { feature: string; free: string; subsidized: string; partner: string }> = {
-    id: { feature: 'Fitur', free: 'Free', subsidized: 'Subsidized', partner: 'Partner' },
-    en: { feature: 'Feature', free: 'Free', subsidized: 'Subsidized', partner: 'Partner' }
+    id: { feature: 'Fitur', free: 'Pulse (Free)', subsidized: 'Nova (Subsidi)', partner: 'Zenith (Partner)' },
+    en: { feature: 'Feature', free: 'Pulse (Free)', subsidized: 'Nova (Subsidized)', partner: 'Zenith (Partner)' }
 };
 
 export default function PricingPage() {

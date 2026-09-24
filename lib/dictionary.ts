@@ -137,7 +137,7 @@ const rawDictionary = {
             salesNoticeStep4: '4. Kuota bertambah instan di dashboard Anda',
             manualFlowNotice: 'Pembayaran manual langsung via WhatsApp ke Sales Rep menggunakan QRIS / Transfer Bank.',
             free: {
-                name: 'Free',
+                name: 'Pulse',
                 price: 'Rp0',
                 desc: 'Cocok untuk pengguna personal yang ingin mencoba kemampuan bot WhatsApp.',
                 features: [
@@ -148,12 +148,12 @@ const rawDictionary = {
                     'Akses fitur standar',
                     'Bonus Multiplier Ekonomi 1.0x'
                 ],
-                cta: 'Mulai Gratis'
+                cta: 'Mulai dengan Pulse'
             },
             subsidized: {
-                name: 'Subsidized',
+                name: 'Nova',
                 price: 'Rp10.000',
-                desc: 'Pilihan ekonomis terbaik untuk komunitas kecil dan admin grup aktif.',
+                desc: 'Pilihan ekonomis bertenaga untuk komunitas berkembang dan admin grup aktif.',
                 features: [
                     '5 Sub-Bot aktif',
                     '10 Whitelist grup',
@@ -162,12 +162,12 @@ const rawDictionary = {
                     'Fitur bot lanjutan',
                     'Bonus Multiplier Ekonomi 1.05x'
                 ],
-                cta: 'Pilih Subsidized'
+                cta: 'Pilih Nova'
             },
             partner: {
-                name: 'Partner',
+                name: 'Zenith',
                 price: 'Rp32.000',
-                desc: 'Paket terlengkap untuk pengelola komunitas besar dan bisnis.',
+                desc: 'Paket terlengkap performa puncak untuk pengelola komunitas besar dan bisnis.',
                 features: [
                     '12 Sub-Bot aktif',
                     '25 Whitelist grup',
@@ -176,7 +176,7 @@ const rawDictionary = {
                     'Early Access fitur baru',
                     'Bonus Multiplier Ekonomi 1.15x'
                 ],
-                cta: 'Pilih Partner'
+                cta: 'Pilih Zenith'
             }
         },
         auth: {
@@ -547,7 +547,7 @@ const rawDictionary = {
             salesNoticeStep4: '4. Quotas activate instantly in your dashboard',
             manualFlowNotice: 'Direct manual payment via WhatsApp to Sales Rep using QRIS / Bank Transfer.',
             free: {
-                name: 'Free',
+                name: 'Pulse',
                 price: 'Rp0',
                 desc: 'Ideal for personal users testing out WhatsApp bot automation capabilities.',
                 features: [
@@ -558,12 +558,12 @@ const rawDictionary = {
                     'Standard Bot Features',
                     '1.0x Virtual Economy Multiplier'
                 ],
-                cta: 'Start for Free'
+                cta: 'Start with Pulse'
             },
             subsidized: {
-                name: 'Subsidized',
+                name: 'Nova',
                 price: 'Rp10.000',
-                desc: 'Best affordable option for growing communities and active group administrators.',
+                desc: 'High-energy affordable option for growing communities and active group administrators.',
                 features: [
                     '5 Active Sub-Bots',
                     '10 Whitelisted Groups',
@@ -572,12 +572,12 @@ const rawDictionary = {
                     'Advanced Bot Features',
                     '1.05x Virtual Economy Multiplier'
                 ],
-                cta: 'Choose Subsidized'
+                cta: 'Choose Nova'
             },
             partner: {
-                name: 'Partner',
+                name: 'Zenith',
                 price: 'Rp32.000',
-                desc: 'Complete high-capacity tier for large communities, networks, and power users.',
+                desc: 'Peak capacity and maximum speed for large communities, networks, and power users.',
                 features: [
                     '12 Active Sub-Bots',
                     '25 Whitelisted Groups',
@@ -586,7 +586,7 @@ const rawDictionary = {
                     'Early Access to new features',
                     '1.15x Virtual Economy Multiplier'
                 ],
-                cta: 'Choose Partner'
+                cta: 'Choose Zenith'
             }
         },
         auth: {

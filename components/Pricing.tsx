@@ -88,7 +88,7 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
             isPopular: true,
             icon: <Lightning className="w-5 h-5 text-amber-500" weight="fill" />,
             ctaText: t.pricing.subsidized.cta,
-            action: () => handleSubscribe('Subsidized Tier', t.pricing.subsidized.price)
+            action: () => handleSubscribe('Nova Plan (Subsidized)', t.pricing.subsidized.price)
         },
         {
             id: 'PARTNER' as SubscriptionTier,
@@ -99,7 +99,7 @@ export function Pricing({ userPhone, currentTier, onSelectFree }: PricingProps) 
             isPopular: false,
             icon: <ShieldCheck className="w-5 h-5 text-indigo-500" weight="fill" />,
             ctaText: t.pricing.partner.cta,
-            action: () => handleSubscribe('Partner Tier', t.pricing.partner.price)
+            action: () => handleSubscribe('Zenith Plan (Partner)', t.pricing.partner.price)
         }
     ];
 

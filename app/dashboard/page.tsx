@@ -591,7 +591,11 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-2xl font-black text-foreground font-heading">
-                                            {subscription?.tier || 'FREE'}
+                                            {subscription?.tier === 'PARTNER'
+                                                ? 'Zenith'
+                                                : subscription?.tier === 'SUBSIDIZED'
+                                                  ? 'Nova'
+                                                  : 'Pulse'}
                                         </span>
                                         <span className="text-[11px] text-muted-foreground">
                                             (
