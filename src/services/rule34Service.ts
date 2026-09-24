@@ -335,9 +335,9 @@ export async function fetchRule34Video(userQuery?: string, isZeroParam: boolean 
     // Shuffle candidate pool
     const shuffled = [...videoCandidates].sort(() => Math.random() - 0.5);
 
-    // Evaluate candidates up to a max of 5 download attempts
-    const MAX_ATTEMPTS = 5;
-    const candidatesToTry = shuffled.slice(0, MAX_ATTEMPTS);
+    // Evaluate candidates up to a max of 25 candidates using fast metadata range probing
+    const MAX_PROBE_CANDIDATES = 25;
+    const candidatesToTry = shuffled.slice(0, MAX_PROBE_CANDIDATES);
 
     for (const candidate of candidatesToTry) {
         const tempId = randomUUID();
@@ -346,23 +346,67 @@ export async function fetchRule34Video(userQuery?: string, isZeroParam: boolean 
         const transmuxedFile = path.join(os.tmpdir(), `r34_transmux_${tempId}.mp4`);
 
         try {
-            // Check headers or download directly with size limit 50MB
-            const videoRes = await axios.get(candidate.file_url, {
-                responseType: 'arraybuffer',
-                headers: { 'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)' },
-                timeout: 25000,
-                maxContentLength: 50 * 1024 * 1024
-            });
+            // 1. Fast metadata duration probe using 1.5MB HTTP Range chunk
+            let duration: number | null = null;
+            let fullBuffer: Buffer | null = null;
+            let totalLength = 0;
 
-            const buffer = Buffer.from(videoRes.data as ArrayBuffer);
-            if (buffer.length > 50 * 1024 * 1024) {
+            try {
+                const chunkRes = await axios.get(candidate.file_url, {
+                    headers: {
+                        'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)',
+                        Range: 'bytes=0-1572864'
+                    },
+                    responseType: 'arraybuffer',
+                    timeout: 6000
+                });
+
+                const contentRange = chunkRes.headers['content-range'];
+                if (typeof contentRange === 'string') {
+                    const match = contentRange.match(/\/(\d+)$/);
+                    if (match) totalLength = parseInt(match[1], 10);
+                } else if (chunkRes.headers['content-length']) {
+                    totalLength = parseInt(String(chunkRes.headers['content-length']), 10);
+                }
+
+                // Instantly skip candidates exceeding WhatsApp 50MB limit
+                if (totalLength > 50 * 1024 * 1024) {
+                    continue;
+                }
+
+                const chunkBuffer = Buffer.from(chunkRes.data as ArrayBuffer);
+                await fs.promises.writeFile(probeFile, chunkBuffer);
+                duration = await probeVideoDuration(probeFile);
+
+                // If candidate is already fully downloaded in this single chunk (small file < 1.5MB)
+                if (totalLength > 0 && chunkBuffer.length >= totalLength) {
+                    fullBuffer = chunkBuffer;
+                }
+            } catch {
+                // Range requests may be unsupported on some CDNs; fallback to full probe below if needed
+            }
+
+            // 2. If duration was found from the chunk and is outside our window, discard immediately
+            if (duration !== null && (duration < 15 || duration > 30)) {
                 continue;
             }
 
-            // Write buffer to temporary file before probing duration
-            await fs.promises.writeFile(probeFile, buffer);
+            // 3. If duration is valid or moov atom was at the end of the file, download full buffer
+            if (!fullBuffer) {
+                const videoRes = await axios.get(candidate.file_url, {
+                    responseType: 'arraybuffer',
+                    headers: { 'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)' },
+                    timeout: 25000,
+                    maxContentLength: 50 * 1024 * 1024
+                });
+                fullBuffer = Buffer.from(videoRes.data as ArrayBuffer);
+                if (fullBuffer.length > 50 * 1024 * 1024) {
+                    continue;
+                }
+                await fs.promises.writeFile(probeFile, fullBuffer);
+                duration = await probeVideoDuration(probeFile);
+            }
 
-            const duration = await probeVideoDuration(probeFile);
             if (duration === null || duration < 15 || duration > 30) {
                 continue;
             }
@@ -375,7 +419,7 @@ export async function fetchRule34Video(userQuery?: string, isZeroParam: boolean 
                 }
                 finalBuffer = await fs.promises.readFile(transmuxedFile);
             } else {
-                finalBuffer = buffer;
+                finalBuffer = fullBuffer;
             }
 
             // Extract tags into clean array, decode HTML entities
