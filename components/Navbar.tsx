@@ -4,13 +4,13 @@ import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'r
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { SignOut, List, X, DeviceMobile } from '@phosphor-icons/react';
+import { SignOut, List, X, User } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from '@/lib/i18n';
-import { clearStoredToken } from '@/lib/api';
+import { clearStoredToken, getUserProfile, getProfilePhoto } from '@/lib/api';
+import type { UserProfile } from '@/lib/types';
 import { LanguageDropdown } from '@/components/LanguageDropdown';
 import { cn } from '@/lib/utils';
-
 function subscribeToAuth(callback: () => void) {
     window.addEventListener('storage', callback);
     return () => window.removeEventListener('storage', callback);
@@ -21,8 +21,27 @@ function getAuthSnapshot(): boolean {
     return !!localStorage.getItem('cosmos_jwt_token');
 }
 
-function getAuthServerSnapshot(): boolean {
-    return false;
+let cachedRawUserProfile: string | null = null;
+let cachedParsedUserProfile: UserProfile | null = null;
+
+function getUserSnapshot(): UserProfile | null {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem('cosmos_user_profile');
+    if (raw === cachedRawUserProfile) {
+        return cachedParsedUserProfile;
+    }
+    cachedRawUserProfile = raw;
+    if (!raw) {
+        cachedParsedUserProfile = null;
+        return null;
+    }
+    try {
+        cachedParsedUserProfile = JSON.parse(raw) as UserProfile;
+        return cachedParsedUserProfile;
+    } catch {
+        cachedParsedUserProfile = null;
+        return null;
+    }
 }
 
 export function Navbar() {
@@ -30,8 +49,53 @@ export function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const isAuthenticated = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getAuthServerSnapshot);
+    const isAuthenticated = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, () => false);
+    const syncedUserProfile = useSyncExternalStore(subscribeToAuth, getUserSnapshot, () => null);
+    const [liveUserProfile, setLiveUserProfile] = useState<UserProfile | null>(null);
+    const [fetchedAvatarUrl, setFetchedAvatarUrl] = useState<string | null>(null);
+    const [avatarError, setAvatarError] = useState(false);
 
+    const userProfile = isAuthenticated ? liveUserProfile || syncedUserProfile : null;
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        let isMounted = true;
+        getUserProfile()
+            .then((res) => {
+                if (isMounted && res?.user) {
+                    setLiveUserProfile(res.user);
+                    if (!res.user.profilePictureUrl) {
+                        getProfilePhoto()
+                            .then((photoRes) => {
+                                if (isMounted && photoRes?.pictureUrl) {
+                                    setFetchedAvatarUrl(photoRes.pictureUrl);
+                                }
+                            })
+                            .catch(() => {});
+                    }
+                }
+            })
+            .catch(() => {
+                if (!syncedUserProfile?.profilePictureUrl) {
+                    getProfilePhoto()
+                        .then((photoRes) => {
+                            if (isMounted && photoRes?.pictureUrl) {
+                                setFetchedAvatarUrl(photoRes.pictureUrl);
+                            }
+                        })
+                        .catch(() => {});
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [isAuthenticated, syncedUserProfile?.profilePictureUrl]);
+
+    const avatarUrl = userProfile?.profilePictureUrl || fetchedAvatarUrl;
+    const placeholderAvatarUrl = userProfile?.avatarPlaceholderUrl ?? null;
+    const initials = (userProfile?.username || userProfile?.pushName || 'U').charAt(0).toUpperCase();
     const closeMenu = useCallback(() => {
         setMobileMenuOpen(false);
     }, []);
@@ -131,10 +195,33 @@ export function Navbar() {
                             <div className="flex items-center gap-2">
                                 <Link
                                     href="/dashboard"
-                                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
+                                    className="px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-all flex items-center gap-2 border border-border"
                                 >
-                                    <DeviceMobile className="w-3.5 h-3.5" />
-                                    <span>{t.nav.dashboard}</span>
+                                    <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0 flex items-center justify-center">
+                                        {avatarUrl && !avatarError ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                                src={avatarUrl}
+                                                alt={userProfile?.username || 'User Avatar'}
+                                                referrerPolicy="no-referrer"
+                                                className="w-full h-full object-cover"
+                                                onError={() => setAvatarError(true)}
+                                            />
+                                        ) : placeholderAvatarUrl ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                                src={placeholderAvatarUrl}
+                                                alt={userProfile?.username || 'User Avatar'}
+                                                referrerPolicy="no-referrer"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-primary/20 flex items-center justify-center text-primary font-bold text-[10px]">
+                                                {initials || <User className="w-3.5 h-3.5 text-primary" />}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="max-w-[120px] truncate">{userProfile?.username || userProfile?.pushName || t.nav.dashboard}</span>
                                 </Link>
                                 <button
                                     type="button"
@@ -168,10 +255,33 @@ export function Navbar() {
                         {isAuthenticated ? (
                             <Link
                                 href="/dashboard"
-                                className="p-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold flex items-center gap-1"
+                                className="p-1 rounded-xl bg-secondary/80 border border-border flex items-center justify-center transition-colors"
                                 aria-label={t.nav.dashboard}
                             >
-                                <DeviceMobile className="w-4 h-4" />
+                                <div className="w-7 h-7 rounded-full overflow-hidden bg-primary/10 border border-primary/20 shrink-0 flex items-center justify-center">
+                                    {avatarUrl && !avatarError ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={avatarUrl}
+                                            alt={userProfile?.username || 'User Avatar'}
+                                            referrerPolicy="no-referrer"
+                                            className="w-full h-full object-cover"
+                                            onError={() => setAvatarError(true)}
+                                        />
+                                    ) : placeholderAvatarUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={placeholderAvatarUrl}
+                                            alt={userProfile?.username || 'User Avatar'}
+                                            referrerPolicy="no-referrer"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                                            {initials || <User className="w-4 h-4 text-primary" />}
+                                        </div>
+                                    )}
+                                </div>
                             </Link>
                         ) : (
                             <Link
@@ -307,9 +417,32 @@ export function Navbar() {
                                             <Link
                                                 href="/dashboard"
                                                 onClick={closeMenu}
-                                                className="w-full text-center py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-colors touch-manipulation"
+                                                className="w-full text-center py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs flex items-center justify-center gap-2 transition-colors touch-manipulation"
                                             >
-                                                <DeviceMobile className="w-3.5 h-3.5" />
+                                                <div className="w-5 h-5 rounded-full overflow-hidden bg-primary-foreground/20 border border-primary-foreground/30 shrink-0 flex items-center justify-center">
+                                                    {avatarUrl && !avatarError ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img
+                                                            src={avatarUrl}
+                                                            alt={userProfile?.username || 'User Avatar'}
+                                                            referrerPolicy="no-referrer"
+                                                            className="w-full h-full object-cover"
+                                                            onError={() => setAvatarError(true)}
+                                                        />
+                                                    ) : placeholderAvatarUrl ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img
+                                                            src={placeholderAvatarUrl}
+                                                            alt={userProfile?.username || 'User Avatar'}
+                                                            referrerPolicy="no-referrer"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-primary-foreground font-bold text-[10px]">
+                                                            {initials || <User className="w-3 h-3 text-primary-foreground" />}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <span>{t.nav.dashboard}</span>
                                             </Link>
                                             <button
