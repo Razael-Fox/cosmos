@@ -21,6 +21,7 @@ export interface ToolContext {
     msg: WAMessage;
     jid: string;
     t: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string;
+    lang?: string;
 }
 
 export interface ToolModule {

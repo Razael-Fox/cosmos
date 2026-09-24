@@ -473,3 +473,12 @@ model UserContactBook {
   @@index([ownerJid])
 }
 
+model GroupNsfwSetting {
+  jid       String   @id
+  enabled   Boolean  @default(false)
+  updatedBy String?
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([enabled])
+}
+

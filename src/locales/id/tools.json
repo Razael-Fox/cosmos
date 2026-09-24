@@ -69,6 +69,9 @@
         "category_hint": "Ketik `{{prefix}}menu <kategori>` untuk melihat perintah dalam kategori tertentu (contoh: `{{prefix}}menu casino`).",
         "all_commands_hint": "Ketik `{{prefix}}menu all` untuk melihat seluruh katalog perintah.",
         "command_detail_hint": "Ketik `{{prefix}}help <perintah>` untuk sintaks dan parameter detail (contoh: `{{prefix}}help slot`).",
+        "tutorial_hint": "Ketik `{{prefix}}menu tutorial` untuk melihat panduan langkah demi langkah fitur bot.",
+        "tutorial_hub_title": "PANDUAN FITUR COSMOS",
+        "tutorial_hub_desc": "Pilih topik di bawah ini untuk melihat panduan lengkap:\n\n• `{{prefix}}menu tutorial nsfw` - Pencarian Video NSFW & Kontrol Grup\n• `{{prefix}}menu tutorial casino` - Dasar Kasino & Ekonomi\n• `{{prefix}}menu tutorial subbot` - Pairing & Kelola Sub-Bot",
         "navigation_tips_title": "Tips Navigasi:",
         "tip_label": "Tips:",
         "category_commands_title": "{{icon}} *PERINTAH {{category}}*",
@@ -790,6 +793,12 @@
         "addbalance": {
             "description": "Menambahkan saldo ke pengguna dari brankas bandar. (Khusus Pemilik)"
         },
+        "togglensfw": {
+            "description": "Mengaktifkan atau menonaktifkan fitur NSFW/Rule34 untuk grup saat ini."
+        },
+        "rule34": {
+            "description": "Mencari dan mengambil video NSFW non-AI (15-30 detik) dari Rule34 berdasarkan tag yang ditentukan, atau mengambil video acak jika dipanggil tanpa parameter."
+        },
         "apply_license": {
             "description": "Mengajukan Surat Izin Mengemudi (SIM) virtual. Memerlukan KTP yang sah dan usia >= 17 tahun."
         },
@@ -1237,5 +1246,34 @@
         "auto_enabled_body": "Auto-whitelist saat bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup baru yang diikuti bot akan otomatis masuk whitelist tanpa perlu .addgroup.",
         "auto_disabled_body": "Auto-whitelist saat bergabung grup telah *DINONAKTIFKAN*.\n\nGrup baru memerlukan persetujuan manual menggunakan .addgroup atau .whitelistall.",
         "dashboard_title": "Suite Manajemen Whitelist Grup"
+    },
+    "nsfw": {
+        "admin_required": "Akses ditolak. Hanya administrator grup atau pemilik bot yang dapat mengonfigurasi fitur NSFW.",
+        "group_only": "Perintah konfigurasi ini hanya dapat dijalankan di dalam obrolan grup.",
+        "dm_always_enabled": "Fitur NSFW sudah aktif secara default di obrolan pribadi.",
+        "enabled_success": "Fitur NSFW telah berhasil diaktifkan untuk grup ini.",
+        "disabled_success": "Fitur NSFW telah berhasil dinonaktifkan untuk grup ini.",
+        "feature_disabled_group": "Konten NSFW saat ini dinonaktifkan di grup ini. Administrator grup dapat mengaktifkannya menggunakan perintah \".on nsfw\".",
+        "blacklisted_tag": "Kueri pencarian yang ditentukan mengandung tag yang dibatasi atau dilarang.",
+        "no_results": "Tidak ditemukan hasil untuk kueri yang ditentukan.",
+        "no_video_found": "Tidak ditemukan konten video yang cocok dengan kueri yang ditentukan.",
+        "no_video_duration_match": "Tidak ditemukan video non-AI yang memenuhi syarat durasi (15–30 detik).",
+        "fetch_failed": "Gagal mengambil konten dari API Rule34. Silakan coba lagi nanti.",
+        "file_too_large": "File media yang diminta melebihi batas pengiriman maksimum (50 MB).",
+        "rating_explicit": "Eksplisit",
+        "rating_questionable": "Dipertanyakan",
+        "rating_safe": "Aman",
+        "tip_how_to_search": "\n\n💡 *Tip:* Ketik `{{prefix}}r34 <tag>` untuk mencari konten tertentu, atau `{{prefix}}menu tutorial nsfw` untuk melihat panduan.",
+        "video_caption_template": "🔞 *RULE34 VIDEO #{{id}}*\n\n⏱️ *Durasi:* {{duration}}d\n⭐ *Skor:* {{score}}\n🏷️ *Rating:* {{rating}}\n🔖 *Tag:* {{tags}}",
+        "tutorial": {
+            "header": "📖 *PANDUAN: PENCARIAN VIDEO NSFW*",
+            "step1_title": "1️⃣ AKTIVASI GRUP & HAK AKSES",
+            "step1_body": "• Fitur NSFW DINONAKTIFKAN secara default di obrolan grup.\n• Hanya Admin Grup dan Pemilik Bot yang dapat mengaktifkannya:\n  - Aktifkan: `{{prefix}}on nsfw` (atau `{{prefix}}on hentai`)\n  - Matikan: `{{prefix}}off nsfw` (atau `{{prefix}}off hentai`)\n• Di obrolan pribadi (DM), fitur sudah aktif secara otomatis tanpa perlu aktivasi.",
+            "step2_title": "2️⃣ CARA MENGAMBIL VIDEO",
+            "step2_body": "• Acak Cepat: Ketik `{{prefix}}r34` (tanpa parameter) untuk langsung mengambil video acak terkurasi.\n• Tag Khusus: Ketik `{{prefix}}r34 <tag>` (misal: `{{prefix}}r34 genshin_impact`).\n• Multi-tag: Pisahkan beberapa tag dengan spasi.",
+            "step3_title": "3️⃣ FILTER KEAMANAN & DURASI OTOMATIS",
+            "step3_body": "• Filter Anti-AI Art: Konten buatan AI (Stable Diffusion, Midjourney, NovelAI, dll.) otomatis dibuang.\n• Khusus Video: Gambar statis dan GIF diblokir.\n• Filter Durasi: Hanya video berdurasi antara 15 hingga 30 detik yang dikirim.",
+            "footer": "💡 *Tip:* Ketik `{{prefix}}menu` untuk kembali ke kategori perintah utama."
+        }
     }
 }
