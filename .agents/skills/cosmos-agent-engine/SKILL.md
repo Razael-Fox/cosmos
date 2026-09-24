@@ -118,6 +118,6 @@ Semua perintah dan tool AI dikelompokkan secara ketat pada `ToolAiPolicy`:
 
 Jika Groq mengembalikan status 404 (`model_not_found`) atau 400 (`model_decommissioned`), engine secara otomatis mencoba kandidat berikutnya:
 
-- **Tier 1 (Planning):** `process.env.AGENT_GUIDANCE_MODEL` $\rightarrow$ `llama-3.1-8b-instant` $\rightarrow$ `openai/gpt-oss-20b` $\rightarrow$ `qwen/qwen3.8-27b`.
-- **Tier 2 (Execution):** `process.env.AGENT_EXECUTOR_MODEL` $\rightarrow$ `llama-3.3-70b-versatile` $\rightarrow$ `openai/gpt-oss-120b` $\rightarrow$ `qwen/qwen3.8-27b` $\rightarrow$ `openai/gpt-oss-20b`.
+- **Tier 1 (Planning):** `process.env.AGENT_GUIDANCE_MODEL` $\rightarrow$ `openai/gpt-oss-20b` $\rightarrow$ `qwen/qwen3.8-27b` $\rightarrow$ `openai/gpt-oss-120b`.
+- **Tier 2 (Execution):** `process.env.AGENT_EXECUTOR_MODEL` $\rightarrow$ `openai/gpt-oss-20b` $\rightarrow$ `qwen/qwen3.8-27b` $\rightarrow$ `openai/gpt-oss-120b`.
 - **Active Model Caching:** Model yang berhasil di-cache di memori agar request berikutnya tidak mengalami overhead pencarian 404.

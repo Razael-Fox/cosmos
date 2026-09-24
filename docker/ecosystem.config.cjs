@@ -15,6 +15,9 @@ const apps = [
             BOT_IPC_SOCKET: '/app/storage/ipc.sock',
             INTERNAL_IPC_SECRET: process.env.INTERNAL_IPC_SECRET,
             GROQ_API_KEY: process.env.GROQ_API_KEY,
+            GROQ_MODEL: process.env.GROQ_MODEL,
+            AGENT_EXECUTOR_MODEL: process.env.AGENT_EXECUTOR_MODEL,
+            AGENT_GUIDANCE_MODEL: process.env.AGENT_GUIDANCE_MODEL,
             STORAGE_ENCRYPTION_KEY: process.env.STORAGE_ENCRYPTION_KEY
         },
         max_memory_restart: '512M',
