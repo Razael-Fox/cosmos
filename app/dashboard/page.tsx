@@ -189,8 +189,6 @@ export default function DashboardPage() {
     const [addingGroupJid, setAddingGroupJid] = useState<string | null>(null);
     const [showManualJidInput, setShowManualJidInput] = useState(false);
     const [refreshCount, setRefreshCount] = useState(0);
-    const [isGroupsExpanded, setIsGroupsExpanded] = useState(false);
-
     const groupNameMap = useMemo(() => {
         const map = new Map<string, string>();
         for (const pg of participatingGroups) {
@@ -895,66 +893,77 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Whitelist Groups Quota & Group List Combined Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-5 shadow-xs flex flex-col justify-between">
+                        <div className="p-6 rounded-3xl bg-card border border-border shadow-xs flex flex-col justify-between h-full">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                        {t.dashboard.planCard.groupsQuota}
-                                    </span>
-                                    <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600">
-                                        <UsersThree className="w-5 h-5" weight="duotone" />
+                                    <div>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                                            {t.dashboard.planCard.groupsQuota}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground font-mono">
+                                            {t.dashboard.groupsSlotsLeft.replace(
+                                                '{count}',
+                                                String(Math.max(0, maxGroups - currentGroupsCount))
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black text-foreground font-mono">
+                                            {currentGroupsCount}
+                                            <span className="text-xs font-normal text-muted-foreground">
+                                                /{maxGroups}
+                                            </span>
+                                        </span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <div className="flex items-baseline justify-between">
-                                        <span className="text-3xl font-black text-foreground font-mono">
-                                            {currentGroupsCount}{' '}
-                                            <span className="text-sm font-normal text-muted-foreground">
-                                                / {maxGroups}
-                                            </span>
-                                        </span>
-                                        <span className="text-xs font-semibold text-muted-foreground font-mono">
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-[11px] font-medium text-muted-foreground">
                                             {Math.round((currentGroupsCount / maxGroups) * 100)}%{' '}
                                             {t.dashboard.usedSuffix}
                                         </span>
+                                        {isGroupsQuotaFull && (
+                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                Full
+                                            </span>
+                                        )}
                                     </div>
 
+                                    {/* Segmented capacity meter */}
                                     <div
-                                        className="w-full h-2.5 bg-muted rounded-full overflow-hidden"
+                                        className="flex gap-1.5 w-full"
                                         role="progressbar"
                                         aria-valuenow={currentGroupsCount}
                                         aria-valuemin={0}
                                         aria-valuemax={maxGroups}
                                         aria-label={t.dashboard.planCard.groupsQuota}
                                     >
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-300 ${
-                                                isGroupsQuotaFull ? 'bg-amber-500' : 'bg-indigo-500'
-                                            }`}
-                                            style={{
-                                                width: `${Math.min(100, (currentGroupsCount / maxGroups) * 100)}%`
-                                            }}
-                                        />
+                                        {Array.from({ length: maxGroups }).map((_, idx) => {
+                                            const isFilled = idx < currentGroupsCount;
+                                            const usageRatio = currentGroupsCount / maxGroups;
+                                            let barColor = 'bg-indigo-500';
+                                            if (usageRatio >= 1) {
+                                                barColor = 'bg-amber-500';
+                                            } else if (usageRatio >= 0.7) {
+                                                barColor = 'bg-amber-500/80';
+                                            } else {
+                                                barColor = 'bg-indigo-500';
+                                            }
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                                                        isFilled ? barColor : 'bg-muted'
+                                                    }`}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
-                                <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                                    <span>
-                                        {t.dashboard.groupsSlotsLeft.replace(
-                                            '{count}',
-                                            String(Math.max(0, maxGroups - currentGroupsCount))
-                                        )}
-                                    </span>
-                                    {isGroupsQuotaFull && (
-                                        <Link href="/pricing" className="text-primary font-semibold hover:underline">
-                                            Upgrade →
-                                        </Link>
-                                    )}
-                                </div>
-
-                                {/* Whitelisted Groups List Inside Card */}
-                                <div className="pt-3 border-t border-border/80 space-y-2.5">
+                                {/* Whitelisted Groups List Section */}
+                                <div className="pt-3 border-t border-border/80 space-y-2">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-foreground font-heading">
                                             {t.dashboard.groupsCard.title}
@@ -965,20 +974,23 @@ export default function DashboardPage() {
                                     </div>
 
                                     {groups.length === 0 ? (
-                                        <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/60 text-center">
-                                            <p className="text-xs text-muted-foreground">
+                                        <div className="p-4 rounded-2xl bg-muted/20 border border-dashed border-border/80 text-center space-y-1">
+                                            <p className="text-xs font-medium text-foreground">
                                                 {t.dashboard.groupsCard.noGroups}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                {t.dashboard.groupsCard.noGroupsDesc}
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-1.5">
-                                            {(isGroupsExpanded ? groups : groups.slice(0, 4)).map((grp) => {
+                                        <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-0.5">
+                                            {groups.map((grp) => {
                                                 const groupSubject = groupNameMap.get(grp.jid);
                                                 const pictureUrl = groupPictureMap.get(grp.jid);
                                                 return (
                                                     <div
                                                         key={grp.jid}
-                                                        className="p-2.5 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-between gap-2.5 hover:bg-muted/60 transition-colors"
+                                                        className="p-2.5 rounded-xl bg-muted/30 border border-border/60 flex items-center justify-between gap-2.5 hover:bg-muted/50 hover:border-border transition-all"
                                                     >
                                                         <div className="min-w-0 flex items-center gap-2.5">
                                                             <GroupAvatar
@@ -1009,46 +1021,33 @@ export default function DashboardPage() {
                                                     </div>
                                                 );
                                             })}
-
-                                            {/* Expand / Collapse Button if > 4 Groups */}
-                                            {groups.length > 4 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsGroupsExpanded((prev) => !prev)}
-                                                    className="w-full py-1.5 px-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                                                >
-                                                    {isGroupsExpanded ? (
-                                                        <>
-                                                            <span>{t.dashboard.groupsCard.collapseBtn || 'Collapse'}</span>
-                                                            <CaretUp className="w-3.5 h-3.5" />
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span>
-                                                                {(t.dashboard.groupsCard.expandBtn || 'View All ({count})').replace(
-                                                                    '{count}',
-                                                                    String(groups.length)
-                                                                )}
-                                                            </span>
-                                                            <CaretDown className="w-3.5 h-3.5" />
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={handleOpenAddGroupModal}
-                                disabled={isGroupsQuotaFull}
-                                className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border transition-colors cursor-pointer mt-2 disabled:opacity-50"
-                            >
-                                <Plus className="w-3.5 h-3.5" weight="bold" />
-                                <span>{t.dashboard.groupsCard.addBtn}</span>
-                            </button>
+                            {/* Contextual Action CTA: Upgrade if Full, otherwise Add Group */}
+                            <div className="pt-3 mt-3 border-t border-border/70">
+                                {isGroupsQuotaFull ? (
+                                    <Link
+                                        href="/pricing"
+                                        className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-xs transition-colors"
+                                    >
+                                        <Sparkle className="w-3.5 h-3.5" weight="fill" />
+                                        <span>{t.dashboard.planCard.upgradeBtn}</span>
+                                        <ArrowSquareOut className="w-3.5 h-3.5" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenAddGroupModal}
+                                        className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold border border-border shadow-xs transition-all cursor-pointer"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" weight="bold" />
+                                        <span>{t.dashboard.groupsCard.addBtn}</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
