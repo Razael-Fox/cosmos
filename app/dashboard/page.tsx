@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-    DeviceMobile,
     UsersThree,
     Trash,
     Plus,
@@ -723,21 +722,16 @@ export default function DashboardPage() {
                         <div className="p-6 rounded-3xl bg-card border border-border shadow-xs flex flex-col justify-between h-full">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-                                            <DeviceMobile className="w-5 h-5" weight="duotone" />
-                                        </div>
-                                        <div>
-                                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                                                {t.dashboard.planCard.subBotsQuota}
-                                            </span>
-                                            <span className="text-[11px] text-muted-foreground font-mono">
-                                                {t.dashboard.botsSlotsLeft.replace(
-                                                    '{count}',
-                                                    String(Math.max(0, maxBots - currentBotsCount))
-                                                )}
-                                            </span>
-                                        </div>
+                                    <div>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                                            {t.dashboard.planCard.subBotsQuota}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground font-mono">
+                                            {t.dashboard.botsSlotsLeft.replace(
+                                                '{count}',
+                                                String(Math.max(0, maxBots - currentBotsCount))
+                                            )}
+                                        </span>
                                     </div>
                                     <div className="text-right">
                                         <span className="text-2xl font-black text-foreground font-mono">
