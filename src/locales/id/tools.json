@@ -991,9 +991,9 @@
         "user_label": "Pengguna",
         "plan_label": "Paket",
         "status_label": "Status",
-        "tier_free": "Free Tier",
-        "tier_subsidized": "Subsidized Tier",
-        "tier_partner": "Partner Tier",
+        "tier_free": "Pulse (Free)",
+        "tier_subsidized": "Nova (Subsidi)",
+        "tier_partner": "Zenith (Partner)",
         "status_owner": "Pemilik Bot (Tak Terbatas)",
         "status_active": "Aktif",
         "valid_until": " (Berlaku hingga {{date}})",
@@ -1007,7 +1007,7 @@
         "economy_bonus_label": "Bonus Ekonomi",
         "multiplier_suffix": "x Pengali",
         "upgrade_cta": "Butuh lebih banyak sumber daya? Tingkatkan kapan saja di https://razael-fox.my.id/pricing",
-        "example_cost": "_Contoh biaya peningkatan: Tersubsidi {{cost}}/bulan._"
+        "example_cost": "_Contoh biaya peningkatan: Nova {{cost}}/bulan._"
     },
     "broadcast": {
         "forex_title": "*🏦 Pembaruan Cosmos Central Bank*",

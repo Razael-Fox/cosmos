@@ -1,4 +1,5 @@
 {
+    "lang": "id",
     "owner_only": "Perintah ini hanya dapat digunakan oleh pemilik bot.",
     "group_only": "Perintah ini hanya dapat dijalankan di dalam grup.",
     "database_error": "Terjadi kesalahan pada database. Silakan coba lagi nanti.",

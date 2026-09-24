@@ -1,4 +1,5 @@
 {
+    "lang": "en",
     "owner_only": "This command can only be used by the bot owner.",
     "group_only": "This command can only be executed within a group.",
     "database_error": "Database error occurred. Please try again later.",

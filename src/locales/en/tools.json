@@ -991,9 +991,9 @@
         "user_label": "User",
         "plan_label": "Plan",
         "status_label": "Status",
-        "tier_free": "Free Tier",
-        "tier_subsidized": "Subsidized Tier",
-        "tier_partner": "Partner Tier",
+        "tier_free": "Pulse (Free)",
+        "tier_subsidized": "Nova (Subsidized)",
+        "tier_partner": "Zenith (Partner)",
         "status_owner": "Bot Owner (Unlimited)",
         "status_active": "Active",
         "valid_until": " (Valid until {{date}})",
@@ -1007,7 +1007,7 @@
         "economy_bonus_label": "Economy Bonus",
         "multiplier_suffix": "x Multiplier",
         "upgrade_cta": "Need more resources? Upgrade anytime at https://razael-fox.my.id/pricing",
-        "example_cost": "_Example upgrade cost: Subsidized {{cost}}/month._"
+        "example_cost": "_Example upgrade cost: Nova {{cost}}/month._"
     },
     "broadcast": {
         "forex_title": "*🏦 Cosmos Central Bank Update*",
