@@ -1,9 +1,10 @@
 import { WASocket } from '@whiskeysockets/baileys';
-import { prisma } from '../../db.js';
+import { prisma, dbContext } from '../../db.js';
 import { decryptString } from '../storageEncryption.js';
 import { EphemeralTokenStore } from './tokenStore.js';
 import { cleanPhoneNumber, toCanonicalJid } from '../../utils/phone.js';
-import { isOwnerId } from '../../utils/owner.js';
+import { isOwnerId, getPrimaryOwnerNumber } from '../../utils/owner.js';
+import { loadConfig } from '../subBotConfigService.js';
 
 export interface ResolvedTarget {
     recipientToken: string;
@@ -27,7 +28,7 @@ export class AgentEntityResolver {
 
         // 1. Query UserContactBook table (scoped strictly by ownerJid)
         try {
-            const contact = await prisma.userContactBook.findUnique({
+            let contact = await prisma.userContactBook.findUnique({
                 where: {
                     ownerJid_alias: {
                         ownerJid: callerJid,
@@ -35,6 +36,13 @@ export class AgentEntityResolver {
                     }
                 }
             });
+
+            if (!contact) {
+                const allContacts = await prisma.userContactBook.findMany({
+                    where: { ownerJid: callerJid }
+                });
+                contact = allContacts.find((c) => c.alias.trim().toLowerCase() === cleanQuery) || null;
+            }
 
             if (contact) {
                 const realJid = decryptString(contact.encryptedJid);
@@ -50,7 +58,61 @@ export class AgentEntityResolver {
             console.error('[AgentEntityResolver] Error querying UserContactBook:', err);
         }
 
-        // 2. Direct phone number pattern (Requires registered KTP or owner)
+        // 2. Owner and System Aliases (e.g., 'Razael', 'Owner', 'Pemilik', 'Creator')
+        try {
+            const sessionStore = dbContext.getStore();
+            const currentSessionId = sessionStore?.sessionId || 'default';
+            const isSubBot = currentSessionId !== 'default';
+            const subBotNumber = isSubBot ? currentSessionId.replace(/^sub_/, '') : undefined;
+            let ownerJid: string | null = null;
+            const ownerDisplayName = 'Razael';
+
+            if (subBotNumber) {
+                try {
+                    const subBotConfig = loadConfig(subBotNumber);
+                    if (subBotConfig?.ownerJid) {
+                        ownerJid = toCanonicalJid(subBotConfig.ownerJid);
+                    }
+                } catch {
+                    // Ignore
+                }
+            }
+
+            if (!ownerJid) {
+                const primaryOwner = getPrimaryOwnerNumber();
+                if (primaryOwner) {
+                    ownerJid = toCanonicalJid(primaryOwner);
+                }
+            }
+
+            if (ownerJid) {
+                const isOwnerAlias =
+                    cleanQuery === 'owner' ||
+                    cleanQuery === 'razael' ||
+                    cleanQuery === 'pemilik' ||
+                    cleanQuery === 'creator' ||
+                    cleanQuery === 'developer' ||
+                    cleanQuery === ownerDisplayName.toLowerCase();
+
+                if (isOwnerAlias) {
+                    const token = EphemeralTokenStore.mintToken(
+                        ownerJid,
+                        callerJid,
+                        new Set(['send_message', 'send_location'])
+                    );
+                    return {
+                        recipientToken: token,
+                        aliasMatch: cleanQuery,
+                        pushName: ownerDisplayName,
+                        resolvedJid: ownerJid
+                    };
+                }
+            }
+        } catch (ownerErr) {
+            console.error('[AgentEntityResolver] Error resolving owner alias:', ownerErr);
+        }
+
+        // 3. Direct phone number pattern (Requires registered KTP or owner)
         const digits = cleanPhoneNumber(cleanQuery);
         if (digits.length >= 10 && digits.length <= 15) {
             const user = await prisma.user.findUnique({

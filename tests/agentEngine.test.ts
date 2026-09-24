@@ -15,6 +15,7 @@ import { maskPhoneNumber, cleanPhoneNumber, toCanonicalJid } from '../src/utils/
 import { cancelActiveSession, hasCancellableSession } from '../src/utils/cancellationManager.js';
 import { CosmosAgentEngine } from '../src/services/agentEngine/index.js';
 import { bankTool } from '../src/services/agentEngine/tools/bank.js';
+import { sendMessageTool } from '../src/services/agentEngine/tools/sendMessage.js';
 import { prisma } from '../src/db.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import type { AgentExecutionContext } from '../src/services/agentEngine/types.js';
@@ -81,6 +82,16 @@ async function runTests() {
     assert(EphemeralTokenStore.getActiveCount() <= 10, 'Per-user active token count must be <= 10');
     console.log('  ✔ Zero-knowledge token lifecycle and capability scoping passed.');
 
+    // isValidToken verification tests
+    const testValidToken = EphemeralTokenStore.mintToken(momJid, userA, new Set(['send_message']));
+    assert.strictEqual(EphemeralTokenStore.isValidToken(testValidToken, userA, 'send_message'), true);
+    assert.strictEqual(EphemeralTokenStore.isValidToken(testValidToken, userB, 'send_message'), false);
+    assert.strictEqual(EphemeralTokenStore.isValidToken(testValidToken, userA, 'send_location'), false);
+    assert.strictEqual(EphemeralTokenStore.isValidToken('contact_ref_fake_hallucinated', userA, 'send_message'), false);
+    EphemeralTokenStore.consumeToken(testValidToken, userA);
+    assert.strictEqual(EphemeralTokenStore.isValidToken(testValidToken, userA, 'send_message'), false);
+    console.log('  ✔ isValidToken validation passed.');
+
     // =========================================================================
     // 3. Direct Number Spam Relay Authorization Gate
     // =========================================================================
@@ -90,6 +101,61 @@ async function runTests() {
     const directResultUnverified = await AgentEntityResolver.resolveRecipientToken('6281234567890', unverifiedUser);
     assert.strictEqual(directResultUnverified, null, 'Unverified user cannot mint direct phone number tokens');
     console.log('  ✔ Direct number minting authorization gate passed.');
+
+    // Owner / Razael resolution for any user
+    const razaelTarget = await AgentEntityResolver.resolveRecipientToken('Razael', unverifiedUser);
+    assert(razaelTarget !== null, 'Razael alias must resolve to a recipient target');
+    assert(razaelTarget.recipientToken.startsWith('contact_ref_'), 'Resolved Razael target must have recipientToken');
+    assert.strictEqual(
+        EphemeralTokenStore.isValidToken(razaelTarget.recipientToken, unverifiedUser, 'send_message'),
+        true
+    );
+
+    const ownerTarget = await AgentEntityResolver.resolveRecipientToken('owner', unverifiedUser);
+    assert(ownerTarget !== null, 'Owner alias must resolve to a recipient target');
+    assert.strictEqual(
+        EphemeralTokenStore.isValidToken(ownerTarget.recipientToken, unverifiedUser, 'send_message'),
+        true
+    );
+    console.log('  ✔ Owner/Razael recipient alias resolution passed.');
+
+    // Test sendMessageTool execution with attribution
+    console.log('[Test 3b] Testing sendMessageTool execution with attribution...');
+    const targetOwnerJid = '6282225907841@s.whatsapp.net';
+    const msgToken = EphemeralTokenStore.mintToken(targetOwnerJid, userA, new Set(['send_message']));
+    let dispatchedText = '';
+    let dispatchedDest = '';
+    const mockSendSock = {
+        sendPresenceUpdate: async () => {},
+        sendMessage: async (jid: string, payload: { text: string }) => {
+            dispatchedDest = jid;
+            dispatchedText = payload.text;
+            return { key: { id: 'mock_msg_123' } };
+        }
+    };
+    const mockExecCtx = {
+        sock: mockSendSock,
+        callerJid: userA,
+        callerName: 'Hachimi'
+    } as unknown as AgentExecutionContext;
+
+    const sendResult = await sendMessageTool.execute(
+        { recipientToken: msgToken, message: 'update the sistem' },
+        mockExecCtx
+    );
+    assert.strictEqual(sendResult.success, true);
+    assert.strictEqual(dispatchedDest, targetOwnerJid);
+    assert(dispatchedText.includes('update the sistem'));
+    assert(dispatchedText.includes('Sent by Hachimi via Sara AI'), 'Must include sender attribution');
+
+    // Hallucinated token must be rejected
+    const fakeSendResult = await sendMessageTool.execute(
+        { recipientToken: 'contact_ref_hallucinated_xyz', message: 'hello' },
+        mockExecCtx
+    );
+    assert.strictEqual(fakeSendResult.success, false);
+    assert(fakeSendResult.error?.includes('invalid, expired, or belongs to another user'));
+    console.log('  ✔ sendMessageTool execution and attribution passed.');
 
     // =========================================================================
     // 4. Policy Matrix & RBAC Verification
@@ -504,8 +570,8 @@ async function runTests() {
     };
 
     const e2eResponse = await CosmosAgentEngine.processMessage(
-        e2eSock as any,
-        e2eMsg as any,
+        e2eSock as unknown as WASocket,
+        e2eMsg as unknown as WAMessage,
         userA,
         'what is my current wallet and bank balance?',
         'en'
@@ -515,6 +581,45 @@ async function runTests() {
     assert(lastSentMessage.length > 0, 'Response message must be dispatched via sock.sendMessage');
     console.log('  ✔ End-to-end turn succeeded with response:\n', e2eResponse);
 
+    // =========================================================================
+    // 12. End-to-End CosmosAgentEngine Turn (Message Razael / Owner)
+    // =========================================================================
+    console.log('[Test 12] Testing live CosmosAgentEngine turn: messaging Razael (Owner)...');
+    AgentRateLimiter.clearAll();
+
+    const dispatchedMessages: Array<{ destJid: string; text: string }> = [];
+    const ownerMsgSock = {
+        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        sendMessage: async (jid: string, content: { text: string }) => {
+            dispatchedMessages.push({ destJid: jid, text: content.text });
+            return { key: { id: `mock_msg_${Date.now()}` } };
+        },
+        sendPresenceUpdate: async () => {},
+        groupMetadata: async () => ({ subject: 'Test Chat', participants: [] })
+    };
+
+    const hachimiMsg = {
+        key: { remoteJid: userA, participant: userA, fromMe: false },
+        pushName: 'Hachimi'
+    };
+
+    const ownerMsgResponse = await CosmosAgentEngine.processMessage(
+        ownerMsgSock as unknown as WASocket,
+        hachimiMsg as unknown as WAMessage,
+        userA,
+        'message Razael to update the sistem',
+        'en'
+    );
+
+    assert(ownerMsgResponse, 'CosmosAgentEngine must return a response for messaging Razael');
+    // Ensure that a message was dispatched to the owner JID
+    const targetOwnerCanonical = toCanonicalJid('6282225907841');
+    const msgToOwner = dispatchedMessages.find((m) => m.destJid === targetOwnerCanonical);
+    assert(msgToOwner, 'Message must be dispatched to Razael (Owner JID)');
+    assert(msgToOwner.text.includes('update the sistem'), 'Message to owner must include requested text');
+    assert(msgToOwner.text.includes('Sent by Hachimi via Sara AI'), 'Message must contain sender attribution');
+    console.log('  ✔ End-to-end messaging to Razael succeeded! Dispatched text:\n', msgToOwner.text);
+    console.log('  ✔ Sara reply to caller:\n', ownerMsgResponse);
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('======================================================\n');

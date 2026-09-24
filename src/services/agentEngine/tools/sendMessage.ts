@@ -1,5 +1,6 @@
 import { AgentTool, AgentExecutionContext, ToolExecutionResult, ToolAiPolicy } from '../types.js';
 import { EphemeralTokenStore } from '../tokenStore.js';
+import { cleanId } from '../../../utils/casino.js';
 
 export const sendMessageTool: AgentTool = {
     name: 'send_message',
@@ -41,7 +42,20 @@ export const sendMessageTool: AgentTool = {
 
         try {
             await ctx.sock.sendPresenceUpdate('composing', realJid);
-            const sentMsg = await ctx.sock.sendMessage(realJid, { text: message });
+
+            const rawSenderName =
+                ctx.callerName && ctx.callerName !== 'User' ? ctx.callerName : ctx.subBotOwnerName || 'User';
+            const cleanSenderName = rawSenderName.replace(/^(Ir\.|Dr\.|Drs\.|Prof\.)\s*/i, '').trim() || rawSenderName;
+
+            let textToSend = message;
+            if (
+                cleanId(realJid) !== cleanId(ctx.callerJid) &&
+                !message.toLowerCase().includes(cleanSenderName.toLowerCase())
+            ) {
+                textToSend = `${message}\n\n— Sent by ${cleanSenderName} via Sara AI`;
+            }
+
+            const sentMsg = await ctx.sock.sendMessage(realJid, { text: textToSend });
 
             // Invalidate token upon terminal execution
             EphemeralTokenStore.consumeToken(recipientToken, ctx.callerJid);

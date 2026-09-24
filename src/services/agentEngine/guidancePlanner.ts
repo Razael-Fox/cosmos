@@ -3,6 +3,8 @@ import { buildSaraGuidancePrompt } from './prompts/saraGuidance.js';
 import { AgentGroqClient } from './groqClient.js';
 import { AgentToolPolicyManager } from './policy.js';
 import { ToolAiPolicy } from './types.js';
+import { EphemeralTokenStore } from './tokenStore.js';
+import { AgentEntityResolver } from './entityResolver.js';
 
 export class AgentGuidancePlanner {
     private static activeModel: string | null = null;
@@ -100,6 +102,56 @@ export class AgentGuidancePlanner {
                 confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.8,
                 guidanceInstructions: typeof parsed.guidanceInstructions === 'string' ? parsed.guidanceInstructions : ''
             };
+
+            // 1. Verify recipient token validity against EphemeralTokenStore (prevent hallucinated/expired tokens)
+            if (brief.target?.recipientToken) {
+                const isValid = EphemeralTokenStore.isValidToken(brief.target.recipientToken, ctx.callerJid);
+                if (!isValid) {
+                    console.warn(
+                        `[AgentGuidancePlanner] Invalid or hallucinated recipientToken "${brief.target.recipientToken}" from Tier 1 for caller ${ctx.callerJid}. Discarding.`
+                    );
+                    brief.target.recipientToken = undefined;
+                }
+            }
+
+            // 2. If token is missing/invalid but rawAlias is present, dynamically resolve via AgentEntityResolver
+            if (!brief.target?.recipientToken && brief.target?.rawAlias) {
+                try {
+                    const resolved = await AgentEntityResolver.resolveRecipientToken(
+                        brief.target.rawAlias,
+                        ctx.callerJid
+                    );
+                    if (resolved) {
+                        brief.target.recipientToken = resolved.recipientToken;
+                    }
+                } catch (resolveErr) {
+                    console.error('[AgentGuidancePlanner] Error in entity resolution fallback:', resolveErr);
+                }
+            }
+
+            // 3. Keep extractedParameters.recipientToken synchronized with verified token
+            if (brief.extractedParameters?.recipientToken) {
+                if (brief.target?.recipientToken) {
+                    brief.extractedParameters.recipientToken = brief.target.recipientToken;
+                } else {
+                    delete brief.extractedParameters.recipientToken;
+                }
+            }
+
+            // 4. Guard against dispatching message/location without a valid recipient token
+            if (
+                (brief.primaryTool === 'send_message' || brief.primaryTool === 'send_location') &&
+                !brief.target?.recipientToken
+            ) {
+                const isLocationStagingWithoutTarget = brief.intent === 'SEND_LOCATION' && !brief.target?.rawAlias;
+                if (!isLocationStagingWithoutTarget) {
+                    const targetAlias = brief.target?.rawAlias;
+                    brief.primaryTool = null;
+                    brief.guidanceInstructions = targetAlias
+                        ? `Decline the request gracefully with Sara persona. Explain politely that no contact was found for "${targetAlias}". Ask the user for the contact's phone number or registered alias. NEVER mention internal tokens, nonces, or error codes.`
+                        : 'Decline the request gracefully with Sara persona. Ask the user who they would like to send the message to. NEVER mention internal tokens, nonces, or error codes.';
+                }
+            }
 
             // CODE-ENFORCED POLICY GATE:
             // Sits strictly between Tier 1 and Tier 2. Free-form instructions are stripped;

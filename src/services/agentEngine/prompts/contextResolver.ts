@@ -5,6 +5,7 @@ import { getSenderJid, cleanId } from '../../../utils/casino.js';
 import { isOwnerId, getPrimaryOwnerNumber } from '../../../utils/owner.js';
 import { decryptString } from '../../storageEncryption.js';
 import { EphemeralTokenStore } from '../tokenStore.js';
+import { toCanonicalJid } from '../../../utils/phone.js';
 import { loadConfig } from '../../subBotConfigService.js';
 
 export class SaraPromptContextResolver {
@@ -188,6 +189,46 @@ export class SaraPromptContextResolver {
             }
         } catch (dbErr) {
             console.error('[SaraPromptContextResolver] Failed to load UserContactBook:', dbErr);
+        }
+
+        // Pre-mint owner contact token so users can reference the Owner / Razael / Creator
+        try {
+            let ownerJid: string | null = null;
+            if (subBotNumber) {
+                try {
+                    const subBotConfig = loadConfig(subBotNumber);
+                    if (subBotConfig?.ownerJid) {
+                        ownerJid = toCanonicalJid(subBotConfig.ownerJid);
+                    }
+                } catch {
+                    // Ignore sub-bot config read error
+                }
+            }
+
+            if (!ownerJid) {
+                const primaryOwner = getPrimaryOwnerNumber();
+                if (primaryOwner) {
+                    ownerJid = toCanonicalJid(primaryOwner);
+                }
+            }
+
+            if (ownerJid) {
+                const ownerToken = EphemeralTokenStore.mintToken(ownerJid, callerJid);
+                const ownerAliases = new Set<string>();
+                if (subBotOwnerName) {
+                    ownerAliases.add(subBotOwnerName);
+                }
+                ownerAliases.add('Owner');
+                ownerAliases.add('Razael');
+
+                for (const alias of ownerAliases) {
+                    if (!knownContactTokens.some((c) => c.alias.toLowerCase() === alias.toLowerCase())) {
+                        knownContactTokens.push({ alias, token: ownerToken });
+                    }
+                }
+            }
+        } catch (ownerTokenErr) {
+            console.error('[SaraPromptContextResolver] Failed to mint owner contact token:', ownerTokenErr);
         }
 
         return {

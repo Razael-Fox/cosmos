@@ -115,6 +115,31 @@ export class EphemeralTokenStore {
     }
 
     /**
+     * Checks if a token is valid, active, unconsumed, and accessible by the caller.
+     */
+    public static isValidToken(token: string, callerJid: string, toolName?: string): boolean {
+        if (!token || typeof token !== 'string') return false;
+
+        const entry = this.tokens.get(token);
+        if (!entry) return false;
+
+        if (Date.now() > entry.expiresAt) {
+            this.deleteToken(token);
+            return false;
+        }
+
+        if (entry.callerJid !== callerJid) {
+            return false;
+        }
+
+        if (toolName && !entry.allowedTools.has(toolName)) {
+            return false;
+        }
+
+        return !entry.consumed;
+    }
+
+    /**
      * Marks a token as consumed upon terminal execution.
      */
     public static consumeToken(token: string, callerJid: string): void {
