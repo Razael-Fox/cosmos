@@ -274,6 +274,7 @@ model User {
   subBots              SubBotInstance[]
   devices              UserDevice[]
   ipAccessLogs         UserIpAccessLog[]
+  contacts             UserContactBook[]
 }
 
 model JobCatalog {
@@ -456,5 +457,19 @@ model LoanReminder {
 
   @@index([loanId])
   @@index([remindAt, sent])
+}
+
+model UserContactBook {
+  id           String   @id @default(uuid())
+  ownerJid     String
+  alias        String
+  encryptedJid String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [ownerJid], references: [id], onDelete: Cascade)
+
+  @@unique([ownerJid, alias])
+  @@index([ownerJid])
 }
 

@@ -390,6 +390,17 @@ export function ensureDatabaseSchema(dbPath: string): void {
             );
             CREATE INDEX IF NOT EXISTS "LoanReminder_loanId_idx" ON "LoanReminder"("loanId");
             CREATE INDEX IF NOT EXISTS "LoanReminder_remindAt_sent_idx" ON "LoanReminder"("remindAt", "sent");
+            CREATE TABLE IF NOT EXISTS "UserContactBook" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "ownerJid" TEXT NOT NULL,
+                "alias" TEXT NOT NULL,
+                "encryptedJid" TEXT NOT NULL,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "UserContactBook_ownerJid_fkey" FOREIGN KEY ("ownerJid") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "UserContactBook_ownerJid_alias_key" ON "UserContactBook"("ownerJid", "alias");
+            CREATE INDEX IF NOT EXISTS "UserContactBook_ownerJid_idx" ON "UserContactBook"("ownerJid");
 
             PRAGMA journal_mode = WAL;
             PRAGMA busy_timeout = 5000;

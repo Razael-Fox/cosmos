@@ -5,7 +5,8 @@ import { addMessageToHistory, getConversationContext } from '#utils/aiHistory.js
 import toolsHandler from '#tools/handler.js';
 import { getTranslator } from '#utils/i18n.js';
 import { getGroqClient } from '#utils/apiKeyResolver.js';
-
+import { isOwnerId } from '#utils/owner.js';
+import { CosmosAgentEngine } from '#services/agentEngine/index.js';
 dotenv.config();
 
 let isGlobalOfflineAiEnabled = false;
@@ -129,6 +130,11 @@ export async function handleOfflineAiResponder(
         // Add the new combined user message to history
         const historyText = combinedText || '[Image received]';
         await addMessageToHistory(jid, 'user', historyText);
+        // If text-only message, delegate directly to the safe and deterministic CosmosAgentEngine
+        if (finalImages.length === 0 && combinedText.trim().length > 0) {
+            await CosmosAgentEngine.processMessage(sock, msg, jid, combinedText, lang);
+            return true;
+        }
 
         // Fetch owner context once
         if (!ownerContextStr && sock.user?.id) {
@@ -169,7 +175,7 @@ Important: Use the Native Function Calling API. Strictly do NOT output raw XML t
         // Retrieve the conversation context (includes summary and recent messages)
         const chatContext = await getConversationContext(jid, groq);
 
-        let modelToUse = 'llama3-70b-8192'; // Use model that supports tool calling well
+        let modelToUse = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
         if (finalImages.length > 0) {
             modelToUse = 'llama-3.2-90b-vision-preview'; // Vision model
             const lastMsg = chatContext[chatContext.length - 1];
@@ -200,9 +206,19 @@ Important: Use the Native Function Calling API. Strictly do NOT output raw XML t
             for (const toolCall of message.tool_calls) {
                 const funcName = toolCall.function.name;
                 const args = JSON.parse(toolCall.function.arguments || '{}');
+                const t = getTranslator(lang);
+                const senderJid = msg.key.participant || msg.key.remoteJid || jid;
+                const isOwnerCaller = Boolean(msg.key.fromMe) || isOwnerId(senderJid);
+
+                if (toolsHandler.isOwnerOnly(funcName) && !isOwnerCaller) {
+                    console.warn(
+                        `[Offline AI Security] Blocked owner-only tool invocation: ${funcName} by ${senderJid}`
+                    );
+                    await sock.sendMessage(jid, { text: t('core.owner_only') }, { quoted: msg });
+                    continue;
+                }
 
                 try {
-                    const t = getTranslator(lang);
                     const ctx = { sock, msg, jid, t };
                     console.log('Offline AI executing tool', { jid, funcName, args });
                     const result = await toolsHandler.execute(funcName, args, ctx);

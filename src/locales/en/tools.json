@@ -805,6 +805,12 @@
         "cancel": {
             "description": "Cancel an active multi-step operation, interactive prompt, or pending confirmation in the current chat."
         },
+        "contact": {
+            "description": "Manage personal zero-knowledge contacts for AI assistance and secure messaging."
+        },
+        "sara": {
+            "description": "Invoke Sara, the intelligent AI assistant, to chat, query information, or perform permitted actions."
+        },
         "coinflip": {
             "description": "Play coinflip. Example: .coinflip heads 1.000.000"
         },

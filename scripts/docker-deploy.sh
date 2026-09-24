@@ -121,9 +121,9 @@ setup_tunnel
 # ------------------------------------------------------------------------------
 # Build and Image Comparison
 # ------------------------------------------------------------------------------
-if run_docker docker inspect "${CONTAINER}" >/dev/null 2>&1; then
-    OLD_IMG=$(run_docker docker inspect "${CONTAINER}" --format '{{.Image}}' | tr -d '[:space:]')
-    IS_RUNNING=$(run_docker docker inspect "${CONTAINER}" --format '{{.State.Running}}' | tr -d '[:space:]')
+if run_docker docker inspect --type container "${CONTAINER}" >/dev/null 2>&1; then
+    OLD_IMG=$(run_docker docker inspect --type container "${CONTAINER}" --format '{{.Image}}' | tr -d '[:space:]')
+    IS_RUNNING=$(run_docker docker inspect --type container "${CONTAINER}" --format '{{.State.Running}}' | tr -d '[:space:]')
 else
     OLD_IMG="none"
     IS_RUNNING="false"

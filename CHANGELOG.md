@@ -11,6 +11,37 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-15] - 2026-09-24
+
+### Added
+
+- **CosmosAgentEngine: Safe and Deterministic AI Tool Execution Runtime for Groq Provider (#28):**
+    - **Two-Tier Guidance + Execution Dual-LLM Pipeline:**
+        - **Tier 1 (Analytical Guidance Planner — `llama-3.1-8b-instant` / `openai/gpt-oss-20b`):** Fast (<300ms) intent parser that extracts structured user goals, resolves human relations/nicknames into synthetic tokens, and generates a typed `GuidanceBrief` via Groq JSON mode.
+        - **Tier 2 (Persona Executor — `llama-3.3-70b-versatile` / `openai/gpt-oss-120b`):** High-parameter reasoning core with Sara's conversational persona, executing native tool calls against strictly scoped tool definitions (1 candidate tool max, preventing token flooding and TPM quota exhaustion).
+        - **Dynamic Model Fallback Chain & Active Caching:** Automatic fallback across Tier 1 and Tier 2 if a model is decommissioned or returns 404, with in-memory caching of the working model for sub-second execution.
+    - **Zero-Knowledge Personal Contact Security (Ephemeral Nonces in RAM):**
+        - Raw phone numbers are strictly scrubbed and never exposed to any LLM prompt context.
+        - Contacts are abstracted into cryptographically random 128-bit nonces (`contact_ref_...`) in server RAM, strictly bound to `callerJid` with a 3-minute ephemeral TTL, capability scoping (`allowedTools`), and LRU eviction (max 10,000 global, max 10 per user).
+        - Stored at rest in `UserContactBook` SQLite table using AES-256-GCM encryption (`encryptString`/`decryptString`).
+    - **Interactive Confirmation Manager & TOCTOU Protection (`AgentConfirmationManager`):**
+        - High-risk financial and inventory operations (`bank_action`, `transfer`, `loan`) are staged in memory and integrated with `cancellationManager` (`.confirm` / `.cancel`).
+        - Verifies sender JID and LID identity to prevent group chat confirmation hijacking.
+        - Re-evaluates balances and state atomically inside `prisma.$transaction` upon confirmation.
+    - **Remote Location Forwarding & Delegation via Sub-Bot ("shareloc"):**
+        - Supported via both single-pass quoted location messages and interactive 2-step flows (`.sara please send this location to Mom` followed by location pin / `shareloc`).
+        - Dispatches native WhatsApp `locationMessage` to the target contact with attribution caption: `"${senderName} sent this from a different number — Sara AI"`.
+    - **Advanced International Phone Number Sanitization (`src/utils/phone.ts`):**
+        - Multi-token spaced input parsing (`.contact add Friend +94 77 837 0112`).
+        - International country code preservation (+ strip), Indonesian local `08` -> `628` conversion, accidental `6208` correction, and international `00` exit code removal.
+    - **Groq Self-Healing Interceptor (`tool_use_failed` Recovery):**
+        - Intercepts Groq HTTP 400 errors where tool invocations leak into `error.failed_generation`, extracting function arguments and re-validating recovered tools through the TypeScript Policy Gate before execution.
+    - **Front-End Integration:**
+        - User-facing `.sara` / `.ai` command (`src/tools/sara.ts`).
+        - Refactored `src/utils/offlineAi.ts` to delegate text-based turns to `CosmosAgentEngine.processMessage`.
+
+---
+
 ## [RF-2609-14] - 2026-09-23
 
 ### Fixed
@@ -500,7 +531,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-14...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-15...HEAD
+[RF-2609-15]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-14...RF-2609-15
 [RF-2609-14]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-13...RF-2609-14
 [RF-2609-13]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-12...RF-2609-13
 [RF-2609-12]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-11...RF-2609-12
