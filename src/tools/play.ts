@@ -100,7 +100,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     const isUrl = query.startsWith('http');
-    const ytdlpPath = '/usr/local/bin/yt-dlp';
+    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'yt-dlp')];
+    let ytdlpPath = 'yt-dlp';
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+            ytdlpPath = candidate;
+            break;
+        }
+    }
     const cookiesPath = path.resolve(process.cwd(), 'cookies.txt');
     const cookiesArg = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : '';
 

@@ -76,7 +76,7 @@ RUN pnpm build
 FROM node:${NODE_VERSION}
 ENV NODE_ENV=production
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg nginx openssl curl ca-certificates libcap2-bin \
+    ffmpeg nginx openssl curl ca-certificates libcap2-bin python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install cloudflared (multi-arch: amd64 / arm64)
@@ -84,6 +84,10 @@ RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "amd64" ]; then CF_ARCH="amd64"; else CF_ARCH="arm64"; fi && \
     curl -fsSL -o /usr/local/bin/cloudflared "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" && \
     chmod +x /usr/local/bin/cloudflared
+
+# Install yt-dlp (multi-arch via python3)
+RUN curl -fsSL -o /usr/local/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
+    chmod a+rx /usr/local/bin/yt-dlp
 
 RUN npm install -g pm2
 RUN groupadd -r cosmos -g 1001 && useradd -r -m -u 1001 -g cosmos cosmos

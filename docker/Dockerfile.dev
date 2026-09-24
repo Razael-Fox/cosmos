@@ -7,8 +7,10 @@ ARG NODE_VERSION=22-bookworm-slim
 FROM node:${NODE_VERSION} AS dev-base
 RUN corepack enable && \
     apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg openssl curl ca-certificates libcap2-bin \
-    && rm -rf /var/lib/apt/lists/*
+    ffmpeg openssl curl ca-certificates libcap2-bin python3 \
+    && rm -rf /var/lib/apt/lists/* && \
+    curl -fsSL -o /usr/local/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
+    chmod a+rx /usr/local/bin/yt-dlp
 
 # -------------------------------------------------------------
 # Stage: Bot Engine Dev

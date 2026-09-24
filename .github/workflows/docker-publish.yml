@@ -1,83 +1,83 @@
 name: Publish Docker Image to GHCR
 
 on:
-  push:
-    tags:
-      - 'RF-*'
+    push:
+        tags:
+            - 'RF-*'
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: razael-fox/cosmos
+    REGISTRY: ghcr.io
+    IMAGE_NAME: razael-fox/cosmos
 
 jobs:
-  build-and-push:
-    runs-on: [self-hosted, linux, debian]
+    build-and-push:
+        runs-on: [self-hosted, linux, debian]
 
-    permissions:
-      contents: read
-      packages: write
+        permissions:
+            contents: read
+            packages: write
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Checkout api worktree
-        uses: actions/checkout@v4
-        with:
-          ref: api
-          path: .worktrees/api
+            - name: Checkout api worktree
+              uses: actions/checkout@v4
+              with:
+                  ref: api
+                  path: .worktrees/api
 
-      - name: Checkout website worktree
-        uses: actions/checkout@v4
-        with:
-          ref: website
-          path: .worktrees/website
+            - name: Checkout website worktree
+              uses: actions/checkout@v4
+              with:
+                  ref: website
+                  path: .worktrees/website
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=tag
-            type=raw,value=latest
+            - name: Extract metadata (tags, labels)
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=tag
+                      type=raw,value=latest
 
-      - name: Check disk space
-        run: |
-          df -h /
-          docker system df
+            - name: Check disk space
+              run: |
+                  df -h /
+                  docker system df
 
-      - name: Prune builder cache if low on disk
-        run: |
-          AVAIL=$(df / | awk 'NR==2 {print $4}')
-          if [ "$AVAIL" -lt 5242880 ]; then
-            echo "Low disk space detected, pruning builder cache..."
-            docker builder prune -f
-          fi
+            - name: Prune builder cache if low on disk
+              run: |
+                  AVAIL=$(df / | awk 'NR==2 {print $4}')
+                  if [ "$AVAIL" -lt 5242880 ]; then
+                    echo "Low disk space detected, pruning builder cache..."
+                    docker builder prune -f
+                  fi
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA' }}
-            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://cosmos.razael-fox.my.id' }}
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://cosmos.razael-fox.my.id' }}
-            NEXT_PUBLIC_BOT_NUMBER=${{ secrets.NEXT_PUBLIC_BOT_NUMBER }}
-            NEXT_PUBLIC_SALES_NUMBER=${{ secrets.NEXT_PUBLIC_SALES_NUMBER }}
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: docker/Dockerfile
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  build-args: |
+                      NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA' }}
+                      NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://cosmos.razael-fox.my.id' }}
+                      NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://cosmos.razael-fox.my.id' }}
+                      NEXT_PUBLIC_BOT_NUMBER=${{ secrets.NEXT_PUBLIC_BOT_NUMBER }}
+                      NEXT_PUBLIC_SALES_NUMBER=${{ secrets.NEXT_PUBLIC_SALES_NUMBER }}
 
-      - name: Verify pushed image
-        run: |
-          docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
-            | grep -E '"digest"|"mediaType"' | head -6
+            - name: Verify pushed image
+              run: |
+                  docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
+                    | grep -E '"digest"|"mediaType"' | head -6
