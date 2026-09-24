@@ -127,13 +127,15 @@ export default function DashboardPage() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [timeQuote, setTimeQuote] = useState<string>('');
     const [fetchedAvatarUrl, setFetchedAvatarUrl] = useState<string | null>(null);
+    const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
     const [avatarError, setAvatarError] = useState(false);
+    const [bannerError, setBannerError] = useState(false);
     const [polledPresence, setPolledPresence] = useState<'online' | 'offline' | null>(null);
     const presence = polledPresence ?? userProfile?.presence ?? 'offline';
 
     const avatarUrl = userProfile?.profilePictureUrl || fetchedAvatarUrl;
     const placeholderAvatarUrl = userProfile?.avatarPlaceholderUrl ?? null;
-
+    const bannerUrl = !bannerError ? (userProfile?.coverPictureUrl || fetchedBannerUrl || avatarUrl) : null;
     useEffect(() => {
         if (!userProfile?.id) return;
         let isMounted = true;
@@ -155,16 +157,19 @@ export default function DashboardPage() {
     }, [userProfile?.id]);
 
     useEffect(() => {
-        if (!userProfile?.profilePictureUrl && userProfile?.id) {
+        if ((!userProfile?.profilePictureUrl || !userProfile?.coverPictureUrl) && userProfile?.id) {
             getProfilePhoto()
                 .then((res) => {
                     if (res?.pictureUrl) {
                         setFetchedAvatarUrl(res.pictureUrl);
                     }
+                    if (res?.coverUrl) {
+                        setFetchedBannerUrl(res.coverUrl);
+                    }
                 })
                 .catch(() => {});
         }
-    }, [userProfile?.profilePictureUrl, userProfile?.id]);
+    }, [userProfile?.profilePictureUrl, userProfile?.coverPictureUrl, userProfile?.id]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe sync of client time-of-day quote
@@ -501,84 +506,112 @@ export default function DashboardPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* User Profile & Plan Status Card */}
-                        <div className="p-6 rounded-3xl bg-card border border-border space-y-4 shadow-xs flex flex-col justify-between">
-                            <div>
-                                <div className="flex items-center justify-between pb-3 border-b border-border/80">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                        <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
-                                        {t.dashboard.userProfileCard?.title || 'WhatsApp Profile'}
+                        <div className="rounded-3xl bg-card border border-border shadow-xs flex flex-col justify-between overflow-hidden relative group">
+                            {/* Profile Header Banner */}
+                            <div className="relative h-24 sm:h-28 w-full overflow-hidden bg-muted/70 shrink-0">
+                                {bannerUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={bannerUrl}
+                                        alt={userProfile?.username || 'Profile Banner'}
+                                        referrerPolicy="no-referrer"
+                                        className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500 ease-out"
+                                        onError={() => setBannerError(true)}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-r from-emerald-600/20 via-primary/20 to-indigo-600/20" />
+                                )}
+
+                                {/* Subtle Dark/Light Gradient for text contrast */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40" />
+
+                                {/* WhatsApp Profile Header Pill Bar (inside banner) */}
+                                <div className="absolute top-3.5 inset-x-4 flex items-center justify-between z-10">
+                                    <span className="text-[11px] font-bold uppercase tracking-wider text-white drop-shadow-sm flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                                        <WhatsappLogo className="w-3.5 h-3.5 text-emerald-400" weight="fill" />
+                                        <span>{t.dashboard.userProfileCard?.title || 'WhatsApp Profile'}</span>
                                     </span>
                                     <span
-                                        className={`text-xs px-2.5 py-0.5 rounded-md font-semibold flex items-center gap-1.5 transition-colors border ${
+                                        className={`text-[11px] px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 backdrop-blur-md border shadow-xs ${
                                             presence === 'online'
-                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                                                : 'bg-muted text-muted-foreground border-border'
+                                                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
+                                                : 'bg-black/40 text-zinc-300 border-white/10'
                                         }`}
                                     >
                                         <span
                                             className={`w-1.5 h-1.5 rounded-full ${
                                                 presence === 'online'
-                                                    ? 'bg-emerald-500 animate-pulse'
-                                                    : 'bg-zinc-400 dark:bg-zinc-600'
+                                                    ? 'bg-emerald-400 animate-pulse'
+                                                    : 'bg-zinc-400'
                                             }`}
                                         />
-                                        {presence === 'online'
-                                            ? t.dashboard.userProfileCard?.online || 'Online'
-                                            : t.dashboard.userProfileCard?.offline || 'Offline'}
+                                        <span>
+                                            {presence === 'online'
+                                                ? t.dashboard.userProfileCard?.online || 'Online'
+                                                : t.dashboard.userProfileCard?.offline || 'Offline'}
+                                        </span>
                                     </span>
                                 </div>
 
-                                {/* User Details: Avatar + Username + Redacted Phone */}
-                                <div className="flex items-center gap-3.5 pt-3">
-                                    <div className="relative shrink-0">
-                                        <div className="w-13 h-13 rounded-2xl overflow-hidden border border-border bg-muted/60 flex items-center justify-center shadow-xs">
-                                            {avatarUrl && !avatarError ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
-                                                    src={avatarUrl}
-                                                    alt={userProfile?.username || 'Profile'}
-                                                    referrerPolicy="no-referrer"
-                                                    className="w-full h-full object-cover"
-                                                    onError={() => setAvatarError(true)}
-                                                />
-                                            ) : placeholderAvatarUrl ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
-                                                    src={placeholderAvatarUrl}
-                                                    alt={userProfile?.username || 'Profile'}
-                                                    referrerPolicy="no-referrer"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-primary/20 flex items-center justify-center text-primary font-bold text-lg font-heading">
-                                                    {(userProfile?.username || userProfile?.pushName || 'U')
-                                                        .charAt(0)
-                                                        .toUpperCase()}
+                                {/* Bottom Blur Blend Effect on the Banner */}
+                                <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-card via-card/75 to-transparent backdrop-blur-[3px] pointer-events-none" />
+                            </div>
+
+                            {/* Card Content (Avatar, Username, Plan Status) */}
+                            <div className="px-6 pb-6 pt-0 space-y-4 flex-1 flex flex-col justify-between -mt-9 relative z-10">
+                                <div>
+                                    {/* User Details: Avatar overlapping Banner + Username + Redacted Phone */}
+                                    <div className="flex items-end gap-3.5">
+                                        <div className="relative shrink-0">
+                                            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-card bg-card shadow-md flex items-center justify-center ring-1 ring-border/80">
+                                                {avatarUrl && !avatarError ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={avatarUrl}
+                                                        alt={userProfile?.username || 'Profile'}
+                                                        referrerPolicy="no-referrer"
+                                                        className="w-full h-full object-cover"
+                                                        onError={() => setAvatarError(true)}
+                                                    />
+                                                ) : placeholderAvatarUrl ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={placeholderAvatarUrl}
+                                                        alt={userProfile?.username || 'Profile'}
+                                                        referrerPolicy="no-referrer"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-primary/20 flex items-center justify-center text-primary font-bold text-lg font-heading">
+                                                        {(userProfile?.username || userProfile?.pushName || 'U')
+                                                            .charAt(0)
+                                                            .toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="absolute -bottom-1 -right-1 p-0.5 bg-card rounded-full shadow-xs">
+                                                <div
+                                                    className={`p-0.5 rounded-full text-white transition-colors ${
+                                                        presence === 'online'
+                                                            ? 'bg-emerald-500'
+                                                            : 'bg-zinc-400 dark:bg-zinc-600'
+                                                    }`}
+                                                >
+                                                    <WhatsappLogo className="w-3 h-3" weight="fill" />
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="absolute -bottom-1 -right-1 p-0.5 bg-card rounded-full shadow-xs">
-                                            <div
-                                                className={`p-0.5 rounded-full text-white transition-colors ${
-                                                    presence === 'online'
-                                                        ? 'bg-emerald-500'
-                                                        : 'bg-zinc-400 dark:bg-zinc-600'
-                                                }`}
-                                            >
-                                                <WhatsappLogo className="w-3 h-3" weight="fill" />
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="min-w-0 flex-1 space-y-0.5">
-                                        <h3 className="text-base font-bold text-foreground font-heading truncate">
-                                            {userProfile?.username
-                                                ? `@${userProfile.username}`
-                                                : userProfile?.pushName || 'WhatsApp User'}
-                                        </h3>
-                                        <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5 tracking-tight">
-                                            <span>{formatRedactedPhone(userProfile?.id)}</span>
-                                        </p>
+                                        <div className="min-w-0 flex-1 space-y-0.5 pb-0.5">
+                                            <h3 className="text-base font-bold text-foreground font-heading truncate">
+                                                {userProfile?.username
+                                                    ? `@${userProfile.username}`
+                                                    : userProfile?.pushName || 'WhatsApp User'}
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5 tracking-tight">
+                                                <span>{formatRedactedPhone(userProfile?.id)}</span>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 

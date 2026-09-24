@@ -230,8 +230,8 @@ export async function getUserProfile(): Promise<{ user: import('./types').UserPr
  * GET /api/v1/auth/profile-photo
  * Retrieves the profile picture URL for the authenticated user from WhatsApp Baileys engine.
  */
-export async function getProfilePhoto(): Promise<{ pictureUrl: string | null }> {
-    return await request<{ pictureUrl: string | null }>('/api/v1/auth/profile-photo', {
+export async function getProfilePhoto(): Promise<{ pictureUrl: string | null; coverUrl?: string | null }> {
+    return await request<{ pictureUrl: string | null; coverUrl?: string | null }>('/api/v1/auth/profile-photo', {
         method: 'GET'
     });
 }
