@@ -1,7 +1,0 @@
-{
-  "name": "test-pkg",
-  "type": "module",
-  "imports": {
-    "#*": "./*"
-  }
-}
