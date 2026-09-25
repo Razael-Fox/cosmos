@@ -213,6 +213,17 @@ export function ensureDatabaseSchema(dbPath: string): void {
                 "updatedBy" TEXT,
                 "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS "MaliciousActor" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "jid" TEXT NOT NULL,
+                "lid" TEXT,
+                "reason" TEXT NOT NULL,
+                "severity" TEXT NOT NULL DEFAULT 'BLOCKED',
+                "details" TEXT,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
         `);
 
         ensureColumnExists(db, 'User', 'currentJobId', 'INTEGER');
@@ -238,6 +249,13 @@ export function ensureDatabaseSchema(dbPath: string): void {
         ensureColumnExists(db, 'IdCard', 'provinsi', "TEXT NOT NULL DEFAULT 'JAWA BARAT'");
         try {
             db.exec(`CREATE INDEX IF NOT EXISTS "GroupNsfwSetting_enabled_idx" ON "GroupNsfwSetting"("enabled")`);
+        } catch {
+            /* ignore index errors */
+        }
+        try {
+            db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "MaliciousActor_jid_key" ON "MaliciousActor"("jid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "MaliciousActor_lid_idx" ON "MaliciousActor"("lid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "MaliciousActor_severity_idx" ON "MaliciousActor"("severity")`);
         } catch {
             /* ignore index errors */
         }
