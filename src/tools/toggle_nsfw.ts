@@ -28,13 +28,15 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     }
 
     // Check group permissions (admin or bot owner required)
+    const cleanId = (id?: string | null): string | null => (id ? id.split(':')[0].split('@')[0] : null);
     const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+    const senderRaw = cleanId(senderJid);
     let isAdmin = false;
 
     try {
         const groupMetadata = await ctx.sock.groupMetadata(jid);
-        if (senderJid && Array.isArray(groupMetadata?.participants)) {
-            const participant = groupMetadata.participants.find((p) => p.id === senderJid);
+        if (senderRaw && Array.isArray(groupMetadata?.participants)) {
+            const participant = groupMetadata.participants.find((p) => cleanId(p.id) === senderRaw);
             if (participant && (participant.admin === 'admin' || participant.admin === 'superadmin')) {
                 isAdmin = true;
             }
@@ -44,7 +46,6 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     }
 
     const ownerNumbers = getOwnerNumbers();
-    const senderRaw = senderJid ? senderJid.split(':')[0].split('@')[0] : null;
     const isOwner = Boolean(ctx.msg.key.fromMe) || (senderRaw !== null && ownerNumbers.includes(senderRaw));
 
     if (!isAdmin && !isOwner) {

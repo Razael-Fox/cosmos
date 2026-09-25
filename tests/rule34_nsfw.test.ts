@@ -1,6 +1,8 @@
 import assert from 'assert';
 import {
     isBlacklistedTag,
+    hasBlacklistedTag,
+    isValidBooruMediaUrl,
     isAiGeneratedPost,
     resolveTags,
     POPULAR_TAG_ALIASES
@@ -47,7 +49,38 @@ async function runRule34NsfwTests() {
     assert.strictEqual(isBlacklistedTag('guro'), true);
     assert.strictEqual(isBlacklistedTag('genshin_impact'), false);
     assert.strictEqual(isBlacklistedTag('zenless_zone_zero'), false);
-    console.log('✓ Safety blacklist verified.');
+    assert.strictEqual(hasBlacklistedTag('genshin_impact raiden_shogun solo'), false);
+    assert.strictEqual(hasBlacklistedTag('genshin_impact loli solo'), true);
+    assert.strictEqual(hasBlacklistedTag('shota_boy video'), true);
+    assert.strictEqual(hasBlacklistedTag('safe_guro_test'), true);
+    await assert.rejects(
+        async () => {
+            await resolveTags(['loli', 'solo']);
+        },
+        { message: 'BLACKLISTED_TAG' },
+        'resolveTags must reject blacklisted tags'
+    );
+    console.log('✓ Safety blacklist and post-fetch tag filter verified.');
+
+    // 2b. SSRF Media URL Validation
+    console.log('[Test 2b] Testing SSRF URL validation...');
+    assert.strictEqual(isValidBooruMediaUrl('https://wimg.rule34.xxx/images/123/abc.mp4'), true);
+    assert.strictEqual(isValidBooruMediaUrl('https://us.rule34.xxx/video.webm'), true);
+    assert.strictEqual(isValidBooruMediaUrl('https://rule34.xxx/samples/123.mp4'), true);
+    assert.strictEqual(isValidBooruMediaUrl('http://wimg.rule34.xxx/video.mp4'), false, 'HTTP must be rejected');
+    assert.strictEqual(isValidBooruMediaUrl('https://localhost/video.mp4'), false, 'localhost must be rejected');
+    assert.strictEqual(isValidBooruMediaUrl('https://127.0.0.1/video.mp4'), false, '127.0.0.1 must be rejected');
+    assert.strictEqual(
+        isValidBooruMediaUrl('https://169.254.169.254/video.mp4'),
+        false,
+        'Cloud metadata must be rejected'
+    );
+    assert.strictEqual(
+        isValidBooruMediaUrl('https://evil.attacker.com/video.mp4'),
+        false,
+        'External domains must be rejected'
+    );
+    console.log('✓ SSRF URL validation verified.');
 
     // 3. Anti-AI Filter Validation
     console.log('[Test 3] Testing AI content exclusion tags...');

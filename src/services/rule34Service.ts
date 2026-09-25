@@ -3,11 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { randomUUID } from 'crypto';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import ffmpeg from 'ffmpeg-static';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export const AI_EXCLUSION_TAGS = [
     'ai_generated',
@@ -49,6 +49,10 @@ export const SAFETY_BLACKLIST_TAGS = [
     'gore'
 ];
 
+const BLACKLIST_TABLE: Record<string, true> = Object.fromEntries(
+    SAFETY_BLACKLIST_TAGS.map((t) => [t.toLowerCase(), true])
+);
+const BLACKLIST_REGEXES = SAFETY_BLACKLIST_TAGS.map((t) => new RegExp(`(^|_)${t}(_|$)`, 'i'));
 export const POPULAR_TAG_ALIASES: Record<string, string> = {
     zzz: 'zenless_zone_zero',
     hsr: 'honkai:_star_rail',
@@ -81,7 +85,43 @@ export const POPULAR_TAG_ALIASES: Record<string, string> = {
     rezero: 're:zero_kara_hajimeru_isekai_seikatsu'
 };
 
+const MAX_AUTOCOMPLETE_CACHE_SIZE = 500;
 const autocompleteCache = new Map<string, string>();
+
+function setAutocompleteCache(key: string, value: string): void {
+    if (autocompleteCache.size >= MAX_AUTOCOMPLETE_CACHE_SIZE) {
+        const oldestKey = autocompleteCache.keys().next().value;
+        if (oldestKey) autocompleteCache.delete(oldestKey);
+    }
+    autocompleteCache.set(key, value);
+}
+
+class SimpleAsyncMutex {
+    private queue: (() => void)[] = [];
+    private locked = false;
+
+    async acquire(): Promise<() => void> {
+        return new Promise<() => void>((resolve) => {
+            const release = () => {
+                const next = this.queue.shift();
+                if (next) {
+                    next();
+                } else {
+                    this.locked = false;
+                }
+            };
+
+            if (!this.locked) {
+                this.locked = true;
+                resolve(release);
+            } else {
+                this.queue.push(() => resolve(release));
+            }
+        });
+    }
+}
+
+const videoProcessingMutex = new SimpleAsyncMutex();
 
 export interface Rule34Post {
     id: number;
@@ -108,12 +148,39 @@ export interface Rule34VideoResult {
 export function isBlacklistedTag(tag: string): boolean {
     const normalized = tag.toLowerCase().trim();
     if (!normalized) return false;
-    for (const blacklisted of SAFETY_BLACKLIST_TAGS) {
-        if (normalized === blacklisted || new RegExp(`(^|_)${blacklisted}(_|$)`, 'i').test(normalized)) {
+    if (BLACKLIST_TABLE[normalized]) return true;
+    for (const re of BLACKLIST_REGEXES) {
+        if (re.test(normalized)) {
             return true;
         }
     }
     return false;
+}
+
+export function hasBlacklistedTag(tagString: string): boolean {
+    if (!tagString) return false;
+    const tags = tagString.toLowerCase().split(/\s+/);
+    for (const tag of tags) {
+        if (isBlacklistedTag(tag)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function isValidBooruMediaUrl(urlStr: string): boolean {
+    try {
+        const parsed = new URL(urlStr);
+        if (parsed.protocol !== 'https:') return false;
+        const hostname = parsed.hostname.toLowerCase();
+        // Disallow IP addresses (IPv4/IPv6) and localhost
+        if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.startsWith('[')) {
+            return false;
+        }
+        return hostname === 'rule34.xxx' || hostname.endsWith('.rule34.xxx') || hostname.endsWith('.booru.org');
+    } catch {
+        return false;
+    }
 }
 
 export function isAiGeneratedPost(tagString: string): boolean {
@@ -140,6 +207,9 @@ export async function resolveTags(
         const cleaned = raw.trim();
         if (!cleaned) continue;
         const lower = cleaned.toLowerCase();
+        if (isBlacklistedTag(lower)) {
+            throw new Error('BLACKLISTED_TAG');
+        }
 
         // 1. Direct match in dictionary
         if (POPULAR_TAG_ALIASES[lower]) {
@@ -171,7 +241,7 @@ export async function resolveTags(
                 );
                 if (Array.isArray(autoRes.data) && autoRes.data.length > 0 && autoRes.data[0]?.value) {
                     const topSuggestion = String(autoRes.data[0].value).trim();
-                    autocompleteCache.set(lower, topSuggestion);
+                    setAutocompleteCache(lower, topSuggestion);
                     effectiveTags.push(topSuggestion);
                     if (topSuggestion.toLowerCase() !== lower) {
                         resolvedAliases.push({ original: cleaned, resolved: topSuggestion });
@@ -183,8 +253,15 @@ export async function resolveTags(
             }
         }
 
-        autocompleteCache.set(lower, cleaned);
+        setAutocompleteCache(lower, cleaned);
         effectiveTags.push(cleaned);
+    }
+
+    // Safety verify: resolved tags must not violate blacklist
+    for (const eff of effectiveTags) {
+        if (isBlacklistedTag(eff)) {
+            throw new Error('BLACKLISTED_TAG');
+        }
     }
 
     return { effectiveTags, resolvedAliases };
@@ -192,8 +269,8 @@ export async function resolveTags(
 
 export async function probeVideoDuration(tempFilePath: string): Promise<number | null> {
     try {
-        const ffmpegPath = ffmpeg || 'ffmpeg';
-        const { stdout, stderr } = await execAsync(`"${ffmpegPath}" -i "${tempFilePath}" -f null -`, {
+        const ffmpegPath: string = (ffmpeg as unknown as string) || 'ffmpeg';
+        const { stdout, stderr } = await execFileAsync(ffmpegPath, ['-i', tempFilePath, '-f', 'null', '-'], {
             maxBuffer: 10 * 1024 * 1024
         }).catch((err: unknown) => {
             const errObj = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : {};
@@ -220,12 +297,35 @@ export async function probeVideoDuration(tempFilePath: string): Promise<number |
 
 export async function transmuxToMp4(inputPath: string, outputPath: string): Promise<boolean> {
     try {
-        const ffmpegPath = ffmpeg || 'ffmpeg';
-        await execAsync(
-            `"${ffmpegPath}" -y -i "${inputPath}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "${outputPath}"`,
+        const ffmpegPath: string = (ffmpeg as unknown as string) || 'ffmpeg';
+        await execFileAsync(
+            ffmpegPath,
+            [
+                '-y',
+                '-i',
+                inputPath,
+                '-c:v',
+                'libx264',
+                '-preset',
+                'fast',
+                '-crf',
+                '23',
+                '-c:a',
+                'aac',
+                '-b:a',
+                '128k',
+                '-movflags',
+                '+faststart',
+                outputPath
+            ],
             { maxBuffer: 10 * 1024 * 1024 }
         );
-        return fs.existsSync(outputPath);
+        try {
+            await fs.promises.access(outputPath);
+            return true;
+        } catch {
+            return false;
+        }
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.error('[Rule34Service] Failed to transmux video to MP4:', message);
@@ -257,12 +357,24 @@ export async function fetchRule34Video(userQuery?: string, isZeroParam: boolean 
 
     const apiKey = process.env.RULE34_API_KEY;
     const userId = process.env.RULE34_USER_ID;
+    const isAuthenticated = Boolean(apiKey && userId);
 
-    const baseTags = effectiveTags.length > 0 ? effectiveTags : [];
-    const negativeTags = AI_EXCLUSION_TAGS.map((t) => `-${t}`);
-
-    // Build query tags: enforce 'video' + search tags + negative AI tags
-    const queryTags = ['video', ...baseTags, ...negativeTags].join(' ');
+    let queryTags: string;
+    if (isAuthenticated) {
+        // Authenticated queries can include full tags, AI exclusions, and top safety exclusions
+        const baseTags = effectiveTags.length > 0 ? effectiveTags : [];
+        const negativeAi = AI_EXCLUSION_TAGS.map((t) => `-${t}`);
+        const negativeSafety = SAFETY_BLACKLIST_TAGS.slice(0, 5).map((t) => `-${t}`);
+        queryTags = ['video', ...baseTags, ...negativeAi, ...negativeSafety].join(' ');
+    } else {
+        // Anonymous Booru API limit is strictly <= 2 tags!
+        // Negative tags and AI exclusion are applied client-side in post-fetch filter.
+        if (effectiveTags.length === 0) {
+            queryTags = 'video';
+        } else {
+            queryTags = ['video', effectiveTags[0]].join(' ');
+        }
+    }
 
     const params: Record<string, string | number> = {
         page: 'dapi',
@@ -313,12 +425,16 @@ export async function fetchRule34Video(userQuery?: string, isZeroParam: boolean 
     }
 
     // Post-Fetch Filter:
-    // 1. Exclude AI tags
-    // 2. Reject non-video extensions (.jpg, .jpeg, .png, .webp, .bmp, .gif)
-    // 3. Keep only .mp4 and .webm
+    // 1. Validate URL protocol & host (SSRF prevention)
+    // 2. Exclude AI tags
+    // 3. Exclude safety blacklist tags
+    // 4. Reject non-video extensions (.jpg, .jpeg, .png, .webp, .bmp, .gif)
+    // 5. Keep only .mp4 and .webm
     const videoCandidates = posts.filter((post) => {
         if (!post?.file_url) return false;
+        if (!isValidBooruMediaUrl(post.file_url)) return false;
         if (isAiGeneratedPost(post.tags)) return false;
+        if (hasBlacklistedTag(post.tags)) return false;
 
         const lowerUrl = post.file_url.toLowerCase();
         const isForbiddenExt = /\.(jpg|jpeg|png|webp|bmp|gif)($|\?)/i.test(lowerUrl);
@@ -335,128 +451,121 @@ export async function fetchRule34Video(userQuery?: string, isZeroParam: boolean 
     // Shuffle candidate pool
     const shuffled = [...videoCandidates].sort(() => Math.random() - 0.5);
 
-    // Evaluate candidates up to a max of 25 candidates using fast metadata range probing
-    const MAX_PROBE_CANDIDATES = 25;
+    // Limit evaluation to max 5 candidates to prevent memory exhaustion and DoS
+    const MAX_PROBE_CANDIDATES = 5;
     const candidatesToTry = shuffled.slice(0, MAX_PROBE_CANDIDATES);
 
-    for (const candidate of candidatesToTry) {
-        const tempId = randomUUID();
-        const isWebm = candidate.file_url.toLowerCase().includes('.webm');
-        const probeFile = path.join(os.tmpdir(), `r34_probe_${tempId}.${isWebm ? 'webm' : 'mp4'}`);
-        const transmuxedFile = path.join(os.tmpdir(), `r34_transmux_${tempId}.mp4`);
-
-        try {
-            // 1. Fast metadata duration probe using 1.5MB HTTP Range chunk
-            let duration: number | null = null;
-            let fullBuffer: Buffer | null = null;
-            let totalLength = 0;
+    const releaseMutex = await videoProcessingMutex.acquire();
+    try {
+        for (const candidate of candidatesToTry) {
+            const tempId = randomUUID();
+            const isWebm = candidate.file_url.toLowerCase().includes('.webm');
+            const probeFile = path.join(os.tmpdir(), `r34_probe_${tempId}.${isWebm ? 'webm' : 'mp4'}`);
+            const transmuxedFile = path.join(os.tmpdir(), `r34_transmux_${tempId}.mp4`);
 
             try {
-                const chunkRes = await axios.get(candidate.file_url, {
-                    headers: {
-                        'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)',
-                        Range: 'bytes=0-1572864'
-                    },
-                    responseType: 'arraybuffer',
-                    timeout: 6000
-                });
+                // 1. Fast metadata duration probe using 1.5MB HTTP Range chunk
+                let duration: number | null = null;
+                let fullBuffer: Buffer | null = null;
+                let totalLength = 0;
 
-                const contentRange = chunkRes.headers['content-range'];
-                if (typeof contentRange === 'string') {
-                    const match = contentRange.match(/\/(\d+)$/);
-                    if (match) totalLength = parseInt(match[1], 10);
-                } else if (chunkRes.headers['content-length']) {
-                    totalLength = parseInt(String(chunkRes.headers['content-length']), 10);
-                }
-
-                // Instantly skip candidates exceeding WhatsApp 50MB limit
-                if (totalLength > 50 * 1024 * 1024) {
-                    continue;
-                }
-
-                const chunkBuffer = Buffer.from(chunkRes.data as ArrayBuffer);
-                await fs.promises.writeFile(probeFile, chunkBuffer);
-                duration = await probeVideoDuration(probeFile);
-
-                // If candidate is already fully downloaded in this single chunk (small file < 1.5MB)
-                if (totalLength > 0 && chunkBuffer.length >= totalLength) {
-                    fullBuffer = chunkBuffer;
-                }
-            } catch {
-                // Range requests may be unsupported on some CDNs; fallback to full probe below if needed
-            }
-
-            // 2. If duration was found from the chunk and is outside our window, discard immediately
-            if (duration !== null && (duration < 15 || duration > 30)) {
-                continue;
-            }
-
-            // 3. If duration is valid or moov atom was at the end of the file, download full buffer
-            if (!fullBuffer) {
-                const videoRes = await axios.get(candidate.file_url, {
-                    responseType: 'arraybuffer',
-                    headers: { 'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)' },
-                    timeout: 25000,
-                    maxContentLength: 50 * 1024 * 1024
-                });
-                fullBuffer = Buffer.from(videoRes.data as ArrayBuffer);
-                if (fullBuffer.length > 50 * 1024 * 1024) {
-                    continue;
-                }
-                await fs.promises.writeFile(probeFile, fullBuffer);
-                duration = await probeVideoDuration(probeFile);
-            }
-
-            if (duration === null || duration < 15 || duration > 30) {
-                continue;
-            }
-
-            let finalBuffer: Buffer;
-            if (isWebm) {
-                const transmuxSuccess = await transmuxToMp4(probeFile, transmuxedFile);
-                if (!transmuxSuccess) {
-                    continue;
-                }
-                finalBuffer = await fs.promises.readFile(transmuxedFile);
-            } else {
-                finalBuffer = fullBuffer;
-            }
-
-            // Extract tags into clean array, decode HTML entities
-            const decodedTags = decodeHtmlEntities(candidate.tags || '')
-                .split(/\s+/)
-                .filter(Boolean)
-                .slice(0, 10);
-
-            return {
-                id: candidate.id,
-                score: candidate.score ?? 0,
-                rating: candidate.rating || 'explicit',
-                tags: decodedTags,
-                duration: Math.round(duration * 10) / 10,
-                videoBuffer: finalBuffer,
-                resolvedAliases
-            };
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : String(err);
-            console.error(`[Rule34Service] Candidate evaluation error (ID ${candidate.id}):`, message);
-            continue;
-        } finally {
-            if (fs.existsSync(probeFile)) {
                 try {
-                    fs.unlinkSync(probeFile);
+                    const chunkRes = await axios.get(candidate.file_url, {
+                        headers: {
+                            'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)',
+                            Range: 'bytes=0-1572864'
+                        },
+                        responseType: 'arraybuffer',
+                        timeout: 6000
+                    });
+
+                    const contentRange = chunkRes.headers['content-range'];
+                    if (typeof contentRange === 'string') {
+                        const match = contentRange.match(/\/(\d+)$/);
+                        if (match) totalLength = parseInt(match[1], 10);
+                    } else if (chunkRes.headers['content-length']) {
+                        totalLength = parseInt(String(chunkRes.headers['content-length']), 10);
+                    }
+
+                    // Instantly skip candidates exceeding WhatsApp 50MB limit
+                    if (totalLength > 50 * 1024 * 1024) {
+                        continue;
+                    }
+
+                    const chunkBuffer = Buffer.from(chunkRes.data as ArrayBuffer);
+                    await fs.promises.writeFile(probeFile, chunkBuffer);
+                    duration = await probeVideoDuration(probeFile);
+
+                    // If candidate is already fully downloaded in this single chunk (small file < 1.5MB)
+                    if (totalLength > 0 && chunkBuffer.length >= totalLength) {
+                        fullBuffer = chunkBuffer;
+                    }
                 } catch {
-                    /* ignore */
+                    // Range requests may be unsupported on some CDNs; fallback to full probe below if needed
                 }
-            }
-            if (fs.existsSync(transmuxedFile)) {
-                try {
-                    fs.unlinkSync(transmuxedFile);
-                } catch {
-                    /* ignore */
+
+                // 2. If duration was found from the chunk and is outside our window, discard immediately
+                if (duration !== null && (duration < 15 || duration > 30)) {
+                    continue;
                 }
+
+                // 3. If duration is valid or moov atom was at the end of the file, download full buffer
+                if (!fullBuffer) {
+                    const videoRes = await axios.get(candidate.file_url, {
+                        responseType: 'arraybuffer',
+                        headers: { 'User-Agent': 'CosmosBot/1.0 (WhatsAppBotFramework)' },
+                        timeout: 25000,
+                        maxContentLength: 50 * 1024 * 1024
+                    });
+                    fullBuffer = Buffer.from(videoRes.data as ArrayBuffer);
+                    if (fullBuffer.length > 50 * 1024 * 1024) {
+                        continue;
+                    }
+                    await fs.promises.writeFile(probeFile, fullBuffer);
+                    duration = await probeVideoDuration(probeFile);
+                }
+
+                if (duration === null || duration < 15 || duration > 30) {
+                    continue;
+                }
+
+                let finalBuffer: Buffer;
+                if (isWebm) {
+                    const transmuxSuccess = await transmuxToMp4(probeFile, transmuxedFile);
+                    if (!transmuxSuccess) {
+                        continue;
+                    }
+                    finalBuffer = await fs.promises.readFile(transmuxedFile);
+                } else {
+                    finalBuffer = fullBuffer;
+                }
+
+                // Extract tags into clean array, decode HTML entities
+                const decodedTags = decodeHtmlEntities(candidate.tags || '')
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 10);
+
+                return {
+                    id: candidate.id,
+                    score: candidate.score ?? 0,
+                    rating: candidate.rating || 'explicit',
+                    tags: decodedTags,
+                    duration: Math.round(duration * 10) / 10,
+                    videoBuffer: finalBuffer,
+                    resolvedAliases
+                };
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[Rule34Service] Candidate evaluation error (ID ${candidate.id}):`, message);
+                continue;
+            } finally {
+                await fs.promises.unlink(probeFile).catch(() => {});
+                await fs.promises.unlink(transmuxedFile).catch(() => {});
             }
         }
+    } finally {
+        releaseMutex();
     }
 
     throw new Error('NO_DURATION_MATCH');

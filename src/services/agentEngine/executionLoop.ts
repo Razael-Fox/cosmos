@@ -34,9 +34,7 @@ export class AgentExecutionLoop {
             } catch (turnErr) {
                 if (executedToolsCount > 0) {
                     console.error(`[CosmosAgentEngine] Post-tool synthesis turn ${currentTurn} failed:`, turnErr);
-                    return execCtx.locale === 'id'
-                        ? 'Permintaan Anda telah berhasil diproses, namun terjadi kendala saat merangkum respon akhir.'
-                        : 'Your request was successfully processed, but an issue occurred while synthesizing the summary response.';
+                    return execCtx.t('core.agent_synthesis_failure');
                 }
                 throw turnErr;
             }
