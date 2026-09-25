@@ -1003,6 +1003,15 @@
         },
         "whitelistall": {
             "description": "Whitelist sekaligus semua grup yang diikuti bot dalam satu perintah."
+        },
+        "autoarchive": {
+            "description": "Atur pengarsipan grup otomatis saat bot bergabung, lihat status arsip, atau arsipkan/batalkan arsip chat secara manual."
+        },
+        "archive": {
+            "description": "Arsipkan chat tertentu atau grup saat ini secara manual."
+        },
+        "unarchive": {
+            "description": "Buka arsip chat tertentu atau grup saat ini secara manual."
         }
     },
     "myplan": {
@@ -1267,6 +1276,19 @@
         "auto_enabled_body": "Auto-whitelist saat bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup baru yang diikuti bot akan otomatis masuk whitelist tanpa perlu .addgroup.",
         "auto_disabled_body": "Auto-whitelist saat bergabung grup telah *DINONAKTIFKAN*.\n\nGrup baru memerlukan persetujuan manual menggunakan .addgroup atau .whitelistall.",
         "dashboard_title": "Suite Manajemen Whitelist Grup"
+    },
+    "autoarchive": {
+        "title": "Pengaturan Auto-Archive",
+        "missing_target": "Harap tentukan JID grup yang valid atau jalankan perintah ini di dalam obrolan grup.",
+        "manual_archive_title": "Chat Diarsipkan",
+        "manual_archive_success": "Chat berhasil diarsipkan.",
+        "manual_archive_error": "Gagal mengarsipkan chat. Pastikan bot bergabung dalam chat tersebut.",
+        "manual_unarchive_title": "Batal Arsip Chat",
+        "manual_unarchive_success": "Chat berhasil dikeluarkan dari arsip.",
+        "manual_unarchive_error": "Gagal membatalkan arsip chat. Pastikan chat target ada.",
+        "enabled_body": "Pengarsipan otomatis saat bot bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup yang diikuti bot akan otomatis dipindahkan ke arsip.",
+        "disabled_body": "Pengarsipan otomatis saat bot bergabung grup telah *DINONAKTIFKAN*.\n\nGrup yang baru diikuti akan tetap berada di daftar obrolan utama.",
+        "dashboard_body": "Arsipkan grup baru secara otomatis saat bergabung untuk menjaga kotak masuk obrolan tetap rapi."
     },
     "nsfw": {
         "admin_required": "Akses ditolak. Hanya administrator grup atau pemilik bot yang dapat mengonfigurasi fitur NSFW.",

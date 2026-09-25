@@ -1003,6 +1003,15 @@
         },
         "whitelistall": {
             "description": "Batch-whitelist all available groups the bot is participating in at once."
+        },
+        "autoarchive": {
+            "description": "Configure automatic group archiving upon bot joining, view current archive status, or manually archive/unarchive chats."
+        },
+        "archive": {
+            "description": "Manually archive a specific chat or the current group chat."
+        },
+        "unarchive": {
+            "description": "Manually unarchive a specific chat or the current group chat."
         }
     },
     "myplan": {
@@ -1267,6 +1276,19 @@
         "auto_enabled_body": "Auto-whitelisting on group join has been *ENABLED*.\n\nEvery group the bot joins or is currently in will automatically be whitelisted without needing .addgroup.",
         "auto_disabled_body": "Auto-whitelisting on group join has been *DISABLED*.\n\nNew groups will require manual approval using .addgroup or .whitelistall.",
         "dashboard_title": "Group Whitelist Suite"
+    },
+    "autoarchive": {
+        "title": "Auto-Archive Settings",
+        "missing_target": "Please specify a valid group JID or invoke this command inside a group chat.",
+        "manual_archive_title": "Chat Archived",
+        "manual_archive_success": "The chat has been successfully archived.",
+        "manual_archive_error": "Failed to archive chat. Please ensure the bot is participating in the chat.",
+        "manual_unarchive_title": "Chat Unarchived",
+        "manual_unarchive_success": "The chat has been successfully unarchived.",
+        "manual_unarchive_error": "Failed to unarchive chat. Please verify that the target chat exists.",
+        "enabled_body": "Auto-archiving on group join has been *ENABLED*.\n\nEvery group the bot joins will automatically be moved to the archive.",
+        "disabled_body": "Auto-archiving on group join has been *DISABLED*.\n\nNewly joined groups will remain in your primary chat list.",
+        "dashboard_body": "Automatically archive new groups upon joining to maintain a clean chat inbox."
     },
     "nsfw": {
         "admin_required": "Permission denied. Only group administrators or the bot owner can configure the NSFW feature.",

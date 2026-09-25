@@ -3,7 +3,12 @@ import { prisma, addGroup, removeGroup, isGroupWhitelisted, getAllWhitelistedGro
 import { getSenderJid } from '../utils/casino.js';
 import { isOwnerId } from '../utils/owner.js';
 import { renderCard, renderCatalogCard, renderBadge, CatalogItem } from '../utils/uiFormatter.js';
-import { isAutoWhitelistEnabled, setAutoWhitelist } from '../services/systemConfigService.js';
+import {
+    isAutoWhitelistEnabled,
+    setAutoWhitelist,
+    isAutoArchiveEnabled,
+    setAutoArchive
+} from '../services/systemConfigService.js';
 import { getCachedParticipatingGroups } from '../services/agentEngine/prompts/contextResolver.js';
 
 export const definition: ToolDefinition = {
@@ -209,10 +214,10 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                 { label: 'Newly Added', value: toAdd.length },
                 { label: 'Previously Active', value: existingSet.size },
                 { label: 'Total Whitelisted', value: updatedCount },
-                { label: 'Auto-Whitelist on Join', value: isAutoWhitelistEnabled() ? 'ENABLED' : 'DISABLED' }
+                { label: 'Auto-Whitelist on Join', value: isAutoWhitelistEnabled() ? 'ENABLED' : 'DISABLED' },
+                { label: 'Auto-Archive on Join', value: isAutoArchiveEnabled() ? 'ENABLED' : 'DISABLED' }
             ],
-            footer: '💡 Tip: Turn on auto-whitelisting with .whitelist auto on to whitelist new groups automatically.',
-            t
+            footer: '💡 Tip: Turn on auto-whitelisting with .whitelist auto on to whitelist new groups automatically.'
         });
 
         await sock.sendMessage(jid, { text: successMsg }, { quoted: msg });
@@ -229,6 +234,49 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         }
 
         const action = subArgs[1]?.toLowerCase();
+        if (action === 'archive' || action === 'autoarchive') {
+            const archiveAction = subArgs[2]?.toLowerCase();
+            if (
+                archiveAction === 'on' ||
+                archiveAction === 'enable' ||
+                archiveAction === '1' ||
+                archiveAction === 'true'
+            ) {
+                setAutoArchive(true);
+                const msgCard = renderCard({
+                    title: t('tools.autoarchive.title', 'Auto-Archive Settings'),
+                    icon: '⚡',
+                    body: t('tools.autoarchive.enabled_body', 'Auto-archiving on group join has been *ENABLED*.'),
+                    fields: [
+                        { label: 'Status', value: 'ENABLED' },
+                        { label: 'Updated By', value: callerJid || 'Bot Owner' }
+                    ],
+                    t
+                });
+                await sock.sendMessage(jid, { text: msgCard }, { quoted: msg });
+                return;
+            }
+            if (
+                archiveAction === 'off' ||
+                archiveAction === 'disable' ||
+                archiveAction === '0' ||
+                archiveAction === 'false'
+            ) {
+                setAutoArchive(false);
+                const msgCard = renderCard({
+                    title: t('tools.autoarchive.title', 'Auto-Archive Settings'),
+                    icon: '⏸️',
+                    body: t('tools.autoarchive.disabled_body', 'Auto-archiving on group join has been *DISABLED*.'),
+                    fields: [
+                        { label: 'Status', value: 'DISABLED' },
+                        { label: 'Updated By', value: callerJid || 'Bot Owner' }
+                    ],
+                    t
+                });
+                await sock.sendMessage(jid, { text: msgCard }, { quoted: msg });
+                return;
+            }
+        }
         if (action === 'on' || action === 'enable' || action === '1' || action === 'true') {
             setAutoWhitelist(true);
             const msgCard = renderCard({
@@ -367,7 +415,8 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         fields: [
             { label: 'Participating Groups', value: participatingCount },
             { label: 'Whitelisted Groups', value: whitelistedGroups.length },
-            { label: 'Auto-Whitelist on Join', value: autoWlStatus }
+            { label: 'Auto-Whitelist on Join', value: autoWlStatus },
+            { label: 'Auto-Archive on Join', value: isAutoArchiveEnabled() ? 'ENABLED' : 'DISABLED' }
         ],
         sections: [
             {
@@ -376,6 +425,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                     { icon: '📋', label: '.listgroup', value: 'Show all available groups with status' },
                     { icon: '⚡', label: '.whitelistall', value: 'Batch-whitelist all participating groups' },
                     { icon: '⚙️', label: '.whitelist auto <on|off>', value: 'Toggle auto-whitelisting on group join' },
+                    { icon: '📦', label: '.autoarchive <on|off>', value: 'Toggle auto-archiving on group join' },
                     { icon: '➕', label: '.addgroup', value: 'Whitelist current group' },
                     { icon: '➖', label: '.delgroup', value: 'Remove current group from whitelist' }
                 ]

@@ -7,7 +7,9 @@ import { usePrismaAuthState } from '#utils/prismaAuthState.js';
 import { initActiveSessions } from '#utils/sessionStore.js';
 import { dbContext, getPrismaClient, disconnectPrismaClient } from '#db.js';
 import { updateUserPresence } from '#services/presenceService.js';
-import { isAutoWhitelistEnabled } from '#services/systemConfigService.js';
+import { isAutoWhitelistEnabled, isAutoArchiveEnabled } from '#services/systemConfigService.js';
+import { isFeatureEnabled } from '#services/subBotConfigService.js';
+import { archiveChat, recordMessage } from '#services/chatArchiveService.js';
 import { addGroup } from '#db.js';
 import { cleanId } from '#utils/casino.js';
 import { securityEnforcementService } from '#services/securityEnforcementService.js';
@@ -393,30 +395,47 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
     sock.ev.on('group-participants.update', async ({ id, participants, action }) => {
         try {
             if (action === 'add' && Array.isArray(participants) && id && id.endsWith('@g.us')) {
-                if (isAutoWhitelistEnabled()) {
-                    const botId = cleanId(sock.user?.id);
-                    const botLid = cleanId(
-                        (sock.user as Record<string, unknown> | undefined)?.lid as string | undefined
-                    );
-                    const isBotAdded = participants.some((p) => {
-                        let pId = '';
-                        if (typeof p === 'string') {
-                            pId = p;
-                        } else if (typeof p === 'object' && p !== null && 'id' in p && typeof p.id === 'string') {
-                            pId = p.id;
-                        }
-                        const cleanP = cleanId(pId);
-                        return cleanP === botId || (Boolean(botLid) && cleanP === botLid);
-                    });
+                const botId = cleanId(sock.user?.id);
+                const botLid = cleanId((sock.user as Record<string, unknown> | undefined)?.lid as string | undefined);
+                const isBotAdded = participants.some((p) => {
+                    let pId = '';
+                    if (typeof p === 'string') {
+                        pId = p;
+                    } else if (typeof p === 'object' && p !== null && 'id' in p && typeof p.id === 'string') {
+                        pId = p.id;
+                    }
+                    const cleanP = cleanId(pId);
+                    return cleanP === botId || (Boolean(botLid) && cleanP === botLid);
+                });
 
-                    if (isBotAdded) {
+                if (isBotAdded) {
+                    if (isAutoWhitelistEnabled()) {
                         await addGroup(id, null);
-                        console.log(`[AutoWhitelist] Bot joined group ${id} - group automatically whitelisted.`);
+                        console.log(
+                            `[AutoWhitelist] [${sessionId}] Bot joined group ${id} - group automatically whitelisted.`
+                        );
+                    }
+
+                    const isSubBot = sessionId.startsWith('sub_');
+                    const subBotNumber = isSubBot ? sessionId.replace(/^sub_/, '') : undefined;
+                    const shouldAutoArchive =
+                        isSubBot && subBotNumber
+                            ? isFeatureEnabled(subBotNumber, 'autoarchive') || isAutoArchiveEnabled()
+                            : isAutoArchiveEnabled();
+
+                    if (shouldAutoArchive) {
+                        console.log(`[AutoArchive] [${sessionId}] Bot joined group ${id} - executing auto-archive.`);
+                        archiveChat(sock, id).catch((archiveErr) => {
+                            console.error(
+                                `[AutoArchive] [${sessionId}] Failed to auto-archive group ${id}:`,
+                                archiveErr
+                            );
+                        });
                     }
                 }
             }
         } catch (err) {
-            console.error('[AutoWhitelist] Error in group-participants.update handler:', err);
+            console.error(`[GroupParticipants] [${sessionId}] Error in group-participants.update handler:`, err);
         }
     });
 
@@ -427,9 +446,9 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             if (sender && securityEnforcementService.isBlacklisted(sender)) {
                 continue;
             }
+            recordMessage(msg);
             cacheMessage(msg);
         }
-
         if (type !== 'notify' && type !== 'append') return;
         for (const msg of messages) {
             try {
