@@ -410,6 +410,17 @@ export function ensureDatabaseSchema(dbPath: string): void {
                 "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS "MaliciousActor" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "jid" TEXT NOT NULL,
+                "lid" TEXT,
+                "reason" TEXT NOT NULL,
+                "severity" TEXT NOT NULL DEFAULT 'BLOCKED',
+                "details" TEXT,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
             PRAGMA journal_mode = WAL;
             PRAGMA busy_timeout = 5000;
             PRAGMA synchronous = NORMAL;
@@ -440,6 +451,13 @@ export function ensureDatabaseSchema(dbPath: string): void {
         }
         try {
             db.exec(`CREATE INDEX IF NOT EXISTS "GroupNsfwSetting_enabled_idx" ON "GroupNsfwSetting"("enabled")`);
+        } catch {
+            /* ignore index errors */
+        }
+        try {
+            db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "MaliciousActor_jid_key" ON "MaliciousActor"("jid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "MaliciousActor_lid_idx" ON "MaliciousActor"("lid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "MaliciousActor_severity_idx" ON "MaliciousActor"("severity")`);
         } catch {
             /* ignore index errors */
         }

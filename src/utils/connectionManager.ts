@@ -10,6 +10,7 @@ import { updateUserPresence } from '#services/presenceService.js';
 import { isAutoWhitelistEnabled } from '#services/systemConfigService.js';
 import { addGroup } from '#db.js';
 import { cleanId } from '#utils/casino.js';
+import { securityEnforcementService } from '#services/securityEnforcementService.js';
 
 const logger = pino({ level: 'debug' });
 const MAX_RECONNECT_ATTEMPTS = 15;
@@ -422,12 +423,20 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
         console.log(`[DEBUG] [${sessionId}] messages.upsert type: ${type}, count: ${messages.length}`);
         for (const msg of messages) {
+            const sender = msg.key?.participant || msg.key?.remoteJid;
+            if (sender && securityEnforcementService.isBlacklisted(sender)) {
+                continue;
+            }
             cacheMessage(msg);
         }
 
         if (type !== 'notify' && type !== 'append') return;
         for (const msg of messages) {
             try {
+                const sender = msg.key?.participant || msg.key?.remoteJid;
+                if (sender && securityEnforcementService.isBlacklisted(sender)) {
+                    continue;
+                }
                 if (msg.key?.fromMe) {
                     console.log(
                         `[DEBUG_SELF_MSG] [${sessionId}] details:`,

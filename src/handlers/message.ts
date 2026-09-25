@@ -18,7 +18,10 @@ import {
     unregisterCancellableSessionByUser
 } from '#utils/cancellationManager.js';
 import { getTranslator } from '#utils/i18n.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+import { getOwnerNumbers, isOwnerId } from '#utils/owner.js';
+import { inspectMessageForMalice } from '#utils/security/bugDetector.js';
+import { antiSpamGuard } from '#utils/security/antiSpamGuard.js';
+import { securityEnforcementService } from '#services/securityEnforcementService.js';
 import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
 import { updateUserPresence, linkPresenceIds } from '#services/presenceService.js';
 import {
@@ -237,6 +240,75 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             if (existing) senderJidDb = existing.id;
         } catch {
             /* ignore */
+        }
+    }
+    const effectiveSender = senderJidDb || msg.key.participant || msg.key.remoteJid;
+    const isSenderOwner =
+        isOwnerId(senderJidDb) ||
+        isOwnerId(senderLidDb) ||
+        isOwnerId(msg.key.participant) ||
+        isOwnerId(msg.key.remoteJid);
+
+    if (!isSenderOwner && !msg.key.fromMe) {
+        // 1. Fast in-memory blacklist check
+        if (
+            (senderJidDb && securityEnforcementService.isBlacklisted(senderJidDb)) ||
+            (senderLidDb && securityEnforcementService.isBlacklisted(senderLidDb)) ||
+            (effectiveSender && securityEnforcementService.isBlacklisted(effectiveSender))
+        ) {
+            return;
+        }
+
+        // 2. Anti-spam rate limiting
+        const spamResult = antiSpamGuard.checkRate(effectiveSender, isSenderOwner);
+        if (spamResult.isSpam) {
+            console.warn(`[SECURITY_SHIELD] Rate limit triggered for ${effectiveSender}: ${spamResult.reason}`);
+            if (spamResult.action === 'BLOCK') {
+                await securityEnforcementService.handleMaliciousActor(
+                    sock,
+                    msg,
+                    {
+                        isMalicious: true,
+                        type: 'VIRTEX',
+                        reason: spamResult.reason,
+                        severity: 'BLOCKED',
+                        confidence: 1.0
+                    },
+                    effectiveSender,
+                    senderLidDb
+                );
+            }
+            return;
+        }
+
+        // 3. Payload malice inspection
+        let isGroupAdmin = false;
+        const isGroup = msg.key.remoteJid?.endsWith('@g.us');
+        if (isGroup) {
+            const contextInfo =
+                msg.message.extendedTextMessage?.contextInfo ||
+                msg.message.imageMessage?.contextInfo ||
+                msg.message.videoMessage?.contextInfo;
+            if (contextInfo?.mentionedJid && contextInfo.mentionedJid.length > 50) {
+                try {
+                    const metadata = await sock.groupMetadata(msg.key.remoteJid!);
+                    const senderDigits = effectiveSender.split('@')[0].split(':')[0];
+                    const participant = metadata.participants.find(
+                        (p) => p.id.split('@')[0].split(':')[0] === senderDigits
+                    );
+                    if (participant?.admin === 'admin' || participant?.admin === 'superadmin') {
+                        isGroupAdmin = true;
+                    }
+                } catch {
+                    /* ignore group metadata failures */
+                }
+            }
+        }
+
+        const detection = inspectMessageForMalice(msg, { isOwner: isSenderOwner, isGroupAdmin });
+        if (detection.isMalicious) {
+            await securityEnforcementService.handleMaliciousActor(sock, msg, detection, effectiveSender, senderLidDb);
+            return;
         }
     }
 

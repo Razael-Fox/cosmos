@@ -482,3 +482,18 @@ model GroupNsfwSetting {
   @@index([enabled])
 }
 
+model MaliciousActor {
+  id        String   @id @default(uuid())
+  jid       String   @unique
+  lid       String?
+  reason    String
+  severity  String   @default("BLOCKED") // "WARNING", "BLOCKED"
+  details   String?  // JSON metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jid])
+  @@index([lid])
+  @@index([severity])
+}
+
