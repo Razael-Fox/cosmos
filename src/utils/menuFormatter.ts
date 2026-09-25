@@ -270,42 +270,43 @@ export function formatGenericTutorial(
     lang: string = 'id'
 ): string {
     const header = t(tutorial.titleKey);
-    const lines: string[] = [
-        `╔══════════════════════════════════════╗`,
-        `   ${header}`,
-        `╚══════════════════════════════════════╝`,
-        ``
-    ];
+    const lines: string[] = [`╭───「 ${header} 」`, `│`];
 
     // Prerequisites
     if (tutorial.prerequisiteKeys && tutorial.prerequisiteKeys.length > 0) {
         for (const prereqKey of tutorial.prerequisiteKeys) {
-            lines.push(t(prereqKey, { prefix }));
+            lines.push(`│ ${t(prereqKey, { prefix })}`);
         }
-        lines.push(``);
+        lines.push(`│`);
     }
 
     // Related Commands (Localized according to user/chat language)
     const relatedCommands = tutorialService.getRelatedCommandsList(tutorial, lang, prefix);
     if (relatedCommands) {
         const relatedLabel = t('tools.menu.related_commands_label', 'Related Commands');
-        lines.push(`⌨️ *${relatedLabel}:* ${relatedCommands}`);
-        lines.push(``);
+        lines.push(`│ ⌨️ *${relatedLabel}:* ${relatedCommands}`);
+        lines.push(`│`);
     }
 
     // Steps
     tutorial.steps.forEach((step, idx) => {
         const stepTitle = t(step.titleKey);
         const stepBody = t(step.bodyKey, { prefix });
-        lines.push(`*${stepTitle}*`);
-        lines.push(stepBody);
-        if (idx < tutorial.steps.length - 1 || tutorial.footerKey) {
-            lines.push(``);
+        lines.push(`│ *${stepTitle}*`);
+        const bodyLines = stepBody.split('\n');
+        for (const bLine of bodyLines) {
+            lines.push(`│ ${bLine}`);
+        }
+        if (idx < tutorial.steps.length - 1) {
+            lines.push(`│`);
         }
     });
 
+    lines.push(`╰───────────────────────────`);
+
     // Footer
     if (tutorial.footerKey) {
+        lines.push(``);
         lines.push(t(tutorial.footerKey, { prefix }));
     }
 
@@ -332,13 +333,13 @@ export function formatTutorialHub(t: TranslatorFn, prefix: string = '.', _lang: 
     });
 
     return [
-        `╔══════════════════════════════════════╗`,
-        `   📚 *${title}*`,
-        `╚══════════════════════════════════════╝`,
-        ``,
-        headerPrompt,
-        ``,
-        ...suiteLines,
+        `╭───「 📚 *${title}* 」`,
+        `│`,
+        `│ ${headerPrompt}`,
+        `│`,
+        ...suiteLines.map((line) => `│ ${line}`),
+        `│`,
+        `╰───────────────────────────`,
         ``,
         `💡 *${tipLabel}* ${tipText}`
     ].join('\n');
@@ -363,18 +364,17 @@ export function formatNsfwTutorial(t: TranslatorFn, prefix: string = '.', lang: 
     const footer = t('tools.nsfw.tutorial.footer', { prefix });
 
     return [
-        `╔══════════════════════════════════════╗`,
-        `   ${header}`,
-        `╚══════════════════════════════════════╝`,
-        ``,
-        `*${step1Title}*`,
-        step1Body,
-        ``,
-        `*${step2Title}*`,
-        step2Body,
-        ``,
-        `*${step3Title}*`,
-        step3Body,
+        `╭───「 ${header} 」`,
+        `│`,
+        `│ *${step1Title}*`,
+        ...step1Body.split('\n').map((l) => `│ ${l}`),
+        `│`,
+        `│ *${step2Title}*`,
+        ...step2Body.split('\n').map((l) => `│ ${l}`),
+        `│`,
+        `│ *${step3Title}*`,
+        ...step3Body.split('\n').map((l) => `│ ${l}`),
+        `╰───────────────────────────`,
         ``,
         footer
     ].join('\n');
