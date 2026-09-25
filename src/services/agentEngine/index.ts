@@ -49,7 +49,7 @@ export class CosmosAgentEngine {
             // 3. Dynamic Context Resolution
             const promptCtx = await SaraPromptContextResolver.resolveContext(sock, msg, chatJid, locale);
 
-            // 4. Tier 1: Guidance Planning LLM (llama-3.1-8b-instant)
+            // 4. Tier 1: Guidance Planning LLM (openai/gpt-oss-20b)
             const brief = await AgentGuidancePlanner.plan(promptText, promptCtx);
 
             // 5. Special Mode B: Interactive Location Forwarding Staging ("shareloc" flow)
@@ -98,7 +98,7 @@ export class CosmosAgentEngine {
                 subBotOwnerName: promptCtx.subBotOwnerName
             };
 
-            // 7. Tier 2: Execution & Synthesis LLM (llama-3.3-70b-versatile) in Bounded ReAct Loop
+            // 7. Tier 2: Execution & Synthesis LLM (openai/gpt-oss-20b) in Bounded ReAct Loop
             const responseText = await AgentExecutionLoop.run(promptText, promptCtx, execCtx, brief);
 
             if (responseText && responseText.trim().length > 0) {

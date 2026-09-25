@@ -22,12 +22,23 @@ export class AgentExecutionLoop {
 
         let currentTurn = 0;
         let finalResponseText = '';
+        let executedToolsCount = 0;
 
         while (currentTurn < MAX_REACT_TURNS) {
             currentTurn++;
             const turnStartTime = Date.now();
 
-            const completion = await AgentExecutor.executeTurn(messages, promptCtx, brief);
+            let completion;
+            try {
+                completion = await AgentExecutor.executeTurn(messages, promptCtx, brief);
+            } catch (turnErr) {
+                if (executedToolsCount > 0) {
+                    console.error(`[CosmosAgentEngine] Post-tool synthesis turn ${currentTurn} failed:`, turnErr);
+                    return execCtx.t('core.agent_synthesis_failure');
+                }
+                throw turnErr;
+            }
+
             const assistantMsg = completion.message;
             messages.push(assistantMsg);
 
@@ -85,6 +96,9 @@ export class AgentExecutionLoop {
 
                 // Execute the tool adapter
                 const result = await tool.execute(parsedArgs, execCtx);
+                if (result.success) {
+                    executedToolsCount++;
+                }
 
                 // Check for Confirmation Requirement
                 if (result.requiresConfirmation) {

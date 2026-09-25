@@ -86,10 +86,19 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     let outputText: string;
 
-    if (!rawQuery) {
+    const queryLower = rawQuery.toLowerCase();
+    if (
+        queryLower === 'tutorial' ||
+        queryLower.startsWith('tutorial ') ||
+        queryLower === 'panduan' ||
+        queryLower.startsWith('panduan ')
+    ) {
+        const topic = queryLower.replace(/^(tutorial|panduan)\s*/, '').trim();
+        outputText = menuService.getTutorial(topic, lang, t, '.');
+    } else if (!rawQuery) {
         // No argument: Show Category Overview with Dashboard Header
         outputText = `${dashboardHeader}\n\n${formatCategoryOverview(menuService.getCategoryList(undefined, lang, t), t, '.')}`;
-    } else if (rawQuery.toLowerCase() === 'all') {
+    } else if (queryLower === 'all') {
         // "all": Full command catalog
         outputText = `${dashboardHeader}\n\n${formatAllCommands(menuService.getCategoryList(undefined, lang, t), t, '.')}`;
     } else {

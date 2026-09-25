@@ -7,10 +7,9 @@ export class AgentExecutor {
     private static activeModel: string | null = null;
     private static readonly CANDIDATE_MODELS = [
         process.env.AGENT_EXECUTOR_MODEL,
-        'llama-3.3-70b-versatile',
-        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
         'qwen/qwen3.8-27b',
-        'openai/gpt-oss-20b'
+        'openai/gpt-oss-120b'
     ].filter((m): m is string => typeof m === 'string' && m.trim().length > 0);
 
     /**
@@ -71,11 +70,16 @@ export class AgentExecutor {
                     errMsg.includes('model_not_found') ||
                     errMsg.includes('does not exist') ||
                     errMsg.includes('model_decommissioned') ||
-                    errMsg.includes('404');
+                    errMsg.includes('404') ||
+                    errMsg.includes('rate_limit_exceeded') ||
+                    errMsg.includes('429');
                 if (isModelUnavailable) {
                     console.warn(
-                        `[AgentExecutor] Model ${candidateModel} unavailable (${errMsg}). Trying next candidate...`
+                        `[AgentExecutor] Model ${candidateModel} unavailable or rate-limited (${errMsg}). Trying next candidate...`
                     );
+                    if (this.activeModel === candidateModel) {
+                        this.activeModel = null;
+                    }
                     continue;
                 }
                 throw err;

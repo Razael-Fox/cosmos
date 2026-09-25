@@ -126,10 +126,15 @@ export function formatCategoryOverview(categories: CategoryInfo[], t: Translator
     const categoryHint = t('tools.menu.category_hint', { prefix });
     const allCommandsHint = t('tools.menu.all_commands_hint', { prefix });
     const commandDetailHint = t('tools.menu.command_detail_hint', { prefix });
+    const tutorialHint = t('tools.menu.tutorial_hint', { prefix });
 
-    const footer = [`💡 *${navTipsTitle}*`, `• ${categoryHint}`, `• ${allCommandsHint}`, `• ${commandDetailHint}`].join(
-        '\n'
-    );
+    const footer = [
+        `💡 *${navTipsTitle}*`,
+        `• ${categoryHint}`,
+        `• ${allCommandsHint}`,
+        `• ${commandDetailHint}`,
+        `• ${tutorialHint}`
+    ].join('\n');
 
     return `${lines.join('\n')}\n\n${footer}`;
 }
@@ -252,4 +257,53 @@ export function formatNotFound(
     return [`*${errorLabel}:* ${notFoundMsg}`, ``, `*${availLabel}*`, catList, ``, `💡 *${tipLabel}* ${catHint}`].join(
         '\n'
     );
+}
+
+/**
+ * Formats the tutorial hub directory (.menu tutorial).
+ */
+export function formatTutorialHub(t: TranslatorFn, prefix: string = '.'): string {
+    const title = t('tools.menu.tutorial_hub_title');
+    const desc = t('tools.menu.tutorial_hub_desc', { prefix });
+    const tip = t('tools.nsfw.tutorial.footer', { prefix });
+    return [
+        `╔══════════════════════════════════════╗`,
+        `   📚 *${title}*`,
+        `╚══════════════════════════════════════╝`,
+        ``,
+        desc,
+        ``,
+        tip
+    ].join('\n');
+}
+
+/**
+ * Formats the NSFW Video Retrieval tutorial card (.menu tutorial nsfw).
+ */
+export function formatNsfwTutorial(t: TranslatorFn, prefix: string = '.'): string {
+    const header = t('tools.nsfw.tutorial.header');
+    const step1Title = t('tools.nsfw.tutorial.step1_title');
+    const step1Body = t('tools.nsfw.tutorial.step1_body', { prefix });
+    const step2Title = t('tools.nsfw.tutorial.step2_title');
+    const step2Body = t('tools.nsfw.tutorial.step2_body', { prefix });
+    const step3Title = t('tools.nsfw.tutorial.step3_title');
+    const step3Body = t('tools.nsfw.tutorial.step3_body', { prefix });
+    const footer = t('tools.nsfw.tutorial.footer', { prefix });
+
+    return [
+        `╔══════════════════════════════════════╗`,
+        `   ${header}`,
+        `╚══════════════════════════════════════╝`,
+        ``,
+        `*${step1Title}*`,
+        step1Body,
+        ``,
+        `*${step2Title}*`,
+        step2Body,
+        ``,
+        `*${step3Title}*`,
+        step3Body,
+        ``,
+        footer
+    ].join('\n');
 }

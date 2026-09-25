@@ -403,6 +403,13 @@ export function ensureDatabaseSchema(dbPath: string): void {
             CREATE UNIQUE INDEX IF NOT EXISTS "UserContactBook_ownerJid_alias_key" ON "UserContactBook"("ownerJid", "alias");
             CREATE INDEX IF NOT EXISTS "UserContactBook_ownerJid_idx" ON "UserContactBook"("ownerJid");
 
+            CREATE TABLE IF NOT EXISTS "GroupNsfwSetting" (
+                "jid" TEXT NOT NULL PRIMARY KEY,
+                "enabled" BOOLEAN NOT NULL DEFAULT false,
+                "updatedBy" TEXT,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
             PRAGMA journal_mode = WAL;
             PRAGMA busy_timeout = 5000;
             PRAGMA synchronous = NORMAL;
@@ -430,6 +437,11 @@ export function ensureDatabaseSchema(dbPath: string): void {
             db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email")`);
         } catch {
             /* ignore duplicate index errors on legacy data */
+        }
+        try {
+            db.exec(`CREATE INDEX IF NOT EXISTS "GroupNsfwSetting_enabled_idx" ON "GroupNsfwSetting"("enabled")`);
+        } catch {
+            /* ignore index errors */
         }
     } catch (err) {
         console.error(`[DB] Error ensuring database schema at ${dbPath}:`, err);

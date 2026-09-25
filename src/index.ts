@@ -1,6 +1,7 @@
 import dns from 'dns';
 import dotenv from 'dotenv';
 import { loadAutoDlSettings } from '#utils/autodl.js';
+import { loadNsfwSettings } from '#utils/nsfwConfig.js';
 import toolsHandler from '#tools/handler.js';
 
 import { startAutoBackup } from '#utils/backup.js';
@@ -48,6 +49,7 @@ try {
 async function startSystem(): Promise<void> {
     await toolsHandler.loadTools();
     await loadAutoDlSettings();
+    await loadNsfwSettings();
 
     // Sync shop items and property catalog on every startup so new
     // entries and price updates reach existing databases (both seeders

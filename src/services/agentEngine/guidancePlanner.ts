@@ -10,9 +10,9 @@ export class AgentGuidancePlanner {
     private static activeModel: string | null = null;
     private static readonly CANDIDATE_MODELS = [
         process.env.AGENT_GUIDANCE_MODEL,
-        'llama-3.1-8b-instant',
         'openai/gpt-oss-20b',
-        'qwen/qwen3.8-27b'
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-120b'
     ].filter((m): m is string => typeof m === 'string' && m.trim().length > 0);
 
     public static async plan(userPrompt: string, ctx: SaraPromptContext): Promise<GuidanceBrief> {
@@ -48,11 +48,16 @@ export class AgentGuidancePlanner {
                     errMsg.includes('model_not_found') ||
                     errMsg.includes('does not exist') ||
                     errMsg.includes('model_decommissioned') ||
-                    errMsg.includes('404');
+                    errMsg.includes('404') ||
+                    errMsg.includes('rate_limit_exceeded') ||
+                    errMsg.includes('429');
                 if (isModelUnavailable) {
                     console.warn(
-                        `[AgentGuidancePlanner] Model ${candidateModel} unavailable (${errMsg}). Trying next candidate...`
+                        `[AgentGuidancePlanner] Model ${candidateModel} unavailable or rate-limited (${errMsg}). Trying next candidate...`
                     );
+                    if (this.activeModel === candidateModel) {
+                        this.activeModel = null;
+                    }
                     continue;
                 }
                 throw err;

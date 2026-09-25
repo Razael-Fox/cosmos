@@ -828,7 +828,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 }
 
                 await sock.sendPresenceUpdate('composing', jid);
-                const result = await toolsHandler.execute(commandName, args, { sock, msg, jid, t });
+                const result = await toolsHandler.execute(commandName, args, { sock, msg, jid, t, lang: chatLang });
                 if (result && typeof result === 'string' && result.trim().length > 0) {
                     const matches = result.match(/@(\d+)/g);
                     const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];

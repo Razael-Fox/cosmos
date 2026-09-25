@@ -1,6 +1,7 @@
 import { ToolModule, resolveToolDescription } from '../tools/types.js';
 import toolsHandler from '../tools/handler.js';
 import { toDisplayCommand, getDisplayName } from '../utils/commandFormat.js';
+import { formatTutorialHub, formatNsfwTutorial } from '../utils/menuFormatter.js';
 
 export interface NormalizedTool {
     name: string;
@@ -520,6 +521,22 @@ export class MenuService {
             record[cat.name] = cat.commands;
         }
         return record;
+    }
+
+    /**
+     * Resolves and returns a feature tutorial card or the tutorial hub.
+     */
+    public getTutorial(
+        topic: string,
+        _lang: string = 'id',
+        t: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string,
+        prefix: string = '.'
+    ): string {
+        const clean = topic.toLowerCase().trim();
+        if (clean === 'nsfw' || clean === 'rule34' || clean === 'r34' || clean === 'hentai') {
+            return formatNsfwTutorial(t, prefix);
+        }
+        return formatTutorialHub(t, prefix);
     }
 }
 

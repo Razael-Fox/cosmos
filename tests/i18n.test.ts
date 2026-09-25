@@ -104,7 +104,10 @@ async function runTests() {
 
     // Check DB
     const { prisma } = await import('../src/db.js');
-    const userInDb = await prisma.user.findUnique({ where: { id: '628999999999' } });
+    const userInDb = await prisma.user.findFirst({
+        where: { OR: [{ id: '628999999999@s.whatsapp.net' }, { id: '628999999999' }] },
+        orderBy: { updatedAt: 'desc' }
+    });
     assert.strictEqual(userInDb?.language, 'EN');
     console.log('✓ setlang tool verified.');
 
