@@ -93,16 +93,16 @@ export function formatDashboardHeader(options: DashboardOptions, t: TranslatorFn
     const totalCommandsLabel = t('tools.menu.total_commands');
 
     return [
-        `╭━━━〔 *${title}* 〕━━━╮`,
-        `┃ 👤 *${userLabel}:* ${pushName}`,
-        `┃ 👑 *${roleLabel}:* ${role}`,
-        `┃ ⚡ *${speedLabel}:* ${speed}`,
-        `┃ ⏱️ *${uptimeLabel}:* ${uptime}`,
-        `┃ 📅 *${dateLabel}:* ${date}`,
-        `┃ 🌐 *${langLabel}:* ${langDisplay}`,
-        `┃ ⌨️ *${prefixLabel}:* [ ${prefix} ]`,
-        `┃ 📊 *${totalCommandsLabel}:* ${totalCommands}`,
-        `╰━━━━━━━━━━━━━━━━━━━━━╯`
+        `*${title}*`,
+        ``,
+        `> *${userLabel}:* ${pushName}`,
+        `> *${roleLabel}:* ${role}`,
+        `> *${speedLabel}:* ${speed}`,
+        `> *${uptimeLabel}:* ${uptime}`,
+        `> *${dateLabel}:* ${date}`,
+        `> *${langLabel}:* ${langDisplay}`,
+        `> *${prefixLabel}:* \`${prefix}\``,
+        `> *${totalCommandsLabel}:* ${totalCommands}`
     ].join('\n');
 }
 
@@ -111,17 +111,15 @@ export function formatDashboardHeader(options: DashboardOptions, t: TranslatorFn
  */
 export function formatCategoryOverview(categories: CategoryInfo[], t: TranslatorFn, prefix: string = '.'): string {
     const headerTitle = t('tools.menu.categories_header');
-    const lines: string[] = [`┌──「 *${headerTitle}* 」`];
+    const lines: string[] = [`*${headerTitle}*`, ``];
 
     categories.forEach((cat, index) => {
         const countText =
             cat.count === 1
                 ? t('tools.menu.category_item_count_one')
                 : t('tools.menu.category_item_count', { count: cat.count });
-        lines.push(`│ ${cat.icon} ${index + 1}. ${cat.name} ${countText}`);
+        lines.push(`${index + 1}. *${cat.name}* ${countText}`);
     });
-
-    lines.push(`└─────────────────────`);
 
     const navTipsTitle = t('tools.menu.navigation_tips_title');
     const categoryHint = t('tools.menu.category_hint', { prefix });
@@ -130,47 +128,46 @@ export function formatCategoryOverview(categories: CategoryInfo[], t: Translator
     const tutorialHint = t('tools.menu.tutorial_hint', { prefix });
 
     const footer = [
-        `💡 *${navTipsTitle}*`,
-        `• ${categoryHint}`,
-        `• ${allCommandsHint}`,
-        `• ${commandDetailHint}`,
-        `• ${tutorialHint}`
+        `*${navTipsTitle}*`,
+        `- ${categoryHint}`,
+        `- ${allCommandsHint}`,
+        `- ${commandDetailHint}`,
+        `- ${tutorialHint}`
     ].join('\n');
 
-    return `${lines.join('\n')}\n\n${footer}`;
+    const tipLabel = t('tools.menu.tip_label');
+    const tipDetail = t('tools.menu.tip_detail', { prefix }) || t('tools.menu.command_detail_hint', { prefix });
+
+    return `${lines.join('\n')}\n\n${footer}\n\n> *${tipLabel}* ${tipDetail}`;
 }
 
 /**
  * Formats the Category Command List view (.menu <category>).
  */
 export function formatCategoryCommands(category: CategoryInfo, t: TranslatorFn, prefix: string = '.'): string {
-    const title = t('tools.menu.category_commands_title', {
-        icon: category.icon,
+    const rawTitle = t('tools.menu.category_commands_title', {
+        icon: '',
         category: category.name.toUpperCase()
-    });
+    }).trim();
+    const formattedTitle = rawTitle.startsWith('*') && rawTitle.endsWith('*') ? rawTitle : `*${rawTitle}*`;
 
-    const lines: string[] = [`╭───「 ${title} 」`, `│`];
+    const lines: string[] = [formattedTitle, ``];
 
-    category.commands.forEach((cmd, idx) => {
+    category.commands.forEach((cmd) => {
         const paramIdx = cmd.usage.search(/[<[]/);
         const cmdHeader =
             paramIdx !== -1
-                ? `*${cmd.usage.substring(0, paramIdx).trim()}* ${cmd.usage.substring(paramIdx).trim()}`
-                : `*${cmd.usage.trim()}*`;
+                ? `- *${cmd.usage.substring(0, paramIdx).trim()}* \`${cmd.usage.substring(paramIdx).trim()}\``
+                : `- *${cmd.usage.trim()}*`;
         const desc = resolveToolDescription(cmd, t);
-        lines.push(`│ ⭔ ${cmdHeader}`);
-        lines.push(`│   _${desc}_`);
-        if (idx !== category.commands.length - 1) {
-            lines.push(`│`);
-        }
+        lines.push(cmdHeader);
+        lines.push(`  _${desc}_`);
     });
 
-    lines.push(`╰───────────────────────────`);
-
     const tipLabel = t('tools.menu.tip_label');
-    const commandDetailHint = t('tools.menu.command_detail_hint', { prefix });
+    const tipDetail = t('tools.menu.tip_detail', { prefix }) || t('tools.menu.command_detail_hint', { prefix });
 
-    return `${lines.join('\n')}\n💡 *${tipLabel}* ${commandDetailHint}`;
+    return `${lines.join('\n')}\n\n> *${tipLabel}* ${tipDetail}`;
 }
 
 /**
@@ -180,23 +177,22 @@ export function formatAllCommands(categories: CategoryInfo[], t: TranslatorFn, p
     const blocks: string[] = [];
 
     for (const cat of categories) {
-        const lines: string[] = [`╭───「 ${cat.icon} *${cat.name.toUpperCase()}* (${cat.count}) 」`];
+        const lines: string[] = [`*${cat.name.toUpperCase()}* (${cat.count})`];
         for (const cmd of cat.commands) {
             const paramIdx = cmd.usage.search(/[<[]/);
             const cmdHeader =
                 paramIdx !== -1
-                    ? `*${cmd.usage.substring(0, paramIdx).trim()}* ${cmd.usage.substring(paramIdx).trim()}`
-                    : `*${cmd.usage.trim()}*`;
-            lines.push(`│ ⭔ ${cmdHeader}`);
+                    ? `- *${cmd.usage.substring(0, paramIdx).trim()}* \`${cmd.usage.substring(paramIdx).trim()}\``
+                    : `- *${cmd.usage.trim()}*`;
+            lines.push(cmdHeader);
         }
-        lines.push(`╰───────────────────────────`);
         blocks.push(lines.join('\n'));
     }
 
     const tipLabel = t('tools.menu.tip_label');
-    const commandDetailHint = t('tools.menu.command_detail_hint', { prefix });
+    const tipDetail = t('tools.menu.tip_detail', { prefix }) || t('tools.menu.command_detail_hint', { prefix });
 
-    return `${blocks.join('\n\n')}\n\n💡 *${tipLabel}* ${commandDetailHint}`;
+    return `${blocks.join('\n\n')}\n\n> *${tipLabel}* ${tipDetail}`;
 }
 
 /**
@@ -225,18 +221,17 @@ export function formatCommandDetail(
     const desc = resolveToolDescription(tool, t);
 
     return [
-        `╭───「 *${guideTitle}* 」`,
-        `│ 🏷️ *${cmdLabel}:* ${cleanName}`,
-        `│ 📁 *${catLabel}:* ${tool.category}`,
-        `│ 📝 *${descLabel}:* ${desc}`,
-        `│ 🔁 *${aliasesLabel}:* ${aliasesText}`,
-        `│ 📌 *${usageLabel}:* ${tool.usage}`,
-        `│ 💡 *${exampleLabel}:* ${exampleText}`,
-        `│ 🔒 *${permLabel}:* ${permission}`,
-        `╰───────────────────────────`
+        `*${guideTitle}*`,
+        ``,
+        `> *${cmdLabel}:* \`${cleanName}\``,
+        `> *${catLabel}:* ${tool.category}`,
+        `> *${descLabel}:* ${desc}`,
+        `> *${aliasesLabel}:* ${aliasesText}`,
+        `> *${usageLabel}:* ${tool.usage}`,
+        `> *${exampleLabel}:* ${exampleText}`,
+        `> *${permLabel}:* ${permission}`
     ].join('\n');
 }
-
 /**
  * Formats an error message when a command or category query is not found.
  */
@@ -250,12 +245,12 @@ export function formatNotFound(
     const notFoundKey = type === 'command' ? 'tools.menu.command_not_found' : 'tools.menu.category_not_found';
     const notFoundMsg = t(notFoundKey, { [type]: query });
     const availLabel = t('tools.menu.available_categories_label');
-    const catList = categories.map((c) => `• ${c.icon} *${c.name}*`).join('\n');
+    const catList = categories.map((c) => `- *${c.name}*`).join('\n');
     const tipLabel = t('tools.menu.tip_label');
-    const catHint = t('tools.menu.category_hint', { prefix });
+    const catHint = t('tools.menu.tip_category', { prefix }) || t('tools.menu.category_hint', { prefix });
 
     const errorLabel = t ? t('tools.menu.error_label', 'Error') : 'Error';
-    return [`*${errorLabel}:* ${notFoundMsg}`, ``, `*${availLabel}*`, catList, ``, `💡 *${tipLabel}* ${catHint}`].join(
+    return [`*${errorLabel}:* ${notFoundMsg}`, ``, `*${availLabel}*`, catList, ``, `> *${tipLabel}* ${catHint}`].join(
         '\n'
     );
 }
@@ -270,44 +265,42 @@ export function formatGenericTutorial(
     lang: string = 'id'
 ): string {
     const header = t(tutorial.titleKey);
-    const lines: string[] = [`╭───「 ${header} 」`, `│`];
+    const lines: string[] = [`*${header}*`, ``];
 
     // Prerequisites
     if (tutorial.prerequisiteKeys && tutorial.prerequisiteKeys.length > 0) {
         for (const prereqKey of tutorial.prerequisiteKeys) {
-            lines.push(`│ ${t(prereqKey, { prefix })}`);
+            lines.push(`> ${t(prereqKey, { prefix })}`);
         }
-        lines.push(`│`);
+        lines.push(``);
     }
 
     // Related Commands (Localized according to user/chat language)
     const relatedCommands = tutorialService.getRelatedCommandsList(tutorial, lang, prefix);
     if (relatedCommands) {
         const relatedLabel = t('tools.menu.related_commands_label', 'Related Commands');
-        lines.push(`│ ⌨️ *${relatedLabel}:* ${relatedCommands}`);
-        lines.push(`│`);
+        lines.push(`> *${relatedLabel}:* ${relatedCommands}`);
+        lines.push(``);
     }
 
     // Steps
     tutorial.steps.forEach((step, idx) => {
         const stepTitle = t(step.titleKey);
         const stepBody = t(step.bodyKey, { prefix });
-        lines.push(`│ *${stepTitle}*`);
+        lines.push(`${idx + 1}. *${stepTitle}*`);
         const bodyLines = stepBody.split('\n');
         for (const bLine of bodyLines) {
-            lines.push(`│ ${bLine}`);
+            lines.push(`   ${bLine}`);
         }
         if (idx < tutorial.steps.length - 1) {
-            lines.push(`│`);
+            lines.push(``);
         }
     });
-
-    lines.push(`╰───────────────────────────`);
 
     // Footer
     if (tutorial.footerKey) {
         lines.push(``);
-        lines.push(t(tutorial.footerKey, { prefix }));
+        lines.push(`> ${t(tutorial.footerKey, { prefix })}`);
     }
 
     return lines.join('\n');
@@ -326,23 +319,13 @@ export function formatTutorialHub(t: TranslatorFn, prefix: string = '.', _lang: 
     );
 
     const suites = tutorialService.getAllSuites();
-    const suiteLines = suites.map((suite) => {
+    const suiteLines = suites.map((suite, index) => {
         const summaryKey = `tools.tutorials.${suite.id}.summary`;
         const summary = t(summaryKey, t(suite.titleKey));
-        return `• \`${prefix}menu tutorial ${suite.id}\` — ${summary}`;
+        return `${index + 1}. \`${prefix}menu tutorial ${suite.id}\` — ${summary}`;
     });
 
-    return [
-        `╭───「 📚 *${title}* 」`,
-        `│`,
-        `│ ${headerPrompt}`,
-        `│`,
-        ...suiteLines.map((line) => `│ ${line}`),
-        `│`,
-        `╰───────────────────────────`,
-        ``,
-        `💡 *${tipLabel}* ${tipText}`
-    ].join('\n');
+    return [`*${title}*`, ``, `_${headerPrompt}_`, ``, ...suiteLines, ``, `> *${tipLabel}* ${tipText}`].join('\n');
 }
 
 /**
@@ -364,18 +347,17 @@ export function formatNsfwTutorial(t: TranslatorFn, prefix: string = '.', lang: 
     const footer = t('tools.nsfw.tutorial.footer', { prefix });
 
     return [
-        `╭───「 ${header} 」`,
-        `│`,
-        `│ *${step1Title}*`,
-        ...step1Body.split('\n').map((l) => `│ ${l}`),
-        `│`,
-        `│ *${step2Title}*`,
-        ...step2Body.split('\n').map((l) => `│ ${l}`),
-        `│`,
-        `│ *${step3Title}*`,
-        ...step3Body.split('\n').map((l) => `│ ${l}`),
-        `╰───────────────────────────`,
+        `*${header}*`,
         ``,
-        footer
+        `1. *${step1Title}*`,
+        ...step1Body.split('\n').map((l) => `   ${l}`),
+        ``,
+        `2. *${step2Title}*`,
+        ...step2Body.split('\n').map((l) => `   ${l}`),
+        ``,
+        `3. *${step3Title}*`,
+        ...step3Body.split('\n').map((l) => `   ${l}`),
+        ``,
+        `> ${footer}`
     ].join('\n');
 }

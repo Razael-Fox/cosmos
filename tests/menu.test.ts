@@ -195,16 +195,18 @@ async function runTests() {
     const tEn = getTranslator('en');
     const slotDetail = formatCommandDetail(slotByName, tEn, '.');
 
-    assert(slotDetail.includes('COMMAND GUIDE: .slot'), 'Must include header title');
-    assert(slotDetail.includes('🏷️ *Command:* slot'), 'Must include command name');
-    assert(slotDetail.includes('📁 *Category:* Casino'), 'Must include category');
-    assert(slotDetail.includes('📝 *Description:*'), 'Must include description');
-    assert(slotDetail.includes('🔁 *Aliases:*'), 'Must include aliases');
-    assert(slotDetail.includes('📌 *Usage:*'), 'Must include usage signature');
-    assert(slotDetail.includes('💡 *Example:*'), 'Must include example');
-    assert(slotDetail.includes('🔒 *Permission:* Public'), 'Must include permission');
-    assert(slotDetail.includes('╭───'), 'Must use Unicode box top border');
-    assert(slotDetail.includes('╰───'), 'Must use Unicode box bottom border');
+    assert(slotDetail.includes('*COMMAND GUIDE: .slot*'), 'Must include header title');
+    assert(slotDetail.includes('> *Command:* `slot`'), 'Must include command name with monospace in quote block');
+    assert(slotDetail.includes('> *Category:* Casino'), 'Must include category');
+    assert(slotDetail.includes('> *Description:*'), 'Must include description');
+    assert(slotDetail.includes('> *Aliases:*'), 'Must include aliases');
+    assert(slotDetail.includes('> *Usage:*'), 'Must include usage signature');
+    assert(slotDetail.includes('> *Example:*'), 'Must include example');
+    assert(slotDetail.includes('> *Permission:* Public'), 'Must include permission');
+    assert(!slotDetail.includes('╭───') && !slotDetail.includes('╰───'), 'Must not contain box border characters');
+    for (const emoji of ['🏷️', '📁', '📝', '🔁', '📌', '💡', '🔒']) {
+        assert(!slotDetail.includes(emoji), `Must not contain emoji icon ${emoji} in metadata`);
+    }
     console.log('✓ Command Inspector formatting verified.');
 
     // [Test 6] Category Command List (.menu <category>)
@@ -213,9 +215,11 @@ async function runTests() {
     assert(casinoCat, 'Casino category must exist');
     const casinoView = formatCategoryCommands(casinoCat, tEn, '.');
 
-    assert(casinoView.includes('🎰 *CASINO COMMANDS*'), 'Must include category banner title');
-    assert(casinoView.includes('⭔ *.slot*'), 'Must include slot command item');
-    assert(casinoView.includes('💡 *Tip:*'), 'Must include tip at footer');
+    assert(casinoView.includes('*CASINO COMMANDS*'), 'Must include category banner title without emoji');
+    assert(!casinoView.includes('🎰'), 'Must not contain emoji icon in header');
+    assert(casinoView.includes('- *.slot*'), 'Must include slot command bullet item');
+    assert(!casinoView.includes('⭔'), 'Must not contain ⭔ symbol');
+    assert(casinoView.includes('> *Tip:*'), 'Must include quote tip at footer');
     console.log('✓ Category Command List formatting verified.');
 
     // [Test 7] All-In-One Full Catalog (.menu all)
@@ -233,8 +237,13 @@ async function runTests() {
             );
         }
     }
+    assert(
+        !allMenuOutput.includes('╭───') && !allMenuOutput.includes('╰───'),
+        'Catalog must not use box drawing characters'
+    );
+    assert(!allMenuOutput.includes('⭔'), 'Catalog must not use ⭔ glyphs');
+    assert(allMenuOutput.includes('> *Tip:*'), 'Catalog must use WhatsApp native quote tip');
     console.log('✓ All-In-One catalog output verified with all loaded tools.');
-
     // [Test 8] Dashboard Header & Uptime / Date Formatting
     console.log('[Test 8] Testing Dashboard Header formatting...');
     const testDate = new Date('2026-09-12T12:00:00Z');
@@ -252,17 +261,22 @@ async function runTests() {
         tEn
     );
 
-    assert(headerEn.includes('╭━━━〔 *COSMOS BOT* 〕━━━╮'), 'Must render dashboard top border');
-    assert(headerEn.includes('┃ 👤 *User:* @Razael'), 'Must render user pushname');
-    assert(headerEn.includes('┃ 👑 *Role:* Owner'), 'Must render role as Owner');
-    assert(headerEn.includes('┃ ⚡ *Speed:* 35ms'), 'Must render speed');
-    assert(headerEn.includes('┃ ⏱️ *Uptime:* 1d 1h 1m'), 'Must render uptime');
-    assert(headerEn.includes('┃ 📅 *Date:*'), 'Must render date');
-    assert(headerEn.includes('┃ 🌐 *Language:* English (en)'), 'Must render language');
-    assert(headerEn.includes('┃ ⌨️ *Prefix:* [ . ]'), 'Must render prefix');
-    assert(headerEn.includes('┃ 📊 *Total Commands:* 42'), 'Must render total command count');
-    assert(headerEn.includes('╰━━━━━━━━━━━━━━━━━━━━━╯'), 'Must render dashboard bottom border');
-
+    assert(headerEn.includes('*COSMOS BOT*'), 'Must render dashboard title');
+    assert(headerEn.includes('> *User:* @Razael'), 'Must render user pushname in quote');
+    assert(headerEn.includes('> *Role:* Owner'), 'Must render role as Owner in quote');
+    assert(headerEn.includes('> *Speed:* 35ms'), 'Must render speed in quote');
+    assert(headerEn.includes('> *Uptime:* 1d 1h 1m'), 'Must render uptime in quote');
+    assert(headerEn.includes('> *Date:*'), 'Must render date in quote');
+    assert(headerEn.includes('> *Language:* English (en)'), 'Must render language in quote');
+    assert(headerEn.includes('> *Prefix:* `.`'), 'Must render prefix in quote');
+    assert(headerEn.includes('> *Commands:* 42'), 'Must render command count in quote');
+    assert(
+        !headerEn.includes('╭━━━') && !headerEn.includes('╰━━━') && !headerEn.includes('┃'),
+        'Must not render box borders'
+    );
+    for (const emoji of ['👤', '👑', '⚡', '⏱️', '📅', '🌐', '⌨️', '📊']) {
+        assert(!headerEn.includes(emoji), `Must not contain emoji glyph ${emoji} in header`);
+    }
     // Uptime formatter unit checks
     assert.strictEqual(formatUptimeDuration(45), '45s');
     assert.strictEqual(formatUptimeDuration(130), '2m 10s');
@@ -284,14 +298,19 @@ async function runTests() {
     const overviewId = formatCategoryOverview(categories, tId, '.');
     assert(overviewId.includes('KATEGORI PERINTAH'), 'Indonesian overview must have localized header');
     assert(overviewId.includes('Tips Navigasi:'), 'Indonesian overview must have localized tips header');
-    assert(overviewId.includes('perintah]'), 'Indonesian overview must use "perintah" for command tally');
-
+    assert(overviewId.includes('perintah'), 'Indonesian overview must use "perintah" for command tally');
+    assert(overviewId.includes('1. *'), 'Indonesian overview must use numbered list');
+    assert(
+        !overviewId.includes('┌──') && !overviewId.includes('└────'),
+        'Indonesian overview must not have box borders'
+    );
     // Overview in EN
     const overviewEn = formatCategoryOverview(categories, tEn, '.');
     assert(overviewEn.includes('COMMAND CATEGORIES'), 'English overview must have English header');
     assert(overviewEn.includes('Navigation Tips:'), 'English overview must have English tips header');
-    assert(overviewEn.includes('commands]'), 'English overview must use "commands" for command tally');
-
+    assert(overviewEn.includes('commands'), 'English overview must use "commands" for command tally');
+    assert(overviewEn.includes('1. *'), 'English overview must use numbered list');
+    assert(!overviewEn.includes('┌──') && !overviewEn.includes('└────'), 'English overview must not have box borders');
     // Not found in EN vs ID
     const notFoundEn = formatNotFound('command', 'random123', categories, tEn, '.');
     assert(notFoundEn.includes("Command 'random123' not found"), 'English not found format');

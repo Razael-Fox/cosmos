@@ -9,6 +9,14 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+### Changed
+
+- **WhatsApp-Native Menu Redesign & Visual Clutter Removal (Issue #36):**
+    - Redesigned all menu and help subsystem formatters (`src/utils/menuFormatter.ts`) to use 100% WhatsApp-native Markdown primitives: quotes (`> `), numbered lists (`1. `), bullet lists (`- `), bold (`*...*`), italics (`_..._`), and monospace (`` `...` ``).
+    - Completely stripped brittle Unicode box-drawing characters (`╭━━━`, `┃`, `╰━━━`, `┌──`, `│`, `└──`) and extraneous symbols (`⭔`, decorative emoji barrages) across dashboard headers, category overview, command lists, full catalogs, command inspector guides, and tutorials.
+    - Standardized bilingual localization under `menu` in `src/locales/en/tools.json` and `src/locales/id/tools.json`: clean category command headers without icons, em-dash category command count formatting (`— {{count}} commands` / `— {{count}} perintah`), and symmetric quote tip keys (`tip_detail`, `tip_category`).
+    - Aligned integration test assertions in `tests/menu.test.ts` to enforce WhatsApp-native layout structures and absence of box borders and metadata emojis.
+
 ### Fixed
 
 - **Standardized Multi-Word Command Syntax & Error Output Hints (Issue #35, Rule AF):**
