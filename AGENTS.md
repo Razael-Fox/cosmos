@@ -216,3 +216,9 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 - **Utility Terpusat (`monospace.ts`):** Seluruh parsing argumen perintah yang memerlukan pemisahan parameter berisiko spasi (seperti alias kontak) atau isolasi teks harfiah (seperti teks brat tanpa terpicu keyword animasi) **WAJIB** menggunakan helper `extractLeadingMonospace` atau `unwrapMonospace` dari `src/utils/monospace.ts`.
 - **Dukungan Monospace WhatsApp:** Sistem wajib mendukung format monospace triple backtick (` ```...``` `) dan inline backtick (`` `...` ``) serta kutipan tanda petik ganda/tunggal (`"..."`, `'...'`) secara konsisten. Rujuk panduan di `.agents/skills/whatsapp-monospace-filtering/SKILL.md`.
+
+### AD. Perencanaan Issue & Prosedur Pembuatan GitHub Issue via ISSUE.md (Issue Planning & GitHub Issue Creation Standards)
+
+- **Perencanaan Wajib di `ISSUE.md` (Mandatory Planning in `ISSUE.md`):** Setiap kali merencanakan pembaruan (updates), perbaikan bug (khususnya perbaikan bug berskala besar atau menengah / major & medium-sized bugs), maupun penambahan fitur dan command baru, AI Agent **WAJIB** membuat dan menuangkan seluruh rencana kerja, analisis, serta spesifikasinya terlebih dahulu di dalam file `ISSUE.md`.
+- **Prosedur Pembuatan GitHub Issue (Pre-creation & User Review Gate):** Apabila hendak membuat GitHub Issue, AI Agent **WAJIB** menyusun draf issue tersebut terlebih dahulu di dalam file `ISSUE.md` dan menunggu peninjauan (_user review_) dari pengguna. Dilarang langsung membuat issue di GitHub tanpa melalui tahap ini.
+- **Persetujuan atau Instruksi Pengguna (Explicit Approval / Instruction Required):** AI Agent hanya boleh membuat GitHub Issue di repositori GitHub apabila pengguna telah memberikan persetujuan (_approved_) terhadap draf di `ISSUE.md` atau secara eksplisit menginstruksikan untuk menerbitkannya sebagai GitHub Issue.
