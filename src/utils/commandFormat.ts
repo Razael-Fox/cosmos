@@ -54,7 +54,9 @@ export const LEGACY_COMMAND_MAP: Record<string, string> = {
     checkquota: '.check quota',
     'check-quota': '.check quota',
     myprofile: '.my profile',
-    'my-profile': '.my profile'
+    'my-profile': '.my profile',
+    autoarchive: '.auto archive',
+    'auto-archive': '.auto archive'
 };
 
 /**

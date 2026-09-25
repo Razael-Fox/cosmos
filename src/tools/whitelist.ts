@@ -425,7 +425,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                     { icon: '📋', label: '.listgroup', value: 'Show all available groups with status' },
                     { icon: '⚡', label: '.whitelistall', value: 'Batch-whitelist all participating groups' },
                     { icon: '⚙️', label: '.whitelist auto <on|off>', value: 'Toggle auto-whitelisting on group join' },
-                    { icon: '📦', label: '.autoarchive <on|off>', value: 'Toggle auto-archiving on group join' },
+                    { icon: '📦', label: '.auto archive <on|off>', value: 'Toggle auto-archiving on group join' },
                     { icon: '➕', label: '.addgroup', value: 'Whitelist current group' },
                     { icon: '➖', label: '.delgroup', value: 'Remove current group from whitelist' }
                 ]

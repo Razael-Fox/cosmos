@@ -23,6 +23,8 @@ import {
 } from '../src/services/chatArchiveService.js';
 import { execute as executeAutoArchive } from '../src/tools/autoarchive.js';
 import { execute as executeWhitelist } from '../src/tools/whitelist.js';
+import toolsHandler from '../src/tools/handler.js';
+import { getLegacyCanonical } from '../src/utils/commandFormat.js';
 import type { ToolContext } from '../src/tools/types.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { getTranslator } from '../src/utils/i18n.js';
@@ -234,41 +236,68 @@ async function runTests() {
         t
     });
 
-    // 6a. Non-owner cannot toggle auto-archive
+    // 6a. Non-owner cannot toggle auto-archive using ".auto archive on" (with space)
     sentMessages.length = 0;
-    await executeAutoArchive({ subcommand: 'on' }, makeCtx(nonOwnerNumber, '.autoarchive on'));
+    await executeAutoArchive({}, makeCtx(nonOwnerNumber, '.auto archive on'));
     assert(sentMessages.length > 0);
     assert(sentMessages[0].text.toLowerCase().includes('authorized'));
     assert.strictEqual(isAutoArchiveEnabled(), false, 'Non-owner must not be able to enable auto-archive');
 
-    // 6b. Owner enables auto-archive
+    // 6b. Owner enables auto-archive using ".auto archive on" (with space)
     sentMessages.length = 0;
-    await executeAutoArchive({ subcommand: 'on' }, makeCtx(ownerNumber, '.autoarchive on'));
-    assert.strictEqual(isAutoArchiveEnabled(), true);
+    await executeAutoArchive({}, makeCtx(ownerNumber, '.auto archive on'));
+    assert.strictEqual(isAutoArchiveEnabled(), true, 'Owner using .auto archive on must enable auto-archive');
     assert(sentMessages[0].text.includes('ENABLED'));
 
-    // 6c. Owner disables auto-archive
+    // 6c. Owner disables auto-archive using ".auto archive off" (with space)
     sentMessages.length = 0;
-    await executeAutoArchive({ subcommand: 'off' }, makeCtx(ownerNumber, '.autoarchive off'));
-    assert.strictEqual(isAutoArchiveEnabled(), false);
+    await executeAutoArchive({}, makeCtx(ownerNumber, '.auto archive off'));
+    assert.strictEqual(isAutoArchiveEnabled(), false, 'Owner using .auto archive off must disable auto-archive');
     assert(sentMessages[0].text.includes('DISABLED'));
 
-    // 6d. Status dashboard
+    // 6d. Status dashboard using ".auto archive" (with space)
     sentMessages.length = 0;
-    await executeAutoArchive({}, makeCtx(ownerNumber, '.autoarchive'));
+    await executeAutoArchive({}, makeCtx(ownerNumber, '.auto archive'));
     assert(sentMessages[0].text.includes('Auto-Archive Settings'));
+    assert(sentMessages[0].text.includes('.auto archive <on|off>'));
     assert(sentMessages[0].text.includes('Available Actions'));
 
-    // 6e. Manual archive via .archive inside group
+    // 6e. Multi-word tool lookup and legacy canonical mapping
+    await toolsHandler.loadTools();
+    const dotTool = toolsHandler.getTool('.auto archive');
+    assert(dotTool, 'toolsHandler.getTool(".auto archive") must resolve the tool');
+    assert.strictEqual(dotTool?.definition.name, 'autoarchive');
+
+    const noDotTool = toolsHandler.getTool('auto archive');
+    assert(noDotTool, 'toolsHandler.getTool("auto archive") must resolve the tool');
+    assert.strictEqual(noDotTool?.definition.name, 'autoarchive');
+
+    assert.strictEqual(
+        getLegacyCanonical('.autoarchive'),
+        '.auto archive',
+        'Legacy .autoarchive must map to canonical .auto archive'
+    );
+    assert.strictEqual(
+        getLegacyCanonical('autoarchive'),
+        '.auto archive',
+        'Legacy autoarchive must map to canonical .auto archive'
+    );
+    assert.strictEqual(
+        getLegacyCanonical('.auto archive'),
+        null,
+        'Canonical .auto archive with space must not be treated as legacy'
+    );
+
+    // 6f. Manual archive via .archive inside group
     sentMessages.length = 0;
     await executeAutoArchive({ subcommand: 'archive' }, makeCtx(ownerNumber, '.archive', groupJid));
     assert(sentMessages[0].text.includes('Chat Archived'));
 
-    // 6f. Manual unarchive via .unarchive inside group
+    // 6g. Manual unarchive via .unarchive inside group
     sentMessages.length = 0;
     await executeAutoArchive({ subcommand: 'unarchive' }, makeCtx(ownerNumber, '.unarchive', groupJid));
     assert(sentMessages[0].text.includes('Chat Unarchived'));
-    console.log('  ✔ autoarchive tool commands & permissions passed.');
+    console.log('  ✔ autoarchive tool commands with space & permissions passed.');
 
     // =========================================================================
     // 7. Whitelist Tool Integration with Auto-Archive

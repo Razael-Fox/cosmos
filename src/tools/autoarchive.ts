@@ -8,8 +8,27 @@ import { renderCard } from '../utils/uiFormatter.js';
 export const definition: ToolDefinition = {
     name: 'autoarchive',
     title: 'Auto-Archive Settings',
+    displayNames: {
+        en: 'auto archive',
+        id: 'arsip otomatis'
+    },
     category: 'System',
-    aliases: ['archive', 'unarchive', '.autoarchive', '.archive', '.unarchive'],
+    aliases: [
+        '.auto archive',
+        'auto archive',
+        '.arsip otomatis',
+        'arsip otomatis',
+        '.auto-archive',
+        'auto-archive',
+        '.auto_archive',
+        'auto_archive',
+        '.autoarchive',
+        'autoarchive',
+        '.archive',
+        'archive',
+        '.unarchive',
+        'unarchive'
+    ],
     description:
         'Configure automatic group archiving upon bot joining, view current archive status, or manually archive/unarchive chats.',
     descriptionKey: 'tools.commands.autoarchive.description',
@@ -46,23 +65,44 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         unwrapped?.videoMessage?.caption ||
         '';
 
-    const tokens = rawText.trim().split(/\s+/);
-    const invokedCommand = tokens[0]?.toLowerCase().replace(/^\./, '') || 'autoarchive';
-    const subArgs = tokens.slice(1);
+    const tokens = rawText.trim().split(/\s+/).filter(Boolean);
+    const firstToken = tokens[0]?.toLowerCase().replace(/^\./, '') || '';
+    const secondToken = tokens[1]?.toLowerCase() || '';
 
-    let subcommand = (
-        subArgs[0]?.toLowerCase() || (typeof args.subcommand === 'string' ? args.subcommand.toLowerCase() : '')
-    ).trim();
+    let subcommand: string;
+    let targetArg: string;
 
-    // Map command invocations
-    if (invokedCommand === 'archive') {
+    if (
+        (firstToken === 'auto' && secondToken === 'archive') ||
+        (firstToken === 'arsip' && secondToken === 'otomatis')
+    ) {
+        // Multi-word invocation: ".auto archive [on|off|status]" or ".arsip otomatis [on|off]"
+        const subArgs = tokens.slice(2);
+        subcommand =
+            subArgs[0]?.toLowerCase() || (typeof args.subcommand === 'string' ? args.subcommand.toLowerCase() : '');
+        targetArg = subArgs[1] || (typeof args.target === 'string' ? args.target : '');
+    } else if (firstToken === 'archive') {
+        // ".archive [jid]"
         subcommand = 'archive';
-    } else if (invokedCommand === 'unarchive') {
+        const subArgs = tokens.slice(1);
+        targetArg = subArgs[0] || (typeof args.target === 'string' ? args.target : '');
+    } else if (firstToken === 'unarchive') {
+        // ".unarchive [jid]"
         subcommand = 'unarchive';
+        const subArgs = tokens.slice(1);
+        targetArg = subArgs[0] || (typeof args.target === 'string' ? args.target : '');
+    } else {
+        // Single-token invocation: ".autoarchive [on|off|status]" or LLM tool-calling with args
+        const subArgs = tokens.slice(1);
+        subcommand =
+            subArgs[0]?.toLowerCase() || (typeof args.subcommand === 'string' ? args.subcommand.toLowerCase() : '');
+        targetArg = subArgs[1] || (typeof args.target === 'string' ? args.target : '');
     }
 
+    subcommand = subcommand.trim();
+
     // =========================================================================
-    // 1. MANUAL ARCHIVE: .archive [jid]
+    // 1. MANUAL ARCHIVE: .archive [jid] or .auto archive archive [jid]
     // =========================================================================
     if (subcommand === 'archive') {
         if (!isOwner) {
@@ -70,8 +110,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
             return;
         }
 
-        const targetJid =
-            subArgs[1] || (typeof args.target === 'string' ? args.target : '') || (jid.endsWith('@g.us') ? jid : '');
+        const targetJid = targetArg || (jid.endsWith('@g.us') ? jid : '');
 
         if (!targetJid) {
             const errorCard = renderCard({
@@ -115,7 +154,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     }
 
     // =========================================================================
-    // 2. MANUAL UNARCHIVE: .unarchive [jid]
+    // 2. MANUAL UNARCHIVE: .unarchive [jid] or .auto archive unarchive [jid]
     // =========================================================================
     if (subcommand === 'unarchive') {
         if (!isOwner) {
@@ -123,8 +162,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
             return;
         }
 
-        const targetJid =
-            subArgs[1] || (typeof args.target === 'string' ? args.target : '') || (jid.endsWith('@g.us') ? jid : '');
+        const targetJid = targetArg || (jid.endsWith('@g.us') ? jid : '');
 
         if (!targetJid) {
             const errorCard = renderCard({
@@ -168,9 +206,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     }
 
     // =========================================================================
-    // 3. TOGGLE AUTO-ARCHIVE: .autoarchive on|off
+    // 3. TOGGLE AUTO-ARCHIVE: .auto archive on|off
     // =========================================================================
-    const action = subArgs[0]?.toLowerCase() || subcommand;
+    const action = subcommand;
 
     if (action === 'on' || action === 'enable' || action === '1' || action === 'true') {
         if (!isOwner) {
@@ -215,7 +253,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                 { label: 'Status', value: 'DISABLED' },
                 { label: 'Updated By', value: callerJid || 'Bot Owner' }
             ],
-            footer: '💡 Tip: To re-enable, run .autoarchive on',
+            footer: '💡 Tip: To re-enable, run .auto archive on',
             t
         });
         await sock.sendMessage(jid, { text: card }, { quoted: msg });
@@ -223,7 +261,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     }
 
     // =========================================================================
-    // 4. STATUS DASHBOARD: .autoarchive / .autoarchive status
+    // 4. STATUS DASHBOARD: .auto archive / .auto archive status
     // =========================================================================
     const currentStatus = isAutoArchiveEnabled() ? 'ENABLED' : 'DISABLED';
     const statusCard = renderCard({
@@ -236,14 +274,14 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         ),
         fields: [
             { label: 'Auto-Archive on Join', value: currentStatus },
-            { label: 'Command Syntax', value: '.autoarchive <on|off>' }
+            { label: 'Command Syntax', value: '.auto archive <on|off>' }
         ],
         sections: [
             {
                 title: 'Available Actions',
                 items: [
-                    { icon: '⚡', label: '.autoarchive on', value: 'Enable auto-archiving on join' },
-                    { icon: '⏸️', label: '.autoarchive off', value: 'Disable auto-archiving on join' },
+                    { icon: '⚡', label: '.auto archive on', value: 'Enable auto-archiving on join' },
+                    { icon: '⏸️', label: '.auto archive off', value: 'Disable auto-archiving on join' },
                     { icon: '📦', label: '.archive', value: 'Archive current group chat' },
                     { icon: '📂', label: '.unarchive', value: 'Unarchive current group chat' }
                 ]
