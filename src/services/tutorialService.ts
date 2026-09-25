@@ -136,7 +136,6 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'top global',
             'addbalance',
             'add balance',
-            'fevertime',
             'fever time'
         ],
         relatedCommands: [
