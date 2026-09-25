@@ -16,7 +16,7 @@
         "unregistered": "Unregistered",
         "active": "Active",
         "quick_actions": "Quick Actions:",
-        "tip_daily": "Type .daily to claim free daily coins.",
+        "tip_daily": "Type .daily to claim free daily bonus reward.",
         "tip_bank": "Type .bank deposit <amount> to secure funds with 0.5% daily interest."
     },
     "daily": {
@@ -156,9 +156,9 @@
         "sender_identity_error": "Could not determine your sender identity."
     },
     "addbalance": {
-        "usage": "Invalid format. Use: .addbalance <user> <amount>",
-        "mention_required": "❌ Please mention a user to add balance to. Example: .addbalance @user 50",
-        "invalid_amount": "❌ Invalid amount. Please specify a valid balance amount to add.",
+        "usage": "Invalid format. Use: .add balance <user> <amount>",
+        "mention_required": "❌ Please mention a user to add balance to. Example: .add balance @user 50.000",
+        "invalid_amount": "❌ Invalid amount. Please specify a valid balance amount to add (e.g. .add balance @user 50.000).",
         "success": "✅ *Balance Added!*\n\nSuccessfully added *{{amount}}* to @{{user}} from the house vault.",
         "failed": "❌ Failed to add balance: {{error}}"
     },
@@ -194,10 +194,10 @@
         "ram_label": "RAM Usage"
     },
     "transfer": {
-        "usage": "Invalid format. Use: .transfer <user> <amount>",
-        "mention_required": "❌ Please mention a user to transfer coins to. Example: .transfer @user 50",
+        "usage": "Invalid format. Use: .transfer <user> <amount> (e.g. .transfer @user 50.000)",
+        "mention_required": "❌ Please mention a user to transfer balance to. Example: .transfer @user 50.000",
         "self_transfer": "❌ You cannot transfer balance to yourself.",
-        "invalid_amount": "❌ Invalid amount. Please specify a valid amount of coins to transfer.",
+        "invalid_amount": "❌ Invalid amount. Please specify a valid balance amount to transfer (e.g. 50.000 or 50k).",
         "insufficient": "❌ Insufficient balance. You only have {{balance}}.",
         "success": "💸 *Transfer Successful!*\n\nYou have successfully transferred *{{amount}}* to @{{target}}.\nYour remaining balance is *{{remaining}}*.",
         "failed": "❌ Transfer failed: {{error}}"
@@ -215,7 +215,7 @@
         "tip": "House reserve guarantees instant casino payouts."
     },
     "top": {
-        "group_only": "❌ This command can only be used in a group chat. Use .topglobal to see the global leaderboard.",
+        "group_only": "❌ This command can only be used in a group chat. Use .top global to see the global leaderboard.",
         "roulette_title": "🔫 *Group Roulette Leaderboard* 🔫\n\n",
         "casino_title": "👥 *Group Casino Leaderboard* 👥\n\n",
         "empty": "📭 There are no players registered in the database for this leaderboard yet.",
@@ -234,7 +234,7 @@
         "wins_matches": "Wins: {{wins}} • Matches: {{matches}}",
         "balance_label": "Balance: {{balance}}",
         "tier_label": "Tier: {{tier}}",
-        "tip_climb": "Wager in .roulette or invest in .properties to climb the ranks!",
+        "tip_climb": "Wager in games or invest in .shop / .properties to climb the ranks!",
         "tier_diamond": "💎 Diamond",
         "tier_gold": "🥇 Gold",
         "tier_silver": "🥈 Silver",
@@ -259,7 +259,7 @@
         "wins_matches": "Wins: {{wins}} • Matches: {{matches}}",
         "balance_label": "Balance: {{balance}}",
         "tier_label": "Tier: {{tier}}",
-        "tip_climb": "Wager in .roulette or invest in .properties to climb the ranks!",
+        "tip_climb": "Wager in games or invest in .shop / .properties to climb the ranks!",
         "tier_diamond": "💎 Diamond",
         "tier_gold": "🥇 Gold",
         "tier_silver": "🥈 Silver",
@@ -470,7 +470,7 @@
         "not_available": "N/A"
     },
     "property_sell": {
-        "specify_property": "Please specify the property name to sell. Format: /sell <property_name> <optional_negotiation>",
+        "specify_property": "Please specify the property name to sell. Format: .sell <property_name> <optional_negotiation>",
         "not_owned": "You do not own a property named \"{{name}}\" or it is already pawned/sold.",
         "definition_not_found": "Property definition not found for {{name}}.",
         "negotiation_failed_fallback": "I am currently unable to negotiate. I will give you the standard base offer.",
@@ -481,7 +481,7 @@
         "negotiated_price": "Negotiated Deal Price: {{price}}\n\n",
         "broker_says": "*Broker says:* \"{{message}}\"",
         "final_price": "Final Deal Price: {{price}}\n\n",
-        "negotiate_hint": "_You can negotiate the price by using: /sell {{name}} <your persuasion message>_"
+        "negotiate_hint": "_You can negotiate the price by using: .sell {{name}} <your persuasion message>_"
     },
     "autodl": {
         "invalid_platform": "❌ Invalid platform. Supported: tiktok, ig, pin, yt, tg, twitter, fb, threads, autodelete, all.",
@@ -644,16 +644,16 @@
         "account_not_found": "You do not have an active bank account yet. Please register first using *.bank register*.",
         "account_frozen": "Your bank account is currently {{status}}. Please contact administration.",
         "deposit_success": "Deposit successful. {{amount}} has been securely transferred to your bank account. Your new bank balance is {{newBankBalance}}.",
-        "deposit_invalid_amount": "Invalid deposit amount. Please specify a valid amount greater than 0.",
+        "deposit_invalid_amount": "Invalid deposit amount. Please specify a valid amount greater than 0 (e.g. .bank deposit 50.000 or .bank deposit all).",
         "insufficient_cash": "Transaction failed. You do not have sufficient cash on hand. Your current cash balance is {{cashBalance}}.",
         "withdrawal_success": "Withdrawal successful. {{amount}} has been dispensed to your cash balance. Your remaining bank balance is {{newBankBalance}}.",
-        "withdrawal_invalid_amount": "Invalid withdrawal amount. Please specify a valid amount greater than 0.",
+        "withdrawal_invalid_amount": "Invalid withdrawal amount. Please specify a valid amount greater than 0 (e.g. .bank withdraw 50.000 or .bank withdraw all).",
         "insufficient_bank_balance": "Transaction failed. Your bank account does not have sufficient funds for this withdrawal. Your current bank balance is {{bankBalance}}.",
         "transfer_usage": "Invalid transfer format. Usage: *.bank transfer <account_number> <amount>*",
         "transfer_self": "Transaction failed. You cannot transfer funds to your own bank account.",
         "transfer_target_not_found": "Transaction failed. The specified target Account Number ({{targetAccount}}) does not exist.",
         "transfer_target_frozen": "Transaction failed. The recipient bank account is currently {{status}}.",
-        "transfer_invalid_amount": "Invalid transfer amount. Please specify a valid amount greater than 0.",
+        "transfer_invalid_amount": "Invalid transfer amount. Please specify a valid amount greater than 0 (e.g. .bank transfer <account> 50.000).",
         "transfer_insufficient_funds": "Transaction failed. You do not have sufficient funds in your bank account to complete this transfer (including {{fee}} transfer fee).",
         "transfer_limit_exceeded": "Transaction failed. This transfer exceeds your daily transfer limit of {{limit}}. Remaining limit today: {{remaining}}.",
         "transfer_confirm_prompt": "You are about to transfer {{amount}} to Account Number {{targetAccount}} ({{targetName}}) with an administrative fee of {{fee}}.\n\nPlease reply with 'confirm' to proceed, or type '.cancel' to abort this transaction.",
@@ -712,7 +712,7 @@
         "no_id_card": "Access Denied. You must possess a Virtual ID Card to apply for a bank loan. Please register your identity first using the *.register id* command.",
         "no_bank_account": "Access Denied. You must have an active bank account to apply for a loan. Please register using *.bank register* first.",
         "bank_account_frozen": "Transaction failed. Your bank account is currently {{status}}. Please resolve any outstanding obligations.",
-        "invalid_amount": "Invalid loan amount. Please specify a valid amount greater than 0.",
+        "invalid_amount": "Invalid loan amount. Please specify a valid amount greater than 0 (e.g. .loan apply 500.000).",
         "active_loan_exists": "You already have an active loan with an outstanding balance of {{balance}} due on {{dueDate}}. Please repay your existing loan before applying for a new one.",
         "pending_session_exists": "You already have an active loan application in progress. Please reply to the prompt or type *.cancel* to abort.",
         "assessment_in_progress": "A loan assessment is already in progress for your account. Please wait a moment.",
@@ -725,7 +725,7 @@
         "rejected": "Your loan application has been declined due to an insufficient financial profile or lack of viable collateral. Please build a stronger profile before reapplying.",
         "cancelled": "Your loan application process has been successfully aborted. No transactions have occurred.",
         "no_active_loan": "You do not currently have any active loan obligations.",
-        "repay_invalid_amount": "Invalid repayment amount. Please specify a valid amount greater than 0.",
+        "repay_invalid_amount": "Invalid repayment amount. Please specify a valid amount greater than 0 (e.g. .loan pay 100.000 or .loan pay).",
         "repay_insufficient_funds": "Your repayment could not be processed due to insufficient funds. Your current bank balance is {{bankBalance}}, while the required payment is {{requiredAmount}}.",
         "repay_success": "You have successfully repaid {{amount}} towards your active loan. Your outstanding balance is now {{outstandingBalance}}. Thank you for your prompt payment.",
         "status_title": "*📋 Active Loan Status*\n\n",
@@ -810,7 +810,7 @@
             "description": "Toggle automatic downloading of links for this group. E.g. .autodl tiktok on, .autodl ig off, .autodl list"
         },
         "balance": {
-            "description": "Check your current casino coin balance or another user's balance."
+            "description": "Check your current balance or another user's balance."
         },
         "bank": {
             "description": "Cosmos Central Bank system for secure savings, transfers, and balance inquiries."
@@ -831,7 +831,7 @@
             "description": "Play coinflip. Example: .coinflip heads 1.000.000"
         },
         "daily": {
-            "description": "Claim your daily casino coin reward."
+            "description": "Claim your daily reward."
         },
         "dice": {
             "description": "Play dice. Example: .dice 6 1.000.000"
@@ -963,7 +963,7 @@
             "description": "View the global casino or roulette leaderboard."
         },
         "transfer": {
-            "description": "Transfer casino coins to another user."
+            "description": "Transfer balance to another user."
         },
         "vault": {
             "description": "View the House Vault statistics."
@@ -1360,12 +1360,12 @@
             "header": "📖 *TUTORIAL: CASINO & GAMBLING SUITE*",
             "summary": "Slots, coinflip, dice rolls, daily rewards & vault banking",
             "prereq": "📌 *Prerequisites:* Minimum Bet Balance (`Rp10.000`)",
-            "step1_title": "1️⃣ ECONOMY & DAILY COINS",
-            "step1_body": "• Check funds: `{{prefix}}balance` (or `{{prefix}}saldo`) to view wallet and bank funds.\n• Claim free coins: `{{prefix}}daily` every 24 hours to receive bonus Rupiah.\n• Lock profits: `{{prefix}}vault deposit <amount>` to safeguard winnings from wagers.",
+            "step1_title": "1️⃣ ECONOMY & DAILY REWARDS",
+            "step1_body": "• Check funds: `{{prefix}}balance` (or `{{prefix}}saldo`) to view wallet and bank funds.\n• Claim daily reward: `{{prefix}}daily` every 24 hours to receive bonus Rupiah.\n• Lock profits: `{{prefix}}vault deposit <amount>` to safeguard winnings from wagers.",
             "step2_title": "2️⃣ CASINO GAMES",
             "step2_body": "• Slot Machine: `{{prefix}}slot <amount|all>` (e.g. `{{prefix}}slot 50000`). Match symbols for up to 20x multipliers!\n• Coinflip: `{{prefix}}coinflip <amount> <heads|tails>` for a 50/50 double-or-nothing bet.\n• Dice Roll: `{{prefix}}dice <amount>` to roll high against the house.",
             "step3_title": "3️⃣ FEVER TIME & LEADERBOARDS",
-            "step3_body": "• Fever Time: Activate or view server-wide jackpot multiplier events via `{{prefix}}fevertime`.\n• Group Ranks: Type `{{prefix}}top` to view local chat wealth rankings.\n• Global Ranks: Type `{{prefix}}topglobal` to see Cosmos-wide top players.",
+            "step3_body": "• Fever Time: Activate or view server-wide jackpot multiplier events via `{{prefix}}fever time`.\n• Group Ranks: Type `{{prefix}}top` to view local chat wealth rankings.\n• Global Ranks: Type `{{prefix}}top global` to see Cosmos-wide top players.",
             "footer": "💡 *Tip:* Store your profits in `{{prefix}}vault` to avoid accidentally losing them on big bets."
         },
         "roulette": {
@@ -1485,7 +1485,7 @@
             "step2_title": "2️⃣ GROUP WHITELIST & ADMISSION",
             "step2_body": "• Group Admission: Cosmos operates in whitelisted mode for high stability.\n• Verify user: Type `{{prefix}}verify` to check admission eligibility.\n• Whitelist group: Admins/Owners register active groups via `{{prefix}}whitelist`.",
             "step3_title": "3️⃣ SUBSCRIPTION PLANS & QUOTAS",
-            "step3_body": "• Check Plan: Type `{{prefix}}myplan` to inspect your active subscription tier and limits.\n• Quota Usage: Type `{{prefix}}quota` to view remaining daily query limits.\n• Manage Plan: Type `{{prefix}}sub` to upgrade or renew subscription tiers.",
+            "step3_body": "• Check Plan: Type `{{prefix}}my plan` to inspect your active subscription tier and limits.\n• Quota Usage: Type `{{prefix}}quota` to view remaining daily query limits.\n• Manage Plan: Type `{{prefix}}sub` to upgrade or renew subscription tiers.",
             "footer": "💡 *Tip:* Type `{{prefix}}help <command>` for deep parameter inspections on any tool."
         }
     }

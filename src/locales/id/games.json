@@ -1,7 +1,7 @@
 {
     "coinflip": {
         "title": "🪙 *COINFLIP* 🪙",
-        "usage": "Format tidak valid. Gunakan: .coinflip <heads|tails> <taruhan>",
+        "usage": "Format tidak valid. Gunakan: .coinflip <heads|tails> <taruhan> (contoh: .coinflip heads 50.000)",
         "guessed": "Tebakan Anda: *{{guess}}*",
         "landed": "Koin mendarat pada: *{{result}}*",
         "won": "Koin mendarat pada {{result}}! Anda menang {{amount}}!",
@@ -27,7 +27,7 @@
     "dice": {
         "usage": "Format tidak valid. Gunakan: .dice <taruhan>",
         "guess_required": "❌ Harap tentukan tebakan Anda (1-6). Contoh: .dice 6 1.000.000",
-        "invalid_bet": "❌ Jumlah taruhan tidak valid. Taruhan minimum adalah {{min}}.",
+        "invalid_bet": "❌ Jumlah taruhan tidak valid. Taruhan minimum adalah {{min}} (contoh: .dice 6 50.000).",
         "title": "🎲 *DICE ROLL* 🎲",
         "guessed": "Tebakan Anda: *{{guess}}*",
         "rolled": "Dadu keluar: *{{rolled}}*",
@@ -49,7 +49,7 @@
     "slot": {
         "usage": "Format tidak valid. Gunakan: .slot <taruhan>",
         "bet_required": "❌ Harap tentukan jumlah taruhan Anda. Contoh: .slot 1.000.000",
-        "invalid_bet": "❌ Jumlah taruhan tidak valid. Taruhan minimum adalah {{min}}.",
+        "invalid_bet": "❌ Jumlah taruhan tidak valid. Taruhan minimum adalah {{min}} (contoh: .slot 50.000 atau .slot all).",
         "title": "🎰 *SLOT MACHINE* 🎰",
         "spinning": "🎰 Memutar mesin slot...",
         "jackpot": "🎉 *JACKPOT!* Anda mendapatkan 3 {{symbol}} ({{multiplier}}x + Bonus {{bonus}}) dan memenangkan *{{amount}}*!",

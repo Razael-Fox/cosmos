@@ -57,7 +57,7 @@ const contactTool: ToolModule = {
                 rawText: {
                     type: 'string',
                     description:
-                        'Subcommand and parameters (e.g., add `Ls Friends` 123456789, list, del `Ls Friends`, backup, restore)'
+                        'Subcommand and parameters (e.g., add `Ls Friends` 6281234567890, list, del `Ls Friends`, backup, restore)'
                 }
             }
         }
@@ -87,7 +87,7 @@ const contactTool: ToolModule = {
                             '❌ Invalid format.\n' +
                             'Usage: *.contact add <alias> <phoneNumber>*\n' +
                             'Example: *.contact add Mom 6281234567890*\n' +
-                            'With spaces: *.contact add `Ls Friends` 123456789*'
+                            'With spaces: *.contact add `Ls Friends` 6281234567890*'
                     },
                     { quoted: msg }
                 );
@@ -183,7 +183,7 @@ const contactTool: ToolModule = {
                         text:
                             '📋 *Your Saved Contacts*\n\nYou do not have any registered contacts yet.\n' +
                             'Add one with: *.contact add <alias> <phoneNumber>*\n' +
-                            'Example: *.contact add `Ls Friends` 123456789*'
+                            'Example: *.contact add `Ls Friends` 6281234567890*'
                     },
                     { quoted: msg }
                 );
@@ -369,7 +369,7 @@ const contactTool: ToolModule = {
             `• *.contact restore* — Restore contacts from a quoted .enc file or local snapshot\n\n` +
             `*Examples:*\n` +
             `_.contact add Mom 6281234567890_\n` +
-            `_.contact add \`Ls Friends\` 123456789_\n` +
+            `_.contact add \`Ls Friends\` 6281234567890_\n` +
             `_.contact backup_\n` +
             `_.sara please send a message to Mom saying I will be home soon._`;
 

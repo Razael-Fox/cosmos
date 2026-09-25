@@ -9,7 +9,7 @@ const transferTool: ToolModule = {
     definition: {
         name: 'transfer',
         aliases: ['tf'],
-        description: 'Transfer casino coins to another user.',
+        description: 'Transfer balance to another user.',
         descriptionKey: 'tools.commands.transfer.description',
         category: 'Casino',
         parameters: {

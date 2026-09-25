@@ -133,19 +133,23 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'brankas',
             'top',
             'topglobal',
-            'addbalance'
+            'top global',
+            'addbalance',
+            'add balance',
+            'fevertime',
+            'fever time'
         ],
         relatedCommands: [
             'slot',
             'coinflip',
             'dice',
             'daily',
-            'fevertime',
+            'fever time',
             'vault',
             'balance',
-            'addbalance',
+            'add balance',
             'top',
-            'topglobal'
+            'top global'
         ],
         localizedRelatedCommands: {
             en: ['slot', 'coinflip', 'dice', 'daily', 'vault', 'balance'],
@@ -515,6 +519,7 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'whitelist',
             'verify',
             'myplan',
+            'my plan',
             'sub',
             'subscription',
             'quota',
@@ -524,12 +529,15 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'sistem',
             'verifikasi',
             'paket',
-            'kuota'
+            'kuota',
+            'autoarchive',
+            'auto archive',
+            'archive'
         ],
-        relatedCommands: ['system_info', 'help', 'menu', 'whitelist', 'verify', 'myplan', 'subscription', 'quota'],
+        relatedCommands: ['system_info', 'help', 'menu', 'whitelist', 'verify', 'my plan', 'subscription', 'quota'],
         localizedRelatedCommands: {
-            en: ['system_info', 'help', 'menu', 'myplan', 'subscription', 'quota', 'whitelist', 'verify'],
-            id: ['system_info', 'help', 'menu', 'myplan', 'sub', 'quota', 'whitelist', 'verifikasi']
+            en: ['system_info', 'help', 'menu', 'my plan', 'subscription', 'quota', 'whitelist', 'verify'],
+            id: ['system_info', 'help', 'menu', 'my plan', 'sub', 'quota', 'whitelist', 'verifikasi']
         },
         steps: [
             {

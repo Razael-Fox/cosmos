@@ -122,7 +122,7 @@ async function runTestSuite() {
     );
     assert.strictEqual(
         missingMentionResult,
-        '❌ Silakan sebutkan (@mention) pengguna untuk menambahkan saldo. Contoh: .addbalance @user 50'
+        '❌ Silakan sebutkan (@mention) pengguna untuk menambahkan saldo. Contoh: .add balance @user 50.000'
     );
     console.log('✓ addbalance execution verified.');
 

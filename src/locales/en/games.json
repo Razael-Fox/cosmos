@@ -1,7 +1,7 @@
 {
     "coinflip": {
         "title": "🪙 *COINFLIP* 🪙",
-        "usage": "Invalid format. Use: .coinflip <heads|tails> <bet>",
+        "usage": "Invalid format. Use: .coinflip <heads|tails> <bet> (e.g. .coinflip heads 50.000)",
         "guessed": "You guessed: *{{guess}}*",
         "landed": "Coin landed on: *{{result}}*",
         "won": "Coin landed on {{result}}! You won {{amount}}!",
@@ -27,7 +27,7 @@
     "dice": {
         "usage": "Invalid format. Use: .dice <bet>",
         "guess_required": "❌ Please specify your guess (1-6). Example: .dice 6 1.000.000",
-        "invalid_bet": "❌ Invalid bet amount. Minimum bet is {{min}}.",
+        "invalid_bet": "❌ Invalid bet amount. Minimum bet is {{min}} (e.g. .dice 6 50.000).",
         "title": "🎲 *DICE ROLL* 🎲",
         "guessed": "You guessed: *{{guess}}*",
         "rolled": "Dice rolled: *{{rolled}}*",
@@ -49,7 +49,7 @@
     "slot": {
         "usage": "Invalid format. Use: .slot <bet>",
         "bet_required": "❌ Please specify your bet amount. Example: .slot 1.000.000",
-        "invalid_bet": "❌ Invalid bet amount. Minimum bet is {{min}}.",
+        "invalid_bet": "❌ Invalid bet amount. Minimum bet is {{min}} (e.g. .slot 50.000 or .slot all).",
         "title": "🎰 *SLOT MACHINE* 🎰",
         "spinning": "🎰 Spinning the slot machine...",
         "jackpot": "🎉 *JACKPOT!* You got 3 {{symbol}} ({{multiplier}}x + {{bonus}} Bonus) and won *{{amount}}*!",
