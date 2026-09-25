@@ -109,7 +109,10 @@ storage/backups/*
 !storage/backups/.gitkeep
 
 # Markdown files
+ISSUE.md
 ISSUE*.md
+SUMMARY.md
+SUMMARY*.md
 REVIEW.md
 
 # Website (standalone Next.js project with its own git repo + Vercel deployment)
