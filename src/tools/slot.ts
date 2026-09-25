@@ -23,7 +23,7 @@ const slotTool: ToolModule = {
         parameters: {
             type: 'object',
             properties: {
-                bet: { type: 'string', description: 'The amount of coins to bet' }
+                bet: { type: 'string', description: 'The amount of Rupiah/balance to bet' }
             },
             required: ['bet']
         }

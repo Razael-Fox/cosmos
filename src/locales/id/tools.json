@@ -16,7 +16,7 @@
         "unregistered": "Belum Terdaftar",
         "active": "Aktif",
         "quick_actions": "Aksi Cepat:",
-        "tip_daily": "Ketik .daily untuk mengklaim koin harian gratis.",
+        "tip_daily": "Ketik .daily untuk mengklaim hadiah harian gratis.",
         "tip_bank": "Ketik .bank deposit <jumlah> untuk mengamankan dana dengan bunga harian 0.5%."
     },
     "daily": {
@@ -158,9 +158,9 @@
         "sender_identity_error": "Tidak dapat menentukan identitas pengirim Anda."
     },
     "addbalance": {
-        "usage": "Format tidak valid. Gunakan: .addbalance <user> <jumlah>",
-        "mention_required": "❌ Silakan sebutkan (@mention) pengguna untuk menambahkan koin. Contoh: .addbalance @user 50",
-        "invalid_amount": "❌ Jumlah tidak valid. Silakan tentukan jumlah koin yang valid.",
+        "usage": "Format tidak valid. Gunakan: .add balance <user> <jumlah>",
+        "mention_required": "❌ Silakan sebutkan (@mention) pengguna untuk menambahkan saldo. Contoh: .add balance @user 50.000",
+        "invalid_amount": "❌ Jumlah tidak valid. Silakan tentukan nominal saldo yang valid untuk ditambahkan (contoh: .add balance @user 50.000).",
         "success": "✅ *Saldo Ditambahkan!*\n\nBerhasil menambahkan *{{amount}}* ke @{{user}} dari house vault.",
         "failed": "❌ Gagal menambahkan saldo: {{error}}"
     },
@@ -196,10 +196,10 @@
         "ram_label": "Penggunaan RAM"
     },
     "transfer": {
-        "usage": "Format tidak valid. Gunakan: .transfer <user> <jumlah>",
-        "mention_required": "❌ Silakan sebutkan pengguna untuk mentransfer koin. Contoh: .transfer @user 50",
+        "usage": "Format tidak valid. Gunakan: .transfer <user> <jumlah> (contoh: .transfer @user 50.000)",
+        "mention_required": "❌ Silakan sebutkan pengguna untuk mentransfer saldo. Contoh: .transfer @user 50.000",
         "self_transfer": "❌ Anda tidak dapat mentransfer saldo ke diri sendiri.",
-        "invalid_amount": "❌ Jumlah tidak valid. Silakan tentukan jumlah koin yang valid untuk ditransfer.",
+        "invalid_amount": "❌ Jumlah tidak valid. Silakan tentukan nominal saldo yang valid untuk ditransfer (contoh: 50.000 atau 50rb).",
         "insufficient": "❌ Saldo tidak mencukupi. Anda hanya memiliki {{balance}}.",
         "success": "💸 *Transfer Berhasil!*\n\nAnda berhasil mentransfer *{{amount}}* ke @{{target}}.\nSisa saldo Anda adalah *{{remaining}}*.",
         "failed": "❌ Transfer gagal: {{error}}"
@@ -217,7 +217,7 @@
         "tip": "Cadangan brankas menjamin pembayaran kasino instan."
     },
     "top": {
-        "group_only": "❌ Perintah ini hanya dapat digunakan dalam obrolan grup. Gunakan .topglobal untuk melihat papan peringkat global.",
+        "group_only": "❌ Perintah ini hanya dapat digunakan dalam obrolan grup. Gunakan .top global untuk melihat papan peringkat global.",
         "roulette_title": "🔫 *Papan Peringkat Roulette Grup* 🔫\n\n",
         "casino_title": "👥 *Papan Peringkat Kasino Grup* 👥\n\n",
         "empty": "📭 Belum ada pemain yang terdaftar dalam database untuk papan peringkat ini.",
@@ -236,7 +236,7 @@
         "wins_matches": "Menang: {{wins}} • Pertandingan: {{matches}}",
         "balance_label": "Saldo: {{balance}}",
         "tier_label": "Tingkat: {{tier}}",
-        "tip_climb": "Bertaruh di .roulette atau investasi di .properties untuk menaikkan peringkat!",
+        "tip_climb": "Bertaruh dalam game atau berinvestasi di .shop / .properties untuk menaikkan peringkat!",
         "tier_diamond": "💎 Berlian",
         "tier_gold": "🥇 Emas",
         "tier_silver": "🥈 Perak",
@@ -261,7 +261,7 @@
         "wins_matches": "Menang: {{wins}} • Pertandingan: {{matches}}",
         "balance_label": "Saldo: {{balance}}",
         "tier_label": "Tingkat: {{tier}}",
-        "tip_climb": "Bertaruh di .roulette atau investasi di .properties untuk menaikkan peringkat!",
+        "tip_climb": "Bertaruh dalam game atau berinvestasi di .shop / .properties untuk menaikkan peringkat!",
         "tier_diamond": "💎 Berlian",
         "tier_gold": "🥇 Emas",
         "tier_silver": "🥈 Perak",
@@ -472,7 +472,7 @@
         "not_available": "T/A"
     },
     "property_sell": {
-        "specify_property": "Silakan tentukan nama properti yang akan dijual. Format: /sell <nama_properti> <negosiasi_opsional>",
+        "specify_property": "Silakan tentukan nama properti yang akan dijual. Format: .sell <nama_properti> <negosiasi_opsional>",
         "not_owned": "Anda tidak memiliki properti bernama \"{{name}}\" atau properti tersebut sudah digadaikan/dijual.",
         "definition_not_found": "Definisi properti tidak ditemukan untuk {{name}}.",
         "negotiation_failed_fallback": "Saya saat ini tidak dapat bernegosiasi. Saya akan memberikan penawaran standar.",
@@ -483,7 +483,7 @@
         "negotiated_price": "Harga Kesepakatan Negosiasi: {{price}}\n\n",
         "broker_says": "*Broker berkata:* \"{{message}}\"",
         "final_price": "Harga Kesepakatan Akhir: {{price}}\n\n",
-        "negotiate_hint": "_Anda dapat menegosiasikan harga dengan menggunakan: /sell {{name}} <pesan persuasi Anda>_"
+        "negotiate_hint": "_Anda dapat menegosiasikan harga dengan menggunakan: .sell {{name}} <pesan persuasi Anda>_"
     },
     "autodl": {
         "invalid_platform": "❌ Platform tidak valid. Didukung: tiktok, ig, pin, yt, tg, twitter, fb, threads, autodelete, all.",
@@ -646,16 +646,16 @@
         "account_not_found": "Anda belum memiliki rekening bank yang aktif. Silakan daftar terlebih dahulu menggunakan perintah *.bank register*.",
         "account_frozen": "Rekening bank Anda saat ini berstatus {{status}}. Silakan hubungi pengelola.",
         "deposit_success": "Setoran berhasil. Dana sebesar {{amount}} telah disetorkan dengan aman ke rekening bank Anda. Saldo bank baru Anda adalah {{newBankBalance}}.",
-        "deposit_invalid_amount": "Jumlah setoran tidak valid. Harap masukkan nominal yang valid lebih besar dari 0.",
+        "deposit_invalid_amount": "Jumlah setoran tidak valid. Harap masukkan nominal yang valid lebih besar dari 0 (contoh: .bank deposit 50.000 atau .bank deposit all).",
         "insufficient_cash": "Transaksi gagal. Saldo tunai Anda tidak mencukupi untuk melakukan setoran. Saldo tunai Anda saat ini adalah {{cashBalance}}.",
         "withdrawal_success": "Penarikan berhasil. Dana sebesar {{amount}} telah dicairkan ke saldo tunai Anda. Sisa saldo rekening bank Anda adalah {{newBankBalance}}.",
-        "withdrawal_invalid_amount": "Jumlah penarikan tidak valid. Harap masukkan nominal yang valid lebih besar dari 0.",
+        "withdrawal_invalid_amount": "Jumlah penarikan tidak valid. Harap masukkan nominal yang valid lebih besar dari 0 (contoh: .bank withdraw 50.000 atau .bank withdraw all).",
         "insufficient_bank_balance": "Transaksi gagal. Saldo rekening bank Anda tidak mencukupi untuk penarikan ini. Saldo bank Anda saat ini adalah {{bankBalance}}.",
         "transfer_usage": "Format transfer tidak valid. Penggunaan: *.bank transfer <nomor_rekening> <jumlah>*",
         "transfer_self": "Transaksi gagal. Anda tidak dapat mentransfer dana ke nomor rekening Anda sendiri.",
         "transfer_target_not_found": "Transaksi gagal. Nomor Rekening tujuan yang dimasukkan ({{targetAccount}}) tidak ditemukan.",
         "transfer_target_frozen": "Transaksi gagal. Rekening bank penerima saat ini berstatus {{status}}.",
-        "transfer_invalid_amount": "Jumlah transfer tidak valid. Harap masukkan nominal yang valid lebih besar dari 0.",
+        "transfer_invalid_amount": "Jumlah transfer tidak valid. Harap masukkan nominal yang valid lebih besar dari 0 (contoh: .bank transfer <rekening> 50.000).",
         "transfer_insufficient_funds": "Transaksi gagal. Saldo rekening bank Anda tidak mencukupi untuk menyelesaikan transfer ini (termasuk biaya admin sebesar {{fee}}).",
         "transfer_limit_exceeded": "Transaksi gagal. Transfer ini melebihi batas transfer harian Anda sebesar {{limit}}. Sisa batas transfer hari ini: {{remaining}}.",
         "transfer_confirm_prompt": "Anda akan mentransfer {{amount}} ke Nomor Rekening {{targetAccount}} ({{targetName}}) dengan biaya administrasi sebesar {{fee}}.\n\nSilakan balas dengan 'confirm' untuk melanjutkan, atau ketik '.cancel' untuk membatalkan transaksi ini.",
@@ -714,7 +714,7 @@
         "no_id_card": "Akses Ditolak. Anda wajib memiliki KTP Virtual sebelum mengajukan pinjaman bank. Silakan daftarkan identitas Anda terlebih dahulu menggunakan perintah *.register id*.",
         "no_bank_account": "Akses Ditolak. Anda wajib memiliki rekening bank aktif untuk mengajukan pinjaman. Silakan daftar menggunakan perintah *.bank register* terlebih dahulu.",
         "bank_account_frozen": "Transaksi gagal. Rekening bank Anda saat ini berstatus {{status}}. Harap selesaikan kewajiban Anda terlebih dahulu.",
-        "invalid_amount": "Jumlah pinjaman tidak valid. Harap masukkan nominal yang valid lebih besar dari 0.",
+        "invalid_amount": "Jumlah pinjaman tidak valid. Harap masukkan nominal yang valid lebih besar dari 0 (contoh: .loan apply 500.000).",
         "active_loan_exists": "Anda masih memiliki pinjaman aktif dengan sisa tagihan {{balance}} yang jatuh tempo pada {{dueDate}}. Harap lunasi pinjaman aktif Anda sebelum mengajukan pinjaman baru.",
         "pending_session_exists": "Anda sudah memiliki sesi pengajuan pinjaman yang sedang berlangsung. Silakan balas konfirmasi atau ketik *.cancel* untuk membatalkan.",
         "assessment_in_progress": "Penilaian pinjaman sedang berlangsung untuk akun Anda. Harap tunggu sebentar.",
@@ -727,7 +727,7 @@
         "rejected": "Pengajuan pinjaman Anda ditolak karena profil keuangan yang tidak mencukupi atau ketiadaan agunan yang memadai. Harap perkuat profil Anda sebelum mengajukan kembali.",
         "cancelled": "Proses pengajuan pinjaman Anda telah berhasil dibatalkan. Tidak ada transaksi yang terjadi.",
         "no_active_loan": "Saat ini Anda tidak memiliki kewajiban pinjaman aktif.",
-        "repay_invalid_amount": "Jumlah pembayaran tidak valid. Harap masukkan nominal yang lebih besar dari 0.",
+        "repay_invalid_amount": "Jumlah pembayaran tidak valid. Harap masukkan nominal yang lebih besar dari 0 (contoh: .loan pay 100.000 atau .loan pay).",
         "repay_insufficient_funds": "Pembayaran Anda tidak dapat diproses karena saldo tidak mencukupi. Saldo rekening bank Anda saat ini adalah {{bankBalance}}, sedangkan jumlah yang harus dibayar adalah {{requiredAmount}}.",
         "repay_success": "Anda telah berhasil melunasi {{amount}} untuk pinjaman aktif Anda. Sisa tagihan Anda sekarang adalah {{outstandingBalance}}. Terima kasih atas pembayaran tepat waktu Anda.",
         "status_title": "*📋 Status Pinjaman Aktif*\n\n",
@@ -812,7 +812,7 @@
             "description": "Mengatur unduhan otomatis tautan di grup ini. Contoh: .autodl tiktok on, .autodl ig off, .autodl list"
         },
         "balance": {
-            "description": "Cek saldo koin kasino Anda saat ini atau saldo pengguna lain."
+            "description": "Memeriksa saldo Anda saat ini atau saldo pengguna lain."
         },
         "bank": {
             "description": "Sistem Cosmos Central Bank untuk tabungan aman, transfer, dan pengecekan saldo."
@@ -833,7 +833,7 @@
             "description": "Bermain lempar koin. Contoh: .coinflip heads 1.000.000"
         },
         "daily": {
-            "description": "Klaim hadiah koin kasino harian Anda."
+            "description": "Klaim hadiah harian Anda."
         },
         "dice": {
             "description": "Bermain lempar dadu. Contoh: .dice 6 1.000.000"
@@ -869,10 +869,7 @@
             "description": "Mengunduh video, gambar, atau karosel dari tautan URL Pinterest."
         },
         "play": {
-            "description": "Mencari lagu di YouTube dan mengunduhnya sebagai file audio. Mendukung parameter --lyrics."
-        },
-        "playlyrics": {
-            "description": "Memulai pemutaran lirik otomatis untuk lagu yang diminta. Mengambil lirik tersinkronisasi daring jika tidak tersedia secara lokal."
+            "description": "Mencari lagu di YouTube dan mengunduhnya sebagai file audio."
         },
         "buy": {
             "description": "Membeli barang atau properti dari toko menggunakan saldo Anda."
@@ -934,12 +931,6 @@
         "stopautocorrection": {
             "description": "Menonaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
         },
-        "stoplyrics": {
-            "description": "Menghentikan pemutaran lirik lagu yang sedang berlangsung di obrolan ini."
-        },
-        "stoptogglesticker": {
-            "description": "Menonaktifkan fitur Pembuat Stiker Otomatis untuk obrolan ini."
-        },
         "stt": {
             "description": "Mentranskripsi voice note yang dikutip menjadi teks menggunakan Groq Whisper."
         },
@@ -967,9 +958,6 @@
         "toggleofflineai": {
             "description": "Mengaktifkan atau menonaktifkan penjawab AI offline otomatis saat Anda sedang tidak aktif."
         },
-        "togglesticker": {
-            "description": "Mengaktifkan atau menonaktifkan fitur Pembuat Stiker Otomatis untuk obrolan ini."
-        },
         "top": {
             "description": "Melihat papan peringkat kasino grup."
         },
@@ -977,7 +965,7 @@
             "description": "Melihat papan peringkat kasino atau roulette global."
         },
         "transfer": {
-            "description": "Mentransfer koin kasino ke pengguna lain."
+            "description": "Transfer saldo ke pengguna lain."
         },
         "vault": {
             "description": "Melihat statistik Brankas Bandar (House Vault)."
@@ -1017,6 +1005,15 @@
         },
         "whitelistall": {
             "description": "Whitelist sekaligus semua grup yang diikuti bot dalam satu perintah."
+        },
+        "autoarchive": {
+            "description": "Atur pengarsipan grup otomatis saat bot bergabung, lihat status arsip, atau arsipkan/batalkan arsip chat secara manual."
+        },
+        "archive": {
+            "description": "Arsipkan chat tertentu atau grup saat ini secara manual."
+        },
+        "unarchive": {
+            "description": "Buka arsip chat tertentu atau grup saat ini secara manual."
         }
     },
     "myplan": {
@@ -1282,6 +1279,19 @@
         "auto_disabled_body": "Auto-whitelist saat bergabung grup telah *DINONAKTIFKAN*.\n\nGrup baru memerlukan persetujuan manual menggunakan .addgroup atau .whitelistall.",
         "dashboard_title": "Suite Manajemen Whitelist Grup"
     },
+    "autoarchive": {
+        "title": "Pengaturan Auto-Archive",
+        "missing_target": "Harap tentukan JID grup yang valid atau jalankan perintah ini di dalam obrolan grup.",
+        "manual_archive_title": "Chat Diarsipkan",
+        "manual_archive_success": "Chat berhasil diarsipkan.",
+        "manual_archive_error": "Gagal mengarsipkan chat. Pastikan bot bergabung dalam chat tersebut.",
+        "manual_unarchive_title": "Batal Arsip Chat",
+        "manual_unarchive_success": "Chat berhasil dikeluarkan dari arsip.",
+        "manual_unarchive_error": "Gagal membatalkan arsip chat. Pastikan chat target ada.",
+        "enabled_body": "Pengarsipan otomatis saat bot bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup yang diikuti bot akan otomatis dipindahkan ke arsip.",
+        "disabled_body": "Pengarsipan otomatis saat bot bergabung grup telah *DINONAKTIFKAN*.\n\nGrup yang baru diikuti akan tetap berada di daftar obrolan utama.",
+        "dashboard_body": "Arsipkan grup baru secara otomatis saat bergabung untuk menjaga kotak masuk obrolan tetap rapi."
+    },
     "nsfw": {
         "admin_required": "Akses ditolak. Hanya administrator grup atau pemilik bot yang dapat mengonfigurasi fitur NSFW.",
         "group_only": "Perintah konfigurasi ini hanya dapat dijalankan di dalam obrolan grup.",
@@ -1352,12 +1362,12 @@
             "header": "📖 *PANDUAN: KASINO & PERMAINAN JUDI*",
             "summary": "Slot, coinflip, lempar dadu, klaim harian & brankas saldo",
             "prereq": "📌 *Prasyarat:* Saldo Minimal Taruhan (`Rp10.000`)",
-            "step1_title": "1️⃣ EKONOMI & KLAIM HARIAN",
-            "step1_body": "• Cek saldo: `{{prefix}}balance` (atau `{{prefix}}saldo`) untuk melihat saldo dompet dan bank.\n• Klaim koin gratis: `{{prefix}}daily` setiap 24 jam untuk mendapatkan bonus Rupiah.\n• Kunci keuntungan: `{{prefix}}vault deposit <jumlah>` untuk mengamankan modal di brankas.",
+            "step1_title": "1️⃣ EKONOMI & HADIAH HARIAN",
+            "step1_body": "• Cek saldo: `{{prefix}}balance` (atau `{{prefix}}saldo`) untuk melihat saldo dompet dan bank.\n• Klaim hadiah harian: `{{prefix}}daily` setiap 24 jam untuk mendapatkan bonus Rupiah.\n• Kunci keuntungan: `{{prefix}}vault deposit <jumlah>` untuk mengamankan modal di brankas.",
             "step2_title": "2️⃣ PERMAINAN KASINO",
             "step2_body": "• Mesin Slot: `{{prefix}}slot <jumlah|all>` (contoh: `{{prefix}}slot 50000`). Samakan simbol untuk jackpot hingga 20x!\n• Lempar Koin: `{{prefix}}coinflip <jumlah> <heads|tails>` untuk taruhan 50/50 menang berlipat.\n• Lempar Dadu: `{{prefix}}dice <jumlah>` untuk mengadu angka dadu melawan bandar.",
             "step3_title": "3️⃣ FEVER TIME & PAPAN PERINGKAT",
-            "step3_body": "• Fever Time: Lihat atau picu event pengganda jackpot server via `{{prefix}}fevertime`.\n• Peringkat Grup: Ketik `{{prefix}}top` untuk melihat peringkat kekayaan anggota obrolan grup.\n• Peringkat Global: Ketik `{{prefix}}topglobal` untuk melihat pemain terkaya di seluruh Cosmos.",
+            "step3_body": "• Fever Time: Lihat atau picu event pengganda jackpot server via `{{prefix}}fever time`.\n• Peringkat Grup: Ketik `{{prefix}}top` untuk melihat peringkat kekayaan anggota obrolan grup.\n• Peringkat Global: Ketik `{{prefix}}top global` untuk melihat pemain terkaya di seluruh Cosmos.",
             "footer": "💡 *Tips:* Simpan keuntungan Anda di `{{prefix}}vault` agar tidak habis terbawa taruhan besar."
         },
         "roulette": {
@@ -1401,7 +1411,7 @@
             "summary": "Stiker statis & animasi, tipografi Brat & impor paket Sticker.ly",
             "prereq": "📌 *Prasyarat:* Gambar, Video (<10 detik), GIF atau Teks",
             "step1_title": "1️⃣ STIKER FOTO & VIDEO",
-            "step1_body": "• Stiker Statis: Kirim gambar dengan caption `{{prefix}}s` (atau balas gambar dengan `{{prefix}}s`).\n• Stiker Animasi: Kirim video atau GIF di bawah 10 detik dengan caption `{{prefix}}s`.\n• Stiker Otomatis: Aktifkan konversi otomatis di grup lewat `{{prefix}}togglesticker on`.",
+            "step1_body": "• Stiker Statis: Kirim gambar dengan caption `{{prefix}}s` (atau balas gambar dengan `{{prefix}}s`).\n• Stiker Animasi: Kirim video atau GIF di bawah 10 detik dengan caption `{{prefix}}s`.\n• Kutip Stiker: Balas gambar atau video pendek apa pun dengan `{{prefix}}s` untuk mengubahnya.",
             "step2_title": "2️⃣ STIKER TIPOGRAFI BRAT",
             "step2_body": "• Brat Statis: Ketik `{{prefix}}brat <teks>` (contoh: `{{prefix}}brat halo dunia`).\n• Brat Animasi: Ketik `{{prefix}}brat -a <teks>` untuk efek teks mengetik animasi.\n• Dukungan Monospace: Gunakan tanda petik backtick (`teks`) agar teks presisi.",
             "step3_title": "3️⃣ PENCARIAN & UNDUH STICKER.LY",
@@ -1445,16 +1455,16 @@
             "footer": "💡 *Tips:* Simpan properti bernilai tinggi sebagai jaminan pinjaman berplafon besar."
         },
         "music": {
-            "header": "📖 *PANDUAN: PEMUTAR MUSIK & LIRIK REAL-TIME*",
-            "summary": "Pemutar audio dalam obrolan, lirik tersinkronisasi & kendali musik",
+            "header": "📖 *PANDUAN: PEMUTAR MUSIK & AUDIO*",
+            "summary": "Pemutar audio dalam obrolan, cari lagu & stream audio MP3 berkualitas",
             "prereq": "📌 *Prasyarat:* Judul Lagu, Artis atau Kueri Musik",
             "step1_title": "1️⃣ CARI & PUTAR LAGU",
             "step1_body": "• Putar lagu: Ketik `{{prefix}}play <judul>` (contoh: `{{prefix}}play Bohemian Rhapsody`).\n• Cosmos mencari audio di YouTube, mengunduh file, dan mengirimkan kualitas terbaik.\n• Audio dilengkapi dengan judul, nama penyanyi, dan cover album.",
-            "step2_title": "2️⃣ LIRIK TERSINKRONISASI REAL-TIME",
-            "step2_body": "• Putar dengan Lirik: Ketik `{{prefix}}playlyrics <judul>` (contoh: `{{prefix}}playlyrics Adele Hello`).\n• Bot mengambil timestamp LRC dan mengedit pesan lirik secara real-time mengikuti irama.\n• Bernyanyi bersama anggota grup dengan penanda baris lirik yang sedang berjalan.",
-            "step3_title": "3️⃣ KENDALI PEMUTAR MUSIK",
-            "step3_body": "• Hentikan lirik: Ketik `{{prefix}}stoplyrics` untuk langsung menghentikan sesi lirik berjalan.\n• Mencegah edit pesan berkelanjutan saat ingin mengganti lagu atau berhenti bernyanyi.",
-            "footer": "💡 *Tips:* Gunakan `{{prefix}}playlyrics` di obrolan grup untuk karaoke interaktif."
+            "step2_title": "2️⃣ PEMILIHAN INTERAKTIF",
+            "step2_body": "• Pilih Lagu: Jika hasil pencarian banyak, balas dengan nomor pilihan (1-5).\n• Batalkan: Ketik `{{prefix}}cancel` untuk membatalkan pilihan kapan saja.\n• Kualitas Tinggi: Streaming audio langsung dari YouTube Music.",
+            "step3_title": "3️⃣ PUTAR DARI KUTIPAN PESAN",
+            "step3_body": "• Balas Pesan: Balas pesan yang memuat judul lagu dengan `{{prefix}}play` untuk langsung mengunduh.\n• Tautan Langsung: Kirim tautan YouTube untuk mengunduh audio seketika.",
+            "footer": "💡 *Tips:* Gunakan `{{prefix}}play <judul>` di obrolan mana pun untuk memutar lagu langsung."
         },
         "moderation": {
             "header": "📖 *PANDUAN: KONTROL GRUP, PRIVASI & NSFW*",
@@ -1477,7 +1487,7 @@
             "step2_title": "2️⃣ WHITELIST & IZIN GRUP",
             "step2_body": "• Akses Grup: Cosmos beroperasi dalam mode whitelist untuk menjaga stabilitas server.\n• Verifikasi: Ketik `{{prefix}}verify` untuk mengecek status izin akses Anda.\n• Whitelist grup: Admin/Owner mendaftarkan grup resmi lewat `{{prefix}}whitelist`.",
             "step3_title": "3️⃣ PAKET LANGGANAN & KUOTA",
-            "step3_body": "• Cek Paket: Ketik `{{prefix}}myplan` untuk melihat tingkatan paket dan batas aktif Anda.\n• Cek Kuota: Ketik `{{prefix}}quota` untuk melihat sisa batas panggilan harian.\n• Kelola Paket: Ketik `{{prefix}}sub` untuk memperbarui atau meningkatkan paket.",
+            "step3_body": "• Cek Paket: Ketik `{{prefix}}my plan` untuk melihat tingkatan paket dan batas aktif Anda.\n• Cek Kuota: Ketik `{{prefix}}quota` untuk melihat sisa batas panggilan harian.\n• Kelola Paket: Ketik `{{prefix}}sub` untuk memperbarui atau meningkatkan paket.",
             "footer": "💡 *Tips:* Ketik `{{prefix}}help <perintah>` untuk melihat parameter detail setiap tool."
         }
     }

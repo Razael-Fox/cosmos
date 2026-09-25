@@ -68,25 +68,10 @@
     },
     "play": {
         "results_title": "Berikut adalah hasil teratas untuk *{{query}}*.\nSilakan balas dengan nomor (1-{{count}}) ke pesan ini untuk mengunduh:\n",
-        "flags_lyrics": "(Bendera: --lyrics)\n",
         "cancellation_desc": "Pencarian musik YouTube untuk \"{{query}}\"",
         "cancelled": "Pemilihan pemutaran musik YouTube telah dibatalkan.",
         "download_cancellation_desc": "Pengunduhan audio YouTube untuk \"{{query}}\"",
         "download_cancelled": "Pengunduhan audio YouTube telah dibatalkan."
-    },
-    "playlyrics": {
-        "invalid_format": "Gagal: Format perintah tidak valid. Penggunaan: `.playlyrics 'nama lagu' | [pengali]`",
-        "multiplier_positive": "Gagal: Pengali kecepatan harus berupa angka positif.",
-        "playback_error": "Gagal: Terjadi kesalahan saat memproses pemutaran lirik.",
-        "not_found": "Gagal: Lirik tersinkronisasi untuk \"{{song}}\" tidak ditemukan secara lokal atau daring.",
-        "no_timestamps": "Gagal: Lirik untuk \"{{song}}\" tidak berisi baris dengan stempel waktu yang valid.",
-        "started": "Memulai pemutaran lirik untuk \"{{song}}\" dengan pengali kecepatan {{multiplier}}x ({{count}} baris)...",
-        "read_failed": "Gagal: Tidak dapat membaca file lirik lokal \"{{song}}\"."
-    },
-    "stoplyrics": {
-        "no_session": "Gagal: Tidak ada pemutaran lirik yang sedang berlangsung di obrolan ini.",
-        "stopped": "Pemutaran lirik untuk \"{{song}}\" telah berhasil dihentikan.",
-        "error": "Gagal: Terjadi kesalahan saat menghentikan pemutaran lirik."
     },
     "stickerly": {
         "usage": "Silakan masukkan kata kunci pencarian atau URL Sticker.ly.\nContoh: *.stickerly Chibi*",

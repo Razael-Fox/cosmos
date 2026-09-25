@@ -327,15 +327,12 @@ Cosmos uses a standard dot prefix (`.`) for all bot commands.
 | `.pinterest <query\|url>`   | Search Pinterest pins or download media links directly.     |
 | `.tgdl <link>`              | Download media from public or private Telegram posts.       |
 | `.sticker`                  | Convert images or short videos/GIFs into WhatsApp stickers. |
-| `.togglesticker`            | Automatically convert incoming media into stickers.         |
 
 ### 🎵 Music & Audio
 
-| Command               | Description                                              |
-| :-------------------- | :------------------------------------------------------- |
-| `.play <query>`       | Search, download, and stream audio tracks with metadata. |
-| `.playlyrics <query>` | Stream audio with live-synced scrolling lyrics.          |
-| `.stoplyrics`         | Stop active synchronized lyrics playback.                |
+| Command         | Description                                              |
+| :-------------- | :------------------------------------------------------- |
+| `.play <query>` | Search, download, and stream audio tracks with metadata. |
 
 ### 🤖 AI, Civics & Utilities
 

@@ -111,18 +111,16 @@ async function runRule34NsfwTests() {
     const tId = getTranslator('id');
 
     const nsfwTutorialEn = menuService.getTutorial('nsfw', 'en', tEn, '.');
-    assert.ok(nsfwTutorialEn.includes('TUTORIAL: NSFW VIDEO RETRIEVAL'), 'Should contain English tutorial header');
+    assert.ok(nsfwTutorialEn.includes('GROUP CONTROLS & PRIVACY'), 'Should contain English tutorial header');
     assert.ok(nsfwTutorialEn.includes('.on nsfw'), 'Should contain command guide');
-    assert.ok(nsfwTutorialEn.includes('15 and 30 seconds'), 'Should contain duration constraint guide');
 
     const nsfwTutorialId = menuService.getTutorial('nsfw', 'id', tId, '.');
-    assert.ok(nsfwTutorialId.includes('PANDUAN: PENCARIAN VIDEO NSFW'), 'Should contain Indonesian tutorial header');
+    assert.ok(nsfwTutorialId.includes('KONTROL GRUP, PRIVASI & NSFW'), 'Should contain Indonesian tutorial header');
     assert.ok(nsfwTutorialId.includes('.on nsfw'), 'Should contain command guide');
-    assert.ok(nsfwTutorialId.includes('15 hingga 30 detik'), 'Should contain duration constraint guide');
 
     const hubTutorial = menuService.getTutorial('hub', 'en', tEn, '.');
     assert.ok(hubTutorial.includes('COSMOS FEATURE TUTORIALS'), 'Should render tutorial hub header');
-    assert.ok(hubTutorial.includes('.menu tutorial nsfw'), 'Should list nsfw tutorial topic');
+    assert.ok(hubTutorial.includes('.menu tutorial moderation'), 'Should list moderation tutorial topic');
     console.log('✓ Menu Tutorial system verified.');
 
     // 6. Tool Definitions & DescriptionKey Conformance (Rule T)

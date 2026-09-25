@@ -15,6 +15,7 @@ export interface SubBotFeatures {
     offlineAi: boolean;
     forexAnnouncement: boolean;
     stt: boolean;
+    autoarchive: boolean;
 }
 
 export interface SubBotApiKeys {
@@ -64,7 +65,8 @@ export function getDefaultFeatures(): SubBotFeatures {
         autocorrection: false,
         offlineAi: true,
         forexAnnouncement: true,
-        stt: true
+        stt: true,
+        autoarchive: true
     };
 }
 

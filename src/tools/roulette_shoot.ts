@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { gameSessions, getSessionByChatId, handleElimination, nextTurn, checkReloadShells } from '../utils/roulette.js';
-import { getSenderJid, resolveId } from '../utils/casino.js';
+import { getSenderJid, resolveId, formatMentions } from '../utils/casino.js';
 import { formatRupiah } from '../utils/currency.js';
 import { prisma } from '../db.js';
 import { getTranslator } from '../utils/i18n.js';
@@ -68,7 +68,7 @@ const shootTool: ToolModule = {
             target: target.pushName
         });
 
-        await sock.sendMessage(jid, { text: outputMsg, mentions: [senderJid, targetId] });
+        await sock.sendMessage(jid, { text: outputMsg, mentions: formatMentions([senderJid, targetId]) });
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
         outputMsg = ''; // Reset for the result
@@ -160,7 +160,7 @@ const shootTool: ToolModule = {
             }
         }
 
-        const mentions = session.players.map((p) => p.userId);
+        const mentions = formatMentions(session.players.map((p) => p.userId));
         await sock.sendMessage(jid, { text: outputMsg, mentions });
         return null;
     }
