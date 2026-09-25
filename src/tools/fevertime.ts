@@ -6,6 +6,9 @@ import { renderCard } from '../utils/uiFormatter.js';
 const feverTimeTool: ToolModule = {
     definition: {
         name: 'fevertime',
+        title: 'Fever Time',
+        displayNames: { en: 'fever time', id: 'fever time' },
+        aliases: ['.fever time', 'fever time', '.fevertime', 'fevertime', 'fever'],
         description: 'Trigger a global Fever Time event for 15 minutes.',
         descriptionKey: 'tools.commands.fevertime.description',
         category: 'Casino',

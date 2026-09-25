@@ -992,7 +992,13 @@
             "description": "Verify your whitelisted Cosmos account with an inverted WhatsApp token."
         },
         "myplan": {
-            "description": "View your active Cosmos subscription tier and quota usage."
+            "description": "View your active Cosmos subscription tier, plan perks, and validity."
+        },
+        "quota": {
+            "description": "View your Cosmos resource quotas, active groups, and sub-bot instances."
+        },
+        "profile": {
+            "description": "View your complete Cosmos profile, identity, financial stats, and gaming records."
         },
         "sub": {
             "description": "Manage Cosmos subscriptions. Admin: .sub add <phone> <tier> <days>."
@@ -1028,7 +1034,8 @@
         "economy_bonus_label": "Economy Bonus",
         "multiplier_suffix": "x Multiplier",
         "upgrade_cta": "Need more resources? Upgrade anytime at https://razael-fox.my.id/pricing",
-        "example_cost": "_Example upgrade cost: Nova {{cost}}/month._"
+        "example_cost": "_Example upgrade cost: Nova {{cost}}/month._",
+        "quota_tip": "Use .my quota or .check quota to view resource limits and usage."
     },
     "broadcast": {
         "forex_title": "*🏦 Cosmos Central Bank Update*",
@@ -1232,7 +1239,29 @@
     },
     "quota": {
         "group_limit_reached": "Maximum group limit reached for {{tier}} tier ({{current}}/{{max}}).",
-        "subbot_limit_reached": "Maximum active sub-bot limit reached for {{tier}} tier ({{current}}/{{max}})."
+        "subbot_limit_reached": "Maximum active sub-bot limit reached for {{tier}} tier ({{current}}/{{max}}).",
+        "title": "📊 *Cosmos Resource Quota Usage*",
+        "available_label": "Available",
+        "manage_tip": "Need more capacity? Upgrade your tier or remove inactive instances.",
+        "plan_tip": "Use .my plan or .check plan to view tier perks and billing details."
+    },
+    "profile": {
+        "not_found": "User profile not found in database.",
+        "title": "COSMOS CITIZEN PROFILE",
+        "section_identity": "📋 Identity & Citizenship",
+        "section_financial": "💰 Financial Overview",
+        "section_stats": "🎮 Activity & Records",
+        "label_idcard": "Virtual ID Card",
+        "label_membership": "Membership Tier",
+        "label_career": "Career / Job",
+        "label_credit_score": "Credit Score",
+        "label_games": "Casino Games",
+        "label_roulette": "Buckshot Roulette",
+        "label_items": "Inventory Items",
+        "label_contacts": "Encrypted Contacts",
+        "tip_plan": "Type .my plan or .check plan to view subscription tier perks.",
+        "tip_quota": "Type .my quota or .check quota to monitor resource limits.",
+        "tip_contacts": "Type .contact list or .contact backup to manage personal contacts."
     },
     "whitelist": {
         "list_title": "Available WhatsApp Groups",

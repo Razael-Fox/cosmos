@@ -38,7 +38,23 @@ export const LEGACY_COMMAND_MAP: Record<string, string> = {
     'apply-license': '.apply license',
     applylicense: '.apply license',
     'apply-job': '.apply job',
-    applyjob: '.apply job'
+    applyjob: '.apply job',
+    addbalance: '.add balance',
+    'add-balance': '.add balance',
+    topglobal: '.top global',
+    'top-global': '.top global',
+    fevertime: '.fever time',
+    'fever-time': '.fever time',
+    myplan: '.my plan',
+    'my-plan': '.my plan',
+    checkplan: '.check plan',
+    'check-plan': '.check plan',
+    myquota: '.my quota',
+    'my-quota': '.my quota',
+    checkquota: '.check quota',
+    'check-quota': '.check quota',
+    myprofile: '.my profile',
+    'my-profile': '.my profile'
 };
 
 /**

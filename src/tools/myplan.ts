@@ -2,15 +2,27 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { getSenderJid, formatMentions } from '#utils/casino.js';
 import { isOwnerId } from '#utils/owner.js';
 import { QuotaService } from '#services/quotaService.js';
-import { renderUsageBar } from '#services/subscriptionService.js';
 import { formatRupiah } from '#utils/currency.js';
 
 export const definition: ToolDefinition = {
     name: 'myplan',
     title: 'Subscription Plan',
+    displayNames: { en: 'my plan', id: 'paket saya' },
     category: 'System',
-    aliases: ['.myplan', '.limits'],
-    description: 'View your active Cosmos subscription tier and quota usage.',
+    aliases: [
+        '.my plan',
+        'my plan',
+        '.check plan',
+        'check plan',
+        'checkplan',
+        '.plan',
+        'plan',
+        '.myplan',
+        'myplan',
+        'my-plan',
+        'check-plan'
+    ],
+    description: 'View your active Cosmos subscription tier, plan perks, and validity.',
     descriptionKey: 'tools.commands.myplan.description',
     parameters: {
         type: 'object',
@@ -41,8 +53,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
           }`;
 
     const bonus = quota.economyMultiplier.toFixed(2);
-    const unlim = ctx.t('tools.myplan.unlimited');
-    const usedSuffix = ctx.t('tools.myplan.used_suffix');
     const prefixStatus = quota.customPrefixAllowed
         ? ctx.t('tools.myplan.prefix_enabled')
         : ctx.t('tools.myplan.prefix_locked');
@@ -52,12 +62,12 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         `${ctx.t('tools.myplan.user_label')}: @${senderJid.split('@')[0]}\n` +
         `${ctx.t('tools.myplan.plan_label')}: ${planLabel}\n` +
         `${ctx.t('tools.myplan.status_label')}: ${status}\n\n` +
-        `• ${ctx.t('tools.myplan.groups_label')}: ${renderUsageBar(quota.groups.current, quota.groups.max)} ${quota.groups.current} / ${Number.isFinite(quota.groups.max) ? quota.groups.max : unlim} ${usedSuffix}\n` +
-        `• ${ctx.t('tools.myplan.subbots_label')}: ${renderUsageBar(quota.subBots.current, quota.subBots.max)} ${quota.subBots.current} / ${Number.isFinite(quota.subBots.max) ? quota.subBots.max : unlim} ${usedSuffix}\n` +
         `• ${ctx.t('tools.myplan.custom_prefix_label')}: ${prefixStatus}\n` +
         `• ${ctx.t('tools.myplan.economy_bonus_label')}: ${bonus}${ctx.t('tools.myplan.multiplier_suffix')}\n\n` +
         `${ctx.t('tools.myplan.upgrade_cta')}\n` +
-        `${ctx.t('tools.myplan.example_cost', { cost: formatRupiah(10000) })}`;
+        `${ctx.t('tools.myplan.example_cost', { cost: formatRupiah(10000) })}\n\n` +
+        `💡 ${ctx.t('tools.myplan.quota_tip', 'Use .my quota or .check quota to view resource limits and usage.')}`;
+
     await ctx.sock.sendMessage(ctx.jid, { text, mentions }, { quoted: ctx.msg });
     return;
 }

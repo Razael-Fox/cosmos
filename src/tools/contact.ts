@@ -2,8 +2,17 @@ import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
 import { getSenderJid, getUser } from '../utils/casino.js';
 import { encryptString, decryptString } from '../services/storageEncryption.js';
-import { cleanPhoneNumber, toCanonicalJid, maskPhoneNumber } from '../utils/phone.js';
+import { maskPhoneNumber } from '../utils/phone.js';
 import { extractLeadingMonospace, unwrapMonospace } from '../utils/monospace.js';
+import {
+    validateContactNameWithAI,
+    validatePhoneNumber,
+    createEncryptedContactBackup,
+    restoreEncryptedContactBackup,
+    saveAutoSnapshotBackup
+} from '../services/contactService.js';
+import { downloadMediaMessage, WAMessage } from '@whiskeysockets/baileys';
+
 /**
  * Parses alias and phone number from the rest of the arguments.
  * Supports WhatsApp monospace format (e.g. `Ls Friends` or ```Ls Friends```)
@@ -38,8 +47,8 @@ export function parseContactDelArgs(rest: string): string {
 const contactTool: ToolModule = {
     definition: {
         name: 'contact',
-        aliases: ['kontak'],
-        description: 'Manage personal zero-knowledge contacts for AI assistance and secure messaging.',
+        aliases: ['kontak', '.contact', '.kontak'],
+        description: 'Manage personal zero-knowledge contacts, backup encrypted contact files, and restore contacts.',
         descriptionKey: 'tools.commands.contact.description',
         category: 'Utility',
         parameters: {
@@ -47,7 +56,8 @@ const contactTool: ToolModule = {
             properties: {
                 rawText: {
                     type: 'string',
-                    description: 'Subcommand and parameters (e.g., add `Ls Friends` 123456789, list, del `Ls Friends`)'
+                    description:
+                        'Subcommand and parameters (e.g., add `Ls Friends` 123456789, list, del `Ls Friends`, backup, restore)'
                 }
             }
         }
@@ -65,6 +75,7 @@ const contactTool: ToolModule = {
         const subCommand = subCommandMatch ? subCommandMatch[1].toLowerCase() : '';
         const rest = subCommandMatch && subCommandMatch[2] ? subCommandMatch[2].trim() : '';
 
+        // 1. ADD CONTACT
         if (subCommand === 'add') {
             const { alias, phoneInput } = parseContactAddArgs(rest);
 
@@ -83,27 +94,47 @@ const contactTool: ToolModule = {
                 return;
             }
 
+            // Real-time AI filtering and validation for contact name
+            const nameCheck = await validateContactNameWithAI(alias);
+            if (!nameCheck.isValid) {
+                if (nameCheck.isMisspelled && nameCheck.suggestedCorrection) {
+                    await sock.sendMessage(
+                        msg.key.remoteJid!,
+                        {
+                            text:
+                                `❌ Contact name rejected: *"${alias}"* appears to be misspelled.\n` +
+                                `Did you mean *"${nameCheck.suggestedCorrection}"*?\n\n` +
+                                `Please run:\n` +
+                                `*.contact add \`${nameCheck.suggestedCorrection}\` ${phoneInput}*`
+                        },
+                        { quoted: msg }
+                    );
+                    return;
+                }
+
+                await sock.sendMessage(
+                    msg.key.remoteJid!,
+                    { text: `❌ Contact name rejected: ${nameCheck.reason}` },
+                    { quoted: msg }
+                );
+                return;
+            }
+
+            // Phone number normalization & WhatsApp existence validation
+            const phoneCheck = await validatePhoneNumber(phoneInput, sock);
+            if (!phoneCheck.isValid) {
+                await sock.sendMessage(
+                    msg.key.remoteJid!,
+                    {
+                        text: `❌ Invalid phone number: ${phoneCheck.reason || 'Please provide a valid 8-15 digit phone number.'}`
+                    },
+                    { quoted: msg }
+                );
+                return;
+            }
+
             const cleanAlias = alias.toLowerCase();
-            if (cleanAlias.length < 2 || cleanAlias.length > 32) {
-                await sock.sendMessage(
-                    msg.key.remoteJid!,
-                    { text: '❌ Alias must be between 2 and 32 characters.' },
-                    { quoted: msg }
-                );
-                return;
-            }
-
-            const digits = cleanPhoneNumber(phoneInput);
-            if (digits.length < 8 || digits.length > 15) {
-                await sock.sendMessage(
-                    msg.key.remoteJid!,
-                    { text: '❌ Invalid phone number. Please enter a valid 8-15 digit phone number.' },
-                    { quoted: msg }
-                );
-                return;
-            }
-
-            const canonicalJid = toCanonicalJid(digits);
+            const canonicalJid = phoneCheck.canonicalJid;
             const encryptedJid = encryptString(canonicalJid);
 
             await prisma.userContactBook.upsert({
@@ -124,6 +155,9 @@ const contactTool: ToolModule = {
                 }
             });
 
+            // Auto-snapshot backup
+            await saveAutoSnapshotBackup(senderJid);
+
             const masked = maskPhoneNumber(canonicalJid);
             await sock.sendMessage(
                 msg.key.remoteJid!,
@@ -135,6 +169,7 @@ const contactTool: ToolModule = {
             return;
         }
 
+        // 2. LIST CONTACTS
         if (subCommand === 'list' || subCommand === 'all') {
             const contacts = await prisma.userContactBook.findMany({
                 where: { ownerJid: senderJid },
@@ -166,11 +201,12 @@ const contactTool: ToolModule = {
                 return `• *${c.alias}*: ${displayPhone}`;
             });
 
-            const text = `📋 *Your Saved Contacts (${contacts.length})*\n\n${lines.join('\n')}\n\n_Protected with Zero-Knowledge Tokenization._`;
+            const text = `📋 *Your Saved Contacts (${contacts.length})*\n\n${lines.join('\n')}\n\n_Protected with Zero-Knowledge Tokenization._\n_Use .contact backup to export an encrypted backup file._`;
             await sock.sendMessage(msg.key.remoteJid!, { text }, { quoted: msg });
             return;
         }
 
+        // 3. DELETE CONTACT
         if (subCommand === 'del' || subCommand === 'delete' || subCommand === 'rm') {
             const alias = parseContactDelArgs(rest);
             if (!alias) {
@@ -215,6 +251,9 @@ const contactTool: ToolModule = {
                 }
             });
 
+            // Refresh auto-snapshot backup
+            await saveAutoSnapshotBackup(senderJid);
+
             await sock.sendMessage(
                 msg.key.remoteJid!,
                 { text: `✅ Contact *${alias}* has been deleted from your contact book.` },
@@ -223,18 +262,116 @@ const contactTool: ToolModule = {
             return;
         }
 
-        // Usage help
+        // 4. ENCRYPTED BACKUP
+        if (subCommand === 'backup' || subCommand === 'export') {
+            const backupRes = await createEncryptedContactBackup(senderJid);
+            if (!backupRes.success) {
+                await sock.sendMessage(
+                    msg.key.remoteJid!,
+                    { text: `❌ Failed to create encrypted backup: ${backupRes.error || 'Unknown error'}` },
+                    { quoted: msg }
+                );
+                return;
+            }
+
+            if (backupRes.contactCount === 0) {
+                await sock.sendMessage(
+                    msg.key.remoteJid!,
+                    {
+                        text: '⚠️ You do not have any registered contacts to back up.\nAdd a contact first with: *.contact add <alias> <number>*'
+                    },
+                    { quoted: msg }
+                );
+                return;
+            }
+
+            await sock.sendMessage(
+                msg.key.remoteJid!,
+                {
+                    document: backupRes.encryptedBuffer,
+                    fileName: backupRes.fileName,
+                    mimetype: 'application/octet-stream',
+                    caption:
+                        `🔐 *Personal Encrypted Contact Backup*\n\n` +
+                        `• Total Contacts: *${backupRes.contactCount}*\n` +
+                        `• Algorithm: *AES-256-GCM*\n` +
+                        `• Integrity Checksum: \`${backupRes.checksum.slice(0, 16)}...\`\n` +
+                        `• Local Snapshot: \`${backupRes.filePath}\`\n\n` +
+                        `_All numbers are secured with zero-knowledge cryptography. To restore, reply to this document with .contact restore._`
+                },
+                { quoted: msg }
+            );
+            return;
+        }
+
+        // 5. RESTORE BACKUP
+        if (subCommand === 'restore' || subCommand === 'import') {
+            let encryptedBuffer: Buffer | undefined;
+
+            const quotedMsg = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+            const docMsg = quotedMsg?.documentMessage || msg.message?.documentMessage;
+
+            if (docMsg) {
+                try {
+                    const targetMsg: WAMessage = quotedMsg
+                        ? {
+                              key: {
+                                  remoteJid: msg.key.remoteJid,
+                                  id: msg.message?.extendedTextMessage?.contextInfo?.stanzaId
+                              },
+                              message: quotedMsg
+                          }
+                        : msg;
+                    const downloaded = await downloadMediaMessage(targetMsg, 'buffer', {});
+                    if (Buffer.isBuffer(downloaded)) {
+                        encryptedBuffer = downloaded;
+                    }
+                } catch (downloadErr: unknown) {
+                    console.error('[Contact Restore Document Download Error]', downloadErr);
+                }
+            }
+
+            const restoreRes = await restoreEncryptedContactBackup(senderJid, encryptedBuffer);
+            if (!restoreRes.success) {
+                await sock.sendMessage(
+                    msg.key.remoteJid!,
+                    {
+                        text: `❌ Restore failed: ${restoreRes.error || 'Could not decrypt or restore contact backup file.'}`
+                    },
+                    { quoted: msg }
+                );
+                return;
+            }
+
+            await sock.sendMessage(
+                msg.key.remoteJid!,
+                {
+                    text:
+                        `✅ *Personal Contact Backup Restored Successfully*\n\n` +
+                        `• Restored Contacts: *${restoreRes.restoredCount}*\n` +
+                        `• Status: Verified & Encrypted (AES-256-GCM)\n\n` +
+                        `Use *.contact list* to inspect your restored contacts.`
+                },
+                { quoted: msg }
+            );
+            return;
+        }
+
+        // USAGE HELP
         const usage =
             `📖 *Personal Contact Book Manager*\n\n` +
             `Securely manage personal contacts for AI messaging without exposing real numbers to LLMs.\n\n` +
             `*Commands:*\n` +
             `• *.contact add <alias> <number>* — Save or update contact (use \`name\` for spaces)\n` +
             `• *.contact list* — View all saved contacts (masked)\n` +
-            `• *.contact del <alias>* — Delete a contact\n\n` +
+            `• *.contact del <alias>* — Delete a contact\n` +
+            `• *.contact backup* — Export an encrypted personal contact backup file (.enc)\n` +
+            `• *.contact restore* — Restore contacts from a quoted .enc file or local snapshot\n\n` +
             `*Examples:*\n` +
             `_.contact add Mom 6281234567890_\n` +
             `_.contact add \`Ls Friends\` 123456789_\n` +
-            `_.sara please send a message to Ls Friends saying I will be home soon._`;
+            `_.contact backup_\n` +
+            `_.sara please send a message to Mom saying I will be home soon._`;
 
         await sock.sendMessage(msg.key.remoteJid!, { text: usage }, { quoted: msg });
     }

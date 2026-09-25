@@ -992,7 +992,13 @@
             "description": "Verifikasi akun Cosmos yang masuk whitelist dengan token WhatsApp terbalik."
         },
         "myplan": {
-            "description": "Lihat tingkat langganan Cosmos aktif dan penggunaan kuota Anda."
+            "description": "Lihat paket langganan aktif Cosmos, keuntungan paket, dan masa berlaku Anda."
+        },
+        "quota": {
+            "description": "Lihat kuota sumber daya Cosmos, grup aktif, dan instans sub-bot Anda."
+        },
+        "profile": {
+            "description": "Lihat profil lengkap Cosmos, identitas, status keuangan, dan rekor permainan Anda."
         },
         "sub": {
             "description": "Kelola langganan Cosmos. Admin: .sub add <phone> <tier> <days>."
@@ -1028,7 +1034,8 @@
         "economy_bonus_label": "Bonus Ekonomi",
         "multiplier_suffix": "x Pengali",
         "upgrade_cta": "Butuh lebih banyak sumber daya? Tingkatkan kapan saja di https://razael-fox.my.id/pricing",
-        "example_cost": "_Contoh biaya peningkatan: Nova {{cost}}/bulan._"
+        "example_cost": "_Contoh biaya peningkatan: Nova {{cost}}/bulan._",
+        "quota_tip": "Gunakan .my quota atau .check quota untuk melihat batasan dan penggunaan sumber daya."
     },
     "broadcast": {
         "forex_title": "*🏦 Pembaruan Cosmos Central Bank*",
@@ -1232,7 +1239,29 @@
     },
     "quota": {
         "group_limit_reached": "Batas maksimal grup telah tercapai untuk tier {{tier}} ({{current}}/{{max}}).",
-        "subbot_limit_reached": "Batas maksimal sub-bot aktif telah tercapai untuk tier {{tier}} ({{current}}/{{max}})."
+        "subbot_limit_reached": "Batas maksimal sub-bot aktif telah tercapai untuk tier {{tier}} ({{current}}/{{max}}).",
+        "title": "📊 *Penggunaan Kuota Sumber Daya Cosmos*",
+        "available_label": "Tersedia",
+        "manage_tip": "Butuh kapasitas lebih? Tingkatkan paket Anda atau hapus instans yang tidak aktif.",
+        "plan_tip": "Gunakan .my plan atau .check plan untuk melihat keuntungan paket dan rincian tagihan."
+    },
+    "profile": {
+        "not_found": "Profil pengguna tidak ditemukan di database.",
+        "title": "PROFIL WARGA COSMOS",
+        "section_identity": "📋 Identitas & Kewarganegaraan",
+        "section_financial": "💰 Ikhtisar Keuangan",
+        "section_stats": "🎮 Aktivitas & Rekor",
+        "label_idcard": "KTP Virtual",
+        "label_membership": "Tingkat Keanggotaan",
+        "label_career": "Pekerjaan / Karir",
+        "label_credit_score": "Skor Kredit",
+        "label_games": "Permainan Kasino",
+        "label_roulette": "Buckshot Roulette",
+        "label_items": "Item Inventaris",
+        "label_contacts": "Kontak Terenkripsi",
+        "tip_plan": "Ketik .my plan atau .check plan untuk melihat keuntungan paket langganan.",
+        "tip_quota": "Ketik .my quota atau .check quota untuk memantau batasan sumber daya.",
+        "tip_contacts": "Ketik .contact list atau .contact backup untuk mengelola kontak pribadi."
     },
     "whitelist": {
         "list_title": "Daftar Grup WhatsApp",

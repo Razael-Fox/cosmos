@@ -6,6 +6,9 @@ import { formatRupiah, parseCurrencyAmount } from '../utils/currency.js';
 const addBalanceTool: ToolModule = {
     definition: {
         name: 'addbalance',
+        title: 'Add Balance',
+        displayNames: { en: 'add balance', id: 'tambah saldo' },
+        aliases: ['.add balance', 'add balance', '.addbalance', 'addbalance', '.tambah saldo', 'tambah saldo'],
         description: 'Add balance to a user from the house vault. (Owner only)',
         descriptionKey: 'tools.commands.addbalance.description',
         category: 'Casino',

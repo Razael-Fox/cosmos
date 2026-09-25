@@ -12,6 +12,9 @@ let topRouletteCacheExpiry: number = 0;
 const topGlobalTool: ToolModule = {
     definition: {
         name: 'topglobal',
+        title: 'Top Global Leaderboard',
+        displayNames: { en: 'top global', id: 'top global' },
+        aliases: ['.top global', 'top global', '.topglobal', 'topglobal', 'toplb'],
         description: 'View the global casino or roulette leaderboard.',
         descriptionKey: 'tools.commands.topglobal.description',
         category: 'Casino',
