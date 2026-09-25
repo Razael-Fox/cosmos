@@ -13,7 +13,7 @@ export interface PlaySession {
     chatJid: string;
     query: string;
     results: PlaySearchResult[];
-    enableLyrics: boolean;
+    enableLyrics?: boolean;
     messageKey?: proto.IMessageKey;
     timer?: NodeJS.Timeout;
     createdAt: number;

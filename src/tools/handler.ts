@@ -138,7 +138,6 @@ class ToolsHandler {
             setlang: true,
             startautocorrection: true,
             stopautocorrection: true,
-            togglesticker: true,
             roulette_start: true,
             roulette_join: true,
             roulette_shoot: true,

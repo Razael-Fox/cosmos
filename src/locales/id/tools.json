@@ -867,10 +867,7 @@
             "description": "Mengunduh video, gambar, atau karosel dari tautan URL Pinterest."
         },
         "play": {
-            "description": "Mencari lagu di YouTube dan mengunduhnya sebagai file audio. Mendukung parameter --lyrics."
-        },
-        "playlyrics": {
-            "description": "Memulai pemutaran lirik otomatis untuk lagu yang diminta. Mengambil lirik tersinkronisasi daring jika tidak tersedia secara lokal."
+            "description": "Mencari lagu di YouTube dan mengunduhnya sebagai file audio."
         },
         "buy": {
             "description": "Membeli barang atau properti dari toko menggunakan saldo Anda."
@@ -932,12 +929,6 @@
         "stopautocorrection": {
             "description": "Menonaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
         },
-        "stoplyrics": {
-            "description": "Menghentikan pemutaran lirik lagu yang sedang berlangsung di obrolan ini."
-        },
-        "stoptogglesticker": {
-            "description": "Menonaktifkan fitur Pembuat Stiker Otomatis untuk obrolan ini."
-        },
         "stt": {
             "description": "Mentranskripsi voice note yang dikutip menjadi teks menggunakan Groq Whisper."
         },
@@ -964,9 +955,6 @@
         },
         "toggleofflineai": {
             "description": "Mengaktifkan atau menonaktifkan penjawab AI offline otomatis saat Anda sedang tidak aktif."
-        },
-        "togglesticker": {
-            "description": "Mengaktifkan atau menonaktifkan fitur Pembuat Stiker Otomatis untuk obrolan ini."
         },
         "top": {
             "description": "Melihat papan peringkat kasino grup."
@@ -1399,7 +1387,7 @@
             "summary": "Stiker statis & animasi, tipografi Brat & impor paket Sticker.ly",
             "prereq": "📌 *Prasyarat:* Gambar, Video (<10 detik), GIF atau Teks",
             "step1_title": "1️⃣ STIKER FOTO & VIDEO",
-            "step1_body": "• Stiker Statis: Kirim gambar dengan caption `{{prefix}}s` (atau balas gambar dengan `{{prefix}}s`).\n• Stiker Animasi: Kirim video atau GIF di bawah 10 detik dengan caption `{{prefix}}s`.\n• Stiker Otomatis: Aktifkan konversi otomatis di grup lewat `{{prefix}}togglesticker on`.",
+            "step1_body": "• Stiker Statis: Kirim gambar dengan caption `{{prefix}}s` (atau balas gambar dengan `{{prefix}}s`).\n• Stiker Animasi: Kirim video atau GIF di bawah 10 detik dengan caption `{{prefix}}s`.\n• Kutip Stiker: Balas gambar atau video pendek apa pun dengan `{{prefix}}s` untuk mengubahnya.",
             "step2_title": "2️⃣ STIKER TIPOGRAFI BRAT",
             "step2_body": "• Brat Statis: Ketik `{{prefix}}brat <teks>` (contoh: `{{prefix}}brat halo dunia`).\n• Brat Animasi: Ketik `{{prefix}}brat -a <teks>` untuk efek teks mengetik animasi.\n• Dukungan Monospace: Gunakan tanda petik backtick (`teks`) agar teks presisi.",
             "step3_title": "3️⃣ PENCARIAN & UNDUH STICKER.LY",
@@ -1443,16 +1431,16 @@
             "footer": "💡 *Tips:* Simpan properti bernilai tinggi sebagai jaminan pinjaman berplafon besar."
         },
         "music": {
-            "header": "📖 *PANDUAN: PEMUTAR MUSIK & LIRIK REAL-TIME*",
-            "summary": "Pemutar audio dalam obrolan, lirik tersinkronisasi & kendali musik",
+            "header": "📖 *PANDUAN: PEMUTAR MUSIK & AUDIO*",
+            "summary": "Pemutar audio dalam obrolan, cari lagu & stream audio MP3 berkualitas",
             "prereq": "📌 *Prasyarat:* Judul Lagu, Artis atau Kueri Musik",
             "step1_title": "1️⃣ CARI & PUTAR LAGU",
             "step1_body": "• Putar lagu: Ketik `{{prefix}}play <judul>` (contoh: `{{prefix}}play Bohemian Rhapsody`).\n• Cosmos mencari audio di YouTube, mengunduh file, dan mengirimkan kualitas terbaik.\n• Audio dilengkapi dengan judul, nama penyanyi, dan cover album.",
-            "step2_title": "2️⃣ LIRIK TERSINKRONISASI REAL-TIME",
-            "step2_body": "• Putar dengan Lirik: Ketik `{{prefix}}playlyrics <judul>` (contoh: `{{prefix}}playlyrics Adele Hello`).\n• Bot mengambil timestamp LRC dan mengedit pesan lirik secara real-time mengikuti irama.\n• Bernyanyi bersama anggota grup dengan penanda baris lirik yang sedang berjalan.",
-            "step3_title": "3️⃣ KENDALI PEMUTAR MUSIK",
-            "step3_body": "• Hentikan lirik: Ketik `{{prefix}}stoplyrics` untuk langsung menghentikan sesi lirik berjalan.\n• Mencegah edit pesan berkelanjutan saat ingin mengganti lagu atau berhenti bernyanyi.",
-            "footer": "💡 *Tips:* Gunakan `{{prefix}}playlyrics` di obrolan grup untuk karaoke interaktif."
+            "step2_title": "2️⃣ PEMILIHAN INTERAKTIF",
+            "step2_body": "• Pilih Lagu: Jika hasil pencarian banyak, balas dengan nomor pilihan (1-5).\n• Batalkan: Ketik `{{prefix}}cancel` untuk membatalkan pilihan kapan saja.\n• Kualitas Tinggi: Streaming audio langsung dari YouTube Music.",
+            "step3_title": "3️⃣ PUTAR DARI KUTIPAN PESAN",
+            "step3_body": "• Balas Pesan: Balas pesan yang memuat judul lagu dengan `{{prefix}}play` untuk langsung mengunduh.\n• Tautan Langsung: Kirim tautan YouTube untuk mengunduh audio seketika.",
+            "footer": "💡 *Tips:* Gunakan `{{prefix}}play <judul>` di obrolan mana pun untuk memutar lagu langsung."
         },
         "moderation": {
             "header": "📖 *PANDUAN: KONTROL GRUP, PRIVASI & NSFW*",

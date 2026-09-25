@@ -26,7 +26,6 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     setlang: ToolAiPolicy.DENIED,
     startautocorrection: ToolAiPolicy.DENIED,
     stopautocorrection: ToolAiPolicy.DENIED,
-    togglesticker: ToolAiPolicy.DENIED,
 
     // READ_ONLY: Safe query actions
     get_balance: ToolAiPolicy.READ_ONLY,
@@ -53,8 +52,6 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     ytdl: ToolAiPolicy.UTILITY,
     telegramdl: ToolAiPolicy.UTILITY,
     play: ToolAiPolicy.UTILITY,
-    playlyrics: ToolAiPolicy.UTILITY,
-    stoplyrics: ToolAiPolicy.UTILITY,
     quoted: ToolAiPolicy.UTILITY,
     readviewonce: ToolAiPolicy.UTILITY,
 

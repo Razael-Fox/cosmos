@@ -68,25 +68,10 @@
     },
     "play": {
         "results_title": "Here are the top results for *{{query}}*.\nPlease reply with a number (1-{{count}}) to this message to download:\n",
-        "flags_lyrics": "(Flags: --lyrics)\n",
         "cancellation_desc": "YouTube music search for \"{{query}}\"",
         "cancelled": "YouTube music playback selection has been cancelled.",
         "download_cancellation_desc": "YouTube audio download for \"{{query}}\"",
         "download_cancelled": "YouTube audio download has been cancelled."
-    },
-    "playlyrics": {
-        "invalid_format": "Failed: Invalid command format. Usage: `.playlyrics 'song name' | [multiplier]`",
-        "multiplier_positive": "Failed: Speed multiplier must be a positive number.",
-        "playback_error": "Failed: An error occurred while processing lyrics playback.",
-        "not_found": "Failed: Synchronized lyrics for \"{{song}}\" were not found locally or online.",
-        "no_timestamps": "Failed: Lyric for \"{{song}}\" contains no lines with valid timestamps.",
-        "started": "Starting lyrics playback for \"{{song}}\" with a speed multiplier of {{multiplier}}x ({{count}} lines)...",
-        "read_failed": "Failed: Unable to read local lyric file \"{{song}}\"."
-    },
-    "stoplyrics": {
-        "no_session": "Failed: There is no ongoing lyrics playback in this chat.",
-        "stopped": "Lyrics playback for \"{{song}}\" has been successfully stopped.",
-        "error": "Failed: An error occurred while stopping lyrics playback."
     },
     "stickerly": {
         "usage": "Please provide a search keyword or Sticker.ly URL.\nExample: *.stickerly Chibi*",

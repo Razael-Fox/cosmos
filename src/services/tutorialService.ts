@@ -264,21 +264,11 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         category: 'Media',
         titleKey: 'tools.tutorials.sticker.header',
         prerequisiteKeys: ['tools.tutorials.sticker.prereq'],
-        aliases: [
-            'sticker',
-            'stiker',
-            'brat',
-            'stickerly',
-            'spack',
-            'togglesticker',
-            'stoptogglesticker',
-            'sticker_maker',
-            's'
-        ],
-        relatedCommands: ['sticker_maker', 'stickerly', 'brat', 'togglesticker', 'stoptogglesticker'],
+        aliases: ['sticker', 'stiker', 'brat', 'stickerly', 'spack', 'sticker_maker', 's'],
+        relatedCommands: ['sticker_maker', 'stickerly', 'brat'],
         localizedRelatedCommands: {
-            en: ['sticker', 'stickerly', 'brat', 'togglesticker'],
-            id: ['stiker', 'stickerly', 'brat', 'togglesticker']
+            en: ['sticker', 'stickerly', 'brat'],
+            id: ['stiker', 'stickerly', 'brat']
         },
         steps: [
             {
@@ -439,11 +429,11 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         category: 'Media',
         titleKey: 'tools.tutorials.music.header',
         prerequisiteKeys: ['tools.tutorials.music.prereq'],
-        aliases: ['music', 'play', 'lyrics', 'lirik', 'playlyrics', 'stoplyrics', 'musik', 'lagu', 'putar'],
-        relatedCommands: ['play', 'playlyrics', 'stoplyrics'],
+        aliases: ['music', 'play', 'lyrics', 'lirik', 'musik', 'lagu', 'putar'],
+        relatedCommands: ['play'],
         localizedRelatedCommands: {
-            en: ['play', 'playlyrics', 'stoplyrics'],
-            id: ['play', 'playlyrics', 'stoplyrics', 'musik', 'lirik']
+            en: ['play'],
+            id: ['play', 'musik', 'lagu']
         },
         steps: [
             {

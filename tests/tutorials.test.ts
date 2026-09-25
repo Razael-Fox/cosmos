@@ -73,12 +73,12 @@ async function runTutorialTests() {
     }
     console.log('✓ All 14 Tutorial Suites have 100% complete symmetric translations in EN and ID.');
 
-    // Test 3: 100% Tool Coverage across all 72 registered tools
+    // Test 3: 100% Tool Coverage across all registered tools
     console.log('[Test 3] Loading tools and asserting 100% coverage of registered commands...');
     await toolsHandler.loadTools();
     const allTools = toolsHandler.getAllTools();
     console.log(`Loaded ${allTools.length} tools from toolsHandler.`);
-    assert(allTools.length >= 70, `Expected at least 70 tools, found ${allTools.length}`);
+    assert(allTools.length >= 65, `Expected at least 65 tools, found ${allTools.length}`);
 
     const unmappedTools: string[] = [];
     for (const tool of allTools) {

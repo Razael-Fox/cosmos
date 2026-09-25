@@ -867,10 +867,7 @@
             "description": "Downloads a video, image, or carousel from a specified Pinterest URL."
         },
         "play": {
-            "description": "Searches for a song on YouTube and downloads it as an audio file. Supports --lyrics flag."
-        },
-        "playlyrics": {
-            "description": "Starts automated lyrics playback for the requested song. Fetches synchronized lyrics online if not found locally."
+            "description": "Searches for a song on YouTube and downloads it as an audio file."
         },
         "buy": {
             "description": "Purchase an item or property from the shop using your balance."
@@ -932,12 +929,6 @@
         "stopautocorrection": {
             "description": "Disables automated AI message auto-correction via OpenRouter for this chat."
         },
-        "stoplyrics": {
-            "description": "Stops ongoing lyrics playback in this chat."
-        },
-        "stoptogglesticker": {
-            "description": "Disables the Auto Sticker Maker feature for this chat."
-        },
         "stt": {
             "description": "Transcribes a quoted voice note into text using Groq Whisper."
         },
@@ -964,9 +955,6 @@
         },
         "toggleofflineai": {
             "description": "Toggles the automated offline AI responder. When enabled, the AI will casually reply to messages while you are offline."
-        },
-        "togglesticker": {
-            "description": "Enables or disables the Auto Sticker Maker feature for this chat."
         },
         "top": {
             "description": "View the group casino leaderboard."
@@ -1399,7 +1387,7 @@
             "summary": "Static & animated stickers, Brat typography & Sticker.ly packs",
             "prereq": "📌 *Prerequisites:* Image, Video (<10s), GIF or Text",
             "step1_title": "1️⃣ PHOTO & VIDEO STICKERS",
-            "step1_body": "• Static Sticker: Send an image with caption `{{prefix}}s` (or quote an image with `{{prefix}}s`).\n• Animated Sticker: Send a video or GIF under 10 seconds with caption `{{prefix}}s`.\n• Auto-Sticker: Enable automatic sticker conversion in groups using `{{prefix}}togglesticker on`.",
+            "step1_body": "• Static Sticker: Send an image with caption `{{prefix}}s` (or quote an image with `{{prefix}}s`).\n• Animated Sticker: Send a video or GIF under 10 seconds with caption `{{prefix}}s`.\n• Quoted Sticker: Reply to any image or short video with `{{prefix}}s` to convert it.",
             "step2_title": "2️⃣ BRAT TYPOGRAPHY STICKERS",
             "step2_body": "• Static Brat: Type `{{prefix}}brat <text>` (e.g. `{{prefix}}brat hello world`).\n• Animated Brat: Type `{{prefix}}brat -a <text>` to generate animated typing effect stickers.\n• Monospace support: Wrap text with backticks (`text`) to preserve exact formatting.",
             "step3_title": "3️⃣ STICKER.LY SEARCH & DOWNLOAD",
@@ -1443,16 +1431,16 @@
             "footer": "💡 *Tip:* Hold high-tier properties as collateral to unlock maximum borrowing capacity in loans."
         },
         "music": {
-            "header": "📖 *TUTORIAL: MUSIC & SYNCHRONIZED LYRICS*",
-            "summary": "Audio playback in chat, live synchronized lyrics & player controls",
+            "header": "📖 *TUTORIAL: MUSIC & AUDIO PLAYBACK*",
+            "summary": "Audio playback in chat, song search & high quality MP3 streams",
             "prereq": "📌 *Prerequisites:* Song Title, Artist or YouTube Query",
             "step1_title": "1️⃣ SEARCHING & PLAYING SONGS",
             "step1_body": "• Play music: Type `{{prefix}}play <title>` (e.g. `{{prefix}}play Bohemian Rhapsody`).\n• Cosmos searches YouTube, downloads audio stream, and sends high quality audio.\n• Audio files are tagged with song title, artist, and album thumbnail.",
-            "step2_title": "2️⃣ REAL-TIME SYNCHRONIZED LYRICS",
-            "step2_body": "• Play with Lyrics: Type `{{prefix}}playlyrics <title>` (e.g. `{{prefix}}playlyrics Adele Hello`).\n• Bot fetches synchronized LRC timestamps and edits messages in real-time as the song plays.\n• Sing along directly in chat with highlighted current lyric lines.",
-            "step3_title": "3️⃣ PLAYBACK CONTROLS",
-            "step3_body": "• Stop playback: Type `{{prefix}}stoplyrics` to immediately cancel the live lyrics session.\n• Prevents message spam when changing tracks or ending music listening sessions.",
-            "footer": "💡 *Tip:* Use `{{prefix}}playlyrics` in group chats for an interactive karaoke experience."
+            "step2_title": "2️⃣ INTERACTIVE SELECTION",
+            "step2_body": "• Track Selection: If multiple songs match, choose by typing the number (1-5).\n• Cancel search: Type `{{prefix}}cancel` to dismiss song selection at any time.\n• High Quality: Direct YouTube Music audio streaming.",
+            "step3_title": "3️⃣ QUOTED PLAYBACK",
+            "step3_body": "• Reply Playback: Reply to any message containing a song title with `{{prefix}}play` to download it directly.\n• Direct Links: Paste YouTube links to fetch audio streams instantly.",
+            "footer": "💡 *Tip:* Use `{{prefix}}play <title>` in any chat to stream music instantly."
         },
         "moderation": {
             "header": "📖 *TUTORIAL: GROUP CONTROLS & PRIVACY*",

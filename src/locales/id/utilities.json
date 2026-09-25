@@ -61,11 +61,6 @@
         "cooldown": "Harap tunggu {{seconds}} detik lagi sebelum memasang taruhan lagi.",
         "user_not_found": "Pengguna tidak ditemukan."
     },
-    "autosticker": {
-        "enabled": "✨ *Auto Sticker Maker DIAKTIFKAN* untuk obrolan ini.\n\nSetiap foto, video, atau GIF yang dikirim di obrolan ini akan secara otomatis diubah menjadi stiker.\n\nKetik *.stoptogglesticker* (atau *.stopautosticker* / *.stoptgls*) untuk menonaktifkan.",
-        "disabled": "🔴 *Auto Sticker Maker DINONAKTIFKAN* untuk obrolan ini.",
-        "not_active": "⚠️ *Peringatan:* Auto Sticker Maker tidak aktif di obrolan ini."
-    },
     "autocorrection": {
         "already_active": "⚠️ *Peringatan:* Auto-Koreksi sudah AKTIF di obrolan ini! Jika Anda ingin menonaktifkannya, ketik *.stopautocorrection*.",
         "not_active": "⚠️ *Peringatan:* Auto-Koreksi tidak aktif di obrolan ini.",

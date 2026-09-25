@@ -61,11 +61,6 @@
         "cooldown": "Please wait {{seconds}} more seconds before betting again.",
         "user_not_found": "User not found."
     },
-    "autosticker": {
-        "enabled": "✨ *Auto Sticker Maker ACTIVATED* for this chat.\n\nEvery photo, video, or GIF sent in this chat will automatically be converted into a sticker.\n\nType *.stoptogglesticker* (or *.stopautosticker* / *.stoptgls*) to disable.",
-        "disabled": "🔴 *Auto Sticker Maker DEACTIVATED* for this chat.",
-        "not_active": "⚠️ *Warning:* Auto Sticker Maker is not active in this chat."
-    },
     "autocorrection": {
         "already_active": "⚠️ *Warning:* Auto-Correction is already ACTIVE in this chat! If you want to disable it, type *.stopautocorrection*.",
         "not_active": "⚠️ *Warning:* Auto-Correction is not active in this chat.",
