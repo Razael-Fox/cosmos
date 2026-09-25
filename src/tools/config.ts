@@ -68,7 +68,9 @@ const FEATURE_ALIASES: Record<string, keyof SubBotFeatures> = {
     forexannouncement: 'forexAnnouncement',
     inflation: 'forexAnnouncement',
     stt: 'stt',
-    voice: 'stt'
+    voice: 'stt',
+    autoarchive: 'autoarchive',
+    archive: 'autoarchive'
 };
 
 const VALID_FEATURES_LIST = [
@@ -84,7 +86,8 @@ const VALID_FEATURES_LIST = [
     'autocorrection',
     'offlineAi',
     'forex',
-    'stt'
+    'stt',
+    'autoarchive'
 ].join(', ');
 
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {

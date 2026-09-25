@@ -133,19 +133,22 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'brankas',
             'top',
             'topglobal',
-            'addbalance'
+            'top global',
+            'addbalance',
+            'add balance',
+            'fever time'
         ],
         relatedCommands: [
             'slot',
             'coinflip',
             'dice',
             'daily',
-            'fevertime',
+            'fever time',
             'vault',
             'balance',
-            'addbalance',
+            'add balance',
             'top',
-            'topglobal'
+            'top global'
         ],
         localizedRelatedCommands: {
             en: ['slot', 'coinflip', 'dice', 'daily', 'vault', 'balance'],
@@ -264,21 +267,11 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         category: 'Media',
         titleKey: 'tools.tutorials.sticker.header',
         prerequisiteKeys: ['tools.tutorials.sticker.prereq'],
-        aliases: [
-            'sticker',
-            'stiker',
-            'brat',
-            'stickerly',
-            'spack',
-            'togglesticker',
-            'stoptogglesticker',
-            'sticker_maker',
-            's'
-        ],
-        relatedCommands: ['sticker_maker', 'stickerly', 'brat', 'togglesticker', 'stoptogglesticker'],
+        aliases: ['sticker', 'stiker', 'brat', 'stickerly', 'spack', 'sticker_maker', 's'],
+        relatedCommands: ['sticker_maker', 'stickerly', 'brat'],
         localizedRelatedCommands: {
-            en: ['sticker', 'stickerly', 'brat', 'togglesticker'],
-            id: ['stiker', 'stickerly', 'brat', 'togglesticker']
+            en: ['sticker', 'stickerly', 'brat'],
+            id: ['stiker', 'stickerly', 'brat']
         },
         steps: [
             {
@@ -439,11 +432,11 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         category: 'Media',
         titleKey: 'tools.tutorials.music.header',
         prerequisiteKeys: ['tools.tutorials.music.prereq'],
-        aliases: ['music', 'play', 'lyrics', 'lirik', 'playlyrics', 'stoplyrics', 'musik', 'lagu', 'putar'],
-        relatedCommands: ['play', 'playlyrics', 'stoplyrics'],
+        aliases: ['music', 'play', 'lyrics', 'lirik', 'musik', 'lagu', 'putar'],
+        relatedCommands: ['play'],
         localizedRelatedCommands: {
-            en: ['play', 'playlyrics', 'stoplyrics'],
-            id: ['play', 'playlyrics', 'stoplyrics', 'musik', 'lirik']
+            en: ['play'],
+            id: ['play', 'musik', 'lagu']
         },
         steps: [
             {
@@ -525,6 +518,7 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'whitelist',
             'verify',
             'myplan',
+            'my plan',
             'sub',
             'subscription',
             'quota',
@@ -534,12 +528,15 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'sistem',
             'verifikasi',
             'paket',
-            'kuota'
+            'kuota',
+            'autoarchive',
+            'auto archive',
+            'archive'
         ],
-        relatedCommands: ['system_info', 'help', 'menu', 'whitelist', 'verify', 'myplan', 'subscription', 'quota'],
+        relatedCommands: ['system_info', 'help', 'menu', 'whitelist', 'verify', 'my plan', 'subscription', 'quota'],
         localizedRelatedCommands: {
-            en: ['system_info', 'help', 'menu', 'myplan', 'subscription', 'quota', 'whitelist', 'verify'],
-            id: ['system_info', 'help', 'menu', 'myplan', 'sub', 'quota', 'whitelist', 'verifikasi']
+            en: ['system_info', 'help', 'menu', 'my plan', 'subscription', 'quota', 'whitelist', 'verify'],
+            id: ['system_info', 'help', 'menu', 'my plan', 'sub', 'quota', 'whitelist', 'verifikasi']
         },
         steps: [
             {

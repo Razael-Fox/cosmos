@@ -18,7 +18,7 @@ const balanceTool: ToolModule = {
     definition: {
         name: 'balance',
         aliases: ['bal', 'saldo'],
-        description: "Check your current casino coin balance or another user's balance.",
+        description: "Check your current balance or another user's balance.",
         descriptionKey: 'tools.commands.balance.description',
         category: 'Casino',
         parameters: {
@@ -102,7 +102,7 @@ const balanceTool: ToolModule = {
                 { icon: '💳', label: t('tools.ui.bank_account_label', 'Bank Account'), value: bankAccStr }
             ],
             tips: [
-                t('tools.balance.tip_daily', 'Type .daily to claim free daily coins.'),
+                t('tools.balance.tip_daily', 'Type .daily to claim free daily bonus reward.'),
                 t('tools.balance.tip_bank', 'Type .bank deposit <amount> to secure funds with 0.5% daily interest.')
             ]
         });

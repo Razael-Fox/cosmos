@@ -9,6 +9,27 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Standardized Multi-Word Command Syntax & Error Output Hints (Issue #35, Rule AF):**
+    - Updated all command format examples and usage prompts in error outputs to use canonical space-separated commands (`.add balance`, `.top global`, `.my plan`, `.fever time`, `.auto archive`).
+    - Standardized phone number examples in `src/tools/contact.ts` to valid international E.164 formats (`6281234567890`), preventing dummy placeholder input failures.
+    - Corrected legacy `/sell` command prompts to the canonical `.sell` bot prefix (Rule M).
+
+- **Standard Indonesian Rupiah Currency Terminology (Rule L):**
+    - Replaced legacy casino "coin" / "koin" terminology across all tool definitions and locales with "balance", "saldo", or "Rupiah/balance" (`transfer.ts`, `balance.ts`, `daily.ts`, `slot.ts`).
+    - Added formatted Rupiah examples (`50.000`, `Rp50.000`, `50k`) across bank, loan, dice, and slot validation error messages.
+
+- **Bilingual Localization Parity (Rule O & T):**
+    - Maintained 100% key, variable, and placeholder symmetry across `src/locales/en/` and `src/locales/id/` for `tools.json` and `games.json`.
+    - Cleaned redundant alias duplicates in `src/services/tutorialService.ts`.
+
+### Removed
+
+- **Deprecated Media & Lyrics Features:**
+    - Permanently purged obsolete and inactive commands: `stoptogglesticker`, `playlyrics`, `stoplyrics`, and `togglesticker`.
+    - Removed unused `src/utils/lyricsPlayer.ts` and pruned references from policy matrices and documentation.
+
 ---
 
 ## [RF-2609-18] - 2026-09-25

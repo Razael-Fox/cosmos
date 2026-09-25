@@ -46,11 +46,6 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
     - Tautan Langsung: `.stickerly https://sticker.ly/s/XXXXXX`
 - **Pembatalan:** Ketik `.cancel` saat dalam sesi pemilihan stiker untuk membatalkan antrean.
 
-### `.togglesticker` / `.stoptogglesticker` (Auto Sticker Mode)
-
-- **Fungsi:** Mengaktifkan atau menonaktifkan fitur Auto-Sticker di grup atau percakapan pribadi. Saat aktif, setiap gambar atau video pendek yang dikirim pengguna otomatis diubah menjadi stiker tanpa perlu mengetik perintah.
-- **Aliases:** `.togglesticker`, `.autosticker`, `.stoptogglesticker`
-
 ---
 
 ## 2. Personal Contact Book & Zero-Knowledge Messaging (Kontak & Delegasi Pesan)
@@ -184,9 +179,7 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 - `.tiktok` / `.tiktokdl <url>`: Mengunduh video TikTok tanpa tanda air (watermark) atau format audio MP3.
 - `.yt` / `.ytdl <url>`: Mengunduh video atau audio YouTube menggunakan mesin `yt-dlp`.
-- `.play <judul_lagu>`: Mencari lagu di YouTube Music dan mengunduh format audio langsung ke obrolan. Mendukung flag `--lyrics` untuk menampilkan lirik lagu.
-- `.playlyrics <judul_lagu>`: Memulai pemutaran lirik sinkron otomatis baris per baris di dalam obrolan WhatsApp.
-- `.stoplyrics`: Menghentikan pemutaran lirik lagu yang sedang berjalan.
+- `.play <judul_lagu>`: Mencari lagu di YouTube Music dan mengunduh format audio langsung ke obrolan.
 - `.pinterest` / `.pin <url>`: Mengunduh gambar, karusel foto, atau video pendek dari Pinterest.
 - `.telegramdl` / `.tg <url>`: Mengunduh media dari postingan saluran publik Telegram atau saluran privat yang telah didaftarkan.
 - `.tgadd`, `.tgdel`, `.tglist`: Mendaftarkan atau mengelola sesi grup privat Telegram untuk proksi pengunduhan media bot.

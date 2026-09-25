@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
-import { getSenderJid, resolveId, getUser, cleanId } from '../utils/casino.js';
+import { getSenderJid, resolveId, getUser, cleanId, formatMentions } from '../utils/casino.js';
 import { formatRupiah, parseCurrencyAmount } from '../utils/currency.js';
 import { logTransaction } from '../utils/transactionLogger.js';
 import { getTranslator } from '../utils/i18n.js';
@@ -9,7 +9,7 @@ const transferTool: ToolModule = {
     definition: {
         name: 'transfer',
         aliases: ['tf'],
-        description: 'Transfer casino coins to another user.',
+        description: 'Transfer balance to another user.',
         descriptionKey: 'tools.commands.transfer.description',
         category: 'Casino',
         parameters: {
@@ -86,10 +86,11 @@ const transferTool: ToolModule = {
                 {
                     text: t('tools.transfer.success', {
                         amount: formatRupiah(amount),
-                        target: targetJid.split('@')[0],
+                        target: cleanId(targetJid),
+                        user: cleanId(targetJid),
                         remaining: formatRupiah(Number(user.balance) - amount)
                     }),
-                    mentions: [targetJid]
+                    mentions: formatMentions(targetJid)
                 },
                 { quoted: msg }
             );

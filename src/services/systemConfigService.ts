@@ -3,6 +3,7 @@ import path from 'path';
 
 export interface SystemConfig {
     autoWhitelistOnJoin: boolean;
+    autoArchiveOnJoin: boolean;
     updatedAt: string;
 }
 
@@ -33,6 +34,7 @@ export function getConfigFilePath(): string {
 export function getDefaultSystemConfig(): SystemConfig {
     return {
         autoWhitelistOnJoin: process.env.AUTO_WHITELIST_GROUPS === 'true',
+        autoArchiveOnJoin: process.env.AUTO_ARCHIVE_GROUPS === 'true',
         updatedAt: new Date().toISOString()
     };
 }
@@ -52,6 +54,10 @@ export function getSystemConfig(): SystemConfig {
                     typeof parsed.autoWhitelistOnJoin === 'boolean'
                         ? parsed.autoWhitelistOnJoin
                         : process.env.AUTO_WHITELIST_GROUPS === 'true',
+                autoArchiveOnJoin:
+                    typeof parsed.autoArchiveOnJoin === 'boolean'
+                        ? parsed.autoArchiveOnJoin
+                        : process.env.AUTO_ARCHIVE_GROUPS === 'true',
                 updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString()
             };
             return cachedConfig;
@@ -69,8 +75,33 @@ export function isAutoWhitelistEnabled(): boolean {
 }
 
 export function setAutoWhitelist(enabled: boolean): SystemConfig {
+    const current = getSystemConfig();
     const config: SystemConfig = {
+        ...current,
         autoWhitelistOnJoin: Boolean(enabled),
+        updatedAt: new Date().toISOString()
+    };
+
+    cachedConfig = config;
+    const filePath = getConfigFilePath();
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(config, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('[SystemConfig] Failed to write system_config.json:', err);
+    }
+
+    return config;
+}
+
+export function isAutoArchiveEnabled(): boolean {
+    return getSystemConfig().autoArchiveOnJoin;
+}
+
+export function setAutoArchive(enabled: boolean): SystemConfig {
+    const current = getSystemConfig();
+    const config: SystemConfig = {
+        ...current,
+        autoArchiveOnJoin: Boolean(enabled),
         updatedAt: new Date().toISOString()
     };
 

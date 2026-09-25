@@ -9,7 +9,7 @@ const dailyTool: ToolModule = {
     definition: {
         name: 'daily',
         aliases: ['klaim', 'claim'],
-        description: 'Claim your daily casino coin reward.',
+        description: 'Claim your daily reward.',
         descriptionKey: 'tools.commands.daily.description',
         category: 'Casino',
         parameters: {

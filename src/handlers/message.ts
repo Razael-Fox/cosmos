@@ -71,26 +71,13 @@ function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | nul
     if (['property', 'realestate', 'catalog', 'sell'].includes(name)) {
         return 'property';
     }
-    if (
-        [
-            'play',
-            'playlyrics',
-            'stoplyrics',
-            'tiktokdl',
-            'pinterestdl',
-            'telegramdl',
-            'ytdl',
-            'stickerly',
-            'spack',
-            'stickerpack'
-        ].includes(name)
-    ) {
+    if (['play', 'tiktokdl', 'pinterestdl', 'telegramdl', 'ytdl', 'stickerly', 'spack', 'stickerpack'].includes(name)) {
         return 'downloaders';
     }
     if (['autodl'].includes(name)) {
         return 'autodl';
     }
-    if (['togglesticker', 'stoptogglesticker', 'sticker_maker'].includes(name)) {
+    if (['sticker_maker'].includes(name)) {
         return 'autosticker';
     }
     if (['toggleautocorrection', 'startautocorrection', 'stopautocorrection'].includes(name)) {

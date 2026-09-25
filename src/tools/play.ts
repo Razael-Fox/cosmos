@@ -4,7 +4,6 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
-import { playLyrics } from '#utils/lyricsPlayer.js';
 import { cleanId } from '#utils/casino.js';
 import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
 import { registerPlaySession, getActivePlaySession, clearPlaySession, PlaySearchResult } from '#utils/playSession.js';
@@ -15,7 +14,7 @@ export const definition: ToolDefinition = {
     title: 'YouTube Music Player',
     category: 'Music & Audio',
     aliases: ['.play', '.ytplay', '.song', '.audio', '.ytm'],
-    description: 'Searches for a song on YouTube and downloads it as an audio file. Supports --lyrics flag.',
+    description: 'Searches for a song on YouTube and downloads it as an audio file.',
     descriptionKey: 'tools.commands.play.description',
     parameters: {
         type: 'object',
@@ -33,14 +32,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     let query = args.query ? String(args.query).trim() : '';
     const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
     let quotedText = '';
-    let enableLyrics = false;
     let stanzaIdToDelete = '';
 
-    // Handle --lyrics flag
-    if (query.toLowerCase().includes('--lyrics')) {
-        enableLyrics = true;
-        query = query.replace(/--lyrics/gi, '').trim();
-    }
     let originalQueryStr = query;
 
     const quotedMsg = ctx.msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -70,7 +63,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const queryNum = parseInt(query, 10);
     const activeSession = senderJid ? getActivePlaySession(senderJid, ctx.jid) : undefined;
     if (!isNaN(queryNum) && queryNum > 0 && activeSession && queryNum <= activeSession.results.length) {
-        enableLyrics = activeSession.enableLyrics;
         originalQueryStr = activeSession.results[queryNum - 1].title || activeSession.query;
         query = activeSession.results[queryNum - 1].url;
         if (!stanzaIdToDelete && activeSession.messageKey?.id) {
@@ -86,11 +78,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             quotedText.toLowerCase().includes('balas dengan angka') ||
             quotedText.toLowerCase().includes('(1-'))
     ) {
-        if (quotedText.includes('(Flags: --lyrics)') || quotedText.includes('(Bendera: --lyrics)')) {
-            enableLyrics = true;
-        }
-
-        // Extract original search term for lyrics file matching
+        // Extract original search term
         const matchTitle = quotedText.match(/(?:results for|hasil teratas untuk) \*(.*?)\*/i);
         if (matchTitle) {
             originalQueryStr = matchTitle[1];
@@ -144,9 +132,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             let replyText = ctx.t('media.play.results_title', { query, count: results.length });
-            if (enableLyrics) {
-                replyText += ctx.t('media.play.flags_lyrics');
-            }
             replyText += `\n`;
             results.forEach((res, index) => {
                 replyText += `${index + 1}. ${res}\n`;
@@ -177,7 +162,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                         chatJid: ctx.jid,
                         query,
                         results: parsedResults,
-                        enableLyrics,
                         messageKey: sentMsg?.key,
                         createdAt: Date.now()
                     },
@@ -273,11 +257,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 );
 
                 fs.unlinkSync(downloadedFile);
-
-                // If lyrics flag was requested, trigger the live lyrics playback!
-                if (enableLyrics && originalQueryStr) {
-                    await playLyrics(ctx.jid, ctx.sock, originalQueryStr, 1);
-                }
 
                 // Delete the quoted list message if this is a reply interaction, since processing succeeded
                 if (stanzaIdToDelete) {
