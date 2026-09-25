@@ -11,6 +11,32 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-18] - 2026-09-25
+
+### Added
+
+- **Issue & Update Planning Governance (`AGENTS.md` Rule AD):**
+    - Enforced mandatory pre-planning in `ISSUE.md` for all updates, bug fixes (major/medium), and new features or commands.
+    - Established review gate: AI Agent must draft GitHub issues in `ISSUE.md` and obtain user review and explicit approval or instruction prior to publishing to GitHub.
+    - Mandated strict adherence to official repository issue templates (`.github/ISSUE_TEMPLATE/bug_report.md` with `[BUG]` prefix and `.github/ISSUE_TEMPLATE/feature_request.md` with `[FEATURE]` prefix).
+
+- **Issue & Pull Request Review Summaries Governance (`AGENTS.md` Rule AE):**
+    - Mandated recording comprehensive summaries in `SUMMARY.md` following any issue or pull request review.
+    - Standardized persistent structured summary schema (issue/PR ID, change scope, primary findings, risk assessment, review decision, and action items) for future AI and user context retention.
+
+### Changed
+
+- **Git Staging & Ignore Isolation (`.gitignore`, `AGENTS.md` Rule I & AE):**
+    - Added explicit `.gitignore` rules for `ISSUE.md`, `ISSUE*.md`, `SUMMARY.md`, and `SUMMARY*.md` to guarantee they are never tracked or pushed to remote repositories, even during force pushes.
+    - Updated Rule I and agent workflow in `AGENTS.md` to enforce local-only isolation for both `ISSUE.md` and `SUMMARY.md`.
+
+### Removed
+
+- **Tracked Junk & Test Artifacts:**
+    - Removed obsolete subpath import testing artifacts from repository tracking (`index.js`, `package.json.test`, `utils.js`).
+
+---
+
 ## [RF-2609-17] - 2026-09-24
 
 ### Added
@@ -583,7 +609,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-17...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-18...HEAD
+[RF-2609-18]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-17...RF-2609-18
 [RF-2609-17]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-16...RF-2609-17
 [RF-2609-16]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-15...RF-2609-16
 [RF-2609-15]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-14...RF-2609-15
