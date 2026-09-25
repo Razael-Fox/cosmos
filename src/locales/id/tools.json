@@ -111,7 +111,11 @@
             "h": "j",
             "m": "m",
             "s": "d"
-        }
+        },
+        "related_commands_label": "Perintah Terkait",
+        "tutorial_hub_prompt": "Pilih topik di bawah ini untuk melihat panduan lengkap:",
+        "tutorial_hub_tip": "Ketik `{{prefix}}menu tutorial <topik>` untuk melihat panduan spesifik (contoh: `{{prefix}}menu tutorial bank`).",
+        "tutorial_not_found": "Topik panduan \"{{topic}}\" tidak ditemukan. Silakan pilih topik yang valid dari direktori di bawah:"
     },
     "help": {
         "title": "📜 Menu Bantuan Cosmos",
@@ -631,7 +635,7 @@
         }
     },
     "bank": {
-        "usage": "*🏦 Cosmos Central Bank*\n\nPerintah yang tersedia:\n• *.bank register* - Buka rekening bank baru\n• *.bank balance* - Lihat mutasi & saldo rekening\n• *.bank deposit <jumlah>* - Setor uang tunai ke bank\n• *.bank withdraw <jumlah>* - Tarik uang dari bank ke tunai\n• *.bank transfer <rekening> <jumlah>* - Transfer ke rekening lain",
+        "usage": "*🏦 Cosmos Central Bank*\n\nPerintah yang tersedia:\n• *.bank register* - Buka rekening bank baru\n• *.bank balance* - Lihat mutasi & saldo rekening\n• *.bank deposit <jumlah>* - Setor uang tunai ke bank\n• *.bank withdraw <jumlah>* - Tarik uang dari bank ke tunai\n• *.bank transfer <rekening> <jumlah>* - Transfer ke rekening lain\n\n💡 *Tips:* Ketik .menu tutorial bank untuk panduan langkah demi langkah.",
         "sender_identity_error": "Gagal mengidentifikasi identitas pengirim Anda.",
         "register_success": "Rekening bank Anda telah berhasil dibuat. Nomor Rekening baru Anda adalah {{accountNumber}}.",
         "no_id_card": "Akses ditolak. Anda wajib mendaftarkan KTP Virtual sebelum dapat membuka rekening bank.",
@@ -704,7 +708,7 @@
         "transaction_failed": "Transaksi gagal."
     },
     "loan": {
-        "usage": "*🏦 Cosmos Central Bank - Fasilitas Pinjaman*\n\nPerintah yang tersedia:\n• *.loan apply <jumlah> [nama_agunan]* - Ajukan pinjaman dengan penilaian AI\n• *.loan pay [jumlah]* - Lunasi pinjaman aktif (default: lunasi semua)\n• *.loan status* - Lihat status pinjaman aktif dan batas waktu pelunasan\n• *.loan info* - Lihat skor kredit, reputasi, dan batas pinjaman Anda",
+        "usage": "*🏦 Cosmos Central Bank - Fasilitas Pinjaman*\n\nPerintah yang tersedia:\n• *.loan apply <jumlah> [nama_agunan]* - Ajukan pinjaman dengan penilaian AI\n• *.loan pay [jumlah]* - Lunasi pinjaman aktif (default: lunasi semua)\n• *.loan status* - Lihat status pinjaman aktif dan batas waktu pelunasan\n• *.loan info* - Lihat skor kredit, reputasi, dan batas pinjaman Anda\n\n💡 *Tips:* Ketik .menu tutorial loan untuk panduan Underwriting AI.",
         "no_id_card": "Akses Ditolak. Anda wajib memiliki KTP Virtual sebelum mengajukan pinjaman bank. Silakan daftarkan identitas Anda terlebih dahulu menggunakan perintah *.register id*.",
         "no_bank_account": "Akses Ditolak. Anda wajib memiliki rekening bank aktif untuk mengajukan pinjaman. Silakan daftar menggunakan perintah *.bank register* terlebih dahulu.",
         "bank_account_frozen": "Transaksi gagal. Rekening bank Anda saat ini berstatus {{status}}. Harap selesaikan kewajiban Anda terlebih dahulu.",
@@ -1303,6 +1307,176 @@
             "step3_title": "3️⃣ FILTER KEAMANAN & DURASI OTOMATIS",
             "step3_body": "• Filter Anti-AI Art: Konten buatan AI (Stable Diffusion, Midjourney, NovelAI, dll.) otomatis dibuang.\n• Khusus Video: Gambar statis dan GIF diblokir.\n• Filter Durasi: Hanya video berdurasi antara 15 hingga 30 detik yang dikirim.",
             "footer": "💡 *Tip:* Ketik `{{prefix}}menu` untuk kembali ke kategori perintah utama."
+        }
+    },
+    "tutorials": {
+        "bank": {
+            "header": "📖 *PANDUAN: BANK SENTRAL COSMOS*",
+            "summary": "Pembukaan rekening, setoran, penarikan & transfer aman",
+            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}idcard`)",
+            "step1_title": "1️⃣ REGISTRASI REKENING",
+            "step1_body": "• Ketik `{{prefix}}bank open` atau `{{prefix}}bank register` untuk membuka rekening Bank Sentral.\n• Wajib memiliki Kartu Identitas aktif (`{{prefix}}idcard register`).\n• Cek mutasi dan bunga majemuk harian 0.5% lewat `{{prefix}}bank statement`.",
+            "step2_title": "2️⃣ SETORAN & PENARIKAN SALDO",
+            "step2_body": "• Setor uang: `{{prefix}}bank deposit <jumlah>` (contoh: `{{prefix}}bank deposit 500000` atau `{{prefix}}bank deposit all`).\n• Tarik uang: `{{prefix}}bank withdraw <jumlah>` (contoh: `{{prefix}}bank withdraw 250000` atau `{{prefix}}bank withdraw all`).\n• Saldo di brankas bank memperoleh bunga harian setiap 00:00 UTC.",
+            "step3_title": "3️⃣ TRANSFER INTERAKTIF",
+            "step3_body": "• Mulai transfer: `{{prefix}}transfer <tujuan> <jumlah>` (contoh: `{{prefix}}transfer @user 100000`).\n• Periksa biaya admin (`Rp2.500`) dan rincian, lalu balas `confirm` dalam 3 menit.\n• Batalkan kapan saja saat konfirmasi dengan mengetik `{{prefix}}cancel`.",
+            "footer": "💡 *Tips:* Gunakan `{{prefix}}cancel` kapan saja untuk membatalkan sesi transfer yang sedang berjalan."
+        },
+        "loan": {
+            "header": "📖 *PANDUAN: PINJAMAN BANK & RISIKO KREDIT AI*",
+            "summary": "Pengecekan skor kredit, underwriting pinjaman AI & pelunasan",
+            "prereq": "📌 *Prasyarat:* Rekening Bank Aktif (`{{prefix}}bank register`)",
+            "step1_title": "1️⃣ PROFIL & SKOR KREDIT",
+            "step1_body": "• Cek status kredit: Ketik `{{prefix}}loan info` atau `{{prefix}}loan status`.\n• Skor berkisar antara 0 hingga 1000 berdasarkan riwayat transaksi dan aktivitas 30 hari terakhir.\n• Skor tinggi membuka bunga lebih rendah (2%–15%) dan batas pinjaman lebih besar.",
+            "step2_title": "2️⃣ PENGAJUAN PINJAMAN",
+            "step2_body": "• Ajukan: `{{prefix}}loan apply <jumlah> [jaminan]` (contoh: `{{prefix}}loan apply 5000000` atau `{{prefix}}loan apply 20000000 Luxury Apartment`).\n• Cosmos AI Underwriter mengevaluasi skor, jaminan, dan arus kas secara real-time.\n• Balas `confirm` dalam 3 menit untuk mencairkan dana langsung ke rekening bank.",
+            "step3_title": "3️⃣ PELUNASAN & KONSEKUENSI GAGAL BAYAR",
+            "step3_body": "• Bayar pinjaman: `{{prefix}}loan pay <jumlah|all>` (contoh: `{{prefix}}loan pay 1000000` atau `{{prefix}}loan pay all`).\n• Bayar sebelum jatuh tempo untuk meningkatkan skor kredit Anda.\n• ⚠️ *Peringatan:* Gagal bayar akan membekukan rekening (`FROZEN`) dan menyita/melelang aset inventaris atau properti secara otomatis.",
+            "footer": "💡 *Tips:* Pertahankan skor kredit tinggi dengan bertransaksi dan aktif bermain sebelum meminjam."
+        },
+        "job": {
+            "header": "📖 *PANDUAN: PEKERJAAN, LISENSI & SISTEM GAJI*",
+            "summary": "Pendaftaran karir, lisensi berkendara & shift kerja dinamis",
+            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}idcard`)",
+            "step1_title": "1️⃣ PEMILIHAN KARIR & LISENSI",
+            "step1_body": "• Lihat pekerjaan: Ketik `{{prefix}}job list` untuk melihat pilihan profesi, gaji pokok, dan cooldown shift.\n• Masuk pekerjaan: `{{prefix}}job join <job_id>` (contoh: `{{prefix}}job join driver`).\n• Ujian lisensi: Ketik `{{prefix}}apply license` untuk memperoleh SIM atau izin kerja khusus.",
+            "step2_title": "2️⃣ ALAT KERJA & INVENTARIS",
+            "step2_body": "• Beberapa pekerjaan membutuhkan alat di inventaris (misal: Kurir butuh Motor dari `.shop`).\n• Beli peralatan kerja lewat `{{prefix}}buy <item_id>` dari katalog toko.\n• Periksa alat yang dimiliki menggunakan `{{prefix}}inventory`.",
+            "step3_title": "3️⃣ SHIFT KERJA & PENGALI GAJI",
+            "step3_body": "• Kerjakan shift: Ketik `{{prefix}}work` untuk mulai bekerja dan mendapatkan gaji.\n• Gaji dihitung otomatis mengacu pada pengali makroekonomi `EconomyMultiplier`.\n• Tunggu masa jeda (cooldown) selesai sebelum memulai shift berikutnya.",
+            "footer": "💡 *Tips:* Bekerja secara rutin dan tingkatkan lisensi Anda untuk membuka karir bergaji tinggi."
+        },
+        "casino": {
+            "header": "📖 *PANDUAN: KASINO & PERMAINAN JUDI*",
+            "summary": "Slot, coinflip, lempar dadu, klaim harian & brankas saldo",
+            "prereq": "📌 *Prasyarat:* Saldo Minimal Taruhan (`Rp10.000`)",
+            "step1_title": "1️⃣ EKONOMI & KLAIM HARIAN",
+            "step1_body": "• Cek saldo: `{{prefix}}balance` (atau `{{prefix}}saldo`) untuk melihat saldo dompet dan bank.\n• Klaim koin gratis: `{{prefix}}daily` setiap 24 jam untuk mendapatkan bonus Rupiah.\n• Kunci keuntungan: `{{prefix}}vault deposit <jumlah>` untuk mengamankan modal di brankas.",
+            "step2_title": "2️⃣ PERMAINAN KASINO",
+            "step2_body": "• Mesin Slot: `{{prefix}}slot <jumlah|all>` (contoh: `{{prefix}}slot 50000`). Samakan simbol untuk jackpot hingga 20x!\n• Lempar Koin: `{{prefix}}coinflip <jumlah> <heads|tails>` untuk taruhan 50/50 menang berlipat.\n• Lempar Dadu: `{{prefix}}dice <jumlah>` untuk mengadu angka dadu melawan bandar.",
+            "step3_title": "3️⃣ FEVER TIME & PAPAN PERINGKAT",
+            "step3_body": "• Fever Time: Lihat atau picu event pengganda jackpot server via `{{prefix}}fevertime`.\n• Peringkat Grup: Ketik `{{prefix}}top` untuk melihat peringkat kekayaan anggota obrolan grup.\n• Peringkat Global: Ketik `{{prefix}}topglobal` untuk melihat pemain terkaya di seluruh Cosmos.",
+            "footer": "💡 *Tips:* Simpan keuntungan Anda di `{{prefix}}vault` agar tidak habis terbawa taruhan besar."
+        },
+        "roulette": {
+            "header": "📖 *PANDUAN: ARENA RUSSIAN ROULETTE PVP*",
+            "summary": "Duel shotgun multipemain, item taktikal & strategi gertakan",
+            "prereq": "📌 *Prasyarat:* Obrolan Grup & Saldo Taruhan",
+            "step1_title": "1️⃣ PEMBUATAN LOBBY & TARUHAN",
+            "step1_body": "• Buat lobby: `{{prefix}}creategame <taruhan>` (contoh: `{{prefix}}creategame 100000`).\n• Gabung duel: Lawan mengetik `{{prefix}}joingame` untuk menyamakan nilai taruhan.\n• Mulai game: Tuan rumah mengetik `{{prefix}}startgame` saat pemain sudah siap.\n• Batal lobby: Ketik `{{prefix}}cancel` sebelum ronde dimulai untuk mengembalikan taruhan.",
+            "step2_title": "2️⃣ TEMBAKAN & MEKANISME PELURU",
+            "step2_body": "• Tabung senapan berisi kombinasi acak antara peluru ASLI dan KOSONG.\n• Tembak lawan: `{{prefix}}shoot @lawan` untuk memberi damage bila peluru asli.\n• Tembak diri: `{{prefix}}shoot self` — jika peluru kosong, Anda lolos damage DAN dapat giliran tambahan!",
+            "step3_title": "3️⃣ PENGGUNAAN ITEM TAKTIKAL",
+            "step3_body": "• Pakai item: `{{prefix}}use <nama_item>` saat giliran Anda.\n• 🔍 Kaca Pembesar: Mengintip jenis peluru di bilik tembak saat ini.\n• 🔪 Pisau: Memotong laras shotgun untuk menghasilkan 2x damage peluru asli.\n• 🍺 Bir: Mengokang shotgun dan membuang peluru saat ini tanpa meledak.\n• ⛓️ Borgol: Mengikat lawan agar giliran berikutnya terlewat.",
+            "footer": "💡 *Tips:* Manuver berisiko: menembak diri dengan peluru kosong mempertahankan giliran Anda."
+        },
+        "subbot": {
+            "header": "📖 *PANDUAN: SUB-BOT MULTI-DEVICE PAIRING*",
+            "summary": "Pairing 8 digit WhatsApp, uptime mandiri & custom API key AI",
+            "prereq": "📌 *Prasyarat:* Nomor WhatsApp Sekunder & Obrolan Pribadi (DM)",
+            "step1_title": "1️⃣ MEMINTA KODE PAIRING",
+            "step1_body": "• Mulai pairing: Di obrolan pribadi (DM) bot, kirim `{{prefix}}subbot <nomor_hp>` (contoh: `{{prefix}}subbot 6281234567890`).\n• Cosmos menerbitkan kode pairing resmi 8 digit WhatsApp (misal: `ABCD-1234`).\n• Batalkan: Ketik `{{prefix}}cancel` untuk memutus proses pairing sebelum selesai.",
+            "step2_title": "2️⃣ MENAUTKAN PERANGKAT DI WHATSAPP",
+            "step2_body": "• Buka WhatsApp pada ponsel yang ingin dijadikan bot.\n• Masuk ke menu Setelan > Perangkat Tertaut > Tautkan Perangkat > Tautkan dengan nomor telepon saja.\n• Masukkan kode 8 digit dalam waktu 2 menit untuk otentikasi.\n• Setelah terhubung, nomor Anda aktif menjadi bot Cosmos mandiri yang berjalan 24/7.",
+            "step3_title": "3️⃣ KELOLA & CUSTOM API KEY",
+            "step3_body": "• Custom AI Key: Pasang Groq API key pribadi via `{{prefix}}config groq_key <key>`.\n• Pengaturan bahasa: Atur preferensi bahasa bot via `{{prefix}}setlang <id|en>`.\n• Hentikan sub-bot: Ketik `{{prefix}}subbot stop` untuk memutuskan sesi tertaut dengan aman.",
+            "footer": "💡 *Tips:* Selalu pasang kunci API rahasia di pesan pribadi (DM) agar tidak bocor di grup."
+        },
+        "idcard": {
+            "header": "📖 *PANDUAN: IDENTITAS VIRTUAL & REGISTRASI KTP*",
+            "summary": "Pendaftaran KTP virtual, verifikasi sipil & pembatalan sesi",
+            "prereq": "📌 *Prasyarat:* Obrolan Pribadi (DM) atau Grup",
+            "step1_title": "1️⃣ FUNGSI KARTU IDENTITAS VIRTUAL",
+            "step1_body": "• Kartu Identitas Virtual (`IDCard`) adalah syarat mutlak ekosistem sipil Cosmos.\n• Wajib dimiliki untuk membuka rekening bank (`{{prefix}}bank`) dan mendaftar kerja (`{{prefix}}job`).\n• Melindungi akun dari manipulasi identitas dan mencatat reputasi kredit permanen.",
+            "step2_title": "2️⃣ TAHAPAN PENDAFTARAN",
+            "step2_body": "• Mulai registrasi: Ketik `{{prefix}}idcard register` (atau `{{prefix}}ktp daftar`).\n• Bot akan meminta: Nama Lengkap, Usia (minimal 15 tahun), Jenis Kelamin, dan Kota Domisili.\n• Cosmos merender kartu identitas grafis resmi begitu pendaftaran selesai.",
+            "step3_title": "3️⃣ CEK KARTU & PEMBATALAN",
+            "step3_body": "• Cek kartu: Ketik `{{prefix}}idcard` (atau `{{prefix}}ktp`) untuk melihat kartu digital Anda.\n• Cek profil: Ketik `{{prefix}}profile` untuk melihat statistik lengkap akun Anda.\n• Batalkan: Ketik `{{prefix}}cancel` pada langkah mana saja untuk membatalkan proses.",
+            "footer": "💡 *Tips:* Ketik `{{prefix}}cancel` kapan saja saat pendaftaran untuk langsung keluar."
+        },
+        "sticker": {
+            "header": "📖 *PANDUAN: PENGOLAHAN MEDIA & STIKER*",
+            "summary": "Stiker statis & animasi, tipografi Brat & impor paket Sticker.ly",
+            "prereq": "📌 *Prasyarat:* Gambar, Video (<10 detik), GIF atau Teks",
+            "step1_title": "1️⃣ STIKER FOTO & VIDEO",
+            "step1_body": "• Stiker Statis: Kirim gambar dengan caption `{{prefix}}s` (atau balas gambar dengan `{{prefix}}s`).\n• Stiker Animasi: Kirim video atau GIF di bawah 10 detik dengan caption `{{prefix}}s`.\n• Stiker Otomatis: Aktifkan konversi otomatis di grup lewat `{{prefix}}togglesticker on`.",
+            "step2_title": "2️⃣ STIKER TIPOGRAFI BRAT",
+            "step2_body": "• Brat Statis: Ketik `{{prefix}}brat <teks>` (contoh: `{{prefix}}brat halo dunia`).\n• Brat Animasi: Ketik `{{prefix}}brat -a <teks>` untuk efek teks mengetik animasi.\n• Dukungan Monospace: Gunakan tanda petik backtick (`teks`) agar teks presisi.",
+            "step3_title": "3️⃣ PENCARIAN & UNDUH STICKER.LY",
+            "step3_body": "• Cari paket: Ketik `{{prefix}}stickerly <kueri>` (contoh: `{{prefix}}stickerly meme kucing`).\n• Cosmos mencari paket di Sticker.ly dan langsung mengirimkan stiker ke obrolan.",
+            "footer": "💡 *Tips:* Pastikan video stiker di bawah 10 detik dan 5 MB agar lancar terkirim di WhatsApp."
+        },
+        "downloader": {
+            "header": "📖 *PANDUAN: PENGUNDUH MEDIA UNIVERSAL*",
+            "summary": "TikTok tanpa watermark, Audio/Video YouTube, Pinterest & Telegram",
+            "prereq": "📌 *Prasyarat:* Tautan Media Publik yang Valid",
+            "step1_title": "1️⃣ MEDIA TIKTOK & PINTEREST",
+            "step1_body": "• TikTok: `{{prefix}}tiktokdl <url>` — mengunduh video kualitas HD tanpa watermark.\n• Pinterest: `{{prefix}}pinterestdl <url>` — mengunduh foto dan video pin resolusi tinggi.\n• Auto Downloader: Aktifkan unduhan otomatis saat kirim tautan via `{{prefix}}autodl on`.",
+            "step2_title": "2️⃣ VIDEO & AUDIO YOUTUBE",
+            "step2_body": "• YouTube: `{{prefix}}ytdl <url>` (contoh: `{{prefix}}ytdl https://youtu.be/...`).\n• Mendukung pengunduhan video (MP4) serta format audio (MP3).\n• Ukuran file dibatasi maksimal 50 MB sesuai batas transmisi media WhatsApp.",
+            "step3_title": "3️⃣ JEMBATAN KONTEN TERBATAS TELEGRAM",
+            "step3_body": "• Unduh media: `{{prefix}}telegramdl <tautan_pesan>` (contoh: `https://t.me/c/12345/678`).\n• Kelola sesi: Daftarkan string sesi saluran via `{{prefix}}tgadd <session_string>`.\n• Cek sesi aktif: Ketik `{{prefix}}tglist` atau hapus sesi lewat `{{prefix}}tgdel`.",
+            "footer": "💡 *Tips:* Aktifkan `{{prefix}}autodl on` di grup agar tautan video otomatis terunduh."
+        },
+        "ai": {
+            "header": "📖 *PANDUAN: KECERDASAN AI & SPEECH-TO-TEXT*",
+            "summary": "Percakapan AI Sara, transkripsi suara Whisper STT & autokoreksi grup",
+            "prereq": "📌 *Prasyarat:* Pesan teks atau membalas rekaman suara",
+            "step1_title": "1️⃣ PERSONA SARA AI & ASISTEN",
+            "step1_body": "• Tanya Sara: Ketik `{{prefix}}sara <pertanyaan>` (contoh: `{{prefix}}sara jelaskan komputasi kuantum`).\n• Sara bertindak sebagai rekan cerdas dengan memori kontekstual dan eksekusi tool.\n• Buku Kontak: Sara mengakses kontak tersimpan secara aman melalui `{{prefix}}contact`.",
+            "step2_title": "2️⃣ TRANSKRIPSI SUARA WHISPER (STT)",
+            "step2_body": "• Transkrip audio: Balas pesan suara (VN) atau file audio apa pun dengan `{{prefix}}stt`.\n• Menggunakan Groq Whisper API untuk transkripsi kilat dan akurat dalam dua bahasa.\n• Mendukung istilah gaul, aksen daerah Indonesia, dan bahasa Inggris dengan lancar.",
+            "step3_title": "3️⃣ AUTOKOREKSI TYPO GRUP REAL-TIME",
+            "step3_body": "• Autokoreksi grup: `{{prefix}}startautocorrection` mengaktifkan perbaikan typo otomatis.\n• Hentikan: `{{prefix}}stopautocorrection` mematikan fitur edit pesan otomatis.\n• Toggle cepat: Gunakan `{{prefix}}toggleautocorrection` untuk mengganti status.",
+            "footer": "💡 *Tips:* Balas voice note panjang dengan `{{prefix}}stt` untuk membaca rangkumannya."
+        },
+        "market": {
+            "header": "📖 *PANDUAN: PASAR REAL-ESTATE & PROPERTI*",
+            "summary": "Katalog properti, fluktuasi pasar, kelola inventori & jual-beli aset",
+            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}idcard`)",
+            "step1_title": "1️⃣ KATALOG PROPERTI & ALAT KERJA",
+            "step1_body": "• Pantau Pasar: Ketik `{{prefix}}market` untuk melihat tren ekonomi dan indeks harga.\n• Katalog Properti: Ketik `{{prefix}}catalog` (atau `{{prefix}}shop`) untuk melihat daftar aset dan barang.\n• Tingkatan Aset: Mulai dari Sepeda Motor, Apartemen Studio, hingga Penthouse Mewah.",
+            "step2_title": "2️⃣ PEMBELIAN & INVENTARIS",
+            "step2_body": "• Beli aset: Ketik `{{prefix}}buy <item_id>` (contoh: `{{prefix}}buy apartment`).\n• Biaya akan dipotong dari saldo dompet atau rekening bank Anda.\n• Cek aset milik Anda: Ketik `{{prefix}}inventory` (atau `{{prefix}}inv`) untuk melihat daftar kepemilikan.",
+            "step3_title": "3️⃣ PENJUALAN & LIKUIDASI JAMINAN",
+            "step3_body": "• Jual properti: Ketik `{{prefix}}sell <item_id>` untuk menjual aset menjadi uang tunai.\n• Apresiasi Harga: Nilai aset bergerak fluktuatif mengikuti pergerakan pasar makro.\n• Jaminan Pinjaman: Aset properti dapat dijaminkan untuk pinjaman bank besar (`{{prefix}}loan apply`).",
+            "footer": "💡 *Tips:* Simpan properti bernilai tinggi sebagai jaminan pinjaman berplafon besar."
+        },
+        "music": {
+            "header": "📖 *PANDUAN: PEMUTAR MUSIK & LIRIK REAL-TIME*",
+            "summary": "Pemutar audio dalam obrolan, lirik tersinkronisasi & kendali musik",
+            "prereq": "📌 *Prasyarat:* Judul Lagu, Artis atau Kueri Musik",
+            "step1_title": "1️⃣ CARI & PUTAR LAGU",
+            "step1_body": "• Putar lagu: Ketik `{{prefix}}play <judul>` (contoh: `{{prefix}}play Bohemian Rhapsody`).\n• Cosmos mencari audio di YouTube, mengunduh file, dan mengirimkan kualitas terbaik.\n• Audio dilengkapi dengan judul, nama penyanyi, dan cover album.",
+            "step2_title": "2️⃣ LIRIK TERSINKRONISASI REAL-TIME",
+            "step2_body": "• Putar dengan Lirik: Ketik `{{prefix}}playlyrics <judul>` (contoh: `{{prefix}}playlyrics Adele Hello`).\n• Bot mengambil timestamp LRC dan mengedit pesan lirik secara real-time mengikuti irama.\n• Bernyanyi bersama anggota grup dengan penanda baris lirik yang sedang berjalan.",
+            "step3_title": "3️⃣ KENDALI PEMUTAR MUSIK",
+            "step3_body": "• Hentikan lirik: Ketik `{{prefix}}stoplyrics` untuk langsung menghentikan sesi lirik berjalan.\n• Mencegah edit pesan berkelanjutan saat ingin mengganti lagu atau berhenti bernyanyi.",
+            "footer": "💡 *Tips:* Gunakan `{{prefix}}playlyrics` di obrolan grup untuk karaoke interaktif."
+        },
+        "moderation": {
+            "header": "📖 *PANDUAN: KONTROL GRUP, PRIVASI & NSFW*",
+            "summary": "Aktivasi fitur NSFW, toggle Auto-DL, intip View-Once & bahasa grup",
+            "prereq": "📌 *Prasyarat:* Admin Grup atau Pemilik Bot",
+            "step1_title": "1️⃣ AKTIVASI FITUR NSFW & HAK AKSES",
+            "step1_body": "• Fitur NSFW DINONAKTIFKAN secara default di obrolan grup.\n• Hanya Admin Grup dan Pemilik Bot yang dapat mengaktifkannya:\n  - Aktifkan: `{{prefix}}on nsfw` (atau `{{prefix}}on hentai`)\n  - Matikan: `{{prefix}}off nsfw` (atau `{{prefix}}off hentai`)\n• Di obrolan pribadi (DM), fitur sudah aktif secara otomatis tanpa perlu aktivasi.",
+            "step2_title": "2️⃣ PENGATURAN GRUP & AUTO DOWNLOAD",
+            "step2_body": "• Auto Downloader: Atur unduhan tautan otomatis lewat `{{prefix}}autodl <on|off>`.\n• Bahasa Grup: Atur bahasa respon bot di grup via `{{prefix}}setgrouplang <id|en>`.\n• Bahasa Pribadi: Atur bahasa respon pribadi di DM via `{{prefix}}setlang <id|en>`.",
+            "step3_title": "3️⃣ PRIVASI & INSPEKSI PESAN",
+            "step3_body": "• Buka Sekali Lihat: Balas media View-Once dengan `{{prefix}}rvo` untuk melihatnya kembali.\n• Inspeksi Pesan: Balas pesan apa pun dengan `{{prefix}}quoted` untuk melihat metadata mentah.\n• Foto Profil: Ambil foto profil resolusi penuh via `{{prefix}}getprofilephoto @user`.",
+            "footer": "💡 *Tips:* Ketik `{{prefix}}menu` untuk kembali ke kategori perintah utama."
+        },
+        "system": {
+            "header": "📖 *PANDUAN: ADMINISTRASI SISTEM & AKSES BOT*",
+            "summary": "Diagnostik sistem, izin grup whitelist, paket & kuota",
+            "prereq": "📌 *Prasyarat:* Pengguna Umum atau Pemilik Bot (untuk Whitelist)",
+            "step1_title": "1️⃣ TELEMETRI & STATUS SISTEM",
+            "step1_body": "• Diagnostik: Ketik `{{prefix}}system_info` (atau `{{prefix}}sysinfo`) untuk cek memori, CPU, dan koneksi Baileys.\n• Katalog penuh: Ketik `{{prefix}}menu all` untuk melihat seluruh perintah aktif pada bot.",
+            "step2_title": "2️⃣ WHITELIST & IZIN GRUP",
+            "step2_body": "• Akses Grup: Cosmos beroperasi dalam mode whitelist untuk menjaga stabilitas server.\n• Verifikasi: Ketik `{{prefix}}verify` untuk mengecek status izin akses Anda.\n• Whitelist grup: Admin/Owner mendaftarkan grup resmi lewat `{{prefix}}whitelist`.",
+            "step3_title": "3️⃣ PAKET LANGGANAN & KUOTA",
+            "step3_body": "• Cek Paket: Ketik `{{prefix}}myplan` untuk melihat tingkatan paket dan batas aktif Anda.\n• Cek Kuota: Ketik `{{prefix}}quota` untuk melihat sisa batas panggilan harian.\n• Kelola Paket: Ketik `{{prefix}}sub` untuk memperbarui atau meningkatkan paket.",
+            "footer": "💡 *Tips:* Ketik `{{prefix}}help <perintah>` untuk melihat parameter detail setiap tool."
         }
     }
 }

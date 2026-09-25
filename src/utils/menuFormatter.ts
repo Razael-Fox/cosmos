@@ -1,3 +1,4 @@
+import tutorialService, { TutorialDefinition } from '../services/tutorialService.js';
 import { NormalizedTool, CategoryInfo } from '../services/menuService.js';
 import { resolveToolDescription } from '../tools/types.js';
 import { getDisplayName } from './commandFormat.js';
@@ -260,27 +261,98 @@ export function formatNotFound(
 }
 
 /**
+ * Formats a feature tutorial card (.menu tutorial <target>).
+ */
+export function formatGenericTutorial(
+    tutorial: TutorialDefinition,
+    t: TranslatorFn,
+    prefix: string = '.',
+    lang: string = 'id'
+): string {
+    const header = t(tutorial.titleKey);
+    const lines: string[] = [
+        `╔══════════════════════════════════════╗`,
+        `   ${header}`,
+        `╚══════════════════════════════════════╝`,
+        ``
+    ];
+
+    // Prerequisites
+    if (tutorial.prerequisiteKeys && tutorial.prerequisiteKeys.length > 0) {
+        for (const prereqKey of tutorial.prerequisiteKeys) {
+            lines.push(t(prereqKey, { prefix }));
+        }
+        lines.push(``);
+    }
+
+    // Related Commands (Localized according to user/chat language)
+    const relatedCommands = tutorialService.getRelatedCommandsList(tutorial, lang, prefix);
+    if (relatedCommands) {
+        const relatedLabel = t('tools.menu.related_commands_label', 'Related Commands');
+        lines.push(`⌨️ *${relatedLabel}:* ${relatedCommands}`);
+        lines.push(``);
+    }
+
+    // Steps
+    tutorial.steps.forEach((step, idx) => {
+        const stepTitle = t(step.titleKey);
+        const stepBody = t(step.bodyKey, { prefix });
+        lines.push(`*${stepTitle}*`);
+        lines.push(stepBody);
+        if (idx < tutorial.steps.length - 1 || tutorial.footerKey) {
+            lines.push(``);
+        }
+    });
+
+    // Footer
+    if (tutorial.footerKey) {
+        lines.push(t(tutorial.footerKey, { prefix }));
+    }
+
+    return lines.join('\n');
+}
+
+/**
  * Formats the tutorial hub directory (.menu tutorial).
  */
-export function formatTutorialHub(t: TranslatorFn, prefix: string = '.'): string {
+export function formatTutorialHub(t: TranslatorFn, prefix: string = '.', _lang: string = 'id'): string {
     const title = t('tools.menu.tutorial_hub_title');
-    const desc = t('tools.menu.tutorial_hub_desc', { prefix });
-    const tip = t('tools.nsfw.tutorial.footer', { prefix });
+    const headerPrompt = t('tools.menu.tutorial_hub_prompt', 'Select a topic below to view its complete guide:');
+    const tipLabel = t('tools.menu.tip_label', 'Tip:');
+    const tipText = t(
+        'tools.menu.tutorial_hub_tip',
+        `Type \`${prefix}menu tutorial <topic>\` to inspect a specific guide (e.g. \`${prefix}menu tutorial bank\`).`
+    );
+
+    const suites = tutorialService.getAllSuites();
+    const suiteLines = suites.map((suite) => {
+        const summaryKey = `tools.tutorials.${suite.id}.summary`;
+        const summary = t(summaryKey, t(suite.titleKey));
+        return `• \`${prefix}menu tutorial ${suite.id}\` — ${summary}`;
+    });
+
     return [
         `╔══════════════════════════════════════╗`,
         `   📚 *${title}*`,
         `╚══════════════════════════════════════╝`,
         ``,
-        desc,
+        headerPrompt,
         ``,
-        tip
+        ...suiteLines,
+        ``,
+        `💡 *${tipLabel}* ${tipText}`
     ].join('\n');
 }
 
 /**
  * Formats the NSFW Video Retrieval tutorial card (.menu tutorial nsfw).
+ * Retained for backward compatibility.
  */
-export function formatNsfwTutorial(t: TranslatorFn, prefix: string = '.'): string {
+export function formatNsfwTutorial(t: TranslatorFn, prefix: string = '.', lang: string = 'id'): string {
+    const suite = tutorialService.resolveTutorial('nsfw');
+    if (suite) {
+        return formatGenericTutorial(suite, t, prefix, lang);
+    }
     const header = t('tools.nsfw.tutorial.header');
     const step1Title = t('tools.nsfw.tutorial.step1_title');
     const step1Body = t('tools.nsfw.tutorial.step1_body', { prefix });

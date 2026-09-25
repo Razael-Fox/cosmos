@@ -1,7 +1,8 @@
 import { ToolModule, resolveToolDescription } from '../tools/types.js';
 import toolsHandler from '../tools/handler.js';
 import { toDisplayCommand, getDisplayName } from '../utils/commandFormat.js';
-import { formatTutorialHub, formatNsfwTutorial } from '../utils/menuFormatter.js';
+import { formatTutorialHub, formatGenericTutorial } from '../utils/menuFormatter.js';
+import tutorialService from './tutorialService.js';
 
 export interface NormalizedTool {
     name: string;
@@ -528,15 +529,25 @@ export class MenuService {
      */
     public getTutorial(
         topic: string,
-        _lang: string = 'id',
+        lang: string = 'id',
         t: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string,
         prefix: string = '.'
     ): string {
         const clean = topic.toLowerCase().trim();
-        if (clean === 'nsfw' || clean === 'rule34' || clean === 'r34' || clean === 'hentai') {
-            return formatNsfwTutorial(t, prefix);
+        if (!clean || clean === 'hub' || clean === 'menu' || clean === 'list' || clean === 'all') {
+            return formatTutorialHub(t, prefix, lang);
         }
-        return formatTutorialHub(t, prefix);
+        const suite = tutorialService.resolveTutorial(clean);
+        if (suite) {
+            return formatGenericTutorial(suite, t, prefix, lang);
+        }
+        const notFoundMsg = t(
+            'tools.menu.tutorial_not_found',
+            'Tutorial topic "{{topic}}" not found. Please select a valid topic from the directory below:',
+            { topic }
+        );
+        const hub = formatTutorialHub(t, prefix, lang);
+        return `${notFoundMsg}\n\n${hub}`;
     }
 }
 

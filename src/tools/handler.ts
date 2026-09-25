@@ -1,3 +1,5 @@
+import menuService from '../services/menuService.js';
+import tutorialService from '../services/tutorialService.js';
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -181,12 +183,41 @@ class ToolsHandler {
         return groqTools;
     }
 
+    private isTutorialRequest(nameOrAlias: string, args: Record<string, any>): boolean {
+        const cleanName = nameOrAlias
+            .toLowerCase()
+            .trim()
+            .replace(/^[.-]+/, '');
+        if (cleanName === 'help' || cleanName === 'menu') {
+            return false;
+        }
+        if (!args || typeof args !== 'object') return false;
+        for (const val of Object.values(args)) {
+            if (typeof val === 'string') {
+                const trimmed = val.trim().toLowerCase();
+                if (trimmed === 'tutorial' || trimmed === 'panduan') {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     async execute(nameOrAlias: string, args: Record<string, any>, ctx: ToolContext): Promise<any> {
         const tool = this.getTool(nameOrAlias);
         if (!tool) throw new Error(`Tool not found: ${nameOrAlias}`);
         if (!ctx.t) {
             ctx.t = getTranslator('id');
         }
+
+        // Universal Tutorial & Panduan Interception for all related commands & aliases
+        if (this.isTutorialRequest(nameOrAlias, args)) {
+            const suite = tutorialService.getTutorialForCommand(nameOrAlias);
+            if (suite) {
+                return menuService.getTutorial(suite.id, ctx.lang || 'id', ctx.t, '.');
+            }
+        }
+
         return await tool.execute(args, ctx);
     }
 }
