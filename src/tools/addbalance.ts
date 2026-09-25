@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
-import { resolveId, getUser } from '../utils/casino.js';
+import { resolveId, getUser, formatMentions, cleanId } from '../utils/casino.js';
 import { formatRupiah, parseCurrencyAmount } from '../utils/currency.js';
 
 const addBalanceTool: ToolModule = {
@@ -33,7 +33,7 @@ const addBalanceTool: ToolModule = {
 
         let cleanedInputStr = String(args.input || '').trim();
         for (const jid of mentionedJidList) {
-            const num = jid.split('@')[0];
+            const num = cleanId(jid);
             cleanedInputStr = cleanedInputStr.replace(new RegExp(`@?${num}`, 'g'), '');
         }
 
@@ -80,9 +80,10 @@ const addBalanceTool: ToolModule = {
                 {
                     text: ctx.t('tools.addbalance.success', {
                         amount: formatRupiah(amount),
-                        target: targetJid.split('@')[0]
+                        user: cleanId(targetJid),
+                        target: cleanId(targetJid)
                     }),
-                    mentions: [targetJid]
+                    mentions: formatMentions(targetJid)
                 },
                 { quoted: msg }
             );

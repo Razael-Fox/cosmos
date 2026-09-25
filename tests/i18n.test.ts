@@ -48,6 +48,14 @@ async function runTests() {
         'Koin mendarat pada heads! Anda menang Rp10.000!'
     );
     assert.strictEqual(tEn('games.roulette.bullet_count', { count: 3 }), 'Bullets loaded: 3/6');
+    assert.strictEqual(
+        tEn('tools.addbalance.success', { amount: 'Rp50', user: '6285136533136' }),
+        '✅ *Balance Added!*\n\nSuccessfully added *Rp50* to @6285136533136 from the house vault.'
+    );
+    assert.strictEqual(
+        tId('tools.addbalance.success', { amount: 'Rp50', user: '6285136533136' }),
+        '✅ *Saldo Ditambahkan!*\n\nBerhasil menambahkan *Rp50* ke @6285136533136 dari house vault.'
+    );
     console.log('✓ Interpolation verified.');
 
     // Test 4: Missing Key and Fallback Chain

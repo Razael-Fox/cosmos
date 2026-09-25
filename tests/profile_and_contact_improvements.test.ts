@@ -50,6 +50,70 @@ async function runTestSuite() {
     assert.strictEqual(getLegacyCanonical('fevertime'), '.fever time');
 
     console.log('✓ Command separation verified.');
+    // =========================================================================
+    // 1b. Execution of addbalance (.add balance @user 50)
+    // =========================================================================
+    console.log('[Test 1b] Testing execution of addbalance with mention & proper formatting...');
+    const targetUserJid = '6285136533136@s.whatsapp.net';
+    await prisma.user.upsert({
+        where: { id: targetUserJid },
+        create: { id: targetUserJid, pushName: 'Zhopi', balance: BigInt(0) },
+        update: {}
+    });
+
+    const addBalanceSentMessages: Array<{ dest: string; content: any }> = [];
+    const addBalanceSock = {
+        user: { id: '628123456789:1@s.whatsapp.net' },
+        sendMessage: async (dest: string, content: any) => {
+            addBalanceSentMessages.push({ dest, content });
+            return { key: { id: 'mock-id' } };
+        }
+    };
+
+    const addBalanceMsg = {
+        key: { remoteJid: '120363274823554999@g.us', participant: '628123456789@s.whatsapp.net', fromMe: false },
+        message: {
+            extendedTextMessage: {
+                text: '.tambah saldo @6285136533136 50',
+                contextInfo: {
+                    mentionedJid: [targetUserJid]
+                }
+            }
+        }
+    };
+
+    const { getTranslator } = await import('../src/utils/i18n.js');
+    const tId = getTranslator('id');
+    const addBalanceCtx: ToolContext = {
+        msg: addBalanceMsg as any,
+        sock: addBalanceSock as any,
+        jid: '120363274823554999@g.us',
+        t: tId,
+        lang: 'id',
+        usedPrefix: '.'
+    };
+
+    await addBalanceTool.execute({ input: '@6285136533136 50' }, addBalanceCtx);
+    assert(addBalanceSentMessages.length > 0, 'addbalance must send a confirmation message');
+    assert(
+        !addBalanceSentMessages[0].content.text.includes('{{user}}'),
+        'Message text must NOT contain unrendered {{user}}'
+    );
+    assert(
+        !addBalanceSentMessages[0].content.text.includes('{{target}}'),
+        'Message text must NOT contain unrendered {{target}}'
+    );
+    assert(
+        addBalanceSentMessages[0].content.text.includes('@6285136533136'),
+        'Message text must include @6285136533136'
+    );
+    assert(addBalanceSentMessages[0].content.text.includes('Rp50'), 'Message text must include Rp50');
+    assert.deepStrictEqual(
+        addBalanceSentMessages[0].content.mentions,
+        ['6285136533136@s.whatsapp.net'],
+        'mentions array must be formatted properly'
+    );
+    console.log('✓ addbalance execution verified.');
 
     // =========================================================================
     // 2. Profile Commands (.my plan, .my quota, .my profile, .check plan, .check quota)

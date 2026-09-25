@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from './types.js';
 import { getSessionByChatId, ItemType } from '../utils/roulette.js';
-import { getSenderJid, resolveId } from '../utils/casino.js';
+import { getSenderJid, resolveId, formatMentions } from '../utils/casino.js';
 import { getTranslator } from '../utils/i18n.js';
 import { renderHealthGauge } from '../utils/uiFormatter.js';
 
@@ -100,7 +100,7 @@ const useTool: ToolModule = {
             }
             case 'MAGNIFYING_GLASS': {
                 outputMsg = t('games.roulette.used_glass', { player: currentPlayer.pushName });
-                await sock.sendMessage(jid, { text: outputMsg, mentions: [senderJid] });
+                await sock.sendMessage(jid, { text: outputMsg, mentions: formatMentions(senderJid) });
                 const shell = session.shells[session.shells.length - 1];
                 try {
                     await sock.sendMessage(senderJid, {
@@ -109,7 +109,7 @@ const useTool: ToolModule = {
                 } catch {
                     await sock.sendMessage(jid, {
                         text: t('games.roulette.glass_dm_failed', { player: currentPlayer.pushName }),
-                        mentions: [senderJid]
+                        mentions: formatMentions(senderJid)
                     });
                 }
                 return null;
