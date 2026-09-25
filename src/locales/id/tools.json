@@ -157,8 +157,8 @@
     },
     "addbalance": {
         "usage": "Format tidak valid. Gunakan: .addbalance <user> <jumlah>",
-        "mention_required": "❌ Silakan sebutkan (@mention) pengguna untuk menambahkan koin. Contoh: .addbalance @user 50",
-        "invalid_amount": "❌ Jumlah tidak valid. Silakan tentukan jumlah koin yang valid.",
+        "mention_required": "❌ Silakan sebutkan (@mention) pengguna untuk menambahkan saldo. Contoh: .addbalance @user 50",
+        "invalid_amount": "❌ Jumlah tidak valid. Silakan tentukan jumlah saldo yang valid.",
         "success": "✅ *Saldo Ditambahkan!*\n\nBerhasil menambahkan *{{amount}}* ke @{{user}} dari house vault.",
         "failed": "❌ Gagal menambahkan saldo: {{error}}"
     },

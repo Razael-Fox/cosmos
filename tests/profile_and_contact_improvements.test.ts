@@ -113,6 +113,17 @@ async function runTestSuite() {
         ['6285136533136@s.whatsapp.net'],
         'mentions array must be formatted properly'
     );
+    const missingMentionResult = await addBalanceTool.execute(
+        { input: '' },
+        {
+            ...addBalanceCtx,
+            msg: { key: { remoteJid: '120363274823554999@g.us' }, message: { conversation: '.tambah saldo' } } as any
+        }
+    );
+    assert.strictEqual(
+        missingMentionResult,
+        '❌ Silakan sebutkan (@mention) pengguna untuk menambahkan saldo. Contoh: .addbalance @user 50'
+    );
     console.log('✓ addbalance execution verified.');
 
     // =========================================================================

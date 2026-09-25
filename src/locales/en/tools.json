@@ -157,8 +157,8 @@
     },
     "addbalance": {
         "usage": "Invalid format. Use: .addbalance <user> <amount>",
-        "mention_required": "❌ Please mention a user to add coins to. Example: .addbalance @user 50",
-        "invalid_amount": "❌ Invalid amount. Please specify a valid amount of coins to add.",
+        "mention_required": "❌ Please mention a user to add balance to. Example: .addbalance @user 50",
+        "invalid_amount": "❌ Invalid amount. Please specify a valid balance amount to add.",
         "success": "✅ *Balance Added!*\n\nSuccessfully added *{{amount}}* to @{{user}} from the house vault.",
         "failed": "❌ Failed to add balance: {{error}}"
     },
