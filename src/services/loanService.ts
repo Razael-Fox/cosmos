@@ -3,9 +3,9 @@ import { formatRupiah } from '#utils/currency.js';
 import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 import { getBankAccountByUser } from '#services/bankService.js';
 import cron from 'node-cron';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { getGroqClient } from '#utils/apiKeyResolver.js';
-dotenv.config();
+import { DecisionClient } from './agentEngine/decisionClient.js';
 
 export interface CreditProfile {
     userId: string;
@@ -242,8 +242,50 @@ export async function assessLoanWithAI(
             maxApprovedAmount: creditProfile.maxBorrowLimit
         };
     }
+    // 2. Query Laya AI decision engine for zero-knowledge underwriting advisory signal
+    const netWorthBig = creditProfile.netWorth;
+    const netWorthTier: 'low' | 'medium' | 'high' | 'ultra' =
+        netWorthBig > BigInt(100_000_000)
+            ? 'ultra'
+            : netWorthBig > BigInt(25_000_000)
+              ? 'high'
+              : netWorthBig > BigInt(5_000_000)
+                ? 'medium'
+                : 'low';
 
-    // 2. Query Groq LLM to determine precise terms if API key is present
+    const layaSignal = await DecisionClient.evaluateLoan({
+        creditScore: creditProfile.creditScore,
+        reputation: creditProfile.reputation,
+        netWorthTier,
+        requestedAmount,
+        pastRepaymentsCount: creditProfile.totalRepayments,
+        pastDefaultsCount: creditProfile.totalDefaults,
+        hasCollateral: Boolean(collateralItemName)
+    }).catch(() => null);
+
+    if (layaSignal) {
+        // Code-enforced bound checks: rates 2%-15%, tenors 7-30 days
+        let interestRate = layaSignal.suggestedInterestRate;
+        let termDays = layaSignal.suggestedTermDays;
+
+        if (isNaN(interestRate) || interestRate < 0.02) interestRate = 0.05;
+        if (interestRate > 0.15) interestRate = 0.15;
+        if (isNaN(termDays) || termDays < 7) termDays = 7;
+        if (termDays > 30) termDays = 30;
+
+        const approved = layaSignal.recommendation === 'approved';
+        return {
+            approved,
+            interestRate,
+            termDays,
+            reasoning: approved
+                ? `Approved by Cosmos AI Underwriting based on ${creditProfile.reputation} credit reputation (${layaSignal.riskTier} risk tier).`
+                : `Rejected by Cosmos AI Underwriting due to elevated risk profile (${layaSignal.riskTier} risk tier).`,
+            maxApprovedAmount: creditProfile.maxBorrowLimit
+        };
+    }
+
+    // 3. Fallback to Groq LLM if Laya is unavailable
     if (process.env.GROQ_API_KEY) {
         try {
             const groq = getGroqClient();

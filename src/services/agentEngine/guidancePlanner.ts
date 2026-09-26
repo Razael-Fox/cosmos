@@ -5,7 +5,7 @@ import { AgentToolPolicyManager } from './policy.js';
 import { ToolAiPolicy } from './types.js';
 import { EphemeralTokenStore } from './tokenStore.js';
 import { AgentEntityResolver } from './entityResolver.js';
-
+import { DecisionClient } from './decisionClient.js';
 export class AgentGuidancePlanner {
     private static activeModel: string | null = null;
     private static readonly CANDIDATE_MODELS = [
@@ -16,13 +16,37 @@ export class AgentGuidancePlanner {
     ].filter((m): m is string => typeof m === 'string' && m.trim().length > 0);
 
     public static async plan(userPrompt: string, ctx: SaraPromptContext): Promise<GuidanceBrief> {
-        const systemPrompt = buildSaraGuidancePrompt(ctx);
         const startTime = Date.now();
+
+        // Query Laya AI decision engine first for fast, non-autoregressive intent classification
+        const decisionSignal = await DecisionClient.queryIntent(userPrompt, ctx).catch(() => null);
+
+        // If Laya confidently classified a pure conversational query with no recipient, short-circuit
+        if (
+            decisionSignal &&
+            decisionSignal.intent === 'conversation' &&
+            decisionSignal.recipientCategory === 'none' &&
+            decisionSignal.confidence >= 0.85 &&
+            !ctx.referencedMessage?.location &&
+            !ctx.referencedMessage?.text
+        ) {
+            const latency = Date.now() - startTime;
+            console.log(
+                `[CosmosAgentEngine] [LAYA_PLAN_FASTPATH] Intent: CONVERSATION, Confidence: ${decisionSignal.confidence}, Latency: ${latency}ms`
+            );
+            return {
+                intent: 'CONVERSATION',
+                primaryTool: null,
+                confidence: decisionSignal.confidence,
+                guidanceInstructions: 'Respond conversationally and politely in the caller locale.'
+            };
+        }
+
+        const systemPrompt = buildSaraGuidancePrompt(ctx);
 
         const modelsToTry = this.activeModel
             ? [this.activeModel, ...this.CANDIDATE_MODELS.filter((m) => m !== this.activeModel)]
             : this.CANDIDATE_MODELS;
-
         let completion = null;
         for (const candidateModel of modelsToTry) {
             try {

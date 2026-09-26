@@ -25,8 +25,12 @@ async function runLoanTests() {
     const userNoKtp_Jid = `loan_user_noktp_${timestamp}@s.whatsapp.net`;
     const userNoBank_Jid = `loan_user_nobank_${timestamp}@s.whatsapp.net`;
     const chatJid = `loan_chat_${timestamp}@g.us`;
-
-    // 1. Setup users in database
+    await prisma.whitelistedGroup.create({
+        data: {
+            jid: chatJid,
+            language: 'EN'
+        }
+    });
     console.log('[Test 1] Setting up users, KTP, and bank accounts...');
     await prisma.user.create({
         data: {
