@@ -81,10 +81,17 @@ check_disk_space() {
     echo "[docker-build] Checking disk space before build..."
     local use_pct
     use_pct=$(df / --output=pcent 2>/dev/null | tail -n 1 | tr -dc '0-9' || echo "0")
-    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 90 ]; then
-        echo "[docker-build] Warning: Disk usage at ${use_pct}%. Pruning build cache..."
-        run_docker docker builder prune -f || true
+    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 80 ]; then
+        echo "[docker-build] Warning: Disk usage at ${use_pct}%. Trimming builder cache and dangling images..."
+        run_docker docker image prune -f || true
+        run_docker docker builder prune -f --reserved-space 1GB || true
     fi
+}
+
+cleanup_after_build() {
+    echo "[docker-build] Post-build cleanup: pruning dangling images and trimming builder cache..."
+    run_docker docker image prune -f || true
+    run_docker docker builder prune -f --reserved-space 2GB || true
 }
 
 # ------------------------------------------------------------------------------
@@ -118,5 +125,6 @@ else
     echo "[docker-build] docker compose unavailable, falling back to docker build..."
     run_docker docker build -f docker/Dockerfile -t "${IMAGE}" "$@" .
 fi
+cleanup_after_build
 
 echo "[docker-build] Build complete: ${IMAGE} is ready."

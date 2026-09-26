@@ -42,6 +42,7 @@
         "docker:dev:restart": "./scripts/docker-dev.sh restart",
         "docker:dev:logs": "./scripts/docker-dev.sh logs",
         "docker:dev:clean": "./scripts/docker-dev.sh clean",
+        "docker:prune": "docker image prune -f && docker builder prune -f --reserved-space 2GB",
         "tunnel:setup": "./scripts/setup-cloudflare-tunnel.sh",
         "turnstile:create": "./scripts/create-turnstile-widget.sh",
         "doppler:setup": "./scripts/sync-doppler.sh setup",

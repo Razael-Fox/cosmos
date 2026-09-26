@@ -98,9 +98,10 @@ build_async() {
     echo "[docker-dev] Checking disk space before build..."
     local use_pct
     use_pct=$(df / --output=pcent 2>/dev/null | tail -n 1 | tr -dc '0-9' || echo "0")
-    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 90 ]; then
-        echo "[docker-dev] Warning: Low disk space (${use_pct}% used). Pruning build cache..."
-        run_docker docker builder prune -f || true
+    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 80 ]; then
+        echo "[docker-dev] Warning: Disk space at ${use_pct}% used. Trimming builder cache and dangling images..."
+        run_docker docker image prune -f || true
+        run_docker docker builder prune -f --reserved-space 1GB || true
     fi
 
     ensure_worktrees
@@ -170,6 +171,9 @@ build_async() {
     echo "======================================================================"
     echo "[docker-dev] All requested service Docker images built successfully!"
     echo "======================================================================"
+    echo "[docker-dev] Pruning dangling images and trimming builder cache..."
+    run_docker docker image prune -f || true
+    run_docker docker builder prune -f --reserved-space 2GB || true
 }
 
 # ------------------------------------------------------------------------------
@@ -220,8 +224,10 @@ pair() {
 }
 
 clean() {
-    echo "[docker-dev] Cleaning development containers and dangling volumes..."
+    echo "[docker-dev] Cleaning development containers, dangling images, and volumes..."
     run_docker docker compose -f "${COMPOSE_FILE}" down -v --remove-orphans || true
+    run_docker docker image prune -f || true
+    run_docker docker builder prune -f --reserved-space 1GB || true
     echo "[docker-dev] Clean complete."
 }
 

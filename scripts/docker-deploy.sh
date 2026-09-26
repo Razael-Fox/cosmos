@@ -87,10 +87,21 @@ check_disk() {
     df -h / | tail -n 1
     local use_pct
     use_pct=$(df / --output=pcent 2>/dev/null | tail -n 1 | tr -dc '0-9' || echo "0")
-    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 90 ]; then
-        echo "[deploy] Disk use at ${use_pct}% - pruning builder cache first..."
-        run_docker docker builder prune -f || true
+    if [ -n "${use_pct}" ] && [ "${use_pct}" -ge 80 ]; then
+        echo "[deploy] Disk use at ${use_pct}% - trimming builder cache and dangling images..."
+        run_docker docker image prune -f || true
+        run_docker docker builder prune -f --reserved-space 1GB || true
     fi
+}
+
+cleanup_after_deploy() {
+    echo "[deploy] Cleaning up old images and build cache..."
+    if [ -n "${OLD_IMG:-}" ] && [ "${OLD_IMG}" != "none" ] && [ "${OLD_IMG}" != "${LATEST_IMG}" ]; then
+        echo "[deploy] Pruning previous container image (${OLD_IMG})..."
+        run_docker docker rmi "${OLD_IMG}" 2>/dev/null || true
+    fi
+    run_docker docker image prune -f || true
+    run_docker docker builder prune -f --reserved-space 2GB || true
 }
 
 check_env() {
@@ -190,6 +201,7 @@ fi
 echo "[deploy] Active PM2 Process List:"
 run_docker docker exec "${CONTAINER}" /usr/local/bin/pm2 list 2>/dev/null || true
 
+cleanup_after_deploy
 echo ""
 echo "[deploy] Deployment complete!"
 echo "[deploy] Endpoints:"

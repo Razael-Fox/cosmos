@@ -57,9 +57,10 @@ jobs:
             - name: Prune builder cache if low on disk
               run: |
                   AVAIL=$(df / | awk 'NR==2 {print $4}')
-                  if [ "$AVAIL" -lt 5242880 ]; then
-                    echo "Low disk space detected, pruning builder cache..."
-                    docker builder prune -f
+                  if [ "$AVAIL" -lt 10485760 ]; then
+                    echo "Disk space below 10GB, trimming builder cache and dangling images..."
+                    docker image prune -f || true
+                    docker builder prune -f --reserved-space 2GB || true
                   fi
 
             - name: Build and push Docker image
@@ -81,3 +82,11 @@ jobs:
               run: |
                   docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
                     | grep -E '"digest"|"mediaType"' | head -6
+
+            - name: Post-build cleanup
+              if: always()
+              run: |
+                  echo "Pruning dangling images and trimming builder cache..."
+                  docker image prune -f || true
+                  docker builder prune -f --reserved-space 2GB || true
+                  df -h /
