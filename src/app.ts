@@ -10,7 +10,7 @@ import { subbotRoutes } from './routes/subbots.js';
 import { internalRoutes } from './routes/internal.js';
 import { wsRoutes } from './routes/ws.js';
 import { systemRoutes } from './routes/system.js';
-
+import { decisionRoutes } from './routes/decision.js';
 export function buildApp(): FastifyInstance {
     const app = Fastify({
         logger: config.NODE_ENV !== 'test',
@@ -44,6 +44,7 @@ export function buildApp(): FastifyInstance {
     app.register(groupRoutes, { prefix: '/api/v1/groups' });
     app.register(subbotRoutes, { prefix: '/api/v1/subbots' });
     app.register(systemRoutes, { prefix: '/api/v1/system' });
+    app.register(decisionRoutes, { prefix: '/api/v1/decision' });
     app.register(internalRoutes, { prefix: '/internal' });
     app.register(wsRoutes, { prefix: '/ws' });
 
