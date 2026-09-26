@@ -32,10 +32,10 @@ async function runTests() {
 
     // Clean up test directories if leftover
     for (const num of [TEST_SUBBOT_NUM, TEST_SUBBOT_NUM_2]) {
-        const dir = path.resolve(process.cwd(), 'database', num);
-        if (fs.existsSync(dir)) {
-            fs.rmSync(dir, { recursive: true, force: true });
-        }
+        const dir1 = path.resolve(process.cwd(), 'database', num);
+        const dir2 = path.resolve(process.cwd(), 'storage', 'sub-bot', num);
+        if (fs.existsSync(dir1)) fs.rmSync(dir1, { recursive: true, force: true });
+        if (fs.existsSync(dir2)) fs.rmSync(dir2, { recursive: true, force: true });
         clearConfigCache(num);
     }
     clearAllCancellableSessions();
@@ -44,11 +44,19 @@ async function runTests() {
         // [Test 1] Isolated Per-Bot Database Storage
         console.log('[Test 1] Testing Isolated Database Storage...');
         const client1 = getPrismaClient(`sub_${TEST_SUBBOT_NUM}`);
-        const dbPath1 = path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM, 'database.sqlite');
+        const dbPath1 = fs.existsSync(
+            path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM, 'database.sqlite')
+        )
+            ? path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM, 'database.sqlite')
+            : path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM, 'database.sqlite');
         assert(fs.existsSync(dbPath1), 'Sub-bot 1 SQLite file must exist');
 
         const client2 = getPrismaClient(`sub_${TEST_SUBBOT_NUM_2}`);
-        const dbPath2 = path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM_2, 'database.sqlite');
+        const dbPath2 = fs.existsSync(
+            path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM_2, 'database.sqlite')
+        )
+            ? path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM_2, 'database.sqlite')
+            : path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM_2, 'database.sqlite');
         assert(fs.existsSync(dbPath2), 'Sub-bot 2 SQLite file must exist');
 
         // Verify data isolation: create a group in sub-bot 1 DB
@@ -247,7 +255,7 @@ async function runTests() {
         // [Test 8] Deletion of Sub-Bot Data
         console.log('[Test 8] Testing Sub-Bot Deletion...');
         await deleteSubBot(TEST_SUBBOT_NUM);
-        const dirAfterDelete = path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM);
+        const dirAfterDelete = path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM);
         assert(!fs.existsSync(dirAfterDelete), 'Database directory must be removed on deleteSubBot');
         console.log('✓ Sub-bot deletion verified.\n');
 
@@ -257,10 +265,10 @@ async function runTests() {
     } finally {
         // Cleanup remaining files
         for (const num of [TEST_SUBBOT_NUM, TEST_SUBBOT_NUM_2]) {
-            const dir = path.resolve(process.cwd(), 'database', num);
-            if (fs.existsSync(dir)) {
-                fs.rmSync(dir, { recursive: true, force: true });
-            }
+            const dir1 = path.resolve(process.cwd(), 'database', num);
+            const dir2 = path.resolve(process.cwd(), 'storage', 'sub-bot', num);
+            if (fs.existsSync(dir1)) fs.rmSync(dir1, { recursive: true, force: true });
+            if (fs.existsSync(dir2)) fs.rmSync(dir2, { recursive: true, force: true });
             clearConfigCache(num);
         }
         clearAllCancellableSessions();

@@ -60,7 +60,7 @@
         "owner_request_message_id": "*Message ID:* ```{{messageId}}```",
         "owner_request_user": "*Requester Username:* {{name}}",
         "owner_request_phone": "*WhatsApp Number:* {{number}}",
-        "owner_request_next_steps": "*Next Steps:*\n1. If an invite link is available, run `.tgadd <invite-link>` so the dummy account joins automatically.\n2. Otherwise, join the group manually using the dummy account, then register it with `.tgadd <link-or-chat-id>`.\n3. The requester may retry the same command afterwards."
+        "owner_request_next_steps": "*Next Steps:*\n1. If an invite link is available, run `.tg add <invite-link>` so the dummy account joins automatically.\n2. Otherwise, join the group manually using the dummy account, then register it with `.tg add <link-or-chat-id>`.\n3. The requester may retry the same command afterwards."
     },
     "pinterestdl": {
         "document_version": "Document version",

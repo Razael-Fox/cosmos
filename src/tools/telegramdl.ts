@@ -120,10 +120,10 @@ async function notifyOwnerOfPendingChat(ctx: ToolContext, telegramUrl: string, r
 
     html +=
         '\n<b>Next Steps:</b>\n' +
-        `1. Join the group above using the dummy account (invite links can be joined automatically via <code>.tgadd ${escapeHtml(
+        `1. Join the group above using the dummy account (invite links can be joined automatically via <code>.tg add ${escapeHtml(
             ref.inviteHash ? telegramUrl : '<invite-link>'
         )}</code>).\n` +
-        '2. Register the chat with <code>.tgadd &lt;link-or-chat-id&gt;</code>.\n' +
+        '2. Register the chat with <code>.tg add &lt;link-or-chat-id&gt;</code>.\n' +
         '3. The requester may retry the same command afterwards.';
 
     console.log('[TelegramDL Tool] Forwarding private chat request to the backup Telegram bot.');
@@ -243,7 +243,7 @@ export const definition: ToolDefinition = {
     name: 'telegramdl',
     title: 'Telegram Downloader',
     category: 'Downloaders',
-    aliases: ['.tg', '.tgdl', '.tele', '.telegram'],
+    aliases: ['.tg', '.tgdl', '.tele', '.telegram', 'telegram dl', '.telegram dl', 'tg dl', '.tg dl'],
     description:
         'Downloads media from a Telegram post link (t.me). Public posts are fetched directly, while posts from registered private groups are proxied through the dummy account.',
     descriptionKey: 'tools.commands.telegramdl.description',

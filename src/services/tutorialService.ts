@@ -38,10 +38,10 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'setor',
             'tarik'
         ],
-        relatedCommands: ['bank', 'transfer'],
+        relatedCommands: ['bank', 'transfer', 'bank register', 'bank deposit', 'bank withdraw', 'bank statement'],
         localizedRelatedCommands: {
-            en: ['bank', 'transfer'],
-            id: ['bank', 'transfer', 'rekening']
+            en: ['bank', 'transfer', 'bank register', 'bank deposit', 'bank withdraw', 'bank statement'],
+            id: ['bank', 'transfer', 'rekening', 'bank register', 'bank deposit', 'bank withdraw', 'bank statement']
         },
         steps: [
             {
@@ -142,7 +142,7 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'slot',
             'coinflip',
             'dice',
-            'daily',
+            'daily claim',
             'fever time',
             'vault',
             'balance',
@@ -151,8 +151,8 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'top global'
         ],
         localizedRelatedCommands: {
-            en: ['slot', 'coinflip', 'dice', 'daily', 'vault', 'balance'],
-            id: ['slot', 'coinflip', 'dice', 'daily', 'brankas', 'saldo', 'judi']
+            en: ['slot', 'coinflip', 'dice', 'daily claim', 'vault', 'balance'],
+            id: ['slot', 'coinflip', 'dice', 'daily claim', 'brankas', 'saldo', 'judi']
         },
         steps: [
             {
@@ -187,10 +187,10 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'tembak',
             'russianroulette'
         ],
-        relatedCommands: ['creategame', 'joingame', 'startgame', 'shoot', 'use', 'bet'],
+        relatedCommands: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
         localizedRelatedCommands: {
-            en: ['creategame', 'joingame', 'startgame', 'shoot', 'use', 'bet'],
-            id: ['creategame', 'joingame', 'startgame', 'shoot', 'use', 'bet']
+            en: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
+            id: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet']
         },
         steps: [
             {
@@ -241,10 +241,10 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         titleKey: 'tools.tutorials.idcard.header',
         prerequisiteKeys: ['tools.tutorials.idcard.prereq'],
         aliases: ['idcard', 'ktp', 'register id', 'check id', 'identitas', 'cancel', 'batal', 'profile', 'profil'],
-        relatedCommands: ['idcard', 'cancel', 'profile'],
+        relatedCommands: ['register id', 'check id', 'my profile', 'cancel'],
         localizedRelatedCommands: {
-            en: ['idcard', 'cancel', 'profile'],
-            id: ['idcard', 'ktp', 'batal', 'profil']
+            en: ['register id', 'check id', 'my profile', 'cancel'],
+            id: ['register id', 'check id', 'my profile', 'ktp', 'batal']
         },
         steps: [
             {
@@ -314,10 +314,10 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'tgdel',
             'unduh'
         ],
-        relatedCommands: ['tiktokdl', 'ytdl', 'pinterestdl', 'telegramdl', 'tgadd', 'tglist', 'tgdel'],
+        relatedCommands: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del'],
         localizedRelatedCommands: {
-            en: ['tiktokdl', 'ytdl', 'pinterestdl', 'telegramdl', 'tgadd'],
-            id: ['tiktokdl', 'ytdl', 'pinterestdl', 'telegramdl', 'tgadd', 'unduh']
+            en: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del'],
+            id: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del', 'unduh']
         },
         steps: [
             {
@@ -357,15 +357,31 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         relatedCommands: [
             'sara',
             'stt',
-            'startautocorrection',
-            'stopautocorrection',
-            'toggleautocorrection',
-            'toggleofflineai',
+            'start autocorrect',
+            'stop autocorrect',
+            'toggle autocorrect',
+            'toggle offline ai',
             'contact'
         ],
         localizedRelatedCommands: {
-            en: ['sara', 'stt', 'contact', 'startautocorrection'],
-            id: ['sara', 'stt', 'kontak', 'startautocorrection']
+            en: [
+                'sara',
+                'stt',
+                'contact',
+                'start autocorrect',
+                'stop autocorrect',
+                'toggle autocorrect',
+                'toggle offline ai'
+            ],
+            id: [
+                'sara',
+                'stt',
+                'kontak',
+                'start autocorrect',
+                'stop autocorrect',
+                'toggle autocorrect',
+                'toggle offline ai'
+            ]
         },
         steps: [
             {
@@ -406,10 +422,18 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'jual',
             'inventori'
         ],
-        relatedCommands: ['market', 'shop', 'catalog', 'buy', 'sell', 'inventory', 'forceupdate'],
+        relatedCommands: [
+            'market',
+            'shop',
+            'property catalog',
+            'shop buy',
+            'property sell',
+            'property inventory',
+            'forceupdate'
+        ],
         localizedRelatedCommands: {
-            en: ['market', 'shop', 'catalog', 'buy', 'sell', 'inventory'],
-            id: ['market', 'shop', 'catalog', 'beli', 'jual', 'inventory', 'pasar']
+            en: ['market', 'shop', 'property catalog', 'shop buy', 'property sell', 'property inventory'],
+            id: ['market', 'shop', 'property catalog', 'shop buy', 'property sell', 'property inventory', 'pasar']
         },
         steps: [
             {
@@ -479,16 +503,16 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         relatedCommands: [
             'rule34',
             'togglensfw',
-            'autodl',
-            'setgrouplang',
-            'setlang',
+            'auto dl',
+            'set group lang',
+            'set lang',
             'rvo',
             'quoted',
-            'getprofilephoto'
+            'profile photo'
         ],
         localizedRelatedCommands: {
-            en: ['rule34', 'togglensfw', 'autodl', 'setlang', 'rvo'],
-            id: ['rule34', 'togglensfw', 'autodl', 'setlang', 'setgrouplang', 'rvo']
+            en: ['rule34', 'togglensfw', 'auto dl', 'set lang', 'set group lang', 'profile photo', 'rvo'],
+            id: ['rule34', 'togglensfw', 'auto dl', 'set lang', 'set group lang', 'profile photo', 'rvo']
         },
         steps: [
             {
@@ -533,10 +557,10 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'auto archive',
             'archive'
         ],
-        relatedCommands: ['system_info', 'help', 'menu', 'whitelist', 'verify', 'my plan', 'subscription', 'quota'],
+        relatedCommands: ['system info', 'help', 'menu', 'whitelist', 'verify', 'my plan', 'subscription', 'my quota'],
         localizedRelatedCommands: {
-            en: ['system_info', 'help', 'menu', 'my plan', 'subscription', 'quota', 'whitelist', 'verify'],
-            id: ['system_info', 'help', 'menu', 'my plan', 'sub', 'quota', 'whitelist', 'verifikasi']
+            en: ['system info', 'help', 'menu', 'my plan', 'subscription', 'my quota', 'whitelist', 'verify'],
+            id: ['system info', 'help', 'menu', 'my plan', 'sub', 'my quota', 'whitelist', 'verifikasi']
         },
         steps: [
             {

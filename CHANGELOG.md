@@ -9,6 +9,24 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+### Changed
+
+- **Greedy Longest-Prefix Multi-Word Command Matching (`src/handlers/message.ts`, Rule AF):**
+    - Upgraded multi-token command resolution from a fixed two-token lookup to greedy longest-prefix matching (evaluating 4 tokens down to 2 tokens), properly resolving 3-token and 4-token commands (e.g. `.set group lang`, `.toggle offline ai`) and isolating trailing arguments without rigid token slicing.
+    - Routed canonical `.group add` and `.group del` commands through the message router alongside legacy `.addgroup` and `.delgroup` with identical ACL enforcement and QuotaService locks.
+
+- **Tutorial Service & Commands Context Synchronization (`src/services/tutorialService.ts`, `docs/COMMANDS_CONTEXT.md`):**
+    - Updated `relatedCommands` and `localizedRelatedCommands` across all tutorial suites to reference canonical multi-token commands while maintaining 100% tool coverage.
+    - Synchronized command syntax headers and examples in `docs/COMMANDS_CONTEXT.md` to reflect canonical spaced commands for Sara AI knowledge grounding.
+
+### Fixed
+
+- **Canonical Spaced Command Synchronization in User Outputs & Locales (Issue #39, PR #40, Rule AF):**
+    - Synchronized user-facing prompt strings, error hints, and interactive quick tips across `src/locales/en/` and `src/locales/id/` (`tools.json`, `games.json`, `media.json`, `utilities.json`, `core.json`) to use canonical space-separated commands (`.set lang`, `.set group lang`, `.daily claim`, `.shop buy`, `.property sell`, `.property catalog`, `.property inventory`, `.tg add`, `.tg del`, `.tg list`, `.auto dl`, `.tiktok dl`, `.yt dl`, `.pinterest dl`, `.telegram dl`, `.whitelist all`, `.group add`, `.group del`, `.start autocorrect`, `.stop autocorrect`, `.toggle autocorrect`, `.toggle offline ai`, `.create game`, `.join game`, `.start game`, `.register id`, `.check id`, `.my profile`, `.my quota`, `.system info`).
+    - Added multi-token spaced aliases to tool definitions (`setlang`, `setgrouplang`, `tgadd`, `tgdel`, `tglist`, `autodl`, `tiktokdl`, `ytdl`, `pinterestdl`, `telegramdl`, `whitelist`).
+    - Remediated hardcoded unspaced command strings in `src/tools/` (`profile.ts`, `balance.ts`, `tglist.ts`, `whitelist.ts`, `telegramdl.ts`, `autoarchive.ts`).
+    - Expanded `LEGACY_COMMAND_MAP` in `src/utils/commandFormat.ts` to map transitioned legacy single-token triggers to canonical spaced commands with automatic deprecation guidance notices.
+
 ---
 
 ## [RF-2609-19] - 2026-09-25

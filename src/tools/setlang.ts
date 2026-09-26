@@ -7,7 +7,7 @@ export const definition: ToolDefinition = {
     name: 'setlang',
     title: 'Set Language',
     category: 'Settings',
-    aliases: ['language', 'lang', 'ubahbahasa'],
+    aliases: ['set lang', '.set lang', 'ubah bahasa', '.ubah bahasa', 'language', 'lang', 'ubahbahasa'],
     description: 'Set your preferred bot language (e.g. id, en).',
     descriptionKey: 'tools.commands.setlang.description',
     parameters: {
@@ -31,7 +31,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     let rawLang = args.language;
     if (!rawLang) {
         const text = ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '';
-        const match = text.match(/^[./!#]?(?:setlang|language|lang|ubahbahasa)\s+(\S+)/i);
+        const match = text.match(/^[./!#]?(?:set\s+lang|ubah\s+bahasa|setlang|language|lang|ubahbahasa)\s+(\S+)/i);
         if (match) {
             rawLang = match[1].trim();
         }

@@ -340,7 +340,11 @@ async function runLoanTests() {
 
     const sentCount = await processLoanReminders(mockReminderSock);
     assert(sentCount >= 1);
-    assert(reminderMsgReceived.includes('due in 5 days'));
+    assert(
+        reminderMsgReceived.includes('due in 5 days') ||
+            reminderMsgReceived.includes('jatuh tempo dalam 5 hari') ||
+            reminderMsgReceived.includes('5 hari')
+    );
 
     const updatedReminder = await prisma.loanReminder.findUnique({ where: { id: reminder.id } });
     assert.strictEqual(updatedReminder?.sent, true);

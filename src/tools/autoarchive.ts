@@ -120,7 +120,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                     'tools.autoarchive.missing_target',
                     'Please specify a valid group JID or invoke this command inside a group chat.'
                 ),
-                footer: '💡 Usage: .archive <groupJid>',
+                footer: '💡 Usage: .auto archive <groupJid>',
                 t
             });
             await sock.sendMessage(jid, { text: errorCard }, { quoted: msg });
@@ -172,7 +172,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                     'tools.autoarchive.missing_target',
                     'Please specify a valid group JID or invoke this command inside a group chat.'
                 ),
-                footer: '💡 Usage: .unarchive <groupJid>',
+                footer: '💡 Usage: .auto archive <groupJid>',
                 t
             });
             await sock.sendMessage(jid, { text: errorCard }, { quoted: msg });
@@ -228,7 +228,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                 { label: 'Status', value: 'ENABLED' },
                 { label: 'Updated By', value: callerJid || 'Bot Owner' }
             ],
-            footer: '💡 Tip: To manually archive a specific chat, use .archive <groupJid>',
+            footer: '💡 Tip: To manually archive a specific chat, use .auto archive <groupJid>',
             t
         });
         await sock.sendMessage(jid, { text: card }, { quoted: msg });

@@ -674,18 +674,21 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 commandName = rawCmd;
                 argsStr = trimmedText.substring(parts[0].length).trim();
 
-                // Multi-word command resolution (attempt two-token lookup before single-token)
-                if (parts.length >= 2) {
-                    const twoTokenCandidate = `${rawCmd} ${parts[1]}`;
-                    if (toolsHandler.getTool(twoTokenCandidate)) {
-                        commandName = twoTokenCandidate;
-                        const match = trimmedText.match(/^\S+\s+\S+/);
+                // Multi-word command resolution (greedy longest-prefix matching from 4 words down to 2)
+                const maxTokens = Math.min(parts.length, 4);
+                for (let len = maxTokens; len >= 2; len--) {
+                    const candidate = `${rawCmd} ${parts.slice(1, len).join(' ')}`;
+                    if (toolsHandler.getTool(candidate)) {
+                        commandName = candidate;
+                        const pattern = new RegExp(`^\\S+(?:\\s+\\S+){${len - 1}}`);
+                        const match = trimmedText.match(pattern);
                         argsStr = match ? trimmedText.substring(match[0].length).trim() : '';
+                        break;
                     }
                 }
             }
 
-            if (commandName === '.addgroup' || commandName === '.addwhitelist') {
+            if (commandName === '.addgroup' || commandName === '.addwhitelist' || commandName === '.group add') {
                 console.log('Command executed', { command: '.addgroup', jid });
                 if (!jid.endsWith('@g.us')) {
                     await sock.sendMessage(jid, { text: t('core.group_only') });
@@ -745,7 +748,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 return;
             }
 
-            if (commandName === '.delgroup' || commandName === '.removewhitelist') {
+            if (commandName === '.delgroup' || commandName === '.removewhitelist' || commandName === '.group del') {
                 console.log('Command executed', { command: '.delgroup', jid });
                 if (!jid.endsWith('@g.us')) {
                     await sock.sendMessage(jid, { text: t('core.group_only') });

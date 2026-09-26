@@ -6,7 +6,7 @@ export const definition: ToolDefinition = {
     name: 'tgadd',
     title: 'Register Private Telegram Chat',
     category: 'Downloaders',
-    aliases: ['.tgadd'],
+    aliases: ['.tgadd', 'tg add', '.tg add'],
     owner: true,
     description:
         'Registers a private Telegram chat so its media can be proxied. Accepts an invite link (the dummy account joins automatically), a private post link, or a raw numeric chat id.',

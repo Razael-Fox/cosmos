@@ -5,7 +5,7 @@
         "amount": "Saldo Anda saat ini: {{amount}}",
         "keep_playing": "Terus bermain dan klaim reward harian Anda!",
         "other_user": "@{{user}} saat ini memiliki {{amount}}.",
-        "no_account": "Anda belum memiliki akun. Gunakan .daily untuk memulai.",
+        "no_account": "Anda belum memiliki akun. Gunakan .daily claim untuk memulai.",
         "owner_only_other": "❌ Hanya pemilik bot yang dapat memeriksa saldo pengguna lain.",
         "financial_balance": "SALDO KEUANGAN",
         "wallet_balance": "Saldo Dompet",
@@ -16,7 +16,7 @@
         "unregistered": "Belum Terdaftar",
         "active": "Aktif",
         "quick_actions": "Aksi Cepat:",
-        "tip_daily": "Ketik .daily untuk mengklaim hadiah harian gratis.",
+        "tip_daily": "Ketik .daily claim untuk mengklaim hadiah harian gratis.",
         "tip_bank": "Ketik .bank deposit <jumlah> untuk mengamankan dana dengan bunga harian 0.5%."
     },
     "daily": {
@@ -41,12 +41,12 @@
         "tip_work": "Kerjakan shift dengan .work sambil menunggu reset harian Anda!"
     },
     "setlang": {
-        "usage": "Format tidak valid. Gunakan: .setlang <id|en>",
+        "usage": "Format tidak valid. Gunakan: .set lang <id|en>",
         "success": "Bahasa Anda telah diubah ke {{language}}.",
         "unsupported": "Bahasa '{{lang}}' tidak didukung. Bahasa yang didukung: {{supported}}"
     },
     "setgrouplang": {
-        "usage": "Format tidak valid. Gunakan: .setgrouplang <id|en>",
+        "usage": "Format tidak valid. Gunakan: .set group lang <id|en>",
         "success": "Bahasa grup telah diubah ke {{language}}.",
         "unsupported": "Bahasa '{{lang}}' tidak didukung. Bahasa yang didukung: {{supported}}",
         "admin_only": "Hanya admin grup atau pemilik bot yang dapat mengubah bahasa grup."
@@ -391,23 +391,23 @@
         "buy_success": "Berhasil membeli {{item}} seharga {{price}}.",
         "insufficient_funds": "Saldo Anda tidak mencukupi untuk membeli item ini.",
         "all_items_hint": "• `.shop items` _(Lihat semua item umum)_\n\n",
-        "usage": "*Penggunaan:*\n• Ketik `.shop <kategori>` untuk melihat item dalam suatu kategori.\n• Ketik `.buy <short_id> [jumlah]` untuk membeli item.",
+        "usage": "*Penggunaan:*\n• Ketik `.shop <kategori>` untuk melihat item dalam suatu kategori.\n• Ketik `.shop buy <short_id> [jumlah]` untuk membeli item.",
         "property_catalog_empty": "Katalog properti saat ini kosong.",
         "property_catalog_title": "*🏬 Katalog Properti Cosmos*\n\n",
-        "property_usage": "_Gunakan `.buy <nama_properti>` untuk membeli properti._",
+        "property_usage": "_Gunakan `.shop buy <nama_properti>` untuk membeli properti._",
         "no_items_category": "Item tidak ditemukan dalam kategori \"{{category}}\". Gunakan `.shop` untuk melihat kategori yang tersedia.",
         "items_title": "*🛍️ Toko Cosmos - {{title}}*\n\n",
-        "buy_hint": "_Untuk membeli item, gunakan: `.buy <short_id> [jumlah]`_",
+        "buy_hint": "_Untuk membeli item, gunakan: `.shop buy <short_id> [jumlah]`_",
         "categories_title": "*🏬 Toko Cosmos - Kategori*",
         "categories_select": "Pilih kategori untuk dijelajahi:",
         "categories_items_view": "• `.shop items` _(Lihat semua item umum)_",
-        "categories_usage": "*Penggunaan:*\n• Ketik `.shop <kategori>` untuk melihat item dalam suatu kategori.\n• Ketik `.buy <short_id> [jumlah]` untuk membeli item.",
+        "categories_usage": "*Penggunaan:*\n• Ketik `.shop <kategori>` untuk melihat item dalam suatu kategori.\n• Ketik `.shop buy <short_id> [jumlah]` untuk membeli item.",
         "properties_empty": "Katalog properti saat ini kosong.",
         "properties_title": "*🏬 Katalog Properti Cosmos*\n\n",
-        "properties_buy_tip": "_Gunakan `.buy <nama_properti>` untuk membeli properti._",
+        "properties_buy_tip": "_Gunakan `.shop buy <nama_properti>` untuk membeli properti._",
         "no_items": "Tidak ada item yang ditemukan dalam kategori \"{{category}}\". Gunakan `.shop` untuk melihat kategori yang tersedia.",
         "header_title": "*🛍️ Toko Cosmos - {{title}}*",
-        "buy_tip": "_Untuk membeli item, gunakan: `.buy <short_id> [jumlah]`_",
+        "buy_tip": "_Untuk membeli item, gunakan: `.shop buy <short_id> [jumlah]`_",
         "directory_title": "DIREKTORI TOKO COSMOS",
         "available_categories": "KATEGORI YANG TERSEDIA",
         "category_properties": "Properti",
@@ -421,14 +421,14 @@
         "shop_header": "TOKO COSMOS - {{title}}"
     },
     "property_buy": {
-        "specify_target": "Silakan tentukan item atau properti yang ingin Anda beli. Format: `.buy <short_id> [jumlah]`",
+        "specify_target": "Silakan tentukan item atau properti yang ingin Anda beli. Format: `.shop buy <short_id> [jumlah]`",
         "insufficient_funds_item": "Saldo Anda tidak mencukupi untuk membeli {{quantity}}x *{{name}}*. Total biaya: {{cost}}, saldo Anda: {{balance}}.",
         "buy_item_success": "🎉 Pembelian berhasil! Anda membeli *{{quantity}}x {{name}}* seharga *{{cost}}*.\nSisa saldo: *{{remaining}}*.",
         "not_found": "Item atau properti \"{{target}}\" tidak ditemukan. Gunakan `.shop` untuk melihat item yang tersedia.",
         "already_owned": "Anda sudah memiliki *{{name}}*. Anda tidak dapat membeli properti yang sama lebih dari satu kali.",
         "insufficient_funds_property": "Saldo Anda tidak mencukupi untuk membeli {{name}}. Harga properti {{cost}}, saldo Anda: {{balance}}.",
         "buy_property_success": "🎉 Selamat! Anda telah berhasil membeli *{{name}}* seharga {{cost}}.",
-        "specify_item": "Silakan tentukan item atau properti yang ingin Anda beli. Format: `.buy <short_id> [jumlah]`",
+        "specify_item": "Silakan tentukan item atau properti yang ingin Anda beli. Format: `.shop buy <short_id> [jumlah]`",
         "insufficient_item_funds": "Saldo Anda tidak mencukupi untuk membeli {{quantity}}x *{{name}}*. Total biaya: {{cost}}, saldo Anda: {{balance}}.",
         "item_success": "🎉 Pembelian berhasil! Anda membeli *{{quantity}}x {{name}}* seharga *{{cost}}*.\nSisa saldo: *{{balance}}*.",
         "insufficient_prop_funds": "Saldo Anda tidak mencukupi untuk membeli {{name}}. Harga properti {{cost}}, saldo Anda: {{balance}}.",
@@ -453,7 +453,7 @@
         "items_title": "*Item & Perlengkapan:*\n",
         "properties_title": "*Properti yang Dimiliki:*\n",
         "other_assets_title": "*Aset Lainnya:*\n",
-        "footer": "_Gunakan `.shop` untuk membeli lebih banyak item atau `.sell <nama_properti>` untuk menjual properti._",
+        "footer": "_Gunakan `.shop list` untuk membeli lebih banyak item atau `.property sell <nama_properti>` untuk menjual properti._",
         "items_header": "*Item & Perlengkapan:*",
         "quantity_label": "   Jumlah: {{quantity}}",
         "type_label": "   Tipe: {{type}}",
@@ -461,7 +461,7 @@
         "original_value_label": "   Nilai Asli: {{price}}",
         "acquired_label": "   Diperoleh: {{date}}",
         "other_assets_header": "*Aset Lainnya:*",
-        "footer_tip": "_Gunakan `.shop` untuk membeli lebih banyak item atau `.sell <nama_properti>` untuk melikuidasi properti._",
+        "footer_tip": "_Gunakan `.shop list` untuk membeli lebih banyak item atau `.property sell <nama_properti>` untuk melikuidasi properti._",
         "section_items": "ITEM & PERALATAN",
         "section_properties": "PROPERTI DIMILIKI",
         "section_other": "ASET LAINNYA",
@@ -472,7 +472,7 @@
         "not_available": "T/A"
     },
     "property_sell": {
-        "specify_property": "Silakan tentukan nama properti yang akan dijual. Format: .sell <nama_properti> <negosiasi_opsional>",
+        "specify_property": "Silakan tentukan nama properti yang akan dijual. Format: .property sell <nama_properti> <negosiasi_opsional>",
         "not_owned": "Anda tidak memiliki properti bernama \"{{name}}\" atau properti tersebut sudah digadaikan/dijual.",
         "definition_not_found": "Definisi properti tidak ditemukan untuk {{name}}.",
         "negotiation_failed_fallback": "Saya saat ini tidak dapat bernegosiasi. Saya akan memberikan penawaran standar.",
@@ -483,7 +483,7 @@
         "negotiated_price": "Harga Kesepakatan Negosiasi: {{price}}\n\n",
         "broker_says": "*Broker berkata:* \"{{message}}\"",
         "final_price": "Harga Kesepakatan Akhir: {{price}}\n\n",
-        "negotiate_hint": "_Anda dapat menegosiasikan harga dengan menggunakan: .sell {{name}} <pesan persuasi Anda>_"
+        "negotiate_hint": "_Anda dapat menegosiasikan harga dengan menggunakan: .property sell {{name}} <pesan persuasi Anda>_"
     },
     "autodl": {
         "invalid_platform": "❌ Platform tidak valid. Didukung: tiktok, ig, pin, yt, tg, twitter, fb, threads, autodelete, all.",
@@ -525,12 +525,12 @@
         "card_title": "Berikut adalah KTP Virtual Anda.\n\n"
     },
     "offlineai": {
-        "activated": "🤖 *Offline AI Responder DIAKTIFKAN*\n\nPesan masuk sekarang akan menerima balasan AI santai saat Anda offline.\n\nKetik *.toggleofflineai* lagi untuk menonaktifkan.",
+        "activated": "🤖 *Offline AI Responder DIAKTIFKAN*\n\nPesan masuk sekarang akan menerima balasan AI santai saat Anda offline.\n\nKetik *.toggle offline ai* lagi untuk menonaktifkan.",
         "deactivated": "🔴 *Offline AI Responder DINONAKTIFKAN*"
     },
     "autocorrection": {
-        "already_active": "⚠️ *Peringatan:* Auto-Correction sudah AKTIF dalam obrolan ini! Jika ingin menonaktifkannya, ketik *.stopautocorrection*.",
-        "activated": "✨ *Auto-Correction DIAKTIFKAN* untuk obrolan ini.\n\nPesan terkirim akan otomatis dianalisis dan diperbaiki oleh AI OpenRouter jika terdeteksi salah ketik atau kata yang keliru.\n\nKetik *.stopautocorrection* (atau *.autocorrect*) untuk menonaktifkan.",
+        "already_active": "⚠️ *Peringatan:* Auto-Correction sudah AKTIF dalam obrolan ini! Jika ingin menonaktifkannya, ketik *.stop autocorrect*.",
+        "activated": "✨ *Auto-Correction DIAKTIFKAN* untuk obrolan ini.\n\nPesan terkirim akan otomatis dianalisis dan diperbaiki oleh AI OpenRouter jika terdeteksi salah ketik atau kata yang keliru.\n\nKetik *.stop autocorrect* (atau *.toggle autocorrect*) untuk menonaktifkan.",
         "not_active": "⚠️ *Peringatan:* Auto-Correction tidak aktif dalam obrolan ini.",
         "deactivated": "🔴 *Auto-Correction DINONAKTIFKAN* untuk obrolan ini."
     },
@@ -545,12 +545,12 @@
         "register_success": "Sukses: Chat {{chatId}}{{title}} telah didaftarkan. Harap pastikan akun dummy adalah anggota grup tersebut."
     },
     "tgdel": {
-        "specify_id": "Error: Harap berikan ID chat numerik, contoh .tgdel 1234567890. Gunakan .tglist untuk melihat chat yang terdaftar.",
+        "specify_id": "Error: Harap berikan ID chat numerik, contoh .tg del 1234567890. Gunakan .tg list untuk melihat chat yang terdaftar.",
         "not_found": "Error: Chat {{chatId}} tidak ditemukan dalam registri.",
         "success": "Sukses: Chat {{chatId}} telah dihapus dari registri dan tidak dapat lagi diproksi."
     },
     "tglist": {
-        "empty": "Belum ada chat privat Telegram yang terdaftar. Gunakan .tgadd untuk mendaftarkannya.",
+        "empty": "Belum ada chat privat Telegram yang terdaftar. Gunakan .tg add untuk mendaftarkannya.",
         "title": "*Chat Privat Telegram yang Terdaftar ({{count}}):*\n\n",
         "untitled": "Obrolan tanpa judul",
         "chat_id_label": "ID Obrolan:",
@@ -809,7 +809,7 @@
             "description": "Mengajukan Surat Izin Mengemudi (SIM) virtual. Memerlukan KTP yang sah dan usia >= 17 tahun."
         },
         "autodl": {
-            "description": "Mengatur unduhan otomatis tautan di grup ini. Contoh: .autodl tiktok on, .autodl ig off, .autodl list"
+            "description": "Mengatur unduhan otomatis tautan di grup ini. Contoh: .auto dl tiktok on, .auto dl ig off, .auto dl list"
         },
         "balance": {
             "description": "Memeriksa saldo Anda saat ini atau saldo pengguna lain."
@@ -1269,14 +1269,14 @@
     "whitelist": {
         "list_title": "Daftar Grup WhatsApp",
         "no_groups": "Bot saat ini tidak bergabung dalam grup WhatsApp mana pun.",
-        "list_summary": "Total: {{total}} grup ({{whitelisted}} Masuk Whitelist, {{unwhitelisted}} Belum Whitelist) • Auto-Whitelist: {{autoWl}}\n💡 Gunakan .whitelistall untuk whitelist semua grup sekaligus.",
+        "list_summary": "Total: {{total}} grup ({{whitelisted}} Masuk Whitelist, {{unwhitelisted}} Belum Whitelist) • Auto-Whitelist: {{autoWl}}\n💡 Gunakan .whitelist all untuk whitelist semua grup sekaligus.",
         "all_title": "Status Batch Whitelist",
         "all_already_whitelisted": "Semua {{count}} grup yang diikuti sudah masuk dalam whitelist!",
         "all_success_title": "Batch Whitelist Selesai",
         "all_success_body": "Berhasil menambahkan {{added}} grup baru ke whitelist! Semua grup yang tersedia kini aktif.",
         "auto_title": "Pengaturan Auto-Whitelist",
-        "auto_enabled_body": "Auto-whitelist saat bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup baru yang diikuti bot akan otomatis masuk whitelist tanpa perlu .addgroup.",
-        "auto_disabled_body": "Auto-whitelist saat bergabung grup telah *DINONAKTIFKAN*.\n\nGrup baru memerlukan persetujuan manual menggunakan .addgroup atau .whitelistall.",
+        "auto_enabled_body": "Auto-whitelist saat bergabung grup telah *DIAKTIFKAN*.\n\nSetiap grup baru yang diikuti bot akan otomatis masuk whitelist tanpa perlu .group add.",
+        "auto_disabled_body": "Auto-whitelist saat bergabung grup telah *DINONAKTIFKAN*.\n\nGrup baru memerlukan persetujuan manual menggunakan .group add atau .whitelist all.",
         "dashboard_title": "Suite Manajemen Whitelist Grup"
     },
     "autoarchive": {
@@ -1325,9 +1325,9 @@
         "bank": {
             "header": "📖 *PANDUAN: BANK SENTRAL COSMOS*",
             "summary": "Pembukaan rekening, setoran, penarikan & transfer aman",
-            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}idcard`)",
+            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}register id`)",
             "step1_title": "1️⃣ REGISTRASI REKENING",
-            "step1_body": "• Ketik `{{prefix}}bank open` atau `{{prefix}}bank register` untuk membuka rekening Bank Sentral.\n• Wajib memiliki Kartu Identitas aktif (`{{prefix}}idcard register`).\n• Cek mutasi dan bunga majemuk harian 0.5% lewat `{{prefix}}bank statement`.",
+            "step1_body": "• Ketik `{{prefix}}bank open` atau `{{prefix}}bank register` untuk membuka rekening Bank Sentral.\n• Wajib memiliki Kartu Identitas aktif (`{{prefix}}register id`).\n• Cek mutasi dan bunga majemuk harian 0.5% lewat `{{prefix}}bank statement`.",
             "step2_title": "2️⃣ SETORAN & PENARIKAN SALDO",
             "step2_body": "• Setor uang: `{{prefix}}bank deposit <jumlah>` (contoh: `{{prefix}}bank deposit 500000` atau `{{prefix}}bank deposit all`).\n• Tarik uang: `{{prefix}}bank withdraw <jumlah>` (contoh: `{{prefix}}bank withdraw 250000` atau `{{prefix}}bank withdraw all`).\n• Saldo di brankas bank memperoleh bunga harian setiap 00:00 UTC.",
             "step3_title": "3️⃣ TRANSFER INTERAKTIF",
@@ -1349,11 +1349,11 @@
         "job": {
             "header": "📖 *PANDUAN: PEKERJAAN, LISENSI & SISTEM GAJI*",
             "summary": "Pendaftaran karir, lisensi berkendara & shift kerja dinamis",
-            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}idcard`)",
+            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}register id`)",
             "step1_title": "1️⃣ PEMILIHAN KARIR & LISENSI",
             "step1_body": "• Lihat pekerjaan: Ketik `{{prefix}}job list` untuk melihat pilihan profesi, gaji pokok, dan cooldown shift.\n• Masuk pekerjaan: `{{prefix}}job join <job_id>` (contoh: `{{prefix}}job join driver`).\n• Ujian lisensi: Ketik `{{prefix}}apply license` untuk memperoleh SIM atau izin kerja khusus.",
             "step2_title": "2️⃣ ALAT KERJA & INVENTARIS",
-            "step2_body": "• Beberapa pekerjaan membutuhkan alat di inventaris (misal: Kurir butuh Motor dari `.shop`).\n• Beli peralatan kerja lewat `{{prefix}}buy <item_id>` dari katalog toko.\n• Periksa alat yang dimiliki menggunakan `{{prefix}}inventory`.",
+            "step2_body": "• Beberapa pekerjaan membutuhkan alat di inventaris (misal: Kurir butuh Motor dari `.shop`).\n• Beli peralatan kerja lewat `{{prefix}}shop buy <item_id>` dari katalog toko.\n• Periksa alat yang dimiliki menggunakan `{{prefix}}property inventory`.",
             "step3_title": "3️⃣ SHIFT KERJA & PENGALI GAJI",
             "step3_body": "• Kerjakan shift: Ketik `{{prefix}}work` untuk mulai bekerja dan mendapatkan gaji.\n• Gaji dihitung otomatis mengacu pada pengali makroekonomi `EconomyMultiplier`.\n• Tunggu masa jeda (cooldown) selesai sebelum memulai shift berikutnya.",
             "footer": "💡 *Tips:* Bekerja secara rutin dan tingkatkan lisensi Anda untuk membuka karir bergaji tinggi."
@@ -1363,7 +1363,7 @@
             "summary": "Slot, coinflip, lempar dadu, klaim harian & brankas saldo",
             "prereq": "📌 *Prasyarat:* Saldo Minimal Taruhan (`Rp10.000`)",
             "step1_title": "1️⃣ EKONOMI & HADIAH HARIAN",
-            "step1_body": "• Cek saldo: `{{prefix}}balance` (atau `{{prefix}}saldo`) untuk melihat saldo dompet dan bank.\n• Klaim hadiah harian: `{{prefix}}daily` setiap 24 jam untuk mendapatkan bonus Rupiah.\n• Kunci keuntungan: `{{prefix}}vault deposit <jumlah>` untuk mengamankan modal di brankas.",
+            "step1_body": "• Cek saldo: `{{prefix}}balance` (atau `{{prefix}}saldo`) untuk melihat saldo dompet dan bank.\n• Klaim hadiah harian: `{{prefix}}daily claim` setiap 24 jam untuk mendapatkan bonus Rupiah.\n• Kunci keuntungan: `{{prefix}}vault deposit <jumlah>` untuk mengamankan modal di brankas.",
             "step2_title": "2️⃣ PERMAINAN KASINO",
             "step2_body": "• Mesin Slot: `{{prefix}}slot <jumlah|all>` (contoh: `{{prefix}}slot 50000`). Samakan simbol untuk jackpot hingga 20x!\n• Lempar Koin: `{{prefix}}coinflip <jumlah> <heads|tails>` untuk taruhan 50/50 menang berlipat.\n• Lempar Dadu: `{{prefix}}dice <jumlah>` untuk mengadu angka dadu melawan bandar.",
             "step3_title": "3️⃣ FEVER TIME & PAPAN PERINGKAT",
@@ -1375,7 +1375,7 @@
             "summary": "Duel shotgun multipemain, item taktikal & strategi gertakan",
             "prereq": "📌 *Prasyarat:* Obrolan Grup & Saldo Taruhan",
             "step1_title": "1️⃣ PEMBUATAN LOBBY & TARUHAN",
-            "step1_body": "• Buat lobby: `{{prefix}}creategame <taruhan>` (contoh: `{{prefix}}creategame 100000`).\n• Gabung duel: Lawan mengetik `{{prefix}}joingame` untuk menyamakan nilai taruhan.\n• Mulai game: Tuan rumah mengetik `{{prefix}}startgame` saat pemain sudah siap.\n• Batal lobby: Ketik `{{prefix}}cancel` sebelum ronde dimulai untuk mengembalikan taruhan.",
+            "step1_body": "• Buat lobby: `{{prefix}}create game <taruhan>` (contoh: `{{prefix}}create game 100000`).\n• Gabung duel: Lawan mengetik `{{prefix}}join game` untuk menyamakan nilai taruhan.\n• Mulai game: Tuan rumah mengetik `{{prefix}}start game` saat pemain sudah siap.\n• Batal lobby: Ketik `{{prefix}}cancel` sebelum ronde dimulai untuk mengembalikan taruhan.",
             "step2_title": "2️⃣ TEMBAKAN & MEKANISME PELURU",
             "step2_body": "• Tabung senapan berisi kombinasi acak antara peluru ASLI dan KOSONG.\n• Tembak lawan: `{{prefix}}shoot @lawan` untuk memberi damage bila peluru asli.\n• Tembak diri: `{{prefix}}shoot self` — jika peluru kosong, Anda lolos damage DAN dapat giliran tambahan!",
             "step3_title": "3️⃣ PENGGUNAAN ITEM TAKTIKAL",
@@ -1391,7 +1391,7 @@
             "step2_title": "2️⃣ MENAUTKAN PERANGKAT DI WHATSAPP",
             "step2_body": "• Buka WhatsApp pada ponsel yang ingin dijadikan bot.\n• Masuk ke menu Setelan > Perangkat Tertaut > Tautkan Perangkat > Tautkan dengan nomor telepon saja.\n• Masukkan kode 8 digit dalam waktu 2 menit untuk otentikasi.\n• Setelah terhubung, nomor Anda aktif menjadi bot Cosmos mandiri yang berjalan 24/7.",
             "step3_title": "3️⃣ KELOLA & CUSTOM API KEY",
-            "step3_body": "• Custom AI Key: Pasang Groq API key pribadi via `{{prefix}}config groq_key <key>`.\n• Pengaturan bahasa: Atur preferensi bahasa bot via `{{prefix}}setlang <id|en>`.\n• Hentikan sub-bot: Ketik `{{prefix}}subbot stop` untuk memutuskan sesi tertaut dengan aman.",
+            "step3_body": "• Custom AI Key: Pasang Groq API key pribadi via `{{prefix}}config groq_key <key>`.\n• Pengaturan bahasa: Atur preferensi bahasa bot via `{{prefix}}set lang <id|en>`.\n• Hentikan sub-bot: Ketik `{{prefix}}subbot stop` untuk memutuskan sesi tertaut dengan aman.",
             "footer": "💡 *Tips:* Selalu pasang kunci API rahasia di pesan pribadi (DM) agar tidak bocor di grup."
         },
         "idcard": {
@@ -1399,11 +1399,11 @@
             "summary": "Pendaftaran KTP virtual, verifikasi sipil & pembatalan sesi",
             "prereq": "📌 *Prasyarat:* Obrolan Pribadi (DM) atau Grup",
             "step1_title": "1️⃣ FUNGSI KARTU IDENTITAS VIRTUAL",
-            "step1_body": "• Kartu Identitas Virtual (`IDCard`) adalah syarat mutlak ekosistem sipil Cosmos.\n• Wajib dimiliki untuk membuka rekening bank (`{{prefix}}bank`) dan mendaftar kerja (`{{prefix}}job`).\n• Melindungi akun dari manipulasi identitas dan mencatat reputasi kredit permanen.",
+            "step1_body": "• Kartu Identitas Virtual (`IDCard`) adalah syarat mutlak ekosistem sipil Cosmos.\n• Wajib dimiliki untuk membuka rekening bank (`{{prefix}}bank register`) dan mendaftar kerja (`{{prefix}}apply job`).\n• Melindungi akun dari manipulasi identitas dan mencatat reputasi kredit permanen.",
             "step2_title": "2️⃣ TAHAPAN PENDAFTARAN",
-            "step2_body": "• Mulai registrasi: Ketik `{{prefix}}idcard register` (atau `{{prefix}}ktp daftar`).\n• Bot akan meminta: Nama Lengkap, Usia (minimal 15 tahun), Jenis Kelamin, dan Kota Domisili.\n• Cosmos merender kartu identitas grafis resmi begitu pendaftaran selesai.",
+            "step2_body": "• Mulai registrasi: Ketik `{{prefix}}register id` (atau `{{prefix}}ktp daftar`).\n• Bot akan meminta: Nama Lengkap, Usia (minimal 15 tahun), Jenis Kelamin, dan Kota Domisili.\n• Cosmos merender kartu identitas grafis resmi begitu pendaftaran selesai.",
             "step3_title": "3️⃣ CEK KARTU & PEMBATALAN",
-            "step3_body": "• Cek kartu: Ketik `{{prefix}}idcard` (atau `{{prefix}}ktp`) untuk melihat kartu digital Anda.\n• Cek profil: Ketik `{{prefix}}profile` untuk melihat statistik lengkap akun Anda.\n• Batalkan: Ketik `{{prefix}}cancel` pada langkah mana saja untuk membatalkan proses.",
+            "step3_body": "• Cek kartu: Ketik `{{prefix}}check id` (atau `{{prefix}}ktp`) untuk melihat kartu digital Anda.\n• Cek profil: Ketik `{{prefix}}my profile` untuk melihat statistik lengkap akun Anda.\n• Batalkan: Ketik `{{prefix}}cancel` pada langkah mana saja untuk membatalkan proses.",
             "footer": "💡 *Tips:* Ketik `{{prefix}}cancel` kapan saja saat pendaftaran untuk langsung keluar."
         },
         "sticker": {
@@ -1423,12 +1423,12 @@
             "summary": "TikTok tanpa watermark, Audio/Video YouTube, Pinterest & Telegram",
             "prereq": "📌 *Prasyarat:* Tautan Media Publik yang Valid",
             "step1_title": "1️⃣ MEDIA TIKTOK & PINTEREST",
-            "step1_body": "• TikTok: `{{prefix}}tiktokdl <url>` — mengunduh video kualitas HD tanpa watermark.\n• Pinterest: `{{prefix}}pinterestdl <url>` — mengunduh foto dan video pin resolusi tinggi.\n• Auto Downloader: Aktifkan unduhan otomatis saat kirim tautan via `{{prefix}}autodl on`.",
+            "step1_body": "• TikTok: `{{prefix}}tiktok dl <url>` — mengunduh video kualitas HD tanpa watermark.\n• Pinterest: `{{prefix}}pinterest dl <url>` — mengunduh foto dan video pin resolusi tinggi.\n• Auto Downloader: Aktifkan unduhan otomatis saat kirim tautan via `{{prefix}}auto dl on`.",
             "step2_title": "2️⃣ VIDEO & AUDIO YOUTUBE",
-            "step2_body": "• YouTube: `{{prefix}}ytdl <url>` (contoh: `{{prefix}}ytdl https://youtu.be/...`).\n• Mendukung pengunduhan video (MP4) serta format audio (MP3).\n• Ukuran file dibatasi maksimal 50 MB sesuai batas transmisi media WhatsApp.",
+            "step2_body": "• YouTube: `{{prefix}}yt dl <url>` (contoh: `{{prefix}}yt dl https://youtu.be/...`).\n• Mendukung pengunduhan video (MP4) serta format audio (MP3).\n• Ukuran file dibatasi maksimal 50 MB sesuai batas transmisi media WhatsApp.",
             "step3_title": "3️⃣ JEMBATAN KONTEN TERBATAS TELEGRAM",
-            "step3_body": "• Unduh media: `{{prefix}}telegramdl <tautan_pesan>` (contoh: `https://t.me/c/12345/678`).\n• Kelola sesi: Daftarkan string sesi saluran via `{{prefix}}tgadd <session_string>`.\n• Cek sesi aktif: Ketik `{{prefix}}tglist` atau hapus sesi lewat `{{prefix}}tgdel`.",
-            "footer": "💡 *Tips:* Aktifkan `{{prefix}}autodl on` di grup agar tautan video otomatis terunduh."
+            "step3_body": "• Unduh media: `{{prefix}}telegram dl <tautan_pesan>` (contoh: `https://t.me/c/12345/678`).\n• Kelola sesi: Daftarkan string sesi saluran via `{{prefix}}tg add <session_string>`.\n• Cek sesi aktif: Ketik `{{prefix}}tg list` atau hapus sesi lewat `{{prefix}}tg del`.",
+            "footer": "💡 *Tips:* Aktifkan `{{prefix}}auto dl on` di grup agar tautan video otomatis terunduh."
         },
         "ai": {
             "header": "📖 *PANDUAN: KECERDASAN AI & SPEECH-TO-TEXT*",
@@ -1439,19 +1439,19 @@
             "step2_title": "2️⃣ TRANSKRIPSI SUARA WHISPER (STT)",
             "step2_body": "• Transkrip audio: Balas pesan suara (VN) atau file audio apa pun dengan `{{prefix}}stt`.\n• Menggunakan Groq Whisper API untuk transkripsi kilat dan akurat dalam dua bahasa.\n• Mendukung istilah gaul, aksen daerah Indonesia, dan bahasa Inggris dengan lancar.",
             "step3_title": "3️⃣ AUTOKOREKSI TYPO GRUP REAL-TIME",
-            "step3_body": "• Autokoreksi grup: `{{prefix}}startautocorrection` mengaktifkan perbaikan typo otomatis.\n• Hentikan: `{{prefix}}stopautocorrection` mematikan fitur edit pesan otomatis.\n• Toggle cepat: Gunakan `{{prefix}}toggleautocorrection` untuk mengganti status.",
+            "step3_body": "• Autokoreksi grup: `{{prefix}}start autocorrect` mengaktifkan perbaikan typo otomatis.\n• Hentikan: `{{prefix}}stop autocorrect` mematikan fitur edit pesan otomatis.\n• Toggle cepat: Gunakan `{{prefix}}toggle autocorrect` untuk mengganti status.",
             "footer": "💡 *Tips:* Balas voice note panjang dengan `{{prefix}}stt` untuk membaca rangkumannya."
         },
         "market": {
             "header": "📖 *PANDUAN: PASAR REAL-ESTATE & PROPERTI*",
             "summary": "Katalog properti, fluktuasi pasar, kelola inventori & jual-beli aset",
-            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}idcard`)",
+            "prereq": "📌 *Prasyarat:* Memiliki Kartu Identitas Virtual (`{{prefix}}register id`)",
             "step1_title": "1️⃣ KATALOG PROPERTI & ALAT KERJA",
-            "step1_body": "• Pantau Pasar: Ketik `{{prefix}}market` untuk melihat tren ekonomi dan indeks harga.\n• Katalog Properti: Ketik `{{prefix}}catalog` (atau `{{prefix}}shop`) untuk melihat daftar aset dan barang.\n• Tingkatan Aset: Mulai dari Sepeda Motor, Apartemen Studio, hingga Penthouse Mewah.",
+            "step1_body": "• Pantau Pasar: Ketik `{{prefix}}market` untuk melihat tren ekonomi dan indeks harga.\n• Katalog Properti: Ketik `{{prefix}}property catalog` (atau `{{prefix}}shop list`) untuk melihat daftar aset dan barang.\n• Tingkatan Aset: Mulai dari Sepeda Motor, Apartemen Studio, hingga Penthouse Mewah.",
             "step2_title": "2️⃣ PEMBELIAN & INVENTARIS",
-            "step2_body": "• Beli aset: Ketik `{{prefix}}buy <item_id>` (contoh: `{{prefix}}buy apartment`).\n• Biaya akan dipotong dari saldo dompet atau rekening bank Anda.\n• Cek aset milik Anda: Ketik `{{prefix}}inventory` (atau `{{prefix}}inv`) untuk melihat daftar kepemilikan.",
+            "step2_body": "• Beli aset: Ketik `{{prefix}}shop buy <item_id>` (contoh: `{{prefix}}shop buy apartment`).\n• Biaya akan dipotong dari saldo dompet atau rekening bank Anda.\n• Cek aset milik Anda: Ketik `{{prefix}}property inventory` (atau `{{prefix}}inv`) untuk melihat daftar kepemilikan.",
             "step3_title": "3️⃣ PENJUALAN & LIKUIDASI JAMINAN",
-            "step3_body": "• Jual properti: Ketik `{{prefix}}sell <item_id>` untuk menjual aset menjadi uang tunai.\n• Apresiasi Harga: Nilai aset bergerak fluktuatif mengikuti pergerakan pasar makro.\n• Jaminan Pinjaman: Aset properti dapat dijaminkan untuk pinjaman bank besar (`{{prefix}}loan apply`).",
+            "step3_body": "• Jual properti: Ketik `{{prefix}}property sell <item_id>` untuk menjual aset menjadi uang tunai.\n• Apresiasi Harga: Nilai aset bergerak fluktuatif mengikuti pergerakan pasar makro.\n• Jaminan Pinjaman: Aset properti dapat dijaminkan untuk pinjaman bank besar (`{{prefix}}loan apply`).",
             "footer": "💡 *Tips:* Simpan properti bernilai tinggi sebagai jaminan pinjaman berplafon besar."
         },
         "music": {
@@ -1473,9 +1473,9 @@
             "step1_title": "1️⃣ AKTIVASI FITUR NSFW & HAK AKSES",
             "step1_body": "• Fitur NSFW DINONAKTIFKAN secara default di obrolan grup.\n• Hanya Admin Grup dan Pemilik Bot yang dapat mengaktifkannya:\n  - Aktifkan: `{{prefix}}on nsfw` (atau `{{prefix}}on hentai`)\n  - Matikan: `{{prefix}}off nsfw` (atau `{{prefix}}off hentai`)\n• Di obrolan pribadi (DM), fitur sudah aktif secara otomatis tanpa perlu aktivasi.",
             "step2_title": "2️⃣ PENGATURAN GRUP & AUTO DOWNLOAD",
-            "step2_body": "• Auto Downloader: Atur unduhan tautan otomatis lewat `{{prefix}}autodl <on|off>`.\n• Bahasa Grup: Atur bahasa respon bot di grup via `{{prefix}}setgrouplang <id|en>`.\n• Bahasa Pribadi: Atur bahasa respon pribadi di DM via `{{prefix}}setlang <id|en>`.",
+            "step2_body": "• Auto Downloader: Atur unduhan tautan otomatis lewat `{{prefix}}auto dl <on|off>`.\n• Bahasa Grup: Atur bahasa respon bot di grup via `{{prefix}}set group lang <id|en>`.\n• Bahasa Pribadi: Atur bahasa respon pribadi di DM via `{{prefix}}set lang <id|en>`.",
             "step3_title": "3️⃣ PRIVASI & INSPEKSI PESAN",
-            "step3_body": "• Buka Sekali Lihat: Balas media View-Once dengan `{{prefix}}rvo` untuk melihatnya kembali.\n• Inspeksi Pesan: Balas pesan apa pun dengan `{{prefix}}quoted` untuk melihat metadata mentah.\n• Foto Profil: Ambil foto profil resolusi penuh via `{{prefix}}getprofilephoto @user`.",
+            "step3_body": "• Buka Sekali Lihat: Balas media View-Once dengan `{{prefix}}rvo` untuk melihatnya kembali.\n• Inspeksi Pesan: Balas pesan apa pun dengan `{{prefix}}quoted` untuk melihat metadata mentah.\n• Foto Profil: Ambil foto profil resolusi penuh via `{{prefix}}profile photo @user`.",
             "footer": "💡 *Tips:* Ketik `{{prefix}}menu` untuk kembali ke kategori perintah utama."
         },
         "system": {
@@ -1483,11 +1483,11 @@
             "summary": "Diagnostik sistem, izin grup whitelist, paket & kuota",
             "prereq": "📌 *Prasyarat:* Pengguna Umum atau Pemilik Bot (untuk Whitelist)",
             "step1_title": "1️⃣ TELEMETRI & STATUS SISTEM",
-            "step1_body": "• Diagnostik: Ketik `{{prefix}}system_info` (atau `{{prefix}}sysinfo`) untuk cek memori, CPU, dan koneksi Baileys.\n• Katalog penuh: Ketik `{{prefix}}menu all` untuk melihat seluruh perintah aktif pada bot.",
+            "step1_body": "• Diagnostik: Ketik `{{prefix}}system info` (atau `{{prefix}}ping`) untuk cek memori, CPU, dan koneksi Baileys.\n• Katalog penuh: Ketik `{{prefix}}menu all` untuk melihat seluruh perintah aktif pada bot.",
             "step2_title": "2️⃣ WHITELIST & IZIN GRUP",
             "step2_body": "• Akses Grup: Cosmos beroperasi dalam mode whitelist untuk menjaga stabilitas server.\n• Verifikasi: Ketik `{{prefix}}verify` untuk mengecek status izin akses Anda.\n• Whitelist grup: Admin/Owner mendaftarkan grup resmi lewat `{{prefix}}whitelist`.",
             "step3_title": "3️⃣ PAKET LANGGANAN & KUOTA",
-            "step3_body": "• Cek Paket: Ketik `{{prefix}}my plan` untuk melihat tingkatan paket dan batas aktif Anda.\n• Cek Kuota: Ketik `{{prefix}}quota` untuk melihat sisa batas panggilan harian.\n• Kelola Paket: Ketik `{{prefix}}sub` untuk memperbarui atau meningkatkan paket.",
+            "step3_body": "• Cek Paket: Ketik `{{prefix}}my plan` untuk melihat tingkatan paket dan batas aktif Anda.\n• Cek Kuota: Ketik `{{prefix}}my quota` untuk melihat sisa batas panggilan harian.\n• Kelola Paket: Ketik `{{prefix}}sub` untuk memperbarui atau meningkatkan paket.",
             "footer": "💡 *Tips:* Ketik `{{prefix}}help <perintah>` untuk melihat parameter detail setiap tool."
         }
     }

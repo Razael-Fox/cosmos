@@ -34,6 +34,6 @@
     "ipc_otp": "🔐 *Kode Verifikasi Cosmos*\n\nKode sekali pakai Anda adalah: *{{code}}*\nKode ini kedaluwarsa dalam 5 menit. Jangan bagikan kode ini kepada siapa pun.",
     "ipc_verified": "✅ *Pendaftaran Terverifikasi!*\n\nAkun Anda telah berhasil masuk ke dalam whitelist. Anda sekarang dapat melanjutkan di dasbor web.",
     "ipc_sub_activated": "🎉 *Langganan Diaktifkan!*\n\nPaket: {{tier}}\nBerlaku Hingga: {{expiresAt}}\n\nTerima kasih telah mendukung Cosmos!",
-    "whitelist_limit_reached": "⚠️ *Batas Whitelist Tercapai!*\n\nPaket: {{tier}} Plan\n{{reason}}\n\nUntuk menambah grup:\n1. Hapus grup yang tidak aktif dengan: .delgroup\n2. Tingkatkan ke Partner Tier (hingga 25 grup): https://razael-fox.my.id/pricing",
+    "whitelist_limit_reached": "⚠️ *Batas Whitelist Tercapai!*\n\nPaket: {{tier}} Plan\n{{reason}}\n\nUntuk menambah grup:\n1. Hapus grup yang tidak aktif dengan: .group del\n2. Tingkatkan ke Partner Tier (hingga 25 grup): https://razael-fox.my.id/pricing",
     "agent_synthesis_failure": "Permintaan Anda telah berhasil diproses, namun terjadi kendala saat merangkum respon akhir."
 }

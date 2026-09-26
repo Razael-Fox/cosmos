@@ -15,7 +15,17 @@ export const definition: ToolDefinition = {
     name: 'whitelist',
     title: 'Group Whitelist Suite',
     category: 'System',
-    aliases: ['listgroup', 'grouplist', 'groups', 'whitelistall', 'addallgroups'],
+    aliases: [
+        'listgroup',
+        'grouplist',
+        'groups',
+        'whitelistall',
+        'addallgroups',
+        'whitelist all',
+        '.whitelist all',
+        'group list',
+        '.group list'
+    ],
     description:
         'Manage Cosmos group whitelisting, view all participating groups with status, batch-whitelist groups, or configure auto-whitelisting.',
     descriptionKey: 'tools.commands.whitelist.description',
@@ -303,7 +313,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
                 icon: '⏸️',
                 body: t(
                     'tools.whitelist.auto_disabled_body',
-                    'Auto-whitelisting on group join has been *DISABLED*.\n\nNew groups will require manual approval using .addgroup or .whitelistall.'
+                    'Auto-whitelisting on group join has been *DISABLED*.\n\nNew groups will require manual approval using .group add or .whitelist all.'
                 ),
                 fields: [
                     { label: 'Status', value: 'DISABLED' },

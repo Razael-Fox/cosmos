@@ -18,6 +18,7 @@ import {
     createPlaceholderPhotoBuffer
 } from '../src/utils/imageProcessing.js';
 import { formatMentions, cleanId } from '../src/utils/casino.js';
+import { getTranslator } from '../src/utils/i18n.js';
 import idCardTool from '../src/tools/idcard.js';
 import loanTool from '../src/tools/loan.js';
 import applyLicenseTool from '../src/tools/apply_license.js';
@@ -85,13 +86,13 @@ async function runTests() {
 
     // 3. Test Verification Hook when ID card does not exist (Scenario D)
     console.log('[Test 3] Testing Graceful Rejection for unregistered user (Scenario D)...');
-    const authBefore = await requireIdCard(testJidClean);
+    const tEn = getTranslator('en');
+    const authBefore = await requireIdCard(testJidClean, tEn);
     assert.strictEqual(authBefore.authorized, false);
     assert.strictEqual(
         authBefore.message,
         'Access Denied. You must possess a Virtual ID Card to use this feature. Please register your identity first using the .register id command.'
     );
-
     const mockCtxUnreg: any = {
         sock: { user: { id: 'bot_id' } },
         msg: { key: { participant: testJidClean, remoteJid: testJidClean } },
@@ -219,7 +220,7 @@ async function runTests() {
 
     assert.strictEqual(isUserRegistering(regUser), false);
 
-    const welcome = startRegistrationSession(regUser, chatJidA);
+    const welcome = startRegistrationSession(regUser, chatJidA, tEn);
     assert(welcome.includes('Welcome to the Cosmos Identity System'));
     assert.strictEqual(isUserRegistering(regUser, chatJidA), true);
     assert.strictEqual(isUserRegistering(regUser, chatJidB), false, 'Session must not be active in chat B');
@@ -234,71 +235,71 @@ async function runTests() {
     const mockMsgB: any = { key: { id: 'msg_2', participant: regUser, remoteJid: chatJidB } };
 
     // Chat B isolation check: message in chat B should be ignored
-    const handledInB = await processRegistrationStep(mockSock, mockMsgB, regUser, chatJidB, 'Jane Doe');
+    const handledInB = await processRegistrationStep(mockSock, mockMsgB, regUser, chatJidB, 'Jane Doe', tEn);
     assert.strictEqual(handledInB, false, 'Message in wrong chat should not be handled as registration');
 
     // Step 1: Send name (reject short name, accept valid name)
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'A');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'A', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('at least 2 characters'));
 
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jane Doe');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jane Doe', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Place and Date of Birth'));
 
     // Step 2: Send DOB (reject invalid, accept text month format)
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Just Jakarta');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Just Jakarta', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Invalid format'));
 
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Surabaya, 20 November 2002');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Surabaya, 20 November 2002', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Gender'));
 
     // Step 3: Send Gender (reject invalid string, accept Female)
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'banana');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'banana', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Please specify a valid gender'));
 
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Female');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Female', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Blood Type'));
 
     // Step 4: Send Blood Type
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'XYZ');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'XYZ', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('valid blood type'));
 
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'O');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'O', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Street Address'));
 
     // Step 5: Send Street Address
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jl. Pahlawan No. 45');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jl. Pahlawan No. 45', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('RT/RW'));
 
     // Step 6: Send RT/RW
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, '001/002');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, '001/002', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Village/Kelurahan'));
 
     // Step 7: Send Village
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Sukajadi');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Sukajadi', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('District/Kecamatan'));
 
     // Step 8: Send District
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Sukajadi');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Sukajadi', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('City/Regency'));
 
     // Step 9: Send City
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Surabaya');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Surabaya', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Province'));
 
     // Step 10: Send Province
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jawa Timur');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Jawa Timur', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Religion'));
 
     // Step 11: Send Religion
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Kristen');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Kristen', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Marital Status'));
 
     // Step 12: Send Marital Status
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Single');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'Single', tEn);
     assert(mockSock.sentMessages.pop().content.text.includes('Occupation'));
 
     // Step 13: Send Occupation (Triggers card generation)
-    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'UI Designer');
+    await processRegistrationStep(mockSock, mockMsgA, regUser, chatJidA, 'UI Designer', tEn);
     assert.strictEqual(isUserRegistering(regUser), false, 'Registration session should be closed after completion');
 
     // Check that card was delivered as image
@@ -309,9 +310,9 @@ async function runTests() {
 
     // Check cancellation
     const cancelUser = `cancel_user_${Date.now()}`;
-    startRegistrationSession(cancelUser, chatJidA);
+    startRegistrationSession(cancelUser, chatJidA, tEn);
     assert.strictEqual(isUserRegistering(cancelUser, chatJidA), true);
-    await processRegistrationStep(mockSock, mockMsgA, cancelUser, chatJidA, '.cancel');
+    await processRegistrationStep(mockSock, mockMsgA, cancelUser, chatJidA, '.cancel', tEn);
     assert.strictEqual(isUserRegistering(cancelUser, chatJidA), false);
     assert(mockSock.sentMessages.pop().content.text.includes('cancelled'));
 
