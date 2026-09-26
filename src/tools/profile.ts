@@ -88,13 +88,15 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
             ? 'Nova (Subsidized)'
             : 'Pulse (Free)';
 
-    const idCardStatus = user.idCard ? `✅ Verified (NIK: ${user.idCard.nik})` : '❌ Unregistered (.idcard to apply)';
+    const idCardStatus = user.idCard
+        ? `✅ Verified (NIK: ${user.idCard.nik})`
+        : '❌ Unregistered (.register id to apply)';
 
     const bankStatus = user.bankAccount
         ? `${user.bankAccount.accountNumber} (${user.bankAccount.status})`
-        : 'Unregistered (.bank to open)';
+        : 'Unregistered (.bank register to open)';
 
-    const jobTitle = user.currentJob ? user.currentJob.name : 'Unemployed (.job to browse)';
+    const jobTitle = user.currentJob ? user.currentJob.name : 'Unemployed (.job list to browse)';
     const displayPhone = queryJid.split('@')[0];
     const displayName = user.pushName || displayPhone;
 

@@ -102,7 +102,7 @@ const balanceTool: ToolModule = {
                 { icon: '💳', label: t('tools.ui.bank_account_label', 'Bank Account'), value: bankAccStr }
             ],
             tips: [
-                t('tools.balance.tip_daily', 'Type .daily to claim free daily bonus reward.'),
+                t('tools.balance.tip_daily', 'Type .daily claim to claim free daily bonus reward.'),
                 t('tools.balance.tip_bank', 'Type .bank deposit <amount> to secure funds with 0.5% daily interest.')
             ]
         });

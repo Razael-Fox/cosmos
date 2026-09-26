@@ -5,7 +5,7 @@ export const definition: ToolDefinition = {
     name: 'tgdel',
     title: 'Unregister Private Telegram Chat',
     category: 'Downloaders',
-    aliases: ['.tgdel', '.tgremove'],
+    aliases: ['.tgdel', '.tgremove', 'tg del', '.tg del'],
     owner: true,
     description: 'Removes a private Telegram chat from the proxy registry so its media is no longer accessible.',
     descriptionKey: 'tools.commands.tgdel.description',

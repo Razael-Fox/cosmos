@@ -5,7 +5,7 @@ export const definition: ToolDefinition = {
     name: 'tglist',
     title: 'List Registered Private Telegram Chats',
     category: 'Downloaders',
-    aliases: ['.tglist'],
+    aliases: ['.tglist', 'tg list', '.tg list'],
     owner: true,
     description: 'Displays all private Telegram chats currently registered for media proxying.',
     descriptionKey: 'tools.commands.tglist.description'
@@ -16,7 +16,7 @@ export async function execute(_args?: Record<string, any>, ctx?: ToolContext): P
     if (chats.length === 0) {
         return ctx
             ? ctx.t('tools.tglist.empty')
-            : 'No private Telegram chats have been registered yet. Use .tgadd to register one.';
+            : 'No private Telegram chats have been registered yet. Use .tg add to register one.';
     }
 
     let text = ctx

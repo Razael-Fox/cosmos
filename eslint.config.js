@@ -4,7 +4,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
     {
-        ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.worktrees/**']
+        ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.worktrees/**', 'storage/**']
     },
     js.configs.recommended,
     ...ts.configs.recommended,

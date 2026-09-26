@@ -60,7 +60,7 @@
         "owner_request_message_id": "*ID Pesan:* ```{{messageId}}```",
         "owner_request_user": "*Nama Pemohon:* {{name}}",
         "owner_request_phone": "*Nomor WhatsApp:* {{number}}",
-        "owner_request_next_steps": "*Langkah Selanjutnya:*\n1. Jika tautan undangan tersedia, jalankan `.tgadd <tautan-undangan>` agar akun dummy bergabung secara otomatis.\n2. Jika tidak, bergabunglah ke grup secara manual menggunakan akun dummy, lalu daftarkan dengan `.tgadd <tautan-atau-id-chat>`.\n3. Pemohon dapat mencoba kembali perintah yang sama setelahnya."
+        "owner_request_next_steps": "*Langkah Selanjutnya:*\n1. Jika tautan undangan tersedia, jalankan `.tg add <tautan-undangan>` agar akun dummy bergabung secara otomatis.\n2. Jika tidak, bergabunglah ke grup secara manual menggunakan akun dummy, lalu daftarkan dengan `.tg add <tautan-atau-id-chat>`.\n3. Pemohon dapat mencoba kembali perintah yang sama setelahnya."
     },
     "pinterestdl": {
         "document_version": "Versi dokumen",

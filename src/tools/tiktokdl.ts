@@ -40,7 +40,7 @@ export const definition: ToolDefinition = {
     name: 'tiktokdl',
     title: 'TikTok Downloader',
     category: 'Downloaders',
-    aliases: ['.tiktok', '.tt', '.tiktokdl', '.ttdl'],
+    aliases: ['.tiktok', '.tt', '.tiktokdl', '.ttdl', 'tiktok dl', '.tiktok dl'],
     description: 'Downloads a video from a specified TikTok URL.',
     descriptionKey: 'tools.commands.tiktokdl.description',
     parameters: {

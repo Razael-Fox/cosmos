@@ -62,13 +62,13 @@
         "user_not_found": "Pengguna tidak ditemukan."
     },
     "autocorrection": {
-        "already_active": "⚠️ *Peringatan:* Auto-Koreksi sudah AKTIF di obrolan ini! Jika Anda ingin menonaktifkannya, ketik *.stopautocorrection*.",
+        "already_active": "⚠️ *Peringatan:* Auto-Koreksi sudah AKTIF di obrolan ini! Jika Anda ingin menonaktifkannya, ketik *.stop autocorrect*.",
         "not_active": "⚠️ *Peringatan:* Auto-Koreksi tidak aktif di obrolan ini.",
-        "activated": "✨ *Auto-Koreksi DIAKTIFKAN* untuk obrolan ini.\n\nPesan yang dikirim akan secara otomatis dianalisis dan diperbaiki oleh OpenRouter AI jika terdeteksi salah ketik atau kata yang salah.\n\nKetik *.stopautocorrection* (atau *.autocorrect*) untuk menonaktifkan.",
+        "activated": "✨ *Auto-Koreksi DIAKTIFKAN* untuk obrolan ini.\n\nPesan yang dikirim akan secara otomatis dianalisis dan diperbaiki oleh OpenRouter AI jika terdeteksi salah ketik atau kata yang salah.\n\nKetik *.stop autocorrect* (atau *.toggle autocorrect*) untuk menonaktifkan.",
         "deactivated": "🔴 *Auto-Koreksi DINONAKTIFKAN* untuk obrolan ini."
     },
     "offlineai": {
-        "activated": "🤖 *Penjawab AI Offline DIAKTIFKAN*\n\nPesan masuk kini akan menerima balasan santai dari AI saat Anda offline.\n\nKetik *.toggleofflineai* lagi untuk menonaktifkan.",
+        "activated": "🤖 *Penjawab AI Offline DIAKTIFKAN*\n\nPesan masuk kini akan menerima balasan santai dari AI saat Anda offline.\n\nKetik *.toggle offline ai* lagi untuk menonaktifkan.",
         "deactivated": "🔴 *Penjawab AI Offline DINONAKTIFKAN*"
     },
     "autodl": {

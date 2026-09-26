@@ -95,19 +95,19 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 - **Fungsi:** Membeli perlengkapan kerja, lisensi, peralatan, atau properti untuk meningkatkan efisiensi ekonomi.
 - **Penggunaan:** `.shop` untuk melihat katalog kategori atau `.shop <kategori>` (misal: `.shop tool`, `.shop property`).
 
-### `.buy` (Beli Item)
+### `.shop buy` (Beli Item)
 
 - **Fungsi:** Membeli item atau properti menggunakan saldo kasino/tunai.
-- **Penggunaan:** `.buy <short_id_atau_nama_item> [jumlah]`. Contoh: `.buy cangkul 1`.
+- **Penggunaan:** `.shop buy <short_id_atau_nama_item> [jumlah]`. Contoh: `.shop buy cangkul 1`.
 
-### `.inventory` / `.inv` / `.bag` (Inventaris Pengguna)
+### `.property inventory` / `.inventory` / `.inv` / `.bag` (Inventaris Pengguna)
 
 - **Fungsi:** Menampilkan seluruh aset, peralatan kerja, kendaraan, dan properti yang dimiliki oleh pengguna beserta status kepemilikannya (`Owned` / `Pawned`).
 
-### `.sell` (Jual / Gadai Properti & Item)
+### `.property sell` (Jual / Gadai Properti & Item)
 
 - **Fungsi:** Menjual properti atau menggadaikannya kembali ke bank dengan sistem negosiasi AI.
-- **Penggunaan:** `.sell <nama_properti>`.
+- **Penggunaan:** `.property sell <nama_properti>`.
 
 ### `.market` / `.economy` & `.forceupdate`
 
@@ -149,7 +149,7 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 ### Saldo & Hadiah
 
 - `.balance` / `.bal` / `.saldo`: Cek saldo koin kasino sendiri atau pengguna lain (`.balance @user`).
-- `.daily` / `.claim`: Mengklaim hadiah koin kasino harian (reset tiap 24 jam).
+- `.daily claim` / `.claim`: Mengklaim hadiah koin kasino harian (reset tiap 24 jam).
 - `.transfer` / `.tf`: Mentransfer koin kasino tunai ke pengguna lain (contoh: `.transfer @user 50000`).
 - `.top` / `.topglobal`: Peringkat kekayaan kasino di grup atau secara global.
 - `.vault`: Memeriksa cadangan brankas bandar (House Vault).
@@ -165,10 +165,10 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 - Permainan duel shotgun bergiliran dengan peluru sungguhan (live) dan peluru hampa (blank).
 - **Alur Perintah:**
-    1. `.creategame` — Membuat ruang permainan baru di grup.
+    1. `.create game` — Membuat ruang permainan baru di grup.
     2. `.bet <jumlah>` — Memasang taruhan meja.
-    3. `.joingame` — Bergabung ke sesi yang menunggu lawan.
-    4. `.startgame` — Memulai pertandingan.
+    3. `.join game` — Bergabung ke sesi yang menunggu lawan.
+    4. `.start game` — Memulai pertandingan.
     5. `.shoot <self/opponent>` — Menembak diri sendiri atau lawan.
     6. `.use <nama_item>` — Menggunakan item taktis (kaca pembesar, gergaji, bir, rokok, borgol).
     7. `.cancel` — Membatalkan sesi permainan sebelum dimulai.
@@ -177,12 +177,12 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 ## 6. Downloaders & Media Tools (Pengunduh Media)
 
-- `.tiktok` / `.tiktokdl <url>`: Mengunduh video TikTok tanpa tanda air (watermark) atau format audio MP3.
-- `.yt` / `.ytdl <url>`: Mengunduh video atau audio YouTube menggunakan mesin `yt-dlp`.
+- `.tiktok dl` / `.tiktok <url>`: Mengunduh video TikTok tanpa tanda air (watermark) atau format audio MP3.
+- `.yt dl` / `.yt <url>`: Mengunduh video atau audio YouTube menggunakan mesin `yt-dlp`.
 - `.play <judul_lagu>`: Mencari lagu di YouTube Music dan mengunduh format audio langsung ke obrolan.
-- `.pinterest` / `.pin <url>`: Mengunduh gambar, karusel foto, atau video pendek dari Pinterest.
-- `.telegramdl` / `.tg <url>`: Mengunduh media dari postingan saluran publik Telegram atau saluran privat yang telah didaftarkan.
-- `.tgadd`, `.tgdel`, `.tglist`: Mendaftarkan atau mengelola sesi grup privat Telegram untuk proksi pengunduhan media bot.
+- `.pinterest dl` / `.pin <url>`: Mengunduh gambar, karusel foto, atau video pendek dari Pinterest.
+- `.telegram dl` / `.tg <url>`: Mengunduh media dari postingan saluran publik Telegram atau saluran privat yang telah didaftarkan.
+- `.tg add`, `.tg del`, `.tg list`: Mendaftarkan atau mengelola sesi grup privat Telegram untuk proksi pengunduhan media bot.
 
 ---
 
@@ -208,15 +208,15 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 - **Fungsi:** Membuka pesan sekali lihat (view-once photo/video/audio) dan mengirimkannya kembali agar dapat disimpan.
 - **Penggunaan:** Balas pesan sekali lihat dengan `.rvo`.
 
-### `.getprofilephoto` / `.pp` (Profile Photo Fetcher)
+### `.profile photo` / `.getprofilephoto` / `.pp` (Profile Photo Fetcher)
 
 - **Fungsi:** Mengambil foto profil resolusi penuh milik diri sendiri atau pengguna lain yang dimention/dibalas. Foto akan dihapus otomatis setelah 10 detik untuk menjaga privasi.
 
-### `.toggleautocorrection` (AI Typo Corrector)
+### `.toggle autocorrect` / `.toggleautocorrection` (AI Typo Corrector)
 
 - **Fungsi:** Mengaktifkan atau menonaktifkan fitur koreksi otomatis salah ketik (typo) berbasis AI di grup atau obrolan.
 
-### `.toggleofflineai` (Offline AI Responder)
+### `.toggle offline ai` / `.toggleofflineai` (Offline AI Responder)
 
 - **Fungsi:** Menyalakan asisten AI santai yang merespons pesan secara alami saat bot dalam mode offline.
 
@@ -237,7 +237,7 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 - **Fungsi:** Mengatur API key pribadi (Groq, OpenRouter), persona AI, dan fitur sub-bot agar mandiri dari bot induk.
 
-### `.myplan` / `.limits` (Subscription & Quota)
+### `.my plan` / `.myplan` / `.my quota` (Subscription & Quota)
 
 - **Fungsi:** Memeriksa sisa kuota harian, status langganan VIP/Premium, dan batas pengunduhan media.
 
@@ -253,16 +253,16 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
     - Semua Perintah: `.allmenu` atau `.menu all`
     - Bantuan Perintah Tertentu: `.help <nama_perintah>` (contoh: `.help brat`, `.help bank`).
 
-### `.setlang` / `.setgrouplang` (Pengaturan Bahasa)
+### `.set lang` / `.set group lang` (Pengaturan Bahasa)
 
 - **Fungsi:** Mengubah preferensi bahasa pengguna (DM) atau grup antara Bahasa Indonesia (`id`) dan Bahasa Inggris (`en`).
-- **Penggunaan:** `.setlang en`, `.setlang id`, `.setgrouplang id`, `.setgrouplang en`.
+- **Penggunaan:** `.set lang en`, `.set lang id`, `.set group lang id`, `.set group lang en`.
 
 ### `.cancel` / `.batal` / `.abort` (Global Cancellation)
 
 - **Fungsi:** Membatalkan alur multi-langkah interaktif apa pun yang sedang berlangsung (pendaftaran KTP, transfer bank, lobby kasino, pairing sub-bot, atau ekspor stiker).
 
-### `.whitelist` / `.addgroup` / `.delgroup` (Group Authorization - Owner/Admin)
+### `.group add` / `.group del` / `.whitelist all` / `.whitelist` (Group Authorization - Owner/Admin)
 
 - **Fungsi:** Mendaftarkan grup obrolan agar bot diizinkan merespons perintah di grup tersebut.
 

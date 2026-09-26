@@ -7,7 +7,7 @@ export const definition: ToolDefinition = {
     name: 'setgrouplang',
     title: 'Set Group Language',
     category: 'Settings',
-    aliases: ['grouplang', 'setgplang'],
+    aliases: ['set group lang', '.set group lang', 'setgroup lang', '.setgroup lang', 'grouplang', 'setgplang'],
     description: 'Set default bot language for the group (Admin only).',
     descriptionKey: 'tools.commands.setgrouplang.description',
     parameters: {
@@ -61,7 +61,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     let rawLang = args.language;
     if (!rawLang) {
         const text = ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '';
-        const match = text.match(/^[./!#]?(?:setgrouplang|grouplang|setgplang)\s+(\S+)/i);
+        const match = text.match(
+            /^[./!#]?(?:set\s+group\s+lang|setgroup\s+lang|setgrouplang|grouplang|setgplang)\s+(\S+)/i
+        );
         if (match) {
             rawLang = match[1].trim();
         }

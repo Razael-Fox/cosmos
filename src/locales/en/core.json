@@ -34,6 +34,6 @@
     "ipc_otp": "🔐 *Cosmos Verification Code*\n\nYour one-time code is: *{{code}}*\nIt expires in 5 minutes. Do not share this code with anyone.",
     "ipc_verified": "✅ *Registration Verified!*\n\nYour account has been whitelisted successfully. You may now proceed on the web dashboard.",
     "ipc_sub_activated": "🎉 *Subscription Activated!*\n\nTier: {{tier}}\nValid Until: {{expiresAt}}\n\nThank you for supporting Cosmos!",
-    "whitelist_limit_reached": "⚠️ *Whitelist Limit Reached!*\n\nTier: {{tier}} Plan\n{{reason}}\n\nTo add more groups:\n1. Remove an inactive group using: .delgroup\n2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing",
+    "whitelist_limit_reached": "⚠️ *Whitelist Limit Reached!*\n\nTier: {{tier}} Plan\n{{reason}}\n\nTo add more groups:\n1. Remove an inactive group using: .group del\n2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing",
     "agent_synthesis_failure": "Your request was successfully processed, but an issue occurred while synthesizing the summary response."
 }

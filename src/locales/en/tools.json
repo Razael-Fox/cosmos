@@ -5,7 +5,7 @@
         "amount": "Your current balance is {{amount}}",
         "keep_playing": "Keep playing and claim your daily reward!",
         "other_user": "@{{user}} currently has {{amount}}.",
-        "no_account": "You don't have an account yet. Use .daily to start.",
+        "no_account": "You don't have an account yet. Use .daily claim to start.",
         "owner_only_other": "❌ Only the bot owner can check other users' balances.",
         "financial_balance": "FINANCIAL BALANCE",
         "wallet_balance": "Wallet Balance",
@@ -16,7 +16,7 @@
         "unregistered": "Unregistered",
         "active": "Active",
         "quick_actions": "Quick Actions:",
-        "tip_daily": "Type .daily to claim free daily bonus reward.",
+        "tip_daily": "Type .daily claim to claim free daily bonus reward.",
         "tip_bank": "Type .bank deposit <amount> to secure funds with 0.5% daily interest."
     },
     "daily": {
@@ -41,12 +41,12 @@
         "tip_work": "Work a shift with .work while waiting for your daily reset!"
     },
     "setlang": {
-        "usage": "Invalid format. Use: .setlang <id|en>",
+        "usage": "Invalid format. Use: .set lang <id|en>",
         "success": "Your language has been updated to {{language}}.",
         "unsupported": "Language '{{lang}}' is not supported. Supported languages: {{supported}}"
     },
     "setgrouplang": {
-        "usage": "Invalid format. Use: .setgrouplang <id|en>",
+        "usage": "Invalid format. Use: .set group lang <id|en>",
         "success": "Group language has been updated to {{language}}.",
         "unsupported": "Language '{{lang}}' is not supported. Supported languages: {{supported}}",
         "admin_only": "Only group admins or the bot owner can change the group language."
@@ -391,23 +391,23 @@
         "buy_success": "Successfully purchased {{item}} for {{price}}.",
         "insufficient_funds": "Insufficient balance to purchase this item.",
         "all_items_hint": "• `.shop items` _(View all general items)_\n\n",
-        "usage": "*Usage:*\n• Type `.shop <category>` to view items in a category.\n• Type `.buy <short_id> [quantity]` to purchase an item.",
+        "usage": "*Usage:*\n• Type `.shop <category>` to view items in a category.\n• Type `.shop buy <short_id> [quantity]` to purchase an item.",
         "property_catalog_empty": "The property catalog is currently empty.",
         "property_catalog_title": "*🏬 Cosmos Property Catalog*\n\n",
-        "property_usage": "_Use `.buy <property_name>` to purchase a property._",
+        "property_usage": "_Use `.shop buy <property_name>` to purchase a property._",
         "no_items_category": "No items found in category \"{{category}}\". Use `.shop` to see available categories.",
         "items_title": "*🛍️ Cosmos Shop - {{title}}*\n\n",
-        "buy_hint": "_To purchase an item, use: `.buy <short_id> [quantity]`_",
+        "buy_hint": "_To purchase an item, use: `.shop buy <short_id> [quantity]`_",
         "categories_title": "*🏬 Cosmos Shop - Categories*",
         "categories_select": "Select a category to browse:",
         "categories_items_view": "• `.shop items` _(View all general items)_",
-        "categories_usage": "*Usage:*\n• Type `.shop <category>` to view items in a category.\n• Type `.buy <short_id> [quantity]` to purchase an item.",
+        "categories_usage": "*Usage:*\n• Type `.shop <category>` to view items in a category.\n• Type `.shop buy <short_id> [quantity]` to purchase an item.",
         "properties_empty": "The property catalog is currently empty.",
         "properties_title": "*🏬 Cosmos Property Catalog*\n\n",
-        "properties_buy_tip": "_Use `.buy <property_name>` to purchase a property._",
+        "properties_buy_tip": "_Use `.shop buy <property_name>` to purchase a property._",
         "no_items": "No items found in category \"{{category}}\". Use `.shop` to see available categories.",
         "header_title": "*🛍️ Cosmos Shop - {{title}}*",
-        "buy_tip": "_To purchase an item, use: `.buy <short_id> [quantity]`_",
+        "buy_tip": "_To purchase an item, use: `.shop buy <short_id> [quantity]`_",
         "directory_title": "COSMOS SHOP DIRECTORY",
         "available_categories": "AVAILABLE CATEGORIES",
         "category_properties": "Properties",
@@ -421,14 +421,14 @@
         "shop_header": "COSMOS SHOP - {{title}}"
     },
     "property_buy": {
-        "specify_target": "Please specify the item or property you want to buy. Format: `.buy <short_id> [quantity]`",
+        "specify_target": "Please specify the item or property you want to buy. Format: `.shop buy <short_id> [quantity]`",
         "insufficient_funds_item": "You do not have enough funds to purchase {{quantity}}x *{{name}}*. Total cost: {{cost}}, but your current balance is {{balance}}.",
         "buy_item_success": "🎉 Purchase successful! You bought *{{quantity}}x {{name}}* for *{{cost}}*.\nRemaining balance: *{{remaining}}*.",
         "not_found": "Item or property \"{{target}}\" was not found. Use `.shop` to view available items.",
         "already_owned": "You already own *{{name}}*. You cannot purchase the same property more than once.",
         "insufficient_funds_property": "You do not have enough funds to purchase {{name}}. The property costs {{cost}}, but your current balance is only {{balance}}.",
         "buy_property_success": "🎉 Congratulations! You have successfully purchased *{{name}}* for {{cost}}.",
-        "specify_item": "Please specify the item or property you want to buy. Format: `.buy <short_id> [quantity]`",
+        "specify_item": "Please specify the item or property you want to buy. Format: `.shop buy <short_id> [quantity]`",
         "insufficient_item_funds": "You do not have enough funds to purchase {{quantity}}x *{{name}}*. Total cost: {{cost}}, but your current balance is {{balance}}.",
         "item_success": "🎉 Purchase successful! You bought *{{quantity}}x {{name}}* for *{{cost}}*.\nRemaining balance: *{{balance}}*.",
         "insufficient_prop_funds": "You do not have enough funds to purchase {{name}}. The property costs {{cost}}, but your current balance is only {{balance}}.",
@@ -453,7 +453,7 @@
         "items_title": "*Items & Equipment:*\n",
         "properties_title": "*Owned Properties:*\n",
         "other_assets_title": "*Other Assets:*\n",
-        "footer": "_Use `.shop` to buy more items or `.sell <property_name>` to liquidate properties._",
+        "footer": "_Use `.shop list` to buy more items or `.property sell <property_name>` to liquidate properties._",
         "items_header": "*Items & Equipment:*",
         "quantity_label": "   Quantity: {{quantity}}",
         "type_label": "   Type: {{type}}",
@@ -461,7 +461,7 @@
         "original_value_label": "   Original Value: {{price}}",
         "acquired_label": "   Acquired: {{date}}",
         "other_assets_header": "*Other Assets:*",
-        "footer_tip": "_Use `.shop` to buy more items or `.sell <property_name>` to liquidate properties._",
+        "footer_tip": "_Use `.shop list` to buy more items or `.property sell <property_name>` to liquidate properties._",
         "section_items": "ITEMS & EQUIPMENT",
         "section_properties": "OWNED PROPERTIES",
         "section_other": "OTHER ASSETS",
@@ -472,7 +472,7 @@
         "not_available": "N/A"
     },
     "property_sell": {
-        "specify_property": "Please specify the property name to sell. Format: .sell <property_name> <optional_negotiation>",
+        "specify_property": "Please specify the property name to sell. Format: .property sell <property_name> <optional_negotiation>",
         "not_owned": "You do not own a property named \"{{name}}\" or it is already pawned/sold.",
         "definition_not_found": "Property definition not found for {{name}}.",
         "negotiation_failed_fallback": "I am currently unable to negotiate. I will give you the standard base offer.",
@@ -483,7 +483,7 @@
         "negotiated_price": "Negotiated Deal Price: {{price}}\n\n",
         "broker_says": "*Broker says:* \"{{message}}\"",
         "final_price": "Final Deal Price: {{price}}\n\n",
-        "negotiate_hint": "_You can negotiate the price by using: .sell {{name}} <your persuasion message>_"
+        "negotiate_hint": "_You can negotiate the price by using: .property sell {{name}} <your persuasion message>_"
     },
     "autodl": {
         "invalid_platform": "❌ Invalid platform. Supported: tiktok, ig, pin, yt, tg, twitter, fb, threads, autodelete, all.",
@@ -525,12 +525,12 @@
         "card_title": "Here is your Virtual ID Card.\n\n"
     },
     "offlineai": {
-        "activated": "🤖 *Offline AI Responder ACTIVATED*\n\nIncoming messages will now receive a casual AI reply while you are offline.\n\nType *.toggleofflineai* again to disable.",
+        "activated": "🤖 *Offline AI Responder ACTIVATED*\n\nIncoming messages will now receive a casual AI reply while you are offline.\n\nType *.toggle offline ai* again to disable.",
         "deactivated": "🔴 *Offline AI Responder DEACTIVATED*"
     },
     "autocorrection": {
-        "already_active": "⚠️ *Warning:* Auto-Correction is already ACTIVE in this chat! If you want to disable it, type *.stopautocorrection*.",
-        "activated": "✨ *Auto-Correction ACTIVATED* for this chat.\n\nSent messages will automatically be analyzed and corrected by OpenRouter AI if typos or misspoken words are detected.\n\nType *.stopautocorrection* (or *.autocorrect*) to disable.",
+        "already_active": "⚠️ *Warning:* Auto-Correction is already ACTIVE in this chat! If you want to disable it, type *.stop autocorrect*.",
+        "activated": "✨ *Auto-Correction ACTIVATED* for this chat.\n\nSent messages will automatically be analyzed and corrected by OpenRouter AI if typos or misspoken words are detected.\n\nType *.stop autocorrect* (or *.toggle autocorrect*) to disable.",
         "not_active": "⚠️ *Warning:* Auto-Correction is not active in this chat.",
         "deactivated": "🔴 *Auto-Correction DEACTIVATED* for this chat."
     },
@@ -545,12 +545,12 @@
         "register_success": "Success: Chat {{chatId}}{{title}} has been registered. Please ensure the dummy account is a member of that group."
     },
     "tgdel": {
-        "specify_id": "Error: Please provide the numeric chat id, for example .tgdel 1234567890. Use .tglist to see registered chats.",
+        "specify_id": "Error: Please provide the numeric chat id, for example .tg del 1234567890. Use .tg list to see registered chats.",
         "not_found": "Error: Chat {{chatId}} was not found in the registry.",
         "success": "Success: Chat {{chatId}} has been removed from the registry and can no longer be proxied."
     },
     "tglist": {
-        "empty": "No private Telegram chats have been registered yet. Use .tgadd to register one.",
+        "empty": "No private Telegram chats have been registered yet. Use .tg add to register one.",
         "title": "*Registered Private Telegram Chats ({{count}}):*\n\n",
         "untitled": "Untitled chat",
         "chat_id_label": "Chat ID:",
@@ -809,7 +809,7 @@
             "description": "Apply for a virtual driver license. Requires a valid Virtual ID Card and age >= 17."
         },
         "autodl": {
-            "description": "Toggle automatic downloading of links for this group. E.g. .autodl tiktok on, .autodl ig off, .autodl list"
+            "description": "Toggle automatic downloading of links for this group. E.g. .auto dl tiktok on, .auto dl ig off, .auto dl list"
         },
         "balance": {
             "description": "Check your current balance or another user's balance."
@@ -1269,14 +1269,14 @@
     "whitelist": {
         "list_title": "Available WhatsApp Groups",
         "no_groups": "The bot is not currently participating in any WhatsApp groups.",
-        "list_summary": "Total: {{total}} groups ({{whitelisted}} Whitelisted, {{unwhitelisted}} Not Whitelisted) • Auto-Whitelist: {{autoWl}}\n💡 Use .whitelistall to whitelist all groups at once.",
+        "list_summary": "Total: {{total}} groups ({{whitelisted}} Whitelisted, {{unwhitelisted}} Not Whitelisted) • Auto-Whitelist: {{autoWl}}\n💡 Use .whitelist all to whitelist all groups at once.",
         "all_title": "Batch Whitelist Status",
         "all_already_whitelisted": "All {{count}} participating groups are already whitelisted!",
         "all_success_title": "Batch Whitelist Complete",
         "all_success_body": "Successfully whitelisted {{added}} new group(s)! All available groups are now active.",
         "auto_title": "Auto-Whitelist Settings",
-        "auto_enabled_body": "Auto-whitelisting on group join has been *ENABLED*.\n\nEvery group the bot joins or is currently in will automatically be whitelisted without needing .addgroup.",
-        "auto_disabled_body": "Auto-whitelisting on group join has been *DISABLED*.\n\nNew groups will require manual approval using .addgroup or .whitelistall.",
+        "auto_enabled_body": "Auto-whitelisting on group join has been *ENABLED*.\n\nEvery group the bot joins or is currently in will automatically be whitelisted without needing .group add.",
+        "auto_disabled_body": "Auto-whitelisting on group join has been *DISABLED*.\n\nNew groups will require manual approval using .group add or .whitelist all.",
         "dashboard_title": "Group Whitelist Suite"
     },
     "autoarchive": {
@@ -1325,9 +1325,9 @@
         "bank": {
             "header": "📖 *TUTORIAL: COSMOS CENTRAL BANK*",
             "summary": "Account opening, deposits, withdrawals & secure transfers",
-            "prereq": "📌 *Prerequisites:* Registered Virtual ID (`{{prefix}}idcard`)",
+            "prereq": "📌 *Prerequisites:* Registered Virtual ID (`{{prefix}}register id`)",
             "step1_title": "1️⃣ ACCOUNT REGISTRATION",
-            "step1_body": "• Type `{{prefix}}bank open` or `{{prefix}}bank register` to open your Central Bank account.\n• Requires an active Virtual ID (`{{prefix}}idcard register`).\n• Check your official bank statement and 0.5% daily interest via `{{prefix}}bank statement`.",
+            "step1_body": "• Type `{{prefix}}bank open` or `{{prefix}}bank register` to open your Central Bank account.\n• Requires an active Virtual ID (`{{prefix}}register id`).\n• Check your official bank statement and 0.5% daily interest via `{{prefix}}bank statement`.",
             "step2_title": "2️⃣ DEPOSITS & WITHDRAWALS",
             "step2_body": "• Deposit cash: `{{prefix}}bank deposit <amount>` (e.g. `{{prefix}}bank deposit 500000` or `{{prefix}}bank deposit all`).\n• Withdraw cash: `{{prefix}}bank withdraw <amount>` (e.g. `{{prefix}}bank withdraw 250000` or `{{prefix}}bank withdraw all`).\n• Money kept in the bank vault earns interest daily at 00:00 UTC.",
             "step3_title": "3️⃣ INTERACTIVE TRANSFERS",
@@ -1349,11 +1349,11 @@
         "job": {
             "header": "📖 *TUTORIAL: EMPLOYMENT, LICENSING & SALARY*",
             "summary": "Career joining, driver licensing & dynamic work shifts",
-            "prereq": "📌 *Prerequisites:* Registered Virtual ID (`{{prefix}}idcard`)",
+            "prereq": "📌 *Prerequisites:* Registered Virtual ID (`{{prefix}}register id`)",
             "step1_title": "1️⃣ CAREER SELECTION & LICENSING",
             "step1_body": "• Browse jobs: Type `{{prefix}}job list` to see available careers, base wages, and shift cooldowns.\n• Join a job: `{{prefix}}job join <job_id>` (e.g. `{{prefix}}job join driver`).\n• Apply for licenses: Type `{{prefix}}apply license` to obtain specialized driver/operator permits.",
             "step2_title": "2️⃣ REQUIRED TOOLS & INVENTORY",
-            "step2_body": "• Certain jobs require specific equipment in your inventory (e.g. Courier requires a Motorcycle from `.shop`).\n• Purchase required tools using `{{prefix}}buy <item_id>` from the catalog.\n• Inspect your active equipment using `{{prefix}}inventory`.",
+            "step2_body": "• Certain jobs require specific equipment in your inventory (e.g. Courier requires a Motorcycle from `.shop`).\n• Purchase required tools using `{{prefix}}shop buy <item_id>` from the catalog.\n• Inspect your active equipment using `{{prefix}}property inventory`.",
             "step3_title": "3️⃣ WORK SHIFTS & SALARY MULTIPLIERS",
             "step3_body": "• Perform shift: Type `{{prefix}}work` to execute your job duty and earn wages.\n• Payouts scale dynamically with the global `EconomyMultiplier`.\n• Wait out the cooldown period before beginning your next shift.",
             "footer": "💡 *Tip:* Work regularly and upgrade your license to unlock higher-paying executive careers."
@@ -1363,7 +1363,7 @@
             "summary": "Slots, coinflip, dice rolls, daily rewards & vault banking",
             "prereq": "📌 *Prerequisites:* Minimum Bet Balance (`Rp10.000`)",
             "step1_title": "1️⃣ ECONOMY & DAILY REWARDS",
-            "step1_body": "• Check funds: `{{prefix}}balance` (or `{{prefix}}saldo`) to view wallet and bank funds.\n• Claim daily reward: `{{prefix}}daily` every 24 hours to receive bonus Rupiah.\n• Lock profits: `{{prefix}}vault deposit <amount>` to safeguard winnings from wagers.",
+            "step1_body": "• Check funds: `{{prefix}}balance` (or `{{prefix}}saldo`) to view wallet and bank funds.\n• Claim daily reward: `{{prefix}}daily claim` every 24 hours to receive bonus Rupiah.\n• Lock profits: `{{prefix}}vault deposit <amount>` to safeguard winnings from wagers.",
             "step2_title": "2️⃣ CASINO GAMES",
             "step2_body": "• Slot Machine: `{{prefix}}slot <amount|all>` (e.g. `{{prefix}}slot 50000`). Match symbols for up to 20x multipliers!\n• Coinflip: `{{prefix}}coinflip <amount> <heads|tails>` for a 50/50 double-or-nothing bet.\n• Dice Roll: `{{prefix}}dice <amount>` to roll high against the house.",
             "step3_title": "3️⃣ FEVER TIME & LEADERBOARDS",
@@ -1375,7 +1375,7 @@
             "summary": "Multiplayer shotgun showdown, tactical items & bluffing",
             "prereq": "📌 *Prerequisites:* Group Chat & Wager Balance",
             "step1_title": "1️⃣ LOBBY CREATION & WAGERS",
-            "step1_body": "• Create lobby: `{{prefix}}creategame <bet>` (e.g. `{{prefix}}creategame 100000`).\n• Join game: Opponent types `{{prefix}}joingame` to match the bet amount.\n• Start match: Room host types `{{prefix}}startgame` once players are ready.\n• Cancel lobby: Type `{{prefix}}cancel` before the game begins to refund all wagers.",
+            "step1_body": "• Create lobby: `{{prefix}}create game <bet>` (e.g. `{{prefix}}create game 100000`).\n• Join game: Opponent types `{{prefix}}join game` to match the bet amount.\n• Start match: Room host types `{{prefix}}start game` once players are ready.\n• Cancel lobby: Type `{{prefix}}cancel` before the game begins to refund all wagers.",
             "step2_title": "2️⃣ SHOOTING & SHELL MECHANICS",
             "step2_body": "• Shotgun chambers contain a randomized mix of LIVE and BLANK shells.\n• Shoot opponent: `{{prefix}}shoot @opponent` to inflict damage if the shell is live.\n• Shoot self: `{{prefix}}shoot self` — if the shell is blank, you skip damage AND retain your turn!",
             "step3_title": "3️⃣ TACTICAL ITEMS",
@@ -1391,7 +1391,7 @@
             "step2_title": "2️⃣ LINKING ON WHATSAPP",
             "step2_body": "• Open WhatsApp on your target phone.\n• Navigate to Settings > Linked Devices > Link a Device > Link with phone number instead.\n• Enter the 8-digit code within 2 minutes to authorize the session.\n• Once authenticated, your number becomes an autonomous Cosmos bot running 24/7.",
             "step3_title": "3️⃣ MANAGEMENT & CUSTOM KEYS",
-            "step3_body": "• Custom AI Key: Set your private Groq API key via `{{prefix}}config groq_key <key>`.\n• Language settings: Configure sub-bot language via `{{prefix}}setlang <id|en>`.\n• Disconnect sub-bot: Type `{{prefix}}subbot stop` to terminate the linked session safely.",
+            "step3_body": "• Custom AI Key: Set your private Groq API key via `{{prefix}}config groq_key <key>`.\n• Language settings: Configure sub-bot language via `{{prefix}}set lang <id|en>`.\n• Disconnect sub-bot: Type `{{prefix}}subbot stop` to terminate the linked session safely.",
             "footer": "💡 *Tip:* Always configure private API keys in DM to avoid leaking secrets in group chats."
         },
         "idcard": {
@@ -1399,11 +1399,11 @@
             "summary": "Civil registry wizard, Virtual ID Card & cancellation controls",
             "prereq": "📌 *Prerequisites:* Private Chat (DM) or Group Chat",
             "step1_title": "1️⃣ WHY YOU NEED A VIRTUAL ID",
-            "step1_body": "• Virtual ID Card (`IDCard`) is the mandatory gateway for the Cosmos civil ecosystem.\n• Required to open Central Bank accounts (`{{prefix}}bank`) and apply for jobs (`{{prefix}}job`).\n• Prevents identity spoofing and establishes permanent economic credit history.",
+            "step1_body": "• Virtual ID Card (`IDCard`) is the mandatory gateway for the Cosmos civil ecosystem.\n• Required to open Central Bank accounts (`{{prefix}}bank register`) and apply for jobs (`{{prefix}}apply job`).\n• Prevents identity spoofing and establishes permanent economic credit history.",
             "step2_title": "2️⃣ REGISTRATION WIZARD",
-            "step2_body": "• Start registration: Type `{{prefix}}idcard register` (or `{{prefix}}ktp daftar`).\n• Interactive prompt asks for: Full Name, Age (min 15), Gender, and Domicile City.\n• Cosmos renders an official graphical ID Card badge upon completion.",
+            "step2_body": "• Start registration: Type `{{prefix}}register id` (or `{{prefix}}ktp daftar`).\n• Interactive prompt asks for: Full Name, Age (min 15), Gender, and Domicile City.\n• Cosmos renders an official graphical ID Card badge upon completion.",
             "step3_title": "3️⃣ VIEWING & SESSION CANCELLATION",
-            "step3_body": "• View card: Type `{{prefix}}idcard` (or `{{prefix}}ktp`) to inspect your digital card.\n• View profile: Type `{{prefix}}profile` to inspect comprehensive user statistics.\n• Cancel prompt: Type `{{prefix}}cancel` at any question step to abort registration.",
+            "step3_body": "• View card: Type `{{prefix}}check id` (or `{{prefix}}ktp`) to inspect your digital card.\n• View profile: Type `{{prefix}}my profile` to inspect comprehensive user statistics.\n• Cancel prompt: Type `{{prefix}}cancel` at any question step to abort registration.",
             "footer": "💡 *Tip:* Type `{{prefix}}cancel` at any point during registration to exit immediately."
         },
         "sticker": {
@@ -1423,12 +1423,12 @@
             "summary": "TikTok no-watermark, YouTube Audio/Video, Pinterest & Telegram bridge",
             "prereq": "📌 *Prerequisites:* Valid Supported Public Media URL",
             "step1_title": "1️⃣ TIKTOK & PINTEREST MEDIA",
-            "step1_body": "• TikTok: `{{prefix}}tiktokdl <url>` — automatically downloads HD video without watermark.\n• Pinterest: `{{prefix}}pinterestdl <url>` — downloads high resolution photos and pin videos.\n• Auto Downloader: Enable automatic URL sniffing in chat via `{{prefix}}autodl on`.",
+            "step1_body": "• TikTok: `{{prefix}}tiktok dl <url>` — automatically downloads HD video without watermark.\n• Pinterest: `{{prefix}}pinterest dl <url>` — downloads high resolution photos and pin videos.\n• Auto Downloader: Enable automatic URL sniffing in chat via `{{prefix}}auto dl on`.",
             "step2_title": "2️⃣ YOUTUBE VIDEO & AUDIO",
-            "step2_body": "• YouTube: `{{prefix}}ytdl <url>` (e.g. `{{prefix}}ytdl https://youtu.be/...`).\n• Supports downloading video (MP4) and audio (MP3).\n• Files are capped at 50 MB to comply with WhatsApp transmission limits.",
+            "step2_body": "• YouTube: `{{prefix}}yt dl <url>` (e.g. `{{prefix}}yt dl https://youtu.be/...`).\n• Supports downloading video (MP4) and audio (MP3).\n• Files are capped at 50 MB to comply with WhatsApp transmission limits.",
             "step3_title": "3️⃣ TELEGRAM RESTRICTED CONTENT BRIDGE",
-            "step3_body": "• Download: `{{prefix}}telegramdl <post_url>` (e.g. `https://t.me/c/12345/678`).\n• Session management: Register private session keys via `{{prefix}}tgadd <session_string>`.\n• View active sessions: Type `{{prefix}}tglist` or remove them with `{{prefix}}tgdel`.",
-            "footer": "💡 *Tip:* Enable `{{prefix}}autodl on` in your group to download videos without typing commands."
+            "step3_body": "• Download: `{{prefix}}telegram dl <post_url>` (e.g. `https://t.me/c/12345/678`).\n• Session management: Register private session keys via `{{prefix}}tg add <session_string>`.\n• View active sessions: Type `{{prefix}}tg list` or remove them with `{{prefix}}tg del`.",
+            "footer": "💡 *Tip:* Enable `{{prefix}}auto dl on` in your group to download videos without typing commands."
         },
         "ai": {
             "header": "📖 *TUTORIAL: AI INTELLIGENCE & SPEECH-TO-TEXT*",
@@ -1439,19 +1439,19 @@
             "step2_title": "2️⃣ WHISPER SPEECH-TO-TEXT (STT)",
             "step2_body": "• Transcribe audio: Reply to any voice note (PTT) or audio file with `{{prefix}}stt`.\n• Uses Groq Whisper API for ultra-fast, accurate bilingual transcription.\n• Handles Indonesian regional accents, slang, and English terminology seamlessly.",
             "step3_title": "3️⃣ REAL-TIME GROUP AUTO-CORRECT",
-            "step3_body": "• Group Autocorrect: `{{prefix}}startautocorrection` activates AI typo fixes.\n• Stop Autocorrect: `{{prefix}}stopautocorrection` turns off real-time message editing.\n• Toggle: Use `{{prefix}}toggleautocorrection` to flip state quickly in group chats.",
+            "step3_body": "• Group Autocorrect: `{{prefix}}start autocorrect` activates AI typo fixes.\n• Stop Autocorrect: `{{prefix}}stop autocorrect` turns off real-time message editing.\n• Toggle: Use `{{prefix}}toggle autocorrect` to flip state quickly in group chats.",
             "footer": "💡 *Tip:* Reply to long voice notes with `{{prefix}}stt` to read transcripts in seconds."
         },
         "market": {
             "header": "📖 *TUTORIAL: REAL-TIME PROPERTY & MARKET*",
             "summary": "Property catalog, market ticks, inventory management & asset trading",
-            "prereq": "📌 *Prerequisites:* Registered Virtual ID (`{{prefix}}idcard`)",
+            "prereq": "📌 *Prerequisites:* Registered Virtual ID (`{{prefix}}register id`)",
             "step1_title": "1️⃣ BROWSING REAL ESTATE & TOOLS",
-            "step1_body": "• Market Overview: Type `{{prefix}}market` to inspect global economy trends and price indices.\n• Property Catalog: Type `{{prefix}}catalog` (or `{{prefix}}shop`) to browse properties and items.\n• View asset tiers: From Motorbikes and Studio Apartments to Luxury Penthouses.",
+            "step1_body": "• Market Overview: Type `{{prefix}}market` to inspect global economy trends and price indices.\n• Property Catalog: Type `{{prefix}}property catalog` (or `{{prefix}}shop list`) to browse properties and items.\n• View asset tiers: From Motorbikes and Studio Apartments to Luxury Penthouses.",
             "step2_title": "2️⃣ PURCHASING & INVENTORY",
-            "step2_body": "• Buy asset: Type `{{prefix}}buy <item_id>` (e.g. `{{prefix}}buy apartment`).\n• Funds are deducted from your wallet or bank balance.\n• View owned assets: Type `{{prefix}}inventory` (or `{{prefix}}inv`) to inspect active properties and work tools.",
+            "step2_body": "• Buy asset: Type `{{prefix}}shop buy <item_id>` (e.g. `{{prefix}}shop buy apartment`).\n• Funds are deducted from your wallet or bank balance.\n• View owned assets: Type `{{prefix}}property inventory` (or `{{prefix}}inv`) to inspect active properties and work tools.",
             "step3_title": "3️⃣ SELLING & COLLATERAL LIQUIDATION",
-            "step3_body": "• Sell property: Type `{{prefix}}sell <item_id>` to liquidate assets for quick cash.\n• Market Appreciation: Property values fluctuate over time based on macroeconomic ticks.\n• Loan Collateral: Owned properties can be pledged for larger bank loans (`{{prefix}}loan apply`).",
+            "step3_body": "• Sell property: Type `{{prefix}}property sell <item_id>` to liquidate assets for quick cash.\n• Market Appreciation: Property values fluctuate over time based on macroeconomic ticks.\n• Loan Collateral: Owned properties can be pledged for larger bank loans (`{{prefix}}loan apply`).",
             "footer": "💡 *Tip:* Hold high-tier properties as collateral to unlock maximum borrowing capacity in loans."
         },
         "music": {
@@ -1473,9 +1473,9 @@
             "step1_title": "1️⃣ NSFW ACTIVATION & PERMISSIONS",
             "step1_body": "• By default, NSFW features are DISABLED in group chats.\n• Only Group Admins and the Bot Owner can enable or disable it:\n  - Enable: `{{prefix}}on nsfw` (or `{{prefix}}on hentai`)\n  - Disable: `{{prefix}}off nsfw` (or `{{prefix}}off hentai`)\n• In private chat (DM), it is enabled by default without needing activation.",
             "step2_title": "2️⃣ GROUP SETTINGS & AUTO DOWNLOAD",
-            "step2_body": "• Auto Downloader: Toggle automatic link downloads using `{{prefix}}autodl <on|off>`.\n• Group Language: Set chat language preference using `{{prefix}}setgrouplang <id|en>`.\n• User Language: Set personal language in DM using `{{prefix}}setlang <id|en>`.",
+            "step2_body": "• Auto Downloader: Toggle automatic link downloads using `{{prefix}}auto dl <on|off>`.\n• Group Language: Set chat language preference using `{{prefix}}set group lang <id|en>`.\n• User Language: Set personal language in DM using `{{prefix}}set lang <id|en>`.",
             "step3_title": "3️⃣ PRIVACY & MESSAGE INSPECTORS",
-            "step3_body": "• Read View-Once: Reply to any View-Once photo or video with `{{prefix}}rvo` to reveal it.\n• Quote Inspector: Reply to any message with `{{prefix}}quoted` to inspect raw metadata.\n• Profile Photo: Get full resolution user avatar via `{{prefix}}getprofilephoto @user`.",
+            "step3_body": "• Read View-Once: Reply to any View-Once photo or video with `{{prefix}}rvo` to reveal it.\n• Quote Inspector: Reply to any message with `{{prefix}}quoted` to inspect raw metadata.\n• Profile Photo: Get full resolution user avatar via `{{prefix}}profile photo @user`.",
             "footer": "💡 *Tip:* Type `{{prefix}}menu` to return to the main command categories."
         },
         "system": {
@@ -1483,11 +1483,11 @@
             "summary": "System diagnostics, group admission, plans & quotas",
             "prereq": "📌 *Prerequisites:* Public or Bot Owner (for Whitelisting)",
             "step1_title": "1️⃣ SYSTEM TELEMETRY & HEALTH",
-            "step1_body": "• Diagnostics: Type `{{prefix}}system_info` (or `{{prefix}}sysinfo`) to check memory, CPU, and Baileys socket uptime.\n• Catalog check: Type `{{prefix}}menu all` to view all active tools registered in the runtime.",
+            "step1_body": "• Diagnostics: Type `{{prefix}}system info` (or `{{prefix}}ping`) to check memory, CPU, and Baileys socket uptime.\n• Catalog check: Type `{{prefix}}menu all` to view all active tools registered in the runtime.",
             "step2_title": "2️⃣ GROUP WHITELIST & ADMISSION",
             "step2_body": "• Group Admission: Cosmos operates in whitelisted mode for high stability.\n• Verify user: Type `{{prefix}}verify` to check admission eligibility.\n• Whitelist group: Admins/Owners register active groups via `{{prefix}}whitelist`.",
             "step3_title": "3️⃣ SUBSCRIPTION PLANS & QUOTAS",
-            "step3_body": "• Check Plan: Type `{{prefix}}my plan` to inspect your active subscription tier and limits.\n• Quota Usage: Type `{{prefix}}quota` to view remaining daily query limits.\n• Manage Plan: Type `{{prefix}}sub` to upgrade or renew subscription tiers.",
+            "step3_body": "• Check Plan: Type `{{prefix}}my plan` to inspect your active subscription tier and limits.\n• Quota Usage: Type `{{prefix}}my quota` to view remaining daily query limits.\n• Manage Plan: Type `{{prefix}}sub` to upgrade or renew subscription tiers.",
             "footer": "💡 *Tip:* Type `{{prefix}}help <command>` for deep parameter inspections on any tool."
         }
     }
