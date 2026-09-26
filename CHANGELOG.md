@@ -9,6 +9,16 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+### Added
+
+- **Laya AI System One Decision Engine Integration (Issue #41, PR #42, Rule AG):**
+    - **Zero-Knowledge Decision Client (`src/services/agentEngine/decisionClient.ts`):** Implemented client utility with `sanitizeUntrustedContent()` to scrub raw phone numbers (`+62...`, `08...`), WhatsApp JIDs (`@s.whatsapp.net`, `@g.us`, `@lid`), and Rupiah balances (`Rp...`), mapping known contact and group aliases to ephemeral RAM nonces (`contact_ref_...`) before dispatching payloads.
+    - **Fast-Path Intent Classification (`src/services/agentEngine/guidancePlanner.ts`):** Integrated single-pass non-autoregressive intent evaluation in Tier 1 Guidance Planner, short-circuiting conversational turns without recipients (`confidence >= 0.85`) to reduce latency before falling back to Groq LLM candidate chains.
+    - **Advisory Credit Underwriting Signals (`src/services/loanService.ts`):** Integrated non-autoregressive credit risk assessment into `assessLoanWithAI` with strict dual-gate code bounds enforcing 2%–15% interest rates, 7–30 day tenors, and ACID `$transaction` execution with memory mutexes.
+    - **Circuit Breaker & Fallback Architecture:** Enforced 3-second hard timeouts (`AbortController`) on outbound calls with graceful fallback to Groq Native Function Calling or deterministic scoring tiers without stalling the Baileys event loop.
+    - **Governance & Standards:** Added `AGENTS.md` Rule AG and dedicated specialized agent skill guide in `.agents/skills/laya-ai-decision-engine/SKILL.md`.
+    - **Automated Test Coverage (`tests/decisionClient.test.ts`, `tests/loan.test.ts`):** Added unit and contract tests verifying zero-knowledge sanitization, offline gateway fallback resilience, and whitelisted group loan setups.
+
 ### Changed
 
 - **Greedy Longest-Prefix Multi-Word Command Matching (`src/handlers/message.ts`, Rule AF):**
