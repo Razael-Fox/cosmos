@@ -9,6 +9,10 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ## [Unreleased]
 
+---
+
+## [RF-2609-20] - 2026-09-26
+
 ### Added
 
 - **Laya AI System One Decision Engine Integration (Issue #41, PR #42, Rule AG):**
@@ -670,7 +674,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-19...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-20...HEAD
+[RF-2609-20]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-19...RF-2609-20
 [RF-2609-19]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-18...RF-2609-19
 [RF-2609-18]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-17...RF-2609-18
 [RF-2609-17]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-16...RF-2609-17

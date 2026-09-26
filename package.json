@@ -1,6 +1,6 @@
 {
     "name": "cosmos",
-    "version": "RF-2609-19",
+    "version": "RF-2609-20",
     "description": "A modern, enterprise-grade WhatsApp Bot framework",
     "repository": {
         "type": "git",
