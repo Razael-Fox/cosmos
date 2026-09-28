@@ -13,7 +13,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     - `@whiskeysockets/baileys` (Koneksi & Handler WhatsApp Web API)
     - `groq-sdk` (AI Speech-to-Text & LLM Function Calling)
     - `@prisma/client` (SQLite Database ORM Backend)
-    - `sharp` & `@img/sharp-wasm32` (Pengolahan gambar / stiker)
+    - `sharp` (Pengolahan gambar / stiker)
     - `ffmpeg-static` (Pengolahan media audio/video/stiker bergerak)
     - `pino` (Logging system)
 

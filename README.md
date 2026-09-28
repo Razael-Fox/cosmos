@@ -35,18 +35,18 @@
 
 ## 🛠️ Tech Stack
 
-| Component                    | Technology                                                   |
-| :--------------------------- | :----------------------------------------------------------- |
-| **Package Manager**          | [PNPM](https://pnpm.io/) (`pnpm-lock.yaml`)                  |
-| **Language & Runtime**       | TypeScript 5.7+ / Node.js ES Modules (Node >= 20.x)          |
-| **WhatsApp Engine**          | `@whiskeysockets/baileys` (v7.0.0-rc14)                      |
-| **Database & ORM**           | Prisma ORM v7 (`@prisma/client` + `better-sqlite3`)          |
-| **AI STT & LLM**             | Groq SDK (`groq-sdk`), Whisper STT                           |
-| **Image & Media Processing** | `sharp`, `@img/sharp-wasm32`, `ffmpeg-static`, `opentype.js` |
-| **Telegram Client**          | `telegram` (GramJS)                                          |
-| **Localization (i18n)**      | `i18next`, `i18next-fs-backend`                              |
-| **Process Management**       | PM2, Systemd, Nohup scripts                                  |
-| **Logging**                  | `pino`                                                       |
+| Component                    | Technology                                          |
+| :--------------------------- | :-------------------------------------------------- |
+| **Package Manager**          | [PNPM](https://pnpm.io/) (`pnpm-lock.yaml`)         |
+| **Language & Runtime**       | TypeScript 5.7+ / Node.js ES Modules (Node >= 20.x) |
+| **WhatsApp Engine**          | `@whiskeysockets/baileys` (v7.0.0-rc14)             |
+| **Database & ORM**           | Prisma ORM v7 (`@prisma/client` + `better-sqlite3`) |
+| **AI STT & LLM**             | Groq SDK (`groq-sdk`), Whisper STT                  |
+| **Image & Media Processing** | `sharp`, `ffmpeg-static`, `opentype.js`             |
+| **Telegram Client**          | `telegram` (GramJS)                                 |
+| **Localization (i18n)**      | `i18next`                                           |
+| **Process Management**       | PM2, Systemd, Nohup scripts                         |
+| **Logging**                  | `pino`                                              |
 
 ---
 
