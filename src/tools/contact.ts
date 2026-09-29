@@ -1,12 +1,13 @@
 import { ToolModule, ToolContext } from './types.js';
 import { prisma } from '../db.js';
-import { getSenderJid, getUser } from '../utils/casino.js';
+import { getSenderJid, getUser, cleanId } from '../utils/casino.js';
 import { encryptString, decryptString } from '../services/storageEncryption.js';
 import { maskPhoneNumber } from '../utils/phone.js';
 import { extractLeadingMonospace, unwrapMonospace } from '../utils/monospace.js';
 import {
     validateContactNameWithAI,
     validatePhoneNumber,
+    resolveMentionedContact,
     createEncryptedContactBackup,
     restoreEncryptedContactBackup,
     saveAutoSnapshotBackup
@@ -37,6 +38,63 @@ export function parseContactAddArgs(rest: string): { alias: string; phoneInput: 
 }
 
 /**
+ * Removes WhatsApp mention tokens (e.g. `@6281234567890`) from a raw argument string.
+ * WhatsApp renders a mention as an `@<digits>` literal in the text body while the
+ * authoritative target JID lives in `contextInfo.mentionedJid`.
+ */
+export function stripMentionTokens(rest: string, mentionedJids: string[]): string {
+    let cleaned = rest;
+    for (const jid of mentionedJids) {
+        const digits = cleanId(jid);
+        if (!digits) continue;
+        cleaned = cleaned.replace(new RegExp(`@?\\+?${digits}`, 'g'), ' ');
+    }
+    // Drop any leftover bare mention token that has no matching contextInfo entry
+    cleaned = cleaned.replace(/@[\d\s]{8,20}/g, ' ');
+    return cleaned.replace(/\s+/g, ' ').trim();
+}
+
+export interface ParsedContactAddArgs {
+    alias: string;
+    phoneInput: string;
+    /** True when the target was supplied as a WhatsApp mention/tag instead of a raw number. */
+    isMention: boolean;
+    /** The raw mention target exactly as provided by WhatsApp (`jid@lid` or `jid@s.whatsapp.net`). */
+    mentionJid: string;
+}
+
+/**
+ * Parses `.contact add` arguments for both the numeric and the mention (tag) form.
+ *
+ * Numeric form:  `Ibu 6281234567890` or `` `Ls Friends` 6281234567890 ``
+ * Mention form:  `Ibu @ibu` (tagging a group participant) or a bare `@ibu` tag,
+ *                in which case the caller falls back to the participant's push name.
+ *
+ * When a mention is present, every mention token is stripped from the raw text so
+ * the leftover words are interpreted as the alias.
+ */
+export function parseContactAddArgsWithMention(rest: string, mentionedJids: string[]): ParsedContactAddArgs {
+    const mentions = mentionedJids.filter((j) => Boolean(cleanId(j)));
+    if (mentions.length === 0) {
+        const { alias, phoneInput } = parseContactAddArgs(rest);
+        return { alias, phoneInput, isMention: false, mentionJid: '' };
+    }
+
+    const leftover = stripMentionTokens(rest, mentions);
+    // Allow a monospace/quoted alias next to the tag, e.g. `.contact add `Ls Friends` @tag`
+    const extraction = extractLeadingMonospace(leftover);
+    const rawAlias = extraction.matched ? extraction.extracted : leftover;
+    const alias = rawAlias.replace(/\s+/g, ' ').trim();
+
+    return {
+        alias,
+        phoneInput: '',
+        isMention: true,
+        mentionJid: mentions[0]
+    };
+}
+
+/**
  * Parses alias for deletion, unwrapping any monospace backticks or quotes if present.
  */
 export function parseContactDelArgs(rest: string): string {
@@ -57,7 +115,7 @@ const contactTool: ToolModule = {
                 rawText: {
                     type: 'string',
                     description:
-                        'Subcommand and parameters (e.g., add `Ls Friends` 6281234567890, list, del `Ls Friends`, backup, restore)'
+                        'Subcommand and parameters (e.g., add `Ls Friends` 6281234567890, add Ibu @tag, list, del `Ls Friends`, backup, restore)'
                 }
             }
         }
@@ -77,9 +135,32 @@ const contactTool: ToolModule = {
 
         // 1. ADD CONTACT
         if (subCommand === 'add') {
-            const { alias, phoneInput } = parseContactAddArgs(rest);
+            const mentionedJidList = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            const { alias, phoneInput, isMention, mentionJid } = parseContactAddArgsWithMention(rest, mentionedJidList);
 
-            if (!alias || !phoneInput) {
+            // Resolve the tagged participant into a storable JID (handles @lid -> phone mapping)
+            let mentionTarget: Awaited<ReturnType<typeof resolveMentionedContact>> | null = null;
+            if (isMention) {
+                mentionTarget = await resolveMentionedContact(mentionJid, sock, msg.key.remoteJid);
+                if (!mentionTarget.isValid) {
+                    await sock.sendMessage(
+                        msg.key.remoteJid!,
+                        {
+                            text:
+                                `❌ Could not resolve the tagged user: ${mentionTarget.reason || 'unknown error'}\n` +
+                                `Please re-tag the contact and try again.`
+                        },
+                        { quoted: msg }
+                    );
+                    return;
+                }
+            }
+
+            // Resolve the effective alias: explicit alias, else the tagged participant's push name
+            const explicitAlias = alias;
+            const effectiveAlias = explicitAlias || mentionTarget?.displayName || '';
+
+            if (!effectiveAlias || (!phoneInput && !mentionTarget)) {
                 await sock.sendMessage(
                     msg.key.remoteJid!,
                     {
@@ -87,7 +168,8 @@ const contactTool: ToolModule = {
                             '❌ Invalid format.\n' +
                             'Usage: *.contact add <alias> <phoneNumber>*\n' +
                             'Example: *.contact add Mom 6281234567890*\n' +
-                            'With spaces: *.contact add `Ls Friends` 6281234567890*'
+                            'With spaces: *.contact add `Ls Friends` 6281234567890*\n' +
+                            'In a group, tag the person instead: *.contact add Ibu @tag*'
                     },
                     { quoted: msg }
                 );
@@ -95,17 +177,18 @@ const contactTool: ToolModule = {
             }
 
             // Real-time AI filtering and validation for contact name
-            const nameCheck = await validateContactNameWithAI(alias);
+            const nameCheck = await validateContactNameWithAI(effectiveAlias);
             if (!nameCheck.isValid) {
                 if (nameCheck.isMisspelled && nameCheck.suggestedCorrection) {
+                    const retryTarget = mentionTarget ? '@tag' : phoneInput;
                     await sock.sendMessage(
                         msg.key.remoteJid!,
                         {
                             text:
-                                `❌ Contact name rejected: *"${alias}"* appears to be misspelled.\n` +
+                                `❌ Contact name rejected: *"${effectiveAlias}"* appears to be misspelled.\n` +
                                 `Did you mean *"${nameCheck.suggestedCorrection}"*?\n\n` +
                                 `Please run:\n` +
-                                `*.contact add \`${nameCheck.suggestedCorrection}\` ${phoneInput}*`
+                                `*.contact add \`${nameCheck.suggestedCorrection}\` ${retryTarget}*`
                         },
                         { quoted: msg }
                     );
@@ -120,21 +203,27 @@ const contactTool: ToolModule = {
                 return;
             }
 
-            // Phone number normalization & WhatsApp existence validation
-            const phoneCheck = await validatePhoneNumber(phoneInput, sock);
-            if (!phoneCheck.isValid) {
-                await sock.sendMessage(
-                    msg.key.remoteJid!,
-                    {
-                        text: `❌ Invalid phone number: ${phoneCheck.reason || 'Please provide a valid 8-15 digit phone number.'}`
-                    },
-                    { quoted: msg }
-                );
-                return;
+            let canonicalJid: string;
+            if (mentionTarget) {
+                // A tagged group participant is already a verified WhatsApp account
+                canonicalJid = mentionTarget.canonicalJid;
+            } else {
+                // Phone number normalization & WhatsApp existence validation
+                const phoneCheck = await validatePhoneNumber(phoneInput, sock);
+                if (!phoneCheck.isValid) {
+                    await sock.sendMessage(
+                        msg.key.remoteJid!,
+                        {
+                            text: `❌ Invalid phone number: ${phoneCheck.reason || 'Please provide a valid 8-15 digit phone number.'}`
+                        },
+                        { quoted: msg }
+                    );
+                    return;
+                }
+                canonicalJid = phoneCheck.canonicalJid;
             }
 
-            const cleanAlias = alias.toLowerCase();
-            const canonicalJid = phoneCheck.canonicalJid;
+            const cleanAlias = effectiveAlias.toLowerCase();
             const encryptedJid = encryptString(canonicalJid);
 
             await prisma.userContactBook.upsert({
@@ -159,10 +248,14 @@ const contactTool: ToolModule = {
             await saveAutoSnapshotBackup(senderJid);
 
             const masked = maskPhoneNumber(canonicalJid);
+            const source = mentionTarget ? 'tagged participant' : 'phone number';
             await sock.sendMessage(
                 msg.key.remoteJid!,
                 {
-                    text: `✅ Contact *${alias}* has been successfully saved with number ${masked}.\nAll stored numbers are protected with AES-256-GCM zero-knowledge encryption.`
+                    text:
+                        `✅ Contact *${effectiveAlias}* has been successfully saved with number ${masked}.\n` +
+                        `Source: ${source}.\n` +
+                        `All stored numbers are protected with AES-256-GCM zero-knowledge encryption.`
                 },
                 { quoted: msg }
             );
@@ -183,7 +276,8 @@ const contactTool: ToolModule = {
                         text:
                             '📋 *Your Saved Contacts*\n\nYou do not have any registered contacts yet.\n' +
                             'Add one with: *.contact add <alias> <phoneNumber>*\n' +
-                            'Example: *.contact add `Ls Friends` 6281234567890*'
+                            'Example: *.contact add `Ls Friends` 6281234567890*\n' +
+                            'In a group you can also tag someone: *.contact add Ibu @tag*'
                     },
                     { quoted: msg }
                 );
@@ -363,6 +457,8 @@ const contactTool: ToolModule = {
             `Securely manage personal contacts for AI messaging without exposing real numbers to LLMs.\n\n` +
             `*Commands:*\n` +
             `• *.contact add <alias> <number>* — Save or update contact (use \`name\` for spaces)\n` +
+            `• *.contact add <alias> @tag* — Save a contact by tagging someone in a group\n` +
+            `• *.contact add @tag* — Tag someone and use their display name as the alias\n` +
             `• *.contact list* — View all saved contacts (masked)\n` +
             `• *.contact del <alias>* — Delete a contact\n` +
             `• *.contact backup* — Export an encrypted personal contact backup file (.enc)\n` +
@@ -370,6 +466,7 @@ const contactTool: ToolModule = {
             `*Examples:*\n` +
             `_.contact add Mom 6281234567890_\n` +
             `_.contact add \`Ls Friends\` 6281234567890_\n` +
+            `_.contact add Ibu @tag_   ← tag a group member\n` +
             `_.contact backup_\n` +
             `_.sara please send a message to Mom saying I will be home soon._`;
 

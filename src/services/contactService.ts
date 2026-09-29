@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { prisma } from '../db.js';
 import { cleanPhoneNumber, toCanonicalJid } from '../utils/phone.js';
+import { cleanId, resolveId } from '../utils/casino.js';
 import { encryptSessionData, decryptSessionData, encryptString, decryptString } from './storageEncryption.js';
 import { AgentGroqClient } from './agentEngine/groqClient.js';
 import type { WASocket } from '@whiskeysockets/baileys';
@@ -371,6 +372,99 @@ export async function validatePhoneNumber(phoneInput: string, sock?: WASocket): 
         canonicalJid,
         digits,
         existsOnWhatsApp
+    };
+}
+
+export interface MentionContactResolution {
+    isValid: boolean;
+    /** Canonical target JID. Either `<digits>@s.whatsapp.net` or `<lid>@lid` when only a LID is known. */
+    canonicalJid: string;
+    digits: string;
+    /** Whether the target was resolved to a real phone number (false means LID-only). */
+    isPhoneNumber: boolean;
+    /** Push name of the tagged participant when it could be read from group metadata. */
+    displayName: string;
+    reason?: string;
+}
+
+/**
+ * Resolves a WhatsApp mention (tag) target from a group message into a storable JID.
+ *
+ * A mention may arrive as a phone JID (`628...@s.whatsapp.net`) or, on modern
+ * WhatsApp builds, as an opaque LID (`1234567890...@lid`). The LID is mapped back to
+ * the phone JID through the shared `lidToPnMap` cache and, when still unresolved, by
+ * scanning the group participant list. A LID that cannot be mapped is still accepted
+ * because Baileys can address and mention a participant by LID directly.
+ */
+export async function resolveMentionedContact(
+    mentionJid: string,
+    sock?: WASocket,
+    groupJid?: string | null
+): Promise<MentionContactResolution> {
+    const cleaned = mentionJid.split(':')[0].trim();
+    if (!cleaned) {
+        return {
+            isValid: false,
+            canonicalJid: '',
+            digits: '',
+            isPhoneNumber: false,
+            displayName: '',
+            reason: 'The tagged user could not be read from this message.'
+        };
+    }
+
+    let displayName = '';
+
+    if (sock && groupJid && groupJid.endsWith('@g.us') && typeof sock.groupMetadata === 'function') {
+        try {
+            const metadata = await sock.groupMetadata(groupJid);
+            const targetDigits = cleaned.split('@')[0];
+            const participant = metadata.participants.find((p) => {
+                const pId = (p.id || '').split('@')[0];
+                const pLid = String((p as { lid?: string }).lid || '').split('@')[0];
+                return pId === targetDigits || (Boolean(pLid) && pLid === targetDigits);
+            });
+            if (participant) {
+                displayName = String(participant.name || (participant as { pushName?: string }).pushName || '').trim();
+            }
+        } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.warn('[Contact Mention Resolution] Group metadata lookup failed:', errMsg);
+        }
+    }
+
+    // Map LID -> phone JID using the shared cache and group participant scan.
+    // `resolveId` returns bare digits, so the LID verdict is taken from the original mention.
+    const resolved = await resolveId(cleaned, sock, groupJid);
+    const resolvedDigits = resolved ? cleanId(resolved) : '';
+    const effectiveDigits = resolvedDigits || cleanId(cleaned);
+    const resolvedIsLid = cleaned.endsWith('@lid') && effectiveDigits === cleanId(cleaned);
+
+    if (!effectiveDigits) {
+        return {
+            isValid: false,
+            canonicalJid: '',
+            digits: '',
+            isPhoneNumber: false,
+            displayName,
+            reason: 'The tagged user could not be resolved to a valid account.'
+        };
+    }
+
+    const canonicalJid = resolvedIsLid ? `${effectiveDigits}@lid` : `${effectiveDigits}@s.whatsapp.net`;
+
+    console.log('[Contact Mention Resolution] Resolved tagged target:', {
+        canonicalJid,
+        isPhoneNumber: !resolvedIsLid,
+        hasDisplayName: Boolean(displayName)
+    });
+
+    return {
+        isValid: true,
+        canonicalJid,
+        digits: effectiveDigits,
+        isPhoneNumber: !resolvedIsLid,
+        displayName
     };
 }
 
