@@ -11,6 +11,30 @@ and this project adheres to the `RF-YYMM-BUILD` version formatting.
 
 ---
 
+## [RF-2609-21] - 2026-09-29
+
+### Added
+
+- **Group Tagging for Encrypted Contact Book (`src/tools/contact.ts`, `src/services/contactService.ts`):**
+    - `.contact add <alias> @tag` now saves a contact by tagging someone directly in a group, so users no longer need to transcribe a phone number manually.
+    - Added `parseContactAddArgsWithMention` and `stripMentionTokens` to read the authoritative target from `contextInfo.mentionedJid` and strip the `@<digits>` literal WhatsApp renders in the text body, treating the remaining words as the alias.
+    - Added `resolveMentionedContact` in `src/services/contactService.ts` to map a mention target to a canonical storable JID, reading the tagged participant's push name from group metadata for display and default-alias purposes.
+    - Bare `.contact add @tag` form supported: when no alias is supplied, the tagged participant's WhatsApp display name is used as the alias.
+    - Monospace and quoted aliases continue to work alongside a tag (e.g. ``.contact add `Ls Friends` @tag``), consistent with Rule AC.
+
+### Changed
+
+- **LID-Safe Mention Resolution:** A mention target may arrive as a phone JID or, on modern WhatsApp builds, as an opaque `@lid` identifier. `resolveMentionedContact` maps the LID back to its phone JID through the shared `lidToPnMap` cache and, when still unresolved, by scanning the group participant list. An unmappable LID is still accepted because Baileys can address and mention a participant by LID directly, ensuring tagged contacts resolve correctly in LID-only groups.
+- **Contact Source Transparency:** The `.contact add` confirmation now reports whether the contact was saved from a tagged participant or a phone number.
+
+### Changed (Repository Maintenance)
+
+- **Dependency Pruning (`package.json`, `pnpm-lock.yaml`):** Removed unused dependencies `@img/sharp-wasm32` and `i18next-fs-backend`, and synchronized the documented tech stack in `AGENTS.md` and `README.md` accordingly.
+- **Docker Build Disk Optimization (`.github/workflows/docker-publish.yml`, `scripts/docker-*.sh`):** Improved layer cache cleanup and disk space pruning in the build and deploy scripts to reduce `no space left on device` extraction failures.
+- **Group Moderation Plan Relocation:** Moved the group moderation design plan into issue #46 and removed the now-redundant `MODERATION_PLAN.md` from the repository tree.
+
+---
+
 ## [RF-2609-20] - 2026-09-26
 
 ### Added
@@ -674,7 +698,8 @@ model Loan {
 }
 ```
 
-[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-20...HEAD
+[Unreleased]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-21...HEAD
+[RF-2609-21]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-20...RF-2609-21
 [RF-2609-20]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-19...RF-2609-20
 [RF-2609-19]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-18...RF-2609-19
 [RF-2609-18]: https://github.com/razaelmahasaputra/cosmos/compare/RF-2609-17...RF-2609-18
