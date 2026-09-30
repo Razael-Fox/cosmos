@@ -1,6 +1,6 @@
 # Cosmos - WhatsApp Bot Framework
 
-[![Version](https://img.shields.io/badge/version-RF--2609--21-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-G2--F24--P7-blue.svg)](version.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x%20|%2022.x%20|%2024.x-339933.svg?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![PNPM](https://img.shields.io/badge/PNPM-8.x+-F69220.svg?logo=pnpm&logoColor=white)](https://pnpm.io/)
@@ -137,7 +137,7 @@ All commands use a `.` prefix. Run `.menu [category|all]` for the full in-bot br
 cosmos/
 ├── assets/                 # Menu banners, placeholders, fonts
 ├── prisma/schema.prisma    # SQLite schema (User, BankAccount, Loan, Jobs, ...)
-├── scripts/                # Locale sync, release automation, i18n validation
+├── scripts/                # Locale sync, release/version automation, i18n validation
 ├── src/
 │   ├── db.ts               # Prisma client and better-sqlite3 adapter
 │   ├── index.ts            # Entrypoint and cron scheduler
@@ -145,28 +145,73 @@ cosmos/
 │   ├── locales/            # Translation dictionaries (en, id)
 │   ├── services/           # AI, bank, loans, jobs, shop, menu, inflation
 │   ├── tools/              # Command handlers
-│   └── utils/              # Auto-delete, cancellation, currency, UI, caching
+│   └── utils/              # Auto-delete, cancellation, currency, UI, caching, versioning
 ├── tests/                  # Vitest test suites
+├── docs/                   # Versioning spec and command reference
+├── version.json            # Canonical version metadata (G-F-P)
 ├── CHANGELOG.md
 └── package.json
 ```
 
 ## Scripts
 
-| Script                                                     | Purpose                                 |
-| :--------------------------------------------------------- | :-------------------------------------- |
-| `pnpm dev`                                                 | Run in development mode                 |
-| `pnpm pair` / `pnpm tgpair`                                | Pair a WhatsApp or Telegram account     |
-| `pnpm build` / `pnpm start`                                | Compile and run the production build    |
-| `pnpm pm2:start` / `pm2:logs` / `pm2:restart` / `pm2:stop` | Manage the PM2 process                  |
-| `pnpm start:bg` / `status:bg` / `stop:bg`                  | Manage the nohup daemon                 |
-| `pnpm typecheck` / `pnpm lint` / `pnpm format`             | Static checks and formatting            |
-| `pnpm validate:i18n`                                       | Assert key parity between `en` and `id` |
-| `pnpm release:pre`                                         | Publish a tagged pre-release            |
+| Script                                                     | Purpose                                  |
+| :--------------------------------------------------------- | :--------------------------------------- |
+| `pnpm dev`                                                 | Run in development mode                  |
+| `pnpm pair` / `pnpm tgpair`                                | Pair a WhatsApp or Telegram account      |
+| `pnpm build` / `pnpm start`                                | Compile and run the production build     |
+| `pnpm pm2:start` / `pm2:logs` / `pm2:restart` / `pm2:stop` | Manage the PM2 process                   |
+| `pnpm start:bg` / `status:bg` / `stop:bg`                  | Manage the nohup daemon                  |
+| `pnpm typecheck` / `pnpm lint` / `pnpm format`             | Static checks and formatting             |
+| `pnpm validate:i18n`                                       | Assert key parity between `en` and `id`  |
+| `pnpm version:show` / `version:check` / `version:bump`     | Inspect and increment the Cosmos version |
+| `pnpm release:pre`                                         | Publish a tagged release                 |
 
 ## Versioning
 
-Pre-releases use the `RF-YYMM-BUILD` convention (for example `RF-2609-21`). Stable releases follow SemVer (`1.0.0`, tagged `v1.0.0`). See [CHANGELOG.md](CHANGELOG.md) for history.
+Cosmos uses its own product-oriented version format instead of SemVer:
+
+```text
+G<generation>-F<feature>-P<patch>[.<YYYY-MM-DD>][-<status>]
+```
+
+| Component | Meaning                                                                 |
+| :-------- | :---------------------------------------------------------------------- |
+| `G`       | Generation. Bumped on architectural or schema-level breaks.             |
+| `F`       | Feature milestone. Bumped when a major feature is completed.            |
+| `P`       | Patch. Bumped for fixes, validation, optimization, and UI improvements. |
+| `.date`   | Optional ISO 8601 release date.                                         |
+| `status`  | Optional `alpha`, `beta`, `rc1`, or `stable` stage.                     |
+
+So `G2-F24-P7` means generation 2, feature milestone 24, patch 7. The patch
+resets to `P0` when a feature milestone is completed, and both reset on a new
+generation (`G2-F40-P12` becomes `G3-F1-P0`).
+
+All version metadata is stored in [`version.json`](version.json) at the repository
+root so that CI/CD pipelines, the release script, and the runtime can read it
+without parsing Markdown or Git tags:
+
+```json
+{
+    "version": "G2-F24-P7",
+    "generation": 2,
+    "featureMilestone": 24,
+    "patch": 7,
+    "releaseDate": "2026-09-30"
+}
+```
+
+| Script                             | Purpose                                                  |
+| :--------------------------------- | :------------------------------------------------------- |
+| `pnpm run version:show`            | Print the current version metadata                       |
+| `pnpm run version:check`           | Validate `version.json` and its sync with `package.json` |
+| `pnpm run version:bump patch`      | `G2-F24-P7` to `G2-F24-P8`                               |
+| `pnpm run version:bump feature`    | `G2-F24-P7` to `G2-F25-P0`                               |
+| `pnpm run version:bump generation` | `G2-F24-P7` to `G3-F1-P0`                                |
+| `pnpm run release:pre`             | Bump, tag, and publish the release                       |
+
+See [docs/VERSIONING.md](docs/VERSIONING.md) for the full specification and
+[CHANGELOG.md](CHANGELOG.md) for history.
 
 ## License
 

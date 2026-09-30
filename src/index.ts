@@ -12,10 +12,19 @@ import { isDefaultSessionRegistered, promptBotPhoneNumber, promptPairingMethod }
 import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.js';
 import { seedItems } from '#seed_item.js';
 import { seedProperties } from '#seed_property.js';
+import { describeVersion, getVersionInfo } from '#utils/versioning.js';
 
 dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
+
+// Announce the Cosmos version from the canonical version.json metadata.
+try {
+    const { version, releaseDate } = getVersionInfo();
+    console.log(`[System] Cosmos ${version} (${describeVersion(version)}, released ${releaseDate})`);
+} catch (err) {
+    console.error('[System] Failed to read version.json metadata:', (err as Error).message);
+}
 
 // Start auto backup (on startup and daily at 00:00 WIB)
 startAutoBackup();

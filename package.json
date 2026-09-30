@@ -1,6 +1,6 @@
 {
     "name": "cosmos",
-    "version": "RF-2609-21",
+    "version": "G2-F24-P7",
     "description": "A modern, enterprise-grade WhatsApp Bot framework",
     "repository": {
         "type": "git",
@@ -29,6 +29,9 @@
         "format": "prettier --write .",
         "validate:i18n": "tsx scripts/validate-i18n.ts && tsx scripts/check-i18n-usage.ts",
         "release:pre": "tsx scripts/release.ts",
+        "version:show": "tsx scripts/version.ts show",
+        "version:check": "tsx scripts/version.ts check",
+        "version:bump": "tsx scripts/version.ts bump",
         "docker:build": "./scripts/docker-build.sh",
         "docker:up": "docker compose up -d",
         "docker:down": "docker compose down",

@@ -30,16 +30,20 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### 🛠 Perintah Utama (PNPM Scripts)
 
-| Perintah            | Fungsi                                                                     |
-| :------------------ | :------------------------------------------------------------------------- |
-| `pnpm dev`          | Menjalankan aplikasi dalam mode pengembangan (`tsx src/index.ts`)          |
-| `pnpm build`        | Memproses kompilasi TypeScript (`tsc`) ke folder `dist/`                   |
-| `pnpm typecheck`    | Memeriksa error tipe TypeScript tanpa menulis file output (`tsc --noEmit`) |
-| `pnpm lint`         | Memeriksa kepatuhan kode dengan aturan ESLint                              |
-| `pnpm format`       | Melakukan formatting otomatis menggunakan Prettier                         |
-| `pnpm add <pkg>`    | Menambahkan paket dependency baru                                          |
-| `pnpm add -D <pkg>` | Menambahkan paket devDependency baru                                       |
-| `pnpm install`      | Menginstall seluruh dependency berdasarkan `pnpm-lock.yaml`                |
+| Perintah                                         | Fungsi                                                                     |
+| :----------------------------------------------- | :------------------------------------------------------------------------- |
+| `pnpm dev`                                       | Menjalankan aplikasi dalam mode pengembangan (`tsx src/index.ts`)          |
+| `pnpm build`                                     | Memproses kompilasi TypeScript (`tsc`) ke folder `dist/`                   |
+| `pnpm typecheck`                                 | Memeriksa error tipe TypeScript tanpa menulis file output (`tsc --noEmit`) |
+| `pnpm lint`                                      | Memeriksa kepatuhan kode dengan aturan ESLint                              |
+| `pnpm format`                                    | Melakukan formatting otomatis menggunakan Prettier                         |
+| `pnpm add <pkg>`                                 | Menambahkan paket dependency baru                                          |
+| `pnpm add -D <pkg>`                              | Menambahkan paket devDependency baru                                       |
+| `pnpm install`                                   | Menginstall seluruh dependency berdasarkan `pnpm-lock.yaml`                |
+| `pnpm version:show`                              | Menampilkan metadata versi Cosmos dari `version.json`                      |
+| `pnpm version:check`                             | Validasi invarian `version.json` dan sinkronisasinya dengan `package.json` |
+| `pnpm version:bump <patch\|feature\|generation>` | Menaikkan versi Cosmos sesuai Aturan S                                     |
+| `pnpm run release:pre`                           | Publish rilis bertag dari `version.json` (lihat Aturan S)                  |
 
 ---
 
@@ -149,13 +153,43 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 - **KTP Gate & Prasyarat Inventaris:** Seluruh akses pendaftaran pekerjaan (`.job join`) dan shift kerja (`.work`) **WAJIB** memverifikasi kepemilikan Virtual ID Card (`requireIdCard`) dan kepemilikan item peralatan aktif di inventaris (`UserInventory` dengan `ownershipStatus === 'Owned'`).
 - **Skalabilitas Makroekonomi & Payout Atomik:** Pembayaran gaji wajib dikalikan dengan `EconomyMultiplier` terkini. Pembaruan saldo pengguna dan pelacakan cooldown shift (`lastWorkedAt`) wajib dieksekusi secara atomik menggunakan `prisma.$transaction` serta dicatat ke `ActivityLog`. Rujuk panduan lengkap di `.agents/skills/job-and-salary-system/SKILL.md`.
 
-### S. Standar Versi: Pre-Release RF & Rilis Stabil SemVer (Pre-Release RF & Stable SemVer Versioning Standards)
+### S. Standar Versi Cosmos: Format Tanggal `G-F-P` (Cosmos Dated Versioning Standards)
 
-- **Pre-Release (Wajib `RF-YYMM-BUILD`):** Seluruh versi pre-release Cosmos **wajib** menggunakan format `RF-YYMM-BUILD` (misal: `RF-2609-21`, `RF-2608-01`). Skema ini **khusus** untuk siklus pra-rilis dan **dilarang** dipakai pada rilis stabil.
-- **Rilis Stabil (Wajib SemVer):** Seluruh rilis stabil (production release) **wajib** mengikuti standar **SemVer** (`MAJOR.MINOR.PATCH`, misal: `1.0.0`), dengan prefiks `v` pada tag Git (`v1.0.0`) dan tanpa prefiks pada field `"version"` di `package.json` (`1.0.0`). Rilis stabil **dilarang** menggunakan format `RF-YYMM-BUILD`.
-- **Transisi Pre-Release ke Stabil:** Saat versi stabil diterbitkan, field `"version"` di `package.json` harus diubah dari `RF-YYMM-BUILD` menjadi SemVer murni, dan tag Git yang stabil memakai prefiks `v`. Riwayat `RF-*` tetap dipertahankan apa adanya di `CHANGELOG.md` sebagai catatan siklus pra-rilis.
-- **Otomasi Pre-Release:** Pembuatan tag pre-release dan publikasi halaman release di GitHub didelegasikan melalui script otomasi `scripts/release.ts` (`pnpm run release:pre`), yang secara khusus menerbitkan rilis berlabel **pre-release** (flag `--prerelease`).
-- **Otomasi Rilis Stabil:** Publikasi rilis stabil SemVer **belum** memiliki script otomasi dan **wajib** dilakukan secara eksplisit serta terverifikasi (tag `v<semver>`, GitHub Release tanpa flag `--prerelease`).
+> **Migrasi 2026-09-30:** Standar versi Cosmos **berubah** dari pasangan `RF-YYMM-BUILD` (pra-rilis) + SemVer (stabil) menjadi **satu format tanggal tunggal** `G<generation>-F<feature>-P<patch>`. Seluruh referensi `RF-*` dan SemVer pada aturan ini **DILARANG** digunakan lagi. spesifikasi lengkap ada di `docs/VERSIONING.md`.
+
+- **Format Tunggal (Wajib `G<generation>-F<feature>-P<patch>`):** Seluruh versi Cosmos — pra-rilis maupun stabil — **wajib** menggunakan format `G<generation>-F<feature>-P<patch>` (misal: `G2-F24-P7`, `G1-F12-P2`). Format ini **menggantikan sepenuhnya** `RF-YYMM-BUILD` maupun SemVer.
+- **Komponen Versi:**
+    - `G` (**Generation**): naik pada perubahan arsitektur besar, restrukturisasi proyek, migrasi database mayor, penggantian framework utama, atau desain sistem yang tidak kompatibel dengan generasi sebelumnya (misal: `G2-F40-P12` → `G3-F1-P0`).
+    - `F` (**Feature Milestone**): naik ketika sebuah fitur utama dinyatakan selesai dan siap dipakai (misal: `G2-F24-P0` → `G2-F25-P0`).
+    - `P` (**Patch**): naik untuk perbaikan bug, penambahan validasi, optimasi, perbaikan UI, atau pembaruan dokumentasi penting (misal: `G2-F24-P0` → `G2-F24-P1`). Patch **reset ke `P0`** saat Feature Milestone naik.
+- **Segmen Tanggal (Opsional):** Tanggal rilis opsional ditulis sebagai `.YYYY-MM-DD` (ISO 8601) dan menempel langsung pada nomor patch dengan satu titik (misal: `G1-F12-P2.2026-09-30`). Tanggal **tidak** dihitung sebagai increment versi, hanya mencatat kapan rilis terbit.
+- **Status Rilis (Opsional):** Status developmental dapat ditambahkan di akhir (misal: `G2-F24-P7-alpha`, `G2-F24-P7-beta`, `G2-F24-P7-rc1`, `G2-F24-P7-stable`, `G2-F24-P7.2026-09-30-beta`). Urutan bila tanggal/status keduanya ada adalah `G-F-P.tanggal-status`.
+- **Metadata Wajib pada `version.json` (JSON Terpusat):** Seluruh metadata versi disimpan di file `version.json` pada root repo agar mudah dikelola dan dipakai alat otomatis seperti CI/CD. **DILARANG** menyimpan versi hanya di `package.json` atau dokumentasi.
+    ```json
+    {
+        "version": "G2-F24-P7",
+        "generation": 2,
+        "featureMilestone": 24,
+        "patch": 7,
+        "releaseDate": "2026-09-30"
+    }
+    ```
+- **Invarian `version.json` (Dilarang Melanggar):**
+    1. `version` **wajib** sama persis dengan `G${generation}-F${featureMilestone}-P${patch}`.
+    2. `generation`, `featureMilestone`, dan `patch` **wajib** berupa bilangan bulat non-negatif.
+    3. `releaseDate` **wajib** berformat ISO 8601 (`YYYY-MM-DD`) dan merupakan tanggal kalender yang valid.
+    4. Field `version` pada `package.json` **wajib** selalu identik dengan `version.json` (divalidasi oleh `pnpm run version:check`).
+- **Sumber Kebenaran & Pembacaan Programatik:** Versi **wajib** dibaca melalui utility terpusat `src/utils/versioning.ts` (`getVersionInfo()`, `formatVersion()`, `parseVersion()`, `bumpVersion()`, `compareVersions()`). Dilarang membaca `package.json` sebagai sumber versi, dan dilarang mem-parse versi dari `CHANGELOG.md` secara manual. Modul ini melakukan validasi invarian di atas dan melempar error deskriptif bila data rusak.
+- **Kapan AI Agent WAJIB menaikkan versi (Kapan incremented):**
+    | Situasi                                       | Increment                  | Contoh                    |
+    | :-------------------------------------------- | :------------------------- | :------------------------ |
+    | Perbaikan bug, validasi, optimasi, UI, docs   | `patch`                    | `G2-F24-P7` → `G2-F24-P8` |
+    | Fitur utama selesai & siap pakai              | `feature` (patch reset)    | `G2-F24-P7` → `G2-F25-P0` |
+    | Perubahan arsitektur mayor / migrasi DB mayor | `generation` (F & P reset) | `G2-F40-P12` → `G3-F1-P0` |
+- **Kapan AI Agent TIDAK boleh menaikkan versi:** Perubahan dokumentasi murni, penyuntingan teks, dan penyesuaian internal yang tidak mengubah perilaku produk **tidak** memerlukan increment versi kecuali memperbaiki dokumentasi versi itu sendiri (sesuai aturan `P`).
+- **Tag Git:** Tag rilis **wajib** memakai string versi apa adanya tanpa prefiks tambahan, yaitu `G2-F24-P7` (tag `v`-prefixed dan SemVer **dilarang**). Workflow `.github/workflows/docker-publish.yml` memicu build image pada tag yang cocok dengan pola `G[0-9]*-F[0-9]*-P[0-9]*`.
+- **Otomasi Rilis:** Pembuatan tag dan penerbitan GitHub Release didelegasikan melalui `scripts/release.ts` (`pnpm run release:pre`). Script ini membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, lalu membuat tag dan GitHub Release. Flag penting: `--bump patch|feature|generation` untuk menaikkan versi sebelum publikasi, `--stable` untuk terbit tanpa flag `--prerelease`, `--dry-run` untuk validasi tanpa efek samping, dan `--no-push` untuk melewati push remote. Manajemen metadata harian (read/validate/bump) dilakukan `scripts/version.ts` melalui `pnpm run version:show`, `version:check`, dan `version:bump <patch|feature|generation>`.
+- **Transisi & Riwayat:** Saat migrasi ke format `G-F-P`, riwayat header `RF-*` yang sudah terbit di `CHANGELOG.md` **tetap dipertahankan apa adanya** sebagai catatan siklus pra-rilis dan **tidak boleh diubah**. Rujukan lengkap ada di `.agents/skills/cosmos-versioning/SKILL.md`.
 
 ### T. Standar Menu Bot & Kompatibilitas Deskripsi Perintah i18n (Menu & Command Description i18n Standards)
 

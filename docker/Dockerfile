@@ -10,6 +10,7 @@ FROM node:${NODE_VERSION} AS builder-bot
 RUN corepack enable
 WORKDIR /build/bot
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY version.json ./version.json
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN pnpm config set package-import-method copy && \
@@ -102,6 +103,7 @@ RUN mkdir -p /app/bot /app/api /app/website /app/storage /app/config /app/storag
 # Package Bot Engine
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/dist ./bot/dist
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/package.json ./bot/package.json
+COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/version.json ./bot/version.json
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/node_modules ./bot/node_modules
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/prisma ./bot/prisma
 COPY --from=builder-bot --chown=cosmos:cosmos /build/bot/assets ./bot/assets

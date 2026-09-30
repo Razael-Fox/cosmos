@@ -184,6 +184,7 @@
         "server_uptime_label": "Server Uptime",
         "bot_uptime_label": "Bot Uptime",
         "nodejs_label": "Node.js",
+        "cosmos_version_label": "Cosmos Version",
         "hardware_title": "HARDWARE PERFORMANCE",
         "section_runtime": "RUNTIME TELEMETRY",
         "section_memory": "MEMORY UTILIZATION",

@@ -1,7 +1,7 @@
 ---
 name: job-and-salary-system
 description: >
-    Panduan baku arsitektur dan implementasi Subsistem Pekerjaan dan Gaji (Job & Salary System) Cosmos, mencakup katalog profesi, persyaratan ID Card & item/lisensi, perhitungan gaji dinamis berbasis EconomyMultiplier makroekonomi, pelacakan cooldown shift, serta standar versi rilis (pre-release RF-YYMM-BUILD dan rilis stabil SemVer).
+    Panduan baku arsitektur dan implementasi Subsistem Pekerjaan dan Gaji (Job & Salary System) Cosmos, mencakup katalog profesi, persyaratan ID Card & item/lisensi, perhitungan gaji dinamis berbasis EconomyMultiplier makroekonomi, pelacakan cooldown shift, serta standar versi rilis (format tanggal `G-F-P` melalui metadata `version.json`).
 ---
 
 # Cosmos Job & Salary System Standards
@@ -18,7 +18,7 @@ Fitur utama meliputi:
 4. **Persyaratan Inventaris & Lisensi**: Validasi kepemilikan alat pendukung (Pickaxe, MacBook, iPhone, SIM / Driver's License) sebelum lamaran diterima atau shift dieksekusi.
 5. **Pelacakan Cooldown Shift Atomik**: Menggunakan field `lastWorkedAt` dan `cooldownMinutes` untuk mencegah spam perintah `.work`.
 6. **Pencatatan Audit Ledger**: Setiap pendapatan gaji dicatat ke model `ActivityLog` (`type: 'JOB_SALARY'`).
-7. **Standar Penomoran Versi & Rilis `RF-YYMM-BUILD`**: Format penomoran versi rilis framework menggunakan skema `RF-YYMM-BUILD` melalui otomasi `scripts/release.ts`.
+7. **Standar Penomoran Versi & Rilis `G-F-P`**: Format penomoran versi framework memakai skema `G<generation>-F<feature>-P<patch>` dengan metadata terpusat pada `version.json`, dikelola melalui `scripts/version.ts` dan dipublikasikan melalui `scripts/release.ts`.
 
 ---
 
@@ -81,33 +81,54 @@ $$\text{Final Payout} = \text{round}(\text{Base Payout} \times \text{EconomyMult
 
 ---
 
-## 6. Standar Penomoran Versi & Rilis (Pre-Release `RF-YYMM-BUILD` & Rilis Stabil SemVer)
+## 6. Standar Penomoran Versi & Rilis (Format Tanggal `G-F-P`)
 
-Cosmos memisahkan penomoran versi berdasarkan jenis rilisnya.
+> **Menggantikan** skema lama `RF-YYMM-BUILD` + SemVer. Rujuk `.agents/skills/cosmos-versioning/SKILL.md` dan `docs/VERSIONING.md` untuk spesifikasi penuh.
 
-### 6.1 Pre-Release — Skema `RF-YYMM-BUILD` (Khusus Pra-Rilis)
+### 6.1 Format Tunggal — `G<generation>-F<feature>-P<patch>`
 
-$$\mathbf{RF\text{-}YYMM\text{-}BUILD}$$
+$$\mathbf{G\text{-}F\text{-}P}$$
 
-- `RF`: Prefix tetap (Release Format).
-- `YY`: 2 digit tahun (contoh: `26` untuk 2026).
-- `MM`: 2 digit bulan (contoh: `09` untuk September).
-- `BUILD`: Nomor build rilis 2 digit berurutan pada bulan tersebut (contoh: `01`, `02`, `03`).
-- Skema ini **khusus** untuk siklus pra-rilis dan **dilarang** dipakai pada rilis stabil.
+Seluruh versi Cosmos, pra-rilis maupun stabil, **wajib** memakai format tunggal ini.
 
-### 6.2 Rilis Stabil — Standar SemVer
+- `G`: **Generation**. Naik pada restrukturisasi besar, migrasi database mayor, penggantian framework utama, atau desain sistem yang tidak kompatibel dengan generasi sebelumnya.
+- `F`: **Feature Milestone**. Naik saat sebuah fitur utama selesai dan siap dipakai.
+- `P`: **Patch**. Naik untuk perbaikan bug, validasi, optimasi, perbaikan UI, dan pembaruan dokumentasi penting. Patch **reset ke `P0`** saat Feature Milestone naik.
+- `.YYYY-MM-DD`: segmen tanggal rilis opsional (ISO 8601). Tidak dihitung sebagai increment.
+- `-alpha|-beta|-rc1|-stable`: segmen status developmental opsional di akhir.
 
-- Rilis stabil **wajib** mengikuti standar **SemVer**: `MAJOR.MINOR.PATCH` (contoh: `1.0.0`).
-- Field `"version"` di `package.json` memakai SemVer **tanpa prefiks** (`1.0.0`).
-- Tag Git dan GitHub Release untuk rilis stabil memakai prefiks `v` (`v1.0.0`).
-- Rilis stabil **dilarang** menggunakan format `RF-YYMM-BUILD`.
-- Saat transisi ke rilis stabil, riwayat header `RF-*` di `CHANGELOG.md` tetap dipertahankan sebagai catatan siklus pra-rilis.
+Contoh: `G2-F24-P7`, `G1-F12-P2.2026-09-30`, `G2-F24-P7.2026-09-30-beta`.
 
-### 6.3 Otomasi Rilis
+### 6.2 Metadata pada `version.json`
 
-- **Pre-Release** — Script: `scripts/release.ts` (dijalankan melalui `pnpm run release:pre`).
-    - Secara otomatis memperbarui `"version"` di `package.json`, mencocokkan header rilis di `CHANGELOG.md`, membuat tag pre-release, melakukan push ke branch aktif, dan mempublikasikan pre-release di GitHub via `gh release create --prerelease`.
-- **Rilis Stabil** — belum memiliki script otomasi; **wajib** dilakukan secara eksplisit dan terverifikasi (tag `v<semver>`, GitHub Release **tanpa** flag `--prerelease`).
+Sumber kebenaran metadata versi adalah `version.json` di root repo, dibaca lewat `src/utils/versioning.ts` (`getVersionInfo()`). Dilarang memakai `package.json` sebagai sumber versi.
+
+```json
+{
+    "version": "G2-F24-P7",
+    "generation": 2,
+    "featureMilestone": 24,
+    "patch": 7,
+    "releaseDate": "2026-09-30"
+}
+```
+
+Invarian: `version` wajib identik dengan `G${generation}-F${featureMilestone}-P${patch}`; komponen numerik wajib bilangan bulat non-negatif; `releaseDate` wajib ISO 8601 yang valid; `package.json` wajib sinkron.
+
+### 6.3 Kapan Naik ke Patch / Feature / Generation
+
+| Situasi                                             | Increment                  | Contoh                    |
+| :-------------------------------------------------- | :------------------------- | :------------------------ |
+| Perbaikan bug, validasi, optimasi, UI, docs penting | `patch`                    | `G2-F24-P7` → `G2-F24-P8` |
+| Fitur utama selesai & siap dipakai                  | `feature` (patch reset)    | `G2-F24-P7` → `G2-F25-P0` |
+| Perubahan arsitektur mayor / migrasi DB mayor       | `generation` (F & P reset) | `G2-F40-P12` → `G3-F1-P0` |
+
+### 6.4 Otomasi Rilis
+
+- **Manajemen metadata** — `scripts/version.ts`: `pnpm run version:show`, `pnpm run version:check`, `pnpm run version:bump patch|feature|generation`.
+- **Publish** — `scripts/release.ts` (`pnpm run release:pre`): membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, membuat tag versi tanpa prefiks, dan memublikasi GitHub Release. Flag: `--bump <kind>`, `--stable`, `--dry-run`, `--no-push`.
+- **CI** — `.github/workflows/docker-publish.yml` memicu build pada tag `G[0-9]*-F[0-9]*-P[0-9]*` dan memvalidasi `version.json`.
+- Riwayat header `RF-*` di `CHANGELOG.md` tetap dipertahankan sebagai catatan siklus pra-rilis dan tidak boleh diubah.
 
 ---
 
