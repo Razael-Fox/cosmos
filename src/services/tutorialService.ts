@@ -268,18 +268,15 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'pinterest',
             'pinterestdl',
             'pin',
-            'telegram',
-            'telegramdl',
-            'tg',
             'tgadd',
             'tglist',
             'tgdel',
             'unduh'
         ],
-        relatedCommands: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del'],
+        relatedCommands: ['tiktok dl', 'yt dl', 'pinterest dl', 'tg add', 'tg list', 'tg del'],
         localizedRelatedCommands: {
-            en: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del'],
-            id: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del', 'unduh']
+            en: ['tiktok dl', 'yt dl', 'pinterest dl', 'tg add', 'tg list', 'tg del'],
+            id: ['tiktok dl', 'yt dl', 'pinterest dl', 'tg add', 'tg list', 'tg del', 'unduh']
         },
         steps: [
             {

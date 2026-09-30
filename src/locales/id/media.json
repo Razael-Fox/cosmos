@@ -40,28 +40,6 @@
         "usage": "🎨 *Pembuat Stiker Brat*\n\nBuat stiker teks atau stiker animasi bergaya Brat langsung di WhatsApp.\n\n*Format Perintah:*\n• *.brat <teks>* — Stiker Brat statis\n• *.brat animasi <teks>* — Stiker Brat animasi\n• *.brat animasi -d <ms> <teks>* — Stiker animasi dengan jeda khusus\n• *.brat \"animasi keren\"* — Teks harfiah statis (atau gunakan ```monospace```)\n\n*Opsi Jeda Dash (-):*\n• `-d 300` atau `-d=300` (rentang 50–5000 md, default 500 md)\n• `-300ms` atau `-300`\n• `--delay 300`\n\n*Contoh Penggunaan:*\n• *.brat Halo Dunia*\n• *.brat animasi -d 250 Halo Dunia*\n• *.brat animasi 300 Halo Dunia*\n• *.brat \"animasi keren\"* (memaksa statis)\n\n_Tips: Anda juga dapat membalas pesan apa saja dengan `.brat` atau `.brat animasi -d 300`._",
         "failed": "Gagal membuat stiker Brat: {{error}}"
     },
-    "telegramdl": {
-        "invalid_url": "Kesalahan: Silakan masukkan tautan posting Telegram yang valid (misalnya https://t.me/channel/123).",
-        "group_registered": "Grup Telegram tersebut telah terdaftar di basis data. Silakan berikan tautan kiriman tertentu yang ingin Anda unduh (misalnya https://t.me/c/{{chatId}}/123).",
-        "bot_not_joined": "Bot belum ditambahkan ke grup Telegram tersebut, sehingga kontennya belum dapat diakses saat ini. Pemilik telah diberi tahu tentang permintaan Anda dan akses akan tersedia setelah grup bergabung dan terdaftar. Silakan coba lagi nanti.",
-        "size_exceeded": "Kesalahan: Media ini melebihi batas ukuran 15MB dan tidak dapat dikirim melalui WhatsApp.",
-        "private_fetch_failed": "Kesalahan: Media tidak dapat diambil dari grup privat tersebut. Akun dummy mungkin sudah tidak memiliki akses ke sana. Pemilik telah diberi tahu melalui log.",
-        "video_size_exceeded": "Kesalahan: Video Telegram melebihi batas ukuran 15MB dan tidak dapat dikirim melalui WhatsApp.",
-        "audio_size_exceeded": "Kesalahan: Audio Telegram melebihi batas ukuran 15MB dan tidak dapat dikirim melalui WhatsApp.",
-        "no_media": "Kesalahan: Media tidak dapat diambil. Harap pastikan kiriman Telegram berisi video yang didukung.",
-        "unexpected_error": "Kesalahan: Terjadi masalah yang tidak diharapkan saat mengunduh video Telegram.",
-        "video_retrieved": "✅ Video Telegram berhasil diambil.",
-        "photo_retrieved": "✅ Foto Telegram berhasil diambil.",
-        "video_downloaded": "✅ Video Telegram berhasil diunduh.",
-        "owner_request_title": "🔒 *Permintaan Konten Privat Telegram*",
-        "owner_request_body": "Pengguna meminta media dari obrolan privat Telegram yang belum ditambahkan ke database.",
-        "owner_request_link": "*Tautan Diminta:* {{link}}",
-        "owner_request_chat_id": "*ID Obrolan Internal:* ```{{chatId}}```",
-        "owner_request_message_id": "*ID Pesan:* ```{{messageId}}```",
-        "owner_request_user": "*Nama Pemohon:* {{name}}",
-        "owner_request_phone": "*Nomor WhatsApp:* {{number}}",
-        "owner_request_next_steps": "*Langkah Selanjutnya:*\n1. Jika tautan undangan tersedia, jalankan `.tg add <tautan-undangan>` agar akun dummy bergabung secara otomatis.\n2. Jika tidak, bergabunglah ke grup secara manual menggunakan akun dummy, lalu daftarkan dengan `.tg add <tautan-atau-id-chat>`.\n3. Pemohon dapat mencoba kembali perintah yang sama setelahnya."
-    },
     "pinterestdl": {
         "document_version": "Versi dokumen",
         "card_title": "MEDIA PINTEREST"

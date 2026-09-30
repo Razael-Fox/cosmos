@@ -42,7 +42,6 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     pinterestdl: ToolAiPolicy.UTILITY,
     tiktokdl: ToolAiPolicy.UTILITY,
     ytdl: ToolAiPolicy.UTILITY,
-    telegramdl: ToolAiPolicy.UTILITY,
     play: ToolAiPolicy.UTILITY,
     quoted: ToolAiPolicy.UTILITY,
     readviewonce: ToolAiPolicy.UTILITY,

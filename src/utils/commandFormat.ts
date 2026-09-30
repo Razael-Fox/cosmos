@@ -95,8 +95,6 @@ export const LEGACY_COMMAND_MAP: Record<string, string> = {
     'yt-dl': '.yt dl',
     pinterestdl: '.pinterest dl',
     'pinterest-dl': '.pinterest dl',
-    telegramdl: '.telegram dl',
-    'telegram-dl': '.telegram dl',
     startautocorrection: '.start autocorrect',
     'start-autocorrection': '.start autocorrect',
     'start-autocorrect': '.start autocorrect',

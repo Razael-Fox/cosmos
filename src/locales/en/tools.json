@@ -819,13 +819,13 @@
             "description": "Invoke Sara, the intelligent AI assistant, to chat, query information, or perform permitted actions."
         },
         "coinflip": {
-            "description": "Play coinflip. Example: .coinflip heads 1.000.000"
+            "description": "Play coinflip. Example: .flip coin heads 1.000.000"
         },
         "daily": {
             "description": "Claim your daily reward."
         },
         "dice": {
-            "description": "Play dice. Example: .dice 6 1.000.000"
+            "description": "Play dice. Example: .roll dice 6 1.000.000"
         },
         "fevertime": {
             "description": "Trigger a global Fever Time event for 15 minutes."
@@ -878,24 +878,6 @@
         "rvo": {
             "description": "Reveals a view-once media message (image, video, or voice note) and resends it as a normal forwarded message."
         },
-        "bet": {
-            "description": "Place a bet for the Buckshot Roulette minigame."
-        },
-        "creategame": {
-            "description": "Create a new Buckshot Roulette minigame session."
-        },
-        "joingame": {
-            "description": "Join a Buckshot Roulette minigame session."
-        },
-        "shoot": {
-            "description": "Shoot a player or yourself in Buckshot Roulette."
-        },
-        "startgame": {
-            "description": "Start the Buckshot Roulette minigame."
-        },
-        "use": {
-            "description": "Use an item in Buckshot Roulette."
-        },
         "setgrouplang": {
             "description": "Set default bot language for the group (Admin only)."
         },
@@ -906,7 +888,7 @@
             "description": "Browse the Cosmos Shop categories and available items."
         },
         "slot": {
-            "description": "Play the slot machine. Example: .slot 1.000.000 or .slot all"
+            "description": "Play the slot machine. Example: .slot spin 1.000.000 or .slot spin all"
         },
         "startautocorrection": {
             "description": "Enables automated AI message auto-correction via OpenRouter for this chat."
@@ -925,9 +907,6 @@
         },
         "system_info": {
             "description": "Displays server specifications, bot status, and network latency."
-        },
-        "telegramdl": {
-            "description": "Downloads media from a Telegram post link (t.me). Public posts are fetched directly, while posts from registered private groups are proxied through the dummy account."
         },
         "tgadd": {
             "description": "Registers a private Telegram chat so its media can be proxied. Accepts an invite link (the dummy account joins automatically), a private post link, or a raw numeric chat id."

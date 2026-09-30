@@ -819,13 +819,13 @@
             "description": "Panggil Sara, asisten AI cerdas, untuk mengobrol, mencari informasi, atau menjalankan tindakan yang diizinkan."
         },
         "coinflip": {
-            "description": "Bermain lempar koin. Contoh: .coinflip heads 1.000.000"
+            "description": "Bermain lempar koin. Contoh: .flip coin heads 1.000.000"
         },
         "daily": {
             "description": "Klaim hadiah harian Anda."
         },
         "dice": {
-            "description": "Bermain lempar dadu. Contoh: .dice 6 1.000.000"
+            "description": "Bermain lempar dadu. Contoh: .roll dice 6 1.000.000"
         },
         "fevertime": {
             "description": "Mengaktifkan acara global Fever Time selama 15 menit."
@@ -878,24 +878,6 @@
         "rvo": {
             "description": "Membuka pesan media sekali lihat (gambar, video, atau voice note) dan mengirimkannya kembali sebagai pesan biasa."
         },
-        "bet": {
-            "description": "Memasang taruhan untuk minigame Buckshot Roulette."
-        },
-        "creategame": {
-            "description": "Membuat sesi minigame Buckshot Roulette baru."
-        },
-        "joingame": {
-            "description": "Bergabung ke dalam sesi minigame Buckshot Roulette."
-        },
-        "shoot": {
-            "description": "Menembak pemain lain atau diri sendiri dalam Buckshot Roulette."
-        },
-        "startgame": {
-            "description": "Memulai minigame Buckshot Roulette."
-        },
-        "use": {
-            "description": "Menggunakan item dalam Buckshot Roulette."
-        },
         "setgrouplang": {
             "description": "Mengatur bahasa default bot untuk grup ini (Khusus Admin)."
         },
@@ -925,9 +907,6 @@
         },
         "system_info": {
             "description": "Menampilkan spesifikasi server, status bot, dan latensi jaringan."
-        },
-        "telegramdl": {
-            "description": "Mengunduh media dari tautan kiriman Telegram (t.me). Kiriman publik diunduh langsung, sedangkan kiriman privat melalui proxy akun perantara."
         },
         "tgadd": {
             "description": "Mendaftarkan obrolan Telegram privat agar medianya dapat diakses. Menerima tautan undangan, tautan kiriman privat, atau ID obrolan numerik."

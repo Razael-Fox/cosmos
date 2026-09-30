@@ -71,7 +71,7 @@ function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | nul
     if (['property', 'realestate', 'catalog', 'sell'].includes(name)) {
         return 'property';
     }
-    if (['play', 'tiktokdl', 'pinterestdl', 'telegramdl', 'ytdl', 'stickerly', 'spack', 'stickerpack'].includes(name)) {
+    if (['play', 'tiktokdl', 'pinterestdl', 'ytdl', 'stickerly', 'spack', 'stickerpack'].includes(name)) {
         return 'downloaders';
     }
     if (['autodl'].includes(name)) {

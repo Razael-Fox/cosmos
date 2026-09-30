@@ -36,8 +36,6 @@ const VALID_PLATFORMS = [
     'pinterest',
     'yt',
     'youtube',
-    'tg',
-    'telegram',
     'twitter',
     'x',
     'fb',
@@ -103,13 +101,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 ? 'pin'
                 : platRaw === 'youtube'
                   ? 'yt'
-                  : platRaw === 'telegram'
-                    ? 'tg'
-                    : platRaw === 'x'
-                      ? 'twitter'
-                      : platRaw === 'facebook'
-                        ? 'fb'
-                        : platRaw;
+                  : platRaw === 'x'
+                    ? 'twitter'
+                    : platRaw === 'facebook'
+                      ? 'fb'
+                      : platRaw;
 
     if (!VALID_PLATFORMS.includes(platTarget)) {
         return t('tools.autodl.invalid_platform');
@@ -120,7 +116,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     await ctx.sock.sendMessage(ctx.jid, { react: { text: '⏳', key: ctx.msg.key } });
 
     if (platTarget === 'list') {
-        const platformsToCheck = ['tiktok', 'ig', 'pin', 'yt', 'tg', 'twitter', 'fb', 'threads'];
+        const platformsToCheck = ['tiktok', 'ig', 'pin', 'yt', 'twitter', 'fb', 'threads'];
         let msg = t('tools.autodl.status_title');
         for (const p of platformsToCheck) {
             const status = isAutoDlEnabled(jid, p)
@@ -138,7 +134,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
         return msg.trim();
     } else if (platTarget === 'all') {
-        const platformsToSet = ['tiktok', 'ig', 'pin', 'yt', 'tg', 'twitter', 'fb', 'threads'];
+        const platformsToSet = ['tiktok', 'ig', 'pin', 'yt', 'twitter', 'fb', 'threads'];
         let success = true;
         for (const p of platformsToSet) {
             const res = await setAutoDl(jid, p, enabled);
