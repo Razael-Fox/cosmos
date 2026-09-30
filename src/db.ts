@@ -224,6 +224,29 @@ export function ensureDatabaseSchema(dbPath: string): void {
                 "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS "GroupBlacklist" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "groupJid" TEXT NOT NULL,
+                "userJid" TEXT NOT NULL,
+                "userPhone" TEXT,
+                "reason" TEXT NOT NULL,
+                "addedBy" TEXT NOT NULL,
+                "addedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS "ModerationLog" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "groupJid" TEXT NOT NULL,
+                "action" TEXT NOT NULL,
+                "targetJid" TEXT,
+                "targetPhone" TEXT,
+                "reason" TEXT,
+                "performedBy" TEXT NOT NULL,
+                "performedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "success" BOOLEAN NOT NULL DEFAULT true,
+                "error" TEXT
+            );
         `);
 
         ensureColumnExists(db, 'User', 'currentJobId', 'INTEGER');
@@ -256,6 +279,16 @@ export function ensureDatabaseSchema(dbPath: string): void {
             db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "MaliciousActor_jid_key" ON "MaliciousActor"("jid")`);
             db.exec(`CREATE INDEX IF NOT EXISTS "MaliciousActor_lid_idx" ON "MaliciousActor"("lid")`);
             db.exec(`CREATE INDEX IF NOT EXISTS "MaliciousActor_severity_idx" ON "MaliciousActor"("severity")`);
+        } catch {
+            /* ignore index errors */
+        }
+        try {
+            db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "GroupBlacklist_groupJid_userJid_key" ON "GroupBlacklist"("groupJid", "userJid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "GroupBlacklist_groupJid_idx" ON "GroupBlacklist"("groupJid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "GroupBlacklist_userJid_idx" ON "GroupBlacklist"("userJid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "ModerationLog_groupJid_idx" ON "ModerationLog"("groupJid")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "ModerationLog_performedBy_idx" ON "ModerationLog"("performedBy")`);
+            db.exec(`CREATE INDEX IF NOT EXISTS "ModerationLog_performedAt_idx" ON "ModerationLog"("performedAt")`);
         } catch {
             /* ignore index errors */
         }
