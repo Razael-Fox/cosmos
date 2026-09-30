@@ -67,6 +67,8 @@ Seluruh metadata versi disimpan di `version.json` pada root repo supaya mudah di
 
 **Dilarang** menulis `version.json` secara manual dengan nilai yang tidak konsisten. Selalu gunakan `pnpm run version:bump` atau `serializeVersionFile()`.
 
+> **Kebijakan pembaruan:** `version.json` **wajib** diperbarui pada setiap perubahan kode produk. Lihat [Section 5.1](#51-kebijakan-wajib-pembaruan-versionjson-mandatory-update-policy).
+
 ---
 
 ## 4. Pembacaan Programatik: `src/utils/versioning.ts`
@@ -111,11 +113,56 @@ compareVersions('G2-F24-P8', 'G2-F24-P7'); // 1
 pnpm run version:show                    # tampilkan metadata versi
 pnpm run version:show -- --json          # tampilkan isi mentah version.json
 pnpm run version:check                   # validasi invarian + sinkronisasi package.json
+pnpm run version:verify -- --base <sha>  # tegakkan kebijakan pembaruan versi (dipakai CI)
 pnpm run version:bump patch              # G2-F24-P7 -> G2-F24-P8
 pnpm run version:bump feature            # G2-F24-P7 -> G2-F25-P0
 pnpm run version:bump generation         # G2-F24-P7 -> G3-F1-P0
 pnpm run version:bump patch -- --date 2026-10-01
 ```
+
+---
+
+## 5.1 Kebijakan Wajib Pembaruan `version.json` (Mandatory Update Policy)
+
+> Kebijakan ini mengikat **setiap** AI Agent dan **setiap** kontribusi kode. Aturan utama: `AGENTS.md` Rule S.1.
+
+### Prinsip
+
+`version.json` adalah **komitmen versi** yang tercatat di riwayat Git. Setiap perubahan yang mengubah perilaku produk **wajib** meninggalkan jejak pada `version.json` **di dalam commit yang sama**. Menunda increment ke commit terpisah, atau sama sekali tidak menaikkan versi, **dilarang keras**.
+
+### Tabel Trigger
+
+| Path yang Diubah                                                         | Increment    | Wajib?      |
+| :----------------------------------------------------------------------- | :----------- | :---------- |
+| `src/**`, `prisma/**`, `scripts/**`, `docker/**`, `.github/workflows/**` | `patch`      | **Ya** (CI) |
+| Penyelesaian fitur/command/subsistem baru yang siap dipakai              | `feature`    | **Ya**      |
+| Restrukturisasi mayor, migrasi DB mayor, penggantian framework           | `generation` | **Ya**      |
+| Perbaikan bug, validasi baru, optimasi, perbaikan UI/UX                  | `patch`      | **Ya**      |
+| `README.md`, `docs/**`, `AGENTS.md`, `.agents/**`                        | `patch`      | **Ya**      |
+| `*.md` lain, `ISSUE.md`, `SUMMARY.md`, format/typo/whitespace            | —            | **Tidak**   |
+
+Baris bertanda **(CI)** ditegakkan otomatis oleh `.github/workflows/version-policy.yml`. Baris lain menjadi kewajiban AI Agent dan tidak dideteksi otomatis.
+
+### Prosedur Wajib
+
+Setiap kali menyelesaikan perubahan kode:
+
+1. [ ] Tentukan jenis increment berdasarkan tabel di atas.
+2. [ ] Jalankan `pnpm run version:bump patch|feature|generation`.
+3. [ ] Jalankan `pnpm run version:check` (memastikan invarian dan sinkronisasi `package.json`).
+4. [ ] Jalankan `pnpm run version:verify -- --base HEAD` untuk meniru pemeriksaan CI secara lokal.
+5. [ ] Pastikan `version.json`, `package.json`, dan `CHANGELOG.md` **di-stage dalam commit yang sama** dengan perubahan kode.
+6. [ ] Sebutkan versi Cosmos sebelum dan sesudah perubahan pada ringkasan hasil.
+
+### Penjaga Otomatis (Anti-Forget Guardrail)
+
+Job `version-policy` berjalan pada setiap push ke `main` dan setiap pull request, memanggil `pnpm run version:verify -- --base <base-sha>`. Job tersebut memeriksa:
+
+1. `version.json` **berubah** setiap kali `src/**`, `prisma/**`, `scripts/**`, `docker/**`, atau `.github/workflows/**` berubah.
+2. Versi baru **lebih besar** dari versi base — mencegah downgrade dan versi duplikat.
+3. Invarian `version.json` terpenuhi dan sinkron dengan `package.json`.
+
+Kegagalan pada job ini berarti ada perubahan kode yang belum menaikkan versi. Perbaiki dengan `pnpm run version:bump patch|feature|generation`.
 
 ---
 
@@ -137,14 +184,16 @@ pnpm run release:pre -- --no-push                # commit + tag lokal, skip push
 
 1. [ ] `pnpm typecheck` dan `pnpm lint` bersih.
 2. [ ] `pnpm run version:check` lulus.
-3. [ ] `CHANGELOG.md` memiliki section `## [<versi>] - <YYYY-MM-DD>` yang sesuai.
-4. [ ] Increment versi **sudah** dilakukan bila ada perubahan produk.
-5. [ ] `ISSUE.md` dan `SUMMARY.md` tidak ikut ter-stage (lihat Aturan I `AGENTS.md`).
+3. [ ] `pnpm run version:verify -- --base HEAD` lulus.
+4. [ ] `CHANGELOG.md` memiliki section `## [<versi>] - <YYYY-MM-DD>` yang sesuai.
+5. [ ] Increment versi **sudah** dilakukan bila ada perubahan produk.
+6. [ ] `ISSUE.md` dan `SUMMARY.md` tidak ikut ter-stage (lihat Aturan I `AGENTS.md`).
 
 ### Tag & CI
 
 - Tag Git memakai string versi apa adanya, **tanpa prefiks**: `G2-F24-P7`. Tag `v`-prefixed dan SemVer **dilarang**.
 - `.github/workflows/docker-publish.yml` memicu build image pada tag yang cocok dengan `G[0-9]*-F[0-9]*-P[0-9]*` dan memvalidasi `version.json` sebelum build.
+- `.github/workflows/version-policy.yml` menegakkan [Section 5.1](#51-kebijakan-wajib-pembaruan-versionjson-mandatory-update-policy) pada setiap push ke `main` dan setiap pull request. Tambahkan check `version-policy` ke required status checks pada ruleset branch protection agar tidak dapat dilewati.
 
 ---
 
@@ -163,3 +212,5 @@ pnpm run release:pre -- --no-push                # commit + tag lokal, skip push
 - **Dilarang** menyimpan versi hanya di `package.json`; `version.json` adalah sumber kebenaran.
 - **Dilarang** membaca versi dari `package.json` saat runtime atau di log.
 - **Dilarang** mengedit `version.json` secara manual tanpa menjaga invarian.
+- **Dilarang** melakukan commit perubahan kode produk tanpa `version.json` ikut berubah pada commit yang sama.
+- **Dilarang** menaikkan versi di commit terpisah dari perubahan kode yang menjadi alasan kenaikan tersebut.

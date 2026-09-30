@@ -240,4 +240,38 @@ describe('Cosmos versioning utilities', () => {
             assert.ok(fs.existsSync(path.join(REPO_ROOT, 'version.json')));
         });
     });
+
+    describe('mandatory update policy (AGENTS.md Rule S.1)', () => {
+        const info = getVersionInfo();
+
+        it('produces a strictly greater version for every increment kind', () => {
+            for (const kind of ['patch', 'feature', 'generation'] as const) {
+                const asString = formatVersion(bumpVersion(info, kind));
+                assert.ok(isValidVersion(asString), `${asString} must be a valid version`);
+                assert.ok(compareVersions(asString, info.version) > 0, `${asString} must exceed ${info.version}`);
+            }
+        });
+
+        it('covers every documented trigger path', () => {
+            // Mirrors VERSION_TRIGGER_PATHS in scripts/version.ts.
+            for (const p of ['src', 'prisma', 'scripts', 'docker', '.github/workflows']) {
+                assert.ok(fs.existsSync(path.join(REPO_ROOT, p)), `trigger path '${p}' must exist`);
+            }
+        });
+
+        it('ships the CI enforcement workflow', () => {
+            const workflow = path.join(REPO_ROOT, '.github', 'workflows', 'version-policy.yml');
+            assert.ok(fs.existsSync(workflow), 'version-policy.yml must exist');
+            const raw = fs.readFileSync(workflow, 'utf-8');
+            assert.ok(raw.includes('version:verify'), 'workflow must invoke version:verify');
+            assert.ok(raw.includes('pull_request'), 'workflow must run on pull requests');
+        });
+
+        it('exposes the version:verify script in package.json', () => {
+            const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf-8')) as {
+                scripts: Record<string, string>;
+            };
+            assert.ok(pkg.scripts['version:verify'], 'package.json must define version:verify');
+        });
+    });
 });

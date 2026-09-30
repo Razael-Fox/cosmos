@@ -46,6 +46,51 @@ const info = getVersionInfo(); // { version, generation, featureMilestone, patch
 console.log(formatVersion(info)); // "G2-F24-P7"
 ```
 
+- The `version` field in `package.json` MUST always equal `version.json`.
+
+---
+
+## Mandatory Update Policy
+
+`version.json` is a version commitment recorded in Git history. Every change that
+alters product behaviour **must** leave a trace in `version.json` **within the
+same commit**. Deferring the increment to a later commit, or shipping a product
+change without any increment, is prohibited.
+
+### Trigger table
+
+| Changed path                                                             | Increment    | Required |
+| :----------------------------------------------------------------------- | :----------- | :------- |
+| `src/**`, `prisma/**`, `scripts/**`, `docker/**`, `.github/workflows/**` | `patch`      | Yes (CI) |
+| A new feature, command, or subsystem completed and ready for use         | `feature`    | Yes      |
+| Major refactor, major database migration, framework replacement          | `generation` | Yes      |
+| Bug fix, new validation, optimization, UI/UX improvement                 | `patch`      | Yes      |
+| `README.md`, `docs/**`, `AGENTS.md`, `.agents/**`                        | `patch`      | Yes      |
+| Other `*.md`, `ISSUE.md`, `SUMMARY.md`, formatting, typos, whitespace    | —            | No       |
+
+Rows marked **(CI)** are enforced automatically by
+`.github/workflows/version-policy.yml`. The remaining rows are the contributor's
+obligation and are not machine-detected.
+
+### Required procedure
+
+1. Determine the increment kind from the trigger table.
+2. Run `pnpm run version:bump patch|feature|generation`.
+3. Run `pnpm run version:check` to validate invariants and `package.json` sync.
+4. Run `pnpm run version:verify -- --base HEAD` to mirror CI locally.
+5. Stage `version.json`, `package.json`, and `CHANGELOG.md` in the same commit as
+   the code change.
+
+### Automated guard
+
+The `version-policy` job runs on every push to `main` and every pull request. It
+invokes `pnpm run version:verify -- --base <base-sha>`, which verifies that:
+
+1. `version.json` changed whenever a trigger path changed.
+2. The new version is strictly greater than the base version, preventing
+   downgrades and duplicate versions.
+3. The `version.json` invariants hold and stay in sync with `package.json`.
+
 ## Overview
 
 Cosmos uses a custom versioning format that focuses on product development and feature milestones.

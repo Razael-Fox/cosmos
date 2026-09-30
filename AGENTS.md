@@ -62,6 +62,8 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     2. `pnpm lint`
     3. `pnpm build` (jika diperlukan untuk memastikan kompilasi dist bersih)
     4. `pnpm format` (wajib dijalankan untuk merapikan kode sebelum di-commit)
+    5. `pnpm run version:check` (wajib dijalankan untuk memastikan invarian `version.json` terpenuhi dan sinkron dengan `package.json`)
+    6. `pnpm run version:bump <patch|feature|generation>` bila perubahan memerlukan increment versi — **wajib** pada setiap perubahan kode produk (lihat Aturan S.1).
 
 ### C. Logging & Debugging
 
@@ -106,8 +108,9 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 3. **Eksekusi Perubahan:** Lakukan pengeditan kode secara presisi dan bersih dalam TypeScript.
 4. **Jalankan Verifikasi:** Jalankan `pnpm typecheck` dan `pnpm lint` untuk memastikan tidak ada syntax error atau tipe mismatch.
 5. **Format Kode:** Jalankan `pnpm format` agar format kode seragam dan sesuai standar (jalankan setelah script lainnya).
-6. **Lakukan Git Commit:** Lakukan commit lokal atas semua perubahan yang telah selesai dan terverifikasi beserta hasil formatting. **Kecualikan `ISSUE.md` dan `SUMMARY.md`** — jangan di-stage atau di-commit kecuali pengguna memberi perintah eksplisit (lihat Aturan I).
-7. **Ringkaskan Hasil:** Berikan penjelasan singkat, padat, dan jelas mengenai perubahan yang telah dilakukan beserta bukti verifikasi.
+6. **Perbarui Metadata Versi (WAJIB):** Tentukan jenis increment berdasarkan tabel pada Aturan S.1, lalu jalankan `pnpm run version:bump patch|feature|generation` untuk memperbarui `version.json` (dan otomatis menyelaraskan `package.json`), kemudian jalankan `pnpm run version:check`. **Dilarang** melewati langkah ini bila perubahan menyentuh kode produk, konfigurasi, atau dokumentasi yang tercantum pada tabel trigger Aturan S.1.
+7. **Lakukan Git Commit:** Lakukan commit lokal atas semua perubahan yang telah selesai dan terverifikasi beserta hasil formatting **dan seluruh file versi (`version.json`, `package.json`, `CHANGELOG.md`) dalam commit yang sama**. **Kecualikan `ISSUE.md` dan `SUMMARY.md`** — jangan di-stage atau di-commit kecuali pengguna memberi perintah eksplisit (lihat Aturan I).
+8. **Ringkaskan Hasil:** Berikan penjelasan singkat, padat, dan jelas mengenai perubahan yang telah dilakukan, **termasuk versi Cosmos sebelum dan sesudah perubahan** beserta bukti verifikasi.
 
 ### J. Database & Persistensi (Prisma SQLite)
 
@@ -186,8 +189,36 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     | Perbaikan bug, validasi, optimasi, UI, docs   | `patch`                    | `G2-F24-P7` → `G2-F24-P8` |
     | Fitur utama selesai & siap pakai              | `feature` (patch reset)    | `G2-F24-P7` → `G2-F25-P0` |
     | Perubahan arsitektur mayor / migrasi DB mayor | `generation` (F & P reset) | `G2-F40-P12` → `G3-F1-P0` |
-- **Kapan AI Agent TIDAK boleh menaikkan versi:** Perubahan dokumentasi murni, penyuntingan teks, dan penyesuaian internal yang tidak mengubah perilaku produk **tidak** memerlukan increment versi kecuali memperbaiki dokumentasi versi itu sendiri (sesuai aturan `P`).
 - **Tag Git:** Tag rilis **wajib** memakai string versi apa adanya tanpa prefiks tambahan, yaitu `G2-F24-P7` (tag `v`-prefixed dan SemVer **dilarang**). Workflow `.github/workflows/docker-publish.yml` memicu build image pada tag yang cocok dengan pola `G[0-9]*-F[0-9]*-P[0-9]*`.
+
+#### S.1 Kebijakan Wajib Pembaruan `version.json` (Mandatory Version Metadata Update Policy)
+
+> Kebijakan ini berlaku **mutlak** pada setiap AI Agent dan setiap kontribusi kode. Tujuannya memastikan metadata versi di `version.json` **tidak pernah** tertinggal dari perubahan kode.
+
+- **Prinsip Utama (Source of Truth Commitment):** `version.json` adalah **komitmen versi** yang tercatat di dalam riwayat Git. Setiap perubahan yang mengubah perilaku produk **wajib** meninggalkan jejak pada `version.json` di dalam **commit yang sama**. Membiarkan `version.json` tidak tersentuh pada perubahan yang membutuhkan increment versi **dilarang keras**.
+- **Kapan `version.json` WAJIB Diperbarui (Trigger Paths):** AI Agent **wajib** menjalankan `pnpm run version:bump <patch|feature|generation>` bila perubahan menyentuh salah satu path berikut:
+
+    | Path yang Diubah                                                         | Increment    | Wajib?      |
+    | :----------------------------------------------------------------------- | :----------- | :---------- |
+    | `src/**`, `prisma/**`, `scripts/**`, `docker/**`, `.github/workflows/**` | `patch`      | **Ya** (CI) |
+    | Penyelesaian fitur/command/subsistem baru yang siap dipakai              | `feature`    | **Ya**      |
+    | Restrukturisasi mayor, migrasi DB mayor, penggantian framework           | `generation` | **Ya**      |
+    | Perbaikan bug, validasi baru, optimasi, perbaikan UI/UX                  | `patch`      | **Ya**      |
+    | `README.md`, `docs/**`, `AGENTS.md`, `.agents/**`                        | `patch`      | **Ya**      |
+    | `*.md` lain, `ISSUE.md`, `SUMMARY.md`, format/typo/whitespace            | —            | **Tidak**   |
+
+    Pipeline CI `.github/workflows/version-policy.yml` menegakkan baris bertanda **(CI)** secara otomatis dan akan **gagal** bila kode produk berubah tanpa `version.json` ikut berubah. Baris lainnya ditegakkan oleh kewajiban AI Agent dan tidak dideteksi otomatis.
+
+- **Kapan `version.json` TIDAK perlu Diperbarui:** Penyuntingan teks, perbaikan format/whitespace, dan dokumentasi non-versi **tidak** memerlukan increment versi (sesuai aturan `P` di atas). Cukupkan dengan `pnpm run version:check` untuk memastikan metadata tetap valid dan sinkron.
+- **Prosedur Wajib (Prosedur Wajib Setiap Commissioning):** Setiap kali menyelesaikan perubahan kode:
+    1. [ ] Tentukan jenis increment berdasarkan tabel di atas.
+    2. [ ] Jalankan `pnpm run version:bump patch|feature|generation` (atau `pnpm run release:pre -- --bump <jenis>` bila sekalian menerbitkan).
+    3. [ ] Jalankan `pnpm run version:check` untuk memastikan invarian terpenuhi dan `package.json` sinkron.
+    4. [ ] Pastikan `version.json` **sudah di-stage** dalam commit yang sama dengan perubahan kode.
+    5. [ ] Tambahkan entri di `CHANGELOG.md` sesuai versi baru bila perubahan berdampak ke user.
+- **Konsistensi `package.json`:** Siapa pun yang menaikkan versi **wajib** menjalankan `pnpm run version:bump` (script menyelaraskan `package.json` secara otomatis) **atau** menyelaraskan `package.json` secara manual di commit yang sama. Dilarang hanya mengubah `package.json` tanpa `version.json`, atau sebaliknya.
+- **Pencegahan Lupa (Anti-Forget Guardrail):** Karena `version.json` bersifat text-based, CI menjadi penjaga terakhir. Job `version-policy` pada `.github/workflows/version-policy.yml` berjalan pada setiap push ke `main` dan setiap pull request, memanggil `pnpm run version:verify -- --base <base-sha>`. Perintah tersebut memastikan (a) `version.json` **berubah** setiap kali `src/**`, `prisma/**`, `scripts/**`, `docker/**`, atau `.github/workflows/**` berubah, dan (b) versi baru selalu **lebih besar** dari versi base (mencegah downgrade maupun versi duplikat). Kegagalan pada CI berarti ada perubahan kode yang belum menaikkan versi.
+- **Verifikasi Manual (Setara dengan CI):** Sebelum push, AI Agent dapat menjalankan `pnpm run version:verify -- --base HEAD` untuk meniru perilaku CI secara lokal terhadap commit terakhir.
 - **Otomasi Rilis:** Pembuatan tag dan penerbitan GitHub Release didelegasikan melalui `scripts/release.ts` (`pnpm run release:pre`). Script ini membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, lalu membuat tag dan GitHub Release. Flag penting: `--bump patch|feature|generation` untuk menaikkan versi sebelum publikasi, `--stable` untuk terbit tanpa flag `--prerelease`, `--dry-run` untuk validasi tanpa efek samping, dan `--no-push` untuk melewati push remote. Manajemen metadata harian (read/validate/bump) dilakukan `scripts/version.ts` melalui `pnpm run version:show`, `version:check`, dan `version:bump <patch|feature|generation>`.
 - **Transisi & Riwayat:** Saat migrasi ke format `G-F-P`, riwayat header `RF-*` yang sudah terbit di `CHANGELOG.md` **tetap dipertahankan apa adanya** sebagai catatan siklus pra-rilis dan **tidak boleh diubah**. Rujukan lengkap ada di `.agents/skills/cosmos-versioning/SKILL.md`.
 

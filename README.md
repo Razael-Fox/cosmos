@@ -155,17 +155,17 @@ cosmos/
 
 ## Scripts
 
-| Script                                                     | Purpose                                  |
-| :--------------------------------------------------------- | :--------------------------------------- |
-| `pnpm dev`                                                 | Run in development mode                  |
-| `pnpm pair` / `pnpm tgpair`                                | Pair a WhatsApp or Telegram account      |
-| `pnpm build` / `pnpm start`                                | Compile and run the production build     |
-| `pnpm pm2:start` / `pm2:logs` / `pm2:restart` / `pm2:stop` | Manage the PM2 process                   |
-| `pnpm start:bg` / `status:bg` / `stop:bg`                  | Manage the nohup daemon                  |
-| `pnpm typecheck` / `pnpm lint` / `pnpm format`             | Static checks and formatting             |
-| `pnpm validate:i18n`                                       | Assert key parity between `en` and `id`  |
-| `pnpm version:show` / `version:check` / `version:bump`     | Inspect and increment the Cosmos version |
-| `pnpm release:pre`                                         | Publish a tagged release                 |
+| Script                                                                    | Purpose                                             |
+| :------------------------------------------------------------------------ | :-------------------------------------------------- |
+| `pnpm dev`                                                                | Run in development mode                             |
+| `pnpm pair` / `pnpm tgpair`                                               | Pair a WhatsApp or Telegram account                 |
+| `pnpm build` / `pnpm start`                                               | Compile and run the production build                |
+| `pnpm pm2:start` / `pm2:logs` / `pm2:restart` / `pm2:stop`                | Manage the PM2 process                              |
+| `pnpm start:bg` / `status:bg` / `stop:bg`                                 | Manage the nohup daemon                             |
+| `pnpm typecheck` / `pnpm lint` / `pnpm format`                            | Static checks and formatting                        |
+| `pnpm validate:i18n`                                                      | Assert key parity between `en` and `id`             |
+| `pnpm version:show` / `version:check` / `version:verify` / `version:bump` | Inspect, validate, and increment the Cosmos version |
+| `pnpm release:pre`                                                        | Publish a tagged release                            |
 
 ## Versioning
 
@@ -201,14 +201,30 @@ without parsing Markdown or Git tags:
 }
 ```
 
-| Script                             | Purpose                                                  |
-| :--------------------------------- | :------------------------------------------------------- |
-| `pnpm run version:show`            | Print the current version metadata                       |
-| `pnpm run version:check`           | Validate `version.json` and its sync with `package.json` |
-| `pnpm run version:bump patch`      | `G2-F24-P7` to `G2-F24-P8`                               |
-| `pnpm run version:bump feature`    | `G2-F24-P7` to `G2-F25-P0`                               |
-| `pnpm run version:bump generation` | `G2-F24-P7` to `G3-F1-P0`                                |
-| `pnpm run release:pre`             | Bump, tag, and publish the release                       |
+| Script                             | Purpose                                                   |
+| :--------------------------------- | :-------------------------------------------------------- |
+| `pnpm run version:show`            | Print the current version metadata                        |
+| `pnpm run version:check`           | Validate `version.json` and its sync with `package.json`  |
+| `pnpm run version:verify`          | Enforce the mandatory update policy against a base commit |
+| `pnpm run version:bump patch`      | `G2-F24-P7` to `G2-F24-P8`                                |
+| `pnpm run version:bump feature`    | `G2-F24-P7` to `G2-F25-P0`                                |
+| `pnpm run version:bump generation` | `G2-F24-P7` to `G3-F1-P0`                                 |
+| `pnpm run release:pre`             | Bump, tag, and publish the release                        |
+
+### Mandatory update policy
+
+`version.json` is a version commitment recorded in Git history. Any change that
+alters product behaviour must bump the version **in the same commit**:
+
+| Changed path                                                             | Increment    |
+| :----------------------------------------------------------------------- | :----------- |
+| `src/**`, `prisma/**`, `scripts/**`, `docker/**`, `.github/workflows/**` | `patch`      |
+| A completed feature, command, or subsystem ready for use                 | `feature`    |
+| Major refactor, major database migration, framework replacement          | `generation` |
+| Other `*.md`, `ISSUE.md`, `SUMMARY.md`, formatting, typos, whitespace    | no bump      |
+
+The first row is enforced automatically by the `version-policy` CI job, which
+fails when product code changes without a `version.json` update.
 
 See [docs/VERSIONING.md](docs/VERSIONING.md) for the full specification and
 [CHANGELOG.md](CHANGELOG.md) for history.
