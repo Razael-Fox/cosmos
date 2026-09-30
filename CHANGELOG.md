@@ -13,6 +13,31 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F24-P11] - 2026-09-30
+
+### Added
+
+- **Group check online command (`.check online` / `.cek online`):** Added a new group utility command listing members currently observed as online by the bot with real-time presence. Includes group-only enforcement, deduplicated bot identity filtering, green mentions via `formatMentions`, per-sender 30s cooldown with expiry pruning, and WhatsApp-native markdown formatting.
+- **New agent skill `parallel-branch-versioning`:** Documents parallel-branch version collision detection with `--against origin/main`, mandatory rebase-then-rebump procedure, and Feature Milestone (`F`) milestone counter semantics.
+- **Collision detection & strict ref verification:** Added `--against <ref>` flag to `scripts/version.ts verify` and `.github/workflows/version-policy.yml` to catch collisions at PR time rather than post-merge, and enforced strict ref checking against missing base commits.
+- **Release tag validation:** Added workflow step in `.github/workflows/docker-publish.yml` verifying that `github.ref_name` strictly matches canonical `version.json`.
+
+### Security
+
+- **Runner command injection defense:** Refactored `git()` and `gitSucceeds()` in `scripts/version.ts` to execute Git using `execFileSync` argument arrays rather than shell interpolation. Exported `BASE_REF` safely via environment variables in `.github/workflows/version-policy.yml`.
+
+### Fixed
+
+- **AI Agent runtime policy:** Registered `'check online'` and `check_online` in `AgentToolPolicyManager` with underscore/space normalization so Sara AI can access the tool.
+- **Presence cache persistence:** Added debounced `scheduleSave()` calls in `presenceService.ts` when stale records flip to offline, maintaining parity with disk storage.
+- **Cooldown key robustness:** Guarded `senderJid` in `check_online.ts` with fallback to `msg.key.participant` and `msg.key.id` to prevent group-wide lockouts on unresolvable sender identity.
+- **LID mention handling:** Resolved participant LIDs to phone numbers via `resolveId` before constructing green mentions in `check_online.ts`, falling back gracefully to pushnames to prevent broken `@lid` mentions.
+- **Release automation:** Fixed `scripts/release.ts` `--dry-run` to compute bumped versions in-memory without disk side-effects, filtered flag operands from `--date` and `--bump`, and corrected stable release notes labeling.
+- **Docker layer caching:** Moved `COPY version.json` in `docker/Dockerfile` after `pnpm install` to avoid busting layer caches on patch bumps.
+- **Documentation & types:** Corrected `args: string[]` type signature in `tests/versionCollision.test.ts`, updated `README.md` badge to `G2-F24-P11`, and relocated `Overview` to the top of `docs/VERSIONING.md`.
+
+---
+
 ## [G2-F24-P7] - 2026-09-30
 
 ### Changed

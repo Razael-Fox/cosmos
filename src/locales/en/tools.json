@@ -106,6 +106,7 @@
             "ai_correction": "AI & Correction",
             "tools_utilities": "Tools & Utilities",
             "settings": "Settings",
+            "group": "Group",
             "system_help": "System & Help"
         },
         "units": {
@@ -156,6 +157,19 @@
         "no_active_session": "You do not have any active operation or pending confirmation to cancel in this chat.",
         "success": "Active session has been cancelled.",
         "sender_identity_error": "Could not determine your sender identity."
+    },
+    "check_online": {
+        "group_only": "> ❌ *GROUP-ONLY COMMAND*\n> `.check online` can only be used in a group chat to show which members are currently online.",
+        "title": "ONLINE MEMBERS",
+        "empty_title": "ℹ️ *NO MEMBERS CURRENTLY ONLINE*",
+        "empty_body": "No tracked group members are online right now. Check back later or type `.menu` to browse other commands.",
+        "empty_delay": "_Presence is collected passively, so members the bot has never seen may still be online._",
+        "summary": "🟢 *{{online}} members are currently online*",
+        "online_badge": "🟢 ONLINE",
+        "freshness_note": "💡 Presence is recorded passively and expires after 5 minutes. Members the bot has not interacted with are not tracked.",
+        "cooldown": "Please wait {{seconds}} seconds before checking online members again.",
+        "fetch_error": "> ❌ *PRESENCE CHECK FAILED*\n> Unable to read this group's member list. Please try again in a few moments.",
+        "unknown_member": "Unknown Member"
     },
     "addbalance": {
         "usage": "Invalid format. Use: .add balance <user> <amount>",
@@ -785,6 +799,9 @@
         "days_suffix": "{{days}} days"
     },
     "commands": {
+        "check_online": {
+            "description": "List group members who are currently online with real-time presence."
+        },
         "addbalance": {
             "description": "Add balance to a user from the house vault. (Owner only)"
         },

@@ -106,6 +106,7 @@
             "ai_correction": "AI & Koreksi",
             "tools_utilities": "Alat & Utilitas",
             "settings": "Pengaturan",
+            "group": "Grup",
             "system_help": "Sistem & Bantuan"
         },
         "units": {
@@ -156,6 +157,19 @@
         "no_active_session": "Tidak ada sesi interaktif aktif yang dapat dibatalkan.",
         "success": "Sesi aktif berhasil dibatalkan.",
         "sender_identity_error": "Tidak dapat menentukan identitas pengirim Anda."
+    },
+    "check_online": {
+        "group_only": "> ❌ *PERINTAH KHUSUS GRUP*\n> `.check online` hanya dapat digunakan dalam obrolan grup untuk menampilkan anggota yang sedang online.",
+        "title": "ANGGOTA ONLINE",
+        "empty_title": "ℹ️ *TIDAK ADA ANGGOTA YANG ONLINE*",
+        "empty_body": "Tidak ada anggota grup yang tercatat sedang online saat ini. Silakan coba lagi nanti atau ketik `.menu` untuk melihat perintah lain.",
+        "empty_delay": "_Kehadiran dikumpulkan secara pasif, sehingga anggota yang belum pernah berinteraksi dengan bot mungkin sedang online._",
+        "summary": "🟢 *{{online}} anggota sedang online*",
+        "online_badge": "🟢 ONLINE",
+        "freshness_note": "💡 Kehadiran dicatat secara pasif dan kedaluwarsa setelah 5 menit. Anggota yang belum pernah berinteraksi dengan bot tidak tercatat.",
+        "cooldown": "Harap tunggu {{seconds}} detik sebelum memeriksa anggota online lagi.",
+        "fetch_error": "> ❌ *GAGAL MEMERIKSA KEHADIRAN*\n> Tidak dapat membaca daftar anggota grup ini. Silakan coba lagi beberapa saat lagi.",
+        "unknown_member": "Anggota Anonim"
     },
     "addbalance": {
         "usage": "Format tidak valid. Gunakan: .add balance <user> <jumlah>",
@@ -785,6 +799,9 @@
         "days_suffix": "{{days}} hari"
     },
     "commands": {
+        "check_online": {
+            "description": "Menampilkan daftar anggota grup yang sedang online secara real-time."
+        },
         "addbalance": {
             "description": "Menambahkan saldo ke pengguna dari brankas bandar. (Khusus Pemilik)"
         },

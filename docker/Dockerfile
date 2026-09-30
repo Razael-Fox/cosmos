@@ -10,7 +10,6 @@ FROM node:${NODE_VERSION} AS builder-bot
 RUN corepack enable
 WORKDIR /build/bot
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
-COPY version.json ./version.json
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN pnpm config set package-import-method copy && \
@@ -18,6 +17,7 @@ RUN pnpm config set package-import-method copy && \
     pnpm config set fetch-retry-maxtimeout 180000 && \
     pnpm install --frozen-lockfile && \
     pnpm exec prisma generate
+COPY version.json ./version.json
 COPY src ./src
 COPY scripts ./scripts
 COPY assets ./assets

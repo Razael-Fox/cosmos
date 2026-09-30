@@ -194,10 +194,35 @@ export async function getUserPresence(
     // Check TTL: if status is online, but inactivity exceeds timeout, flip to offline
     if (record.status === 'online' && Date.now() - record.lastSeen > PRESENCE_TIMEOUT_MS) {
         record.status = 'offline';
+        scheduleSave();
     }
 
     return {
         status: record.status,
         lastSeen: record.lastSeen
     };
+}
+
+/**
+ * Returns clean-digit IDs of all users currently marked online within the TTL.
+ * Applies the same 5-minute TTL as `getUserPresence`; stale records are
+ * flipped to offline so subsequent reads stay consistent.
+ */
+export function getAllOnlineIds(): string[] {
+    const now = Date.now();
+    const online: string[] = [];
+    let hasFlipped = false;
+    for (const [id, record] of presenceMap.entries()) {
+        if (record.status !== 'online') continue;
+        if (now - record.lastSeen > PRESENCE_TIMEOUT_MS) {
+            record.status = 'offline';
+            hasFlipped = true;
+            continue;
+        }
+        online.push(id);
+    }
+    if (hasFlipped) {
+        scheduleSave();
+    }
+    return online;
 }

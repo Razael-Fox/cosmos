@@ -3,6 +3,8 @@ name: cosmos-versioning
 description: Panduan baku format versi bertanggal Cosmos (G<generation>-F<feature>-P<patch>), metadata version.json, utility versioning.ts, dan prosedur bump serta publish rilis. Gunakan panduan ini setiap kali AI Agent perlu menaikkan, memvalidasi, mempublikasikan, atau menampilkan versi Cosmos, atau saat mengubah package.json, CHANGELOG.md, tag Git, dan workflow Docker publish.
 ---
 
+> **Lihat juga `parallel-branch-versioning`** untuk tabrakan nomor versi antar branch paralel (prosedur rebase-lalu-rebump) dan semantik Feature Milestone (`F`) beserta registry-nya.
+
 # Cosmos Versioning Standards (Format Tanggal `G-F-P`)
 
 > **Migrasi 2026-09-30.** Format lama `RF-YYMM-BUILD` (pra-rilis) dan SemVer (stabil) **sudah tidak berlaku**. Digantikan oleh satu format tanggal tunggal. Spesifikasi kanonik: `docs/VERSIONING.md`. Aturan utama di `AGENTS.md` Rule S.
@@ -17,13 +19,13 @@ G<generation>-F<featureMilestone>-P<patch>[.<YYYY-MM-DD>][-<status>]
 
 Contoh: `G2-F24-P7`, `G1-F12-P2.2026-09-30`, `G2-F24-P7.2026-09-30-beta`.
 
-| Komponen | Arti                                                                                                                  |
-| :------- | :-------------------------------------------------------------------------------------------------------------------- |
-| `G`      | **Generation**. Naik pada restrukturisasi besar, migrasi DB mayor, penggantian framework, atau desain tak kompatibel. |
-| `F`      | **Feature Milestone**. Naik saat sebuah fitur utama selesai dan siap dipakai.                                         |
-| `P`      | **Patch**. Naik untuk perbaikan bug, validasi, optimasi, UI, dan pembaruan dokumentasi penting.                       |
-| `.date`  | Tanggal rilis opsional, ISO 8601 (`YYYY-MM-DD`). Tidak dihitung sebagai increment.                                    |
-| `status` | Stage opsional di akhir: `alpha`, `beta`, `rc1`, `stable`.                                                            |
+| Komponen | Arti                                                                                                                                                                       |
+| :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `G`      | **Generation**. Naik pada restrukturisasi besar, migrasi DB mayor, penggantian framework, atau desain tak kompatibel.                                                      |
+| `F`      | **Feature Milestone**. Penghitung milestone yang naik saat sebuah fitur utama selesai dan siap dipakai. **Bukan** daftar fitur — lihat skill `parallel-branch-versioning`. |
+| `P`      | **Patch**. Naik untuk perbaikan bug, validasi, optimasi, UI, dan pembaruan dokumentasi penting.                                                                            |
+| `.date`  | Tanggal rilis opsional, ISO 8601 (`YYYY-MM-DD`). Tidak dihitung sebagai increment.                                                                                         |
+| `status` | Stage opsional di akhir: `alpha`, `beta`, `rc1`, `stable`.                                                                                                                 |
 
 Contoh makna `G2-F24-P7`: produk berada di Generasi 2, telah menyelesaikan 24 feature milestone, dan menerima 7 patch sejak milestone terakhir.
 
@@ -114,11 +116,14 @@ pnpm run version:show                    # tampilkan metadata versi
 pnpm run version:show -- --json          # tampilkan isi mentah version.json
 pnpm run version:check                   # validasi invarian + sinkronisasi package.json
 pnpm run version:verify -- --base <sha>  # tegakkan kebijakan pembaruan versi (dipakai CI)
+pnpm run version:verify -- --base <sha> --against origin/main   # + deteksi tabrakan branch paralel
 pnpm run version:bump patch              # G2-F24-P7 -> G2-F24-P8
 pnpm run version:bump feature            # G2-F24-P7 -> G2-F25-P0
 pnpm run version:bump generation         # G2-F24-P7 -> G3-F1-P0
 pnpm run version:bump patch -- --date 2026-10-01
 ```
+
+> **`version:bump` membaca `version.json` LOKAL.** Pada branch yang sudah basi, hasilnya bisa bertabrakan dengan branch lain. Lihat skill `parallel-branch-versioning` untuk prosedur rebase-lalu-rebump.
 
 ---
 
@@ -151,8 +156,10 @@ Setiap kali menyelesaikan perubahan kode:
 2. [ ] Jalankan `pnpm run version:bump patch|feature|generation`.
 3. [ ] Jalankan `pnpm run version:check` (memastikan invarian dan sinkronisasi `package.json`).
 4. [ ] Jalankan `pnpm run version:verify -- --base HEAD` untuk meniru pemeriksaan CI secara lokal.
-5. [ ] Pastikan `version.json`, `package.json`, dan `CHANGELOG.md` **di-stage dalam commit yang sama** dengan perubahan kode.
-6. [ ] Sebutkan versi Cosmos sebelum dan sesudah perubahan pada ringkasan hasil.
+5. [ ] Jalankan `pnpm run version:verify -- --base HEAD --against origin/main` untuk mendeteksi tabrakan branch paralel.
+6. [ ] Pastikan `version.json`, `package.json`, dan `CHANGELOG.md` **di-stage dalam commit yang sama** dengan perubahan kode.
+7. [ ] Bila increment `feature`: tambahkan baris ke registry milestone di `docs/VERSIONING.md` dan section `## [G<n>-F<m>-P0]` di `CHANGELOG.md`.
+8. [ ] Sebutkan versi Cosmos sebelum dan sesudah perubahan pada ringkasan hasil.
 
 ### Penjaga Otomatis (Anti-Forget Guardrail)
 
@@ -161,8 +168,9 @@ Job `version-policy` berjalan pada setiap push ke `main` dan setiap pull request
 1. `version.json` **berubah** setiap kali `src/**`, `prisma/**`, `scripts/**`, `docker/**`, atau `.github/workflows/**` berubah.
 2. Versi baru **lebih besar** dari versi base — mencegah downgrade dan versi duplikat.
 3. Invarian `version.json` terpenuhi dan sinkron dengan `package.json`.
+4. Pada pull request, versi baru **lebih besar dari tip base branch** (`--against`) — mencegah tabrakan dengan branch paralel.
 
-Kegagalan pada job ini berarti ada perubahan kode yang belum menaikkan versi. Perbaiki dengan `pnpm run version:bump patch|feature|generation`.
+Kegagalan pada job ini berarti ada perubahan kode yang belum menaikkan versi, atau nomor versi sudah diklaim branch lain. Perbaiki dengan `pnpm run version:bump patch|feature|generation`; untuk `Version collision`, ikuti prosedur rebase-lalu-rebump di skill `parallel-branch-versioning`.
 
 ---
 
@@ -214,3 +222,5 @@ pnpm run release:pre -- --no-push                # commit + tag lokal, skip push
 - **Dilarang** mengedit `version.json` secara manual tanpa menjaga invarian.
 - **Dilarang** melakukan commit perubahan kode produk tanpa `version.json` ikut berubah pada commit yang sama.
 - **Dilarang** menaikkan versi di commit terpisah dari perubahan kode yang menjadi alasan kenaikan tersebut.
+- **Dilarang** memaksa melewati kegagalan `Version collision`; wajib rebase lalu bump ulang.
+- **Dilarang** menyatakan `F` sebagai jumlah fitur yang ada di codebase.

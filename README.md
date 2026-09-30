@@ -1,6 +1,6 @@
 # Cosmos - WhatsApp Bot Framework
 
-[![Version](https://img.shields.io/badge/version-G2--F24--P7-blue.svg)](version.json)
+[![Version](https://img.shields.io/badge/version-G2--F24--P11-blue.svg)](version.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x%20|%2022.x%20|%2024.x-339933.svg?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![PNPM](https://img.shields.io/badge/PNPM-8.x+-F69220.svg?logo=pnpm&logoColor=white)](https://pnpm.io/)

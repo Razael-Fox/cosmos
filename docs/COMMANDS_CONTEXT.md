@@ -243,7 +243,20 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 ---
 
-## 9. System, Help & Administration (Bantuan & Administrasi)
+## 9. Group Utilities (Utilitas Grup)
+
+### `.check online` / `.cek online` (Daftar Anggota Online)
+
+- **Fungsi:** Menampilkan anggota grup yang tercatat sedang online beserta green mention.
+- **Penggunaan:** `.check online` (atau `.cek online`) — hanya dapat dipakai di dalam obrolan grup.
+- **Catatan:**
+    - Data kehadiran dikumpulkan secara pasif saat anggota berinteraksi dengan bot, dan kedaluwarsa setelah 5 menit. Anggota yang belum pernah berinteraksi tidak tercatat.
+    - Identitas bot sendiri (JID dan LID) otomatis dikecualikan dari hasil.
+    - Terdapat cooldown 30 detik per pengirim untuk mencegah spam.
+
+---
+
+## 10. System, Help & Administration (Bantuan & Administrasi)
 
 ### `.menu` / `.help` (Navigasi Sistem & Bantuan)
 

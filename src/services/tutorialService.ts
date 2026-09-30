@@ -171,6 +171,44 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         footerKey: 'tools.tutorials.casino.footer'
     },
     {
+        id: 'roulette',
+        category: 'Casino',
+        titleKey: 'tools.tutorials.roulette.header',
+        prerequisiteKeys: ['tools.tutorials.roulette.prereq'],
+        aliases: [
+            'roulette',
+            'buckshot',
+            'creategame',
+            'joingame',
+            'startgame',
+            'shoot',
+            'use',
+            'bet',
+            'tembak',
+            'russianroulette'
+        ],
+        relatedCommands: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
+        localizedRelatedCommands: {
+            en: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
+            id: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet']
+        },
+        steps: [
+            {
+                titleKey: 'tools.tutorials.roulette.step1_title',
+                bodyKey: 'tools.tutorials.roulette.step1_body'
+            },
+            {
+                titleKey: 'tools.tutorials.roulette.step2_title',
+                bodyKey: 'tools.tutorials.roulette.step2_body'
+            },
+            {
+                titleKey: 'tools.tutorials.roulette.step3_title',
+                bodyKey: 'tools.tutorials.roulette.step3_body'
+            }
+        ],
+        footerKey: 'tools.tutorials.roulette.footer'
+    },
+    {
         id: 'subbot',
         category: 'Tools',
         titleKey: 'tools.tutorials.subbot.header',
@@ -268,15 +306,18 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'pinterest',
             'pinterestdl',
             'pin',
+            'telegram',
+            'telegramdl',
+            'tg',
             'tgadd',
             'tglist',
             'tgdel',
             'unduh'
         ],
-        relatedCommands: ['tiktok dl', 'yt dl', 'pinterest dl', 'tg add', 'tg list', 'tg del'],
+        relatedCommands: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del'],
         localizedRelatedCommands: {
-            en: ['tiktok dl', 'yt dl', 'pinterest dl', 'tg add', 'tg list', 'tg del'],
-            id: ['tiktok dl', 'yt dl', 'pinterest dl', 'tg add', 'tg list', 'tg del', 'unduh']
+            en: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del'],
+            id: ['tiktok dl', 'yt dl', 'pinterest dl', 'telegram dl', 'tg add', 'tg list', 'tg del', 'unduh']
         },
         steps: [
             {
@@ -456,6 +497,8 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'rvo',
             'quoted',
             'getprofilephoto',
+            'check online',
+            'cek online',
             'moderasi',
             'pengaturan'
         ],
@@ -467,11 +510,21 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'set lang',
             'rvo',
             'quoted',
-            'profile photo'
+            'profile photo',
+            'check online'
         ],
         localizedRelatedCommands: {
-            en: ['rule34', 'togglensfw', 'auto dl', 'set lang', 'set group lang', 'profile photo', 'rvo'],
-            id: ['rule34', 'togglensfw', 'auto dl', 'set lang', 'set group lang', 'profile photo', 'rvo']
+            en: [
+                'rule34',
+                'togglensfw',
+                'auto dl',
+                'set lang',
+                'set group lang',
+                'profile photo',
+                'rvo',
+                'check online'
+            ],
+            id: ['rule34', 'togglensfw', 'auto dl', 'set lang', 'set group lang', 'profile photo', 'rvo', 'cek online']
         },
         steps: [
             {
