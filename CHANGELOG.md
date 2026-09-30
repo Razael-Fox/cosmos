@@ -13,6 +13,41 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F25-P0] - 2026-09-30
+
+### Added
+
+- **Group Moderation System (Milestone F25 — GitHub Issue #46):** Comprehensive group moderation suite empowering group administrators with automated protections, join-request processing, participant control, metadata editing, and a group blacklist system.
+    - **Core Moderation Commands:**
+        - `.group kick` / `.gkick`: Remove a non-admin member from the group with permission guards preventing removal of admins, self, or creator.
+        - `.group close` / `.gclose`: Lock group to admin-only messaging mode via Baileys `announcement` setting.
+        - `.group open` / `.gopen`: Re-open group to all members via Baileys `not_announcement` setting.
+        - `.group invite <phone>` / `.ginvite`: Send direct message invitations with WhatsApp-native Markdown card containing group invite link to avoid direct-add anti-spam detection.
+        - `.group link` / `.glink`: Retrieve the current group invite link.
+        - `.group promote <target>` / `.gpromote`: Grant admin privileges to a group member.
+        - `.group demote <target>` / `.gdemote`: Revoke admin privileges from an admin with superadmin/creator protection.
+    - **Group Metadata & Information Commands:**
+        - `.group rename <name>` / `.grename`: Update group subject (1–25 characters).
+        - `.group description <desc>` / `.gdesc`: Update group description (1–512 characters) with multi-source input fallback supporting inline text, quoted message text, and `.txt`/`.md` document attachments up to 100 KB.
+    - **Join Request Approval & Queue Management:**
+        - `.group approve <phone|all>` / `.gapprove`: Approve pending membership approval requests for a specific phone number or bulk-approve all requests sequentially with a 3-second rate limit.
+        - `.group reject <target>` / `.greject`: Decline pending membership requests.
+    - **Group Blacklist System & Participant Auto-Enforcement:**
+        - `.group blacklist add <target> [reason]` / `.gbl add`: Add a user to the group blacklist and immediately kick them if currently in the group.
+        - `.group blacklist remove <target>` / `.gbl remove`: Remove a user from the group blacklist.
+        - `.group blacklist list` / `.gbl list`: View all active blacklisted users for the group.
+        - `BlacklistEnforcer`: Background listener on `group-participants.update` event (`action === 'add'`) that automatically kicks blacklisted users upon joining and alerts the group with green mentions.
+    - **Database Persistence & SQLite Migrations:**
+        - Added `GroupBlacklist` and `ModerationLog` models to `prisma/schema.prisma` with indexes and unique constraints.
+        - Programmatic DDL auto-bootstrap in `src/db.ts` and `.worktrees/api/src/db.ts` following SQLite migration precedence.
+    - **Rate Limiting & Safety Invariants:**
+        - Enforced 3-second operational cooldown on group-level moderation actions to comply with WhatsApp API rate limits.
+        - ACID logging of all moderation actions to `ModerationLog`.
+    - **Internationalization (i18n):**
+        - Added symmetric English (`src/locales/en/tools.json`) and Indonesian (`src/locales/id/tools.json`) translations for all 14 tools and their `tools.commands.<name>.description` keys.
+
+---
+
 ## [G2-F24-P12] - 2026-09-30
 
 ### Fixed
