@@ -7,7 +7,8 @@ import { renderCard } from '../utils/uiFormatter.js';
 const vaultTool: ToolModule = {
     definition: {
         name: 'vault',
-        aliases: ['bandar'],
+        displayNames: { en: 'vault status', id: 'status brankas' },
+        aliases: ['vault status', '.vault status', 'status brankas', '.status brankas', 'bandar', 'vault', '.vault'],
         description: 'View the House Vault statistics.',
         descriptionKey: 'tools.commands.vault.description',
         category: 'Casino',

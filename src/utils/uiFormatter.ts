@@ -72,87 +72,77 @@ const DEFAULT_ALERT_TITLES: Record<AlertOptions['type'], string> = {
     info: 'INFORMATION'
 };
 
+function quoteLine(text: string): string {
+    const clean = String(text ?? '').trim();
+    return `> ${clean.length > 0 ? clean : '—'}`;
+}
+
+function isBoxCharFree(s: string): boolean {
+    return !/[╭│╰┌└─━┃┐┘├┤┬┴┼═║╔╗╚╝]/.test(s);
+}
+
+function formatFieldLine(f: CardField): string {
+    const icon = f.icon ? `${f.icon} ` : '';
+    const label = f.boldLabel !== false ? `*${f.label}:*` : `${f.label}:`;
+    return `- ${icon}${label} ${f.value}`;
+}
+
 /**
- * Renders a standard CGDS Card with consistent Unicode box borders.
+ * Renders a standard card using 100% WhatsApp-native Markdown.
+ * No Unicode box-drawing characters. Zero-empty-quote invariant enforced.
  */
 export function renderCard(options: CardOptions): string {
-    const style = options.headerStyle === 'bold' ? 'heavy' : options.headerStyle || 'light';
     const iconPart = options.icon ? `${options.icon} ` : '';
-
-    let topBorder: string;
-    let side: string;
-    let emptySide: string;
-    let bottomBorder: string;
-
-    if (style === 'heavy') {
-        topBorder = `╭━━━〔 ${iconPart}*${options.title}* 〕━━━╮`;
-        side = '┃ ';
-        emptySide = '┃';
-        bottomBorder = '╰━━━━━━━━━━━━━━━━━━━━━╯';
-    } else if (style === 'compact') {
-        topBorder = `┌──「 ${iconPart}*${options.title}* 」`;
-        side = '│ ';
-        emptySide = '│';
-        bottomBorder = '└─────────────────────';
-    } else {
-        // light
-        topBorder = `╭───「 ${iconPart}*${options.title}* 」`;
-        side = '│ ';
-        emptySide = '│';
-        bottomBorder = '╰───────────────────────────';
-    }
-
-    const lines: string[] = [topBorder];
+    const lines: string[] = [`*${iconPart}${options.title}*`];
 
     if (options.subtitle) {
-        lines.push(`${side}_${options.subtitle}_`);
-        lines.push(emptySide);
+        lines.push(`_${options.subtitle}_`);
     }
 
+    const quoteLines: string[] = [];
     if (options.body) {
         const bodyLines = Array.isArray(options.body) ? options.body : options.body.split('\n');
-        bodyLines.forEach((bl) => {
-            if (bl.trim() === '') {
-                lines.push(emptySide);
-            } else {
-                lines.push(`${side}${bl}`);
-            }
-        });
+        for (const bl of bodyLines) {
+            if (bl.trim() === '') continue;
+            quoteLines.push(quoteLine(bl.trim()));
+        }
     }
 
+    if (quoteLines.length > 0) {
+        lines.push('');
+        lines.push(...quoteLines);
+    }
+
+    const bulletLines: string[] = [];
     if (options.fields && options.fields.length > 0) {
-        if (options.body && (Array.isArray(options.body) ? options.body.length > 0 : options.body.length > 0)) {
-            lines.push(emptySide);
+        for (const f of options.fields) {
+            bulletLines.push(formatFieldLine(f));
         }
-        options.fields.forEach((f) => {
-            const fIcon = f.icon ? `${f.icon} ` : '';
-            const fLabel = f.boldLabel !== false ? `*${f.label}:*` : `${f.label}:`;
-            lines.push(`${side}${fIcon}${fLabel} ${f.value}`);
-        });
     }
 
     if (options.sections && options.sections.length > 0) {
-        options.sections.forEach((sec, sIdx) => {
-            if (sIdx > 0 || (options.fields && options.fields.length > 0) || options.body) {
-                lines.push(emptySide);
-            }
+        for (const sec of options.sections) {
             if (sec.title) {
-                lines.push(`${side}*${sec.title}*`);
+                bulletLines.push(`*${sec.title}*`);
             }
-            sec.items.forEach((item) => {
-                const fIcon = item.icon ? `${item.icon} ` : '';
-                const fLabel = item.boldLabel !== false ? `*${item.label}:*` : `${item.label}:`;
-                lines.push(`${side}${fIcon}${fLabel} ${item.value}`);
-            });
-        });
+            for (const item of sec.items) {
+                bulletLines.push(formatFieldLine(item));
+            }
+        }
+    }
+
+    if (bulletLines.length > 0) {
+        lines.push('');
+        lines.push(...bulletLines);
     }
 
     if (options.footer) {
-        lines.push(emptySide);
-        lines.push(`${side}${options.footer}`);
+        const footer = String(options.footer).trim();
+        if (footer.length > 0) {
+            lines.push('');
+            lines.push(quoteLine(footer));
+        }
     }
-
-    lines.push(bottomBorder);
 
     const tips: string[] = options.tips ? [...options.tips] : [];
     if (options.tip) {
@@ -161,21 +151,24 @@ export function renderCard(options: CardOptions): string {
 
     if (tips.length > 0) {
         const tipPrefix = options.t ? options.t('tools.ui.tip_prefix', '💡 *Tip:*') : '💡 *Tip:*';
+        lines.push('');
         if (tips.length === 1) {
-            lines.push(`${tipPrefix} ${tips[0]}`);
+            lines.push(quoteLine(`${tipPrefix} ${tips[0]}`));
         } else {
-            lines.push(tipPrefix);
-            tips.forEach((tp) => {
-                lines.push(`• ${tp}`);
-            });
+            lines.push(quoteLine(tipPrefix));
+            for (const tp of tips) {
+                lines.push(`- ${tp}`);
+            }
         }
     }
 
-    return lines.join('\n');
+    const out = lines.join('\n');
+    void isBoxCharFree;
+    return out;
 }
 
 /**
- * Renders an Alert or Validation Card.
+ * Renders an Alert using WhatsApp-native Markdown quote blocks.
  */
 export function renderAlert(options: AlertOptions): string {
     const icon = ALERT_ICONS[options.type] || 'ℹ️';
@@ -184,21 +177,23 @@ export function renderAlert(options: AlertOptions): string {
         : DEFAULT_ALERT_TITLES[options.type];
     const title =
         options.title || defaultTitle || (options.t ? options.t('tools.ui.alert_titles.notice', 'NOTICE') : 'NOTICE');
-    const lines: string[] = [`╭───「 ${icon} *${title}* 」`, `│`, `│ ${options.message}`];
+    const lines: string[] = [quoteLine(`${icon} *${title}*`), quoteLine(options.message)];
 
     if (options.details && options.details.length > 0) {
-        lines.push(`│`);
-        options.details.forEach((d) => {
-            lines.push(`│ • ${d}`);
-        });
+        for (const d of options.details) {
+            const clean = String(d).trim();
+            if (!clean) continue;
+            lines.push(quoteLine(`- *Detail:* ${clean}`));
+        }
     }
 
     if (options.actionSuggestion) {
-        lines.push(`│`);
-        lines.push(`│ 👉 ${options.actionSuggestion}`);
+        const clean = String(options.actionSuggestion).trim();
+        if (clean.length > 0) {
+            lines.push(quoteLine(`👉 ${clean}`));
+        }
     }
 
-    lines.push(`╰───────────────────────────`);
     return lines.join('\n');
 }
 
@@ -228,7 +223,7 @@ export function renderProgressBar(options: ProgressOptions): string {
 }
 
 /**
- * Renders a standardized error card with correct syntax and examples.
+ * Renders a standardized syntax error using WhatsApp-native Markdown.
  */
 export function renderSyntaxError(
     commandName: string,
@@ -247,33 +242,30 @@ export function renderSyntaxError(
     const issueLabel = resolve('tools.ui.issue_label', 'Issue');
     const syntaxLabel = resolve('tools.ui.correct_syntax', 'Correct Syntax:');
     const exampleLabel = resolve('tools.ui.valid_examples', 'Valid Examples:');
+    void commandName;
 
     const lines: string[] = [
-        `╭───「 ❌ *${title}* 」`,
-        `│`,
-        `│ ⚠️ *${issueLabel}:* ${description}`,
-        `│ 📌 *${syntaxLabel}*`,
-        `│    \`${usage}\``,
-        `│`,
-        `│ 💡 *${exampleLabel}*`
+        quoteLine(`❌ *${title}*`),
+        quoteLine(`⚠️ *${issueLabel}:* ${description}`),
+        quoteLine(`📌 *${syntaxLabel}* \`${usage}\``),
+        '',
+        `*${exampleLabel}*`
     ];
 
     const examples = example
         .split('\n')
         .map((e) => e.trim())
         .filter(Boolean);
-    examples.forEach((ex) => {
-        const cleanEx = ex.startsWith('•') ? ex : `• ${ex}`;
-        lines.push(`│    ${cleanEx}`);
-    });
+    for (const ex of examples) {
+        const cleanEx = ex.startsWith('-') || ex.startsWith('•') ? ex.replace(/^•\s*/, '- ') : `- \`${ex}\``;
+        lines.push(cleanEx);
+    }
 
-    lines.push(`│`);
-    lines.push(`╰───────────────────────────`);
     return lines.join('\n');
 }
 
 /**
- * Renders a structured Table or Numbered Catalog Card.
+ * Renders a structured numbered catalog using WhatsApp-native Markdown.
  */
 export function renderCatalogCard(
     title: string,
@@ -283,33 +275,36 @@ export function renderCatalogCard(
     t?: TranslatorFn
 ): string {
     const iconPart = icon ? `${icon} ` : '';
-    const lines: string[] = [`┌──「 ${iconPart}*${title}* 」`];
+    const lines: string[] = [`*${iconPart}${title}*`, ''];
 
     items.forEach((item, idx) => {
         const rankPrefix = item.rank !== undefined ? `${item.rank}. ` : `${idx + 1}. `;
         const badgeStr = item.badge ? ` ${renderBadge(item.badge)}` : '';
-        lines.push(`│ ${rankPrefix}*${item.title}*${badgeStr}`);
+        lines.push(`${rankPrefix}*${item.title}*${badgeStr}`);
         if (item.value || item.subtitle) {
             const parts: string[] = [];
             if (item.value) parts.push(item.value);
-            if (item.subtitle) parts.push(item.subtitle);
-            lines.push(`│    ${parts.join(' • ')}`);
+            if (item.subtitle) parts.push(`_${item.subtitle}_`);
+            lines.push(`   ${parts.join(' • ')}`);
         }
         if (idx !== items.length - 1) {
-            lines.push(`│`);
+            lines.push('');
         }
     });
 
-    lines.push(`└─────────────────────`);
     if (footerTip) {
         const tipPrefix = t ? t('tools.ui.tip_prefix', '💡 *Tip:*') : '💡 *Tip:*';
-        lines.push(`\n${tipPrefix} ${footerTip}`);
+        const clean = String(footerTip).trim();
+        if (clean.length > 0) {
+            lines.push('');
+            lines.push(quoteLine(`${tipPrefix} ${clean}`));
+        }
     }
     return lines.join('\n');
 }
 
 /**
- * Renders a heart health gauge for minigames like Buckshot Roulette: [ ❤️❤️❤️🖤🖤 ] (3/5 HP)
+ * Renders a heart health gauge for minigames: [ ❤️❤️❤️🖤🖤 ] (3/5 HP)
  */
 export function renderHealthGauge(current: number, max: number = 5, t?: TranslatorFn): string {
     const safeCurrent = Math.max(0, Math.min(current, max));

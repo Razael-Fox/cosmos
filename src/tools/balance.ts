@@ -17,7 +17,8 @@ function getWealthTier(netWorth: number, t: (key: string, def?: string) => strin
 const balanceTool: ToolModule = {
     definition: {
         name: 'balance',
-        aliases: ['bal', 'saldo'],
+        displayNames: { en: 'check balance', id: 'cek saldo' },
+        aliases: ['check balance', '.check balance', 'cek saldo', '.cek saldo', 'bal', 'saldo', 'balance', '.balance'],
         description: "Check your current balance or another user's balance.",
         descriptionKey: 'tools.commands.balance.description',
         category: 'Casino',

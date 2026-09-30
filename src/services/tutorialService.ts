@@ -171,44 +171,6 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         footerKey: 'tools.tutorials.casino.footer'
     },
     {
-        id: 'roulette',
-        category: 'Casino',
-        titleKey: 'tools.tutorials.roulette.header',
-        prerequisiteKeys: ['tools.tutorials.roulette.prereq'],
-        aliases: [
-            'roulette',
-            'buckshot',
-            'creategame',
-            'joingame',
-            'startgame',
-            'shoot',
-            'use',
-            'bet',
-            'tembak',
-            'russianroulette'
-        ],
-        relatedCommands: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
-        localizedRelatedCommands: {
-            en: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
-            id: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet']
-        },
-        steps: [
-            {
-                titleKey: 'tools.tutorials.roulette.step1_title',
-                bodyKey: 'tools.tutorials.roulette.step1_body'
-            },
-            {
-                titleKey: 'tools.tutorials.roulette.step2_title',
-                bodyKey: 'tools.tutorials.roulette.step2_body'
-            },
-            {
-                titleKey: 'tools.tutorials.roulette.step3_title',
-                bodyKey: 'tools.tutorials.roulette.step3_body'
-            }
-        ],
-        footerKey: 'tools.tutorials.roulette.footer'
-    },
-    {
         id: 'subbot',
         category: 'Tools',
         titleKey: 'tools.tutorials.subbot.header',

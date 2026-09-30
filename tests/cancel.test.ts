@@ -1,5 +1,4 @@
 import assert from 'assert';
-import { prisma } from '../src/db.js';
 import {
     registerCancellableSession,
     unregisterCancellableSession,
@@ -11,7 +10,6 @@ import {
 } from '../src/utils/cancellationManager.js';
 import cancelTool from '../src/tools/cancel.js';
 import { startRegistrationSession, isUserRegistering, cancelRegistrationSession } from '../src/utils/idCard.js';
-import createGameTool from '../src/tools/roulette_creategame.js';
 import {
     registerPlaySession,
     getActivePlaySession,
@@ -179,43 +177,7 @@ async function runTests() {
     assert.strictEqual(isUserRegistering('temp_reg_user', idChat), false);
     assert.strictEqual(hasCancellableSession('temp_reg_user', idChat), false);
     console.log('✓ Virtual ID Card cancellation integration verified.');
-    // [Test 5] Integration with Buckshot Roulette Lobby Cancellation & Bet Refund
-    console.log('[Test 5] Testing Buckshot Roulette lobby cancellation integration...');
-    const rouletteHost = '628444444444';
-    const rouletteChat = 'roulette_chat@g.us';
-
-    // Seed test user in database
-    await prisma.user.upsert({
-        where: { id: rouletteHost },
-        update: { balance: 50000n },
-        create: { id: rouletteHost, balance: 50000n }
-    });
-
-    const rCtx: any = {
-        sock: mockSock,
-        msg: {
-            key: { remoteJid: rouletteChat, participant: `${rouletteHost}@s.whatsapp.net`, fromMe: false },
-            pushName: 'RouletteHost'
-        },
-        jid: rouletteChat
-    };
-
-    const createRes = await createGameTool.execute({}, rCtx);
-    assert(typeof createRes === 'string' && createRes.includes('Room successfully created'));
-    assert.strictEqual(hasCancellableSession(rouletteHost, rouletteChat), true);
-
-    // Cancel lobby via .cancel tool
-    const rCancelRes = await cancelTool.execute({}, rCtx);
-    assert(typeof rCancelRes === 'string' && rCancelRes.includes('GAME CANCELLED'));
-    assert.strictEqual(hasCancellableSession(rouletteHost, rouletteChat), false);
-
-    // Clean up
-    await prisma.user.deleteMany({
-        where: { id: rouletteHost }
-    });
-    console.log('✓ Buckshot Roulette lobby cancellation integration verified.');
-
-    // [Test 6] Integration with YouTube Music Player (.play) Cancellation State
+    // [Test 5] Integration with YouTube Music Player (.play) Cancellation State
     console.log('[Test 6] Testing YouTube Music Player (.play) cancellation integration...');
     const playUser = '628555555555';
     const playChat = 'play_test_chat@g.us';

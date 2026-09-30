@@ -247,9 +247,7 @@ model User {
   gamesPlayed    Int       @default(0)
   totalWins      Int       @default(0)
   totalLosses    Int       @default(0)
-  // Roulette Minigame-specific statistics (new)
-  rouletteRounds Int       @default(0)
-  rouletteWins   Int       @default(0)
+  // Roulette Minigame-specific statistics (new)  rouletteWins   Int       @default(0)
   rouletteKills  Int       @default(0)
   rouletteAfk    Int       @default(0)
 

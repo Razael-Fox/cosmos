@@ -13,9 +13,18 @@ const REQUEST_TIMEOUT_MS = 30000;
 
 export const definition: ToolDefinition = {
     name: 'brat',
+    displayNames: { en: 'brat sticker', id: 'stiker brat' },
     title: 'Brat Sticker Generator',
     category: 'Media & Stickers',
-    aliases: ['.brat', '.bratanimasi', '.bratanimated', 'brat animasi', 'brat animated'],
+    aliases: [
+        '.stiker brat',
+        '.brat sticker',
+        '.brat',
+        '.bratanimasi',
+        '.bratanimated',
+        'brat animasi',
+        'brat animated'
+    ],
     description:
         'Create Brat text stickers or animated stickers with customizable delay. Usage: .brat <text> or .brat animated <text> [-d <ms>]. Example: .brat Hello World, .brat animated -d 300 Hello, or .brat "animasi keren" for literal static text.',
     descriptionKey: 'tools.commands.brat.description',

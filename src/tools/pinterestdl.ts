@@ -30,6 +30,7 @@ function safeUnlink(filePath: string | null | undefined): void {
 
 export const definition: ToolDefinition = {
     name: 'pinterestdl',
+    displayNames: { en: 'pinterest dl', id: 'pinterest unduh' },
     title: 'Pinterest Downloader',
     category: 'Downloaders',
     aliases: ['.pinterest', '.pin', '.pindl', 'pinterest dl', '.pinterest dl', 'pin dl', '.pin dl'],

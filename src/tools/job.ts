@@ -227,7 +227,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 rank: `${j.id}`,
                 title: getLocalizedJobName(j.name),
                 value: `💵 ${basePayStr} • ⏱️ ${cooldownStr}`,
-                subtitle: `📦 ${toolsStr}\n│    📝 ${descStr}`
+                subtitle: `📦 ${toolsStr} • 📝 ${descStr}`
             };
         });
 

@@ -182,9 +182,10 @@ export async function sendStickerFromBuffer(
 
 export const definition: ToolDefinition = {
     name: 'sticker_maker',
+    displayNames: { en: 'make sticker', id: 'buat stiker' },
     title: 'Sticker Maker',
     category: 'Media & Stickers',
-    aliases: ['.sticker', '.s', '.stiker'],
+    aliases: ['.buat stiker', '.make sticker', '.sticker', '.s', '.stiker'],
     description: 'Creates a sticker from an image, video, or GIF sent by the user.',
     descriptionKey: 'tools.commands.sticker_maker.description',
     parameters: {

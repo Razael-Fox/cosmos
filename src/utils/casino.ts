@@ -90,11 +90,7 @@ export async function autoMergeAccounts(oldId: string, newId: string) {
                 balance: { increment: oldUser.balance },
                 totalWins: { increment: oldUser.totalWins },
                 totalLosses: { increment: oldUser.totalLosses },
-                gamesPlayed: { increment: oldUser.gamesPlayed },
-                rouletteRounds: { increment: oldUser.rouletteRounds },
-                rouletteWins: { increment: oldUser.rouletteWins },
-                rouletteKills: { increment: oldUser.rouletteKills },
-                rouletteAfk: { increment: oldUser.rouletteAfk }
+                gamesPlayed: { increment: oldUser.gamesPlayed }
             }
         });
         await prisma.user.delete({ where: { id: oldUser.id } }).catch((err) => {

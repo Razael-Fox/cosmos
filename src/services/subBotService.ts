@@ -295,15 +295,11 @@ export async function requestPairing(
                 });
 
                 const caption =
-                    `╭━━━〔 📱 *${t('tools.subbot.pairing_title')}* 〕━━━╮\n` +
-                    `┃\n` +
-                    `┃ 📲 ${t('tools.subbot.target_number')}: +${cleanNumber}\n` +
-                    `┃ ⏳ ${t('tools.subbot.expires_in')}: 60s\n` +
-                    `┃\n` +
-                    `┃ 📷 ${t('tools.subbot.qr_instruction')}\n` +
-                    `┃\n` +
-                    `┃ 💡 ${t('tools.subbot.cancel_tip')}\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━╯`;
+                    `*📱 ${t('tools.subbot.pairing_title')}*\n\n` +
+                    `> 📲 ${t('tools.subbot.target_number')}: +${cleanNumber}\n` +
+                    `> ⏳ ${t('tools.subbot.expires_in')}: 60s\n` +
+                    `> 📷 ${t('tools.subbot.qr_instruction')}\n\n` +
+                    `> 💡 ${t('tools.subbot.cancel_tip')}`;
 
                 await parentSock.sendMessage(chatJid, { image: qrBuffer, caption }, { quoted: parentMsg });
             } catch (err) {

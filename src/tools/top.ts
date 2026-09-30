@@ -14,7 +14,7 @@ const topTool: ToolModule = {
         parameters: {
             type: 'object',
             properties: {
-                input: { type: 'string', description: 'Category (e.g., roulette)' }
+                input: { type: 'string', description: 'Category' }
             }
         }
     },
@@ -53,10 +53,6 @@ const topTool: ToolModule = {
                     }
                 }
             }
-            const category = String(args.input || '')
-                .trim()
-                .toLowerCase();
-            const isRoulette = category === 'roulette' || category === 'buckshot';
 
             // Gather all cleaned JIDs and LIDs from the group to query the DB
             const idsToFetch = new Set<string>();
@@ -92,8 +88,6 @@ const topTool: ToolModule = {
                 const pLidClean = (p as any).lid ? (p as any).lid.split(':')[0].split('@')[0] : null;
 
                 let balance = 0n;
-                let rouletteWins = 0;
-                let rouletteRounds = 0;
                 let gamesPlayed = 0;
                 let hasRecord = false;
                 let pushName = '';
@@ -106,34 +100,24 @@ const topTool: ToolModule = {
                     ) {
                         hasRecord = true;
                         balance += BigInt(u.balance);
-                        rouletteWins += u.rouletteWins;
-                        rouletteRounds += u.rouletteRounds;
                         gamesPlayed += u.gamesPlayed;
                         if (u.pushName) pushName = u.pushName;
                     }
                 }
 
                 if (hasRecord) {
-                    if (isRoulette) {
-                        if (rouletteRounds === 0 && rouletteWins === 0) continue;
-                    } else {
-                        if (gamesPlayed === 0 && balance === 10000n) continue;
-                    }
+                    if (gamesPlayed === 0 && balance === 10000n) continue;
 
                     participantStats.push({
                         mentionId: p.id,
                         cleanId: pIdClean,
                         pushName,
-                        balance,
-                        rouletteWins,
-                        rouletteRounds
+                        balance
                     });
                 }
             }
 
-            participantStats.sort((a, b) =>
-                isRoulette ? b.rouletteWins - a.rouletteWins : Number(b.balance) - Number(a.balance)
-            );
+            participantStats.sort((a, b) => Number(b.balance) - Number(a.balance));
 
             const finalTopUsers = participantStats.slice(0, 10);
 
@@ -143,7 +127,7 @@ const topTool: ToolModule = {
             }
 
             const headerCard = renderCard({
-                title: isRoulette ? ctx.t('tools.top.header_roulette') : ctx.t('tools.top.header_casino'),
+                title: ctx.t('tools.top.header_casino'),
                 icon: '🏆',
                 headerStyle: 'heavy',
                 t: ctx.t,
@@ -160,35 +144,24 @@ const topTool: ToolModule = {
                 mentions.push(...formatMentions(user.mentionId));
                 const namePart = user.pushName ? ` (${user.pushName})` : '';
 
-                if (isRoulette) {
-                    return {
-                        rank: `${medal} ${index + 1}`,
-                        title: `@${user.cleanId}${namePart}`,
-                        subtitle: ctx.t('tools.top.wins_matches', {
-                            wins: user.rouletteWins,
-                            matches: user.rouletteRounds
-                        })
-                    };
-                } else {
-                    const netWorth = Number(user.balance);
-                    const tier =
-                        netWorth >= 10000000
-                            ? ctx.t('tools.top.tier_diamond')
-                            : netWorth >= 1000000
-                              ? ctx.t('tools.top.tier_gold')
-                              : netWorth >= 100000
-                                ? ctx.t('tools.top.tier_silver')
-                                : ctx.t('tools.top.tier_bronze');
-                    return {
-                        rank: `${medal} ${index + 1}`,
-                        title: `@${user.cleanId}${namePart}`,
-                        value: ctx.t('tools.top.balance_label', { balance: formatRupiah(user.balance) }),
-                        subtitle: ctx.t('tools.top.tier_label', { tier })
-                    };
-                }
+                const netWorth = Number(user.balance);
+                const tier =
+                    netWorth >= 10000000
+                        ? ctx.t('tools.top.tier_diamond')
+                        : netWorth >= 1000000
+                          ? ctx.t('tools.top.tier_gold')
+                          : netWorth >= 100000
+                            ? ctx.t('tools.top.tier_silver')
+                            : ctx.t('tools.top.tier_bronze');
+                return {
+                    rank: `${medal} ${index + 1}`,
+                    title: `@${user.cleanId}${namePart}`,
+                    value: ctx.t('tools.top.balance_label', { balance: formatRupiah(user.balance) }),
+                    subtitle: ctx.t('tools.top.tier_label', { tier })
+                };
             });
             const listCard = renderCatalogCard(
-                isRoulette ? ctx.t('tools.top.catalog_roulette') : ctx.t('tools.top.catalog_casino'),
+                ctx.t('tools.top.catalog_casino'),
                 '👑',
                 items,
                 ctx.t('tools.top.tip_climb'),

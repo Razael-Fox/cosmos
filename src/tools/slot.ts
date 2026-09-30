@@ -17,6 +17,8 @@ const SLOT_ITEMS = [
 const slotTool: ToolModule = {
     definition: {
         name: 'slot',
+        displayNames: { en: 'slot spin', id: 'putar slot' },
+        aliases: ['slot spin', '.slot spin', 'putar slot', '.putar slot', 'spin slot', '.spin slot'],
         description: 'Play the slot machine. Example: .slot 1.000.000 or .slot all',
         descriptionKey: 'tools.commands.slot.description',
         category: 'Casino',
@@ -40,8 +42,8 @@ const slotTool: ToolModule = {
             return renderSyntaxError(
                 'slot',
                 ctx.t('games.slot.bet_required'),
-                '.slot <bet_amount|all>',
-                '.slot 50000\n• .slot 1.000.000\n• .slot all',
+                '.slot spin <bet_amount|all>',
+                '.slot spin 50000\n• .slot spin 1.000.000\n• .slot spin all',
                 ctx.t
             );
         }
@@ -51,8 +53,8 @@ const slotTool: ToolModule = {
             return renderSyntaxError(
                 'slot',
                 ctx.t('games.slot.invalid_bet', { min: formatRupiah(MIN_BET) }),
-                '.slot <bet_amount|all>',
-                '.slot 50000\n• .slot 1.000.000\n• .slot all',
+                '.slot spin <bet_amount|all>',
+                '.slot spin 50000\n• .slot spin 1.000.000\n• .slot spin all',
                 ctx.t
             );
         }
@@ -96,11 +98,7 @@ const slotTool: ToolModule = {
             } while (slot1 === slot2 && slot2 === slot3); // Ensure they don't match
         }
 
-        const slotBox = [
-            '     ╭───────────────╮',
-            `     │  ${slot1} │ ${slot2} │ ${slot3}  │${result.isWin ? ` ◄ [ ${ctx.t('games.slot.jackpot_tag')} ]` : ''}`,
-            '     ╰───────────────╯'
-        ].join('\n');
+        const slotReel = `[ ${slot1} | ${slot2} | ${slot3} ]${result.isWin ? ` ◄ *JACKPOT (${winItem.multiplier}x)!*` : ''}`;
 
         const fields: CardField[] = [];
         if (result.isWin) {
@@ -136,7 +134,7 @@ const slotTool: ToolModule = {
             icon: '🎰',
             headerStyle: 'heavy',
             t: ctx.t,
-            body: ['', slotBox, ''],
+            body: [slotReel],
             fields
         });
 

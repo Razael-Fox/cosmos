@@ -78,7 +78,7 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
         icon: '💼',
         headerStyle: 'light',
         fields,
-        footer: `${t('tools.work.summary_title', 'Shift Summary:')}\n│ _"${result.narrative}"_`
+        footer: `${t('tools.work.summary_title', 'Shift Summary:')} "${result.narrative}"`
     });
 }
 

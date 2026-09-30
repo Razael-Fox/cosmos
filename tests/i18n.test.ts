@@ -47,7 +47,6 @@ async function runTests() {
         tId('games.coinflip.won', { result: 'heads', amount: 'Rp10.000' }),
         'Koin mendarat pada heads! Anda menang Rp10.000!'
     );
-    assert.strictEqual(tEn('games.roulette.bullet_count', { count: 3 }), 'Bullets loaded: 3/6');
     assert.strictEqual(
         tEn('tools.addbalance.success', { amount: 'Rp50', user: '6285136533136' }),
         '✅ *Balance Added!*\n\nSuccessfully added *Rp50* to @6285136533136 from the house vault.'

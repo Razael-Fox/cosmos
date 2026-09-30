@@ -11,6 +11,8 @@ const DICE_EMOJIS = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 const diceTool: ToolModule = {
     definition: {
         name: 'dice',
+        displayNames: { en: 'roll dice', id: 'kocok dadu' },
+        aliases: ['roll dice', '.roll dice', 'kocok dadu', '.kocok dadu', 'dice', '.dice'],
         description: 'Play dice. Example: .dice 6 1.000.000',
         descriptionKey: 'tools.commands.dice.description',
         category: 'Casino',
@@ -40,8 +42,8 @@ const diceTool: ToolModule = {
             return renderSyntaxError(
                 'dice',
                 ctx.t('games.dice.guess_required'),
-                '.dice <1-6> <bet_amount|all>',
-                '.dice 6 50000\n• .dice 1 1.000.000\n• .dice 3 all',
+                '.roll dice <1-6> <bet_amount|all>',
+                '.roll dice 6 50000\n• .roll dice 1 1.000.000\n• .roll dice 3 all',
                 ctx.t
             );
         }
@@ -53,8 +55,8 @@ const diceTool: ToolModule = {
             return renderSyntaxError(
                 'dice',
                 ctx.t('games.dice.invalid_bet', { min: formatRupiah(MIN_BET) }),
-                '.dice <1-6> <bet_amount|all>',
-                '.dice 6 50000\n• .dice 1 1.000.000\n• .dice 3 all',
+                '.roll dice <1-6> <bet_amount|all>',
+                '.roll dice 6 50000\n• .roll dice 1 1.000.000\n• .roll dice 3 all',
                 ctx.t
             );
         }
