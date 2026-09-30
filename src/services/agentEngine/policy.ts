@@ -11,6 +11,14 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     tgadd: ToolAiPolicy.DENIED,
     tgdel: ToolAiPolicy.DENIED,
     tgpair: ToolAiPolicy.DENIED,
+    roulette_start: ToolAiPolicy.DENIED,
+    roulette_join: ToolAiPolicy.DENIED,
+    roulette_shoot: ToolAiPolicy.DENIED,
+    roulette_spin: ToolAiPolicy.DENIED,
+    roulette_use: ToolAiPolicy.DENIED,
+    roulette_stats: ToolAiPolicy.DENIED,
+    roulette_leaderboard: ToolAiPolicy.DENIED,
+    roulette_cancel: ToolAiPolicy.DENIED,
     slot: ToolAiPolicy.DENIED,
     coinflip: ToolAiPolicy.DENIED,
     dice: ToolAiPolicy.DENIED,
@@ -27,6 +35,8 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     property_catalog: ToolAiPolicy.READ_ONLY,
     property_inventory: ToolAiPolicy.READ_ONLY,
     myplan: ToolAiPolicy.READ_ONLY,
+    'check online': ToolAiPolicy.READ_ONLY,
+    check_online: ToolAiPolicy.READ_ONLY,
     vault: ToolAiPolicy.READ_ONLY,
     top: ToolAiPolicy.READ_ONLY,
     topglobal: ToolAiPolicy.READ_ONLY,
@@ -42,6 +52,7 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     pinterestdl: ToolAiPolicy.UTILITY,
     tiktokdl: ToolAiPolicy.UTILITY,
     ytdl: ToolAiPolicy.UTILITY,
+    telegramdl: ToolAiPolicy.UTILITY,
     play: ToolAiPolicy.UTILITY,
     quoted: ToolAiPolicy.UTILITY,
     readviewonce: ToolAiPolicy.UTILITY,
@@ -69,13 +80,27 @@ const OWNER_ONLY_TOOLS: Record<string, true> = {
 
 export class AgentToolPolicyManager {
     public static getPolicy(toolName: string): ToolAiPolicy {
-        const cleanName = toolName.toLowerCase().replace(/^[.-]+/, '');
-        return POLICY_MAP[cleanName] ?? ToolAiPolicy.DENIED;
+        const cleanName = toolName
+            .toLowerCase()
+            .replace(/^[.-]+/, '')
+            .trim();
+        const withSpaces = cleanName.replace(/_/g, ' ');
+        const withUnderscores = cleanName.replace(/\s+/g, '_');
+        return POLICY_MAP[cleanName] ?? POLICY_MAP[withSpaces] ?? POLICY_MAP[withUnderscores] ?? ToolAiPolicy.DENIED;
     }
 
     public static isOwnerOnly(toolName: string): boolean {
-        const cleanName = toolName.toLowerCase().replace(/^[.-]+/, '');
-        return OWNER_ONLY_TOOLS[cleanName] === true;
+        const cleanName = toolName
+            .toLowerCase()
+            .replace(/^[.-]+/, '')
+            .trim();
+        const withSpaces = cleanName.replace(/_/g, ' ');
+        const withUnderscores = cleanName.replace(/\s+/g, '_');
+        return (
+            OWNER_ONLY_TOOLS[cleanName] === true ||
+            OWNER_ONLY_TOOLS[withSpaces] === true ||
+            OWNER_ONLY_TOOLS[withUnderscores] === true
+        );
     }
 
     public static isAllowed(toolName: string, isOwner: boolean): boolean {

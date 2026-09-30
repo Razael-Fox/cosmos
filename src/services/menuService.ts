@@ -42,6 +42,7 @@ export const CANONICAL_CATEGORY_ORDER: readonly string[] = [
     'AI & Correction',
     'Tools & Utilities',
     'Settings',
+    'Group',
     'System & Help'
 ];
 export const CATEGORY_SLUGS: Record<string, string> = {
@@ -55,6 +56,7 @@ export const CATEGORY_SLUGS: Record<string, string> = {
     'AI & Correction': 'ai_correction',
     'Tools & Utilities': 'tools_utilities',
     Settings: 'settings',
+    Group: 'group',
     'System & Help': 'system_help'
 };
 
@@ -69,6 +71,7 @@ export const CATEGORY_ICONS: Record<string, string> = {
     'AI & Correction': '🤖',
     'Tools & Utilities': '🛠️',
     Settings: '⚙️',
+    Group: '👥',
     'System & Help': 'ℹ️'
 };
 
@@ -96,6 +99,9 @@ const CATEGORY_MAP: Record<string, string> = {
     utilities: 'Tools & Utilities',
     settings: 'Settings',
     setting: 'Settings',
+    group: 'Group',
+    groups: 'Group',
+    grup: 'Group',
     general: 'System & Help',
     'system & help': 'System & Help',
     system: 'System & Help',

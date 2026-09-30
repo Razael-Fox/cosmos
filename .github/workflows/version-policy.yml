@@ -48,3 +48,16 @@ jobs:
               env:
                   BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
               run: pnpm run version:verify -- --base "$BASE_SHA"
+
+            - name: Detect parallel-branch version collisions
+              if: github.event_name == 'pull_request'
+              env:
+                  BASE_SHA: ${{ github.event.pull_request.base.sha }}
+                  BASE_REF: ${{ github.event.pull_request.base.ref }}
+              run: |
+                  # Two PRs branched from the same commit both run `version:bump` against
+                  # the same local version.json and land on the SAME version number. The
+                  # check above only compares against the merge base, so a collision is
+                  # invisible until the second PR merges and CI fails on `main`.
+                  # Comparing against the current base-branch tip catches it at PR time.
+                  pnpm run version:verify -- --base "$BASE_SHA" --against "origin/$BASE_REF"

@@ -5,6 +5,36 @@
 > `src/utils/versioning.ts`. Human-readable guidance for AI Agents lives in
 > `AGENTS.md` (Rule S) and `.agents/skills/cosmos-versioning/SKILL.md`.
 
+## Overview
+
+Cosmos uses a custom versioning format that focuses on product development and feature milestones.
+
+**Format**
+
+```text
+G<generation>-F<feature>-P<patch>[.<YYYY-MM-DD>]
+```
+
+The date segment is optional. If present, it is the release date (ISO 8601).
+
+**Example**
+
+```text
+G2-F24-P7
+G1-F12-P2.2026-09-30
+```
+
+**Meaning**
+
+| Component               | Value      |
+| ----------------------- | ---------- |
+| Generation              | 2          |
+| Feature Milestone       | 24         |
+| Patch                   | 7          |
+| Release Date (optional) | 2026-09-30 |
+
+---
+
 ## Machine-Readable Metadata
 
 All version metadata is stored in `version.json` at the repository root so that
@@ -91,35 +121,99 @@ invokes `pnpm run version:verify -- --base <base-sha>`, which verifies that:
    downgrades and duplicate versions.
 3. The `version.json` invariants hold and stay in sync with `package.json`.
 
-## Overview
+On pull requests a second step runs with `--against origin/<base-ref>`, which adds:
 
-Cosmos uses a custom versioning format that focuses on product development and feature milestones.
-
-**Format**
-
-```text
-G<generation>-F<feature>-P<patch>[.<YYYY-MM-DD>]
-```
-
-The date segment is optional. If present, it is the release date (ISO 8601).
-
-**Example**
-
-```text
-G2-F24-P7
-G1-F12-P2.2026-09-30
-```
-
-**Meaning**
-
-| Component               | Value      |
-| ----------------------- | ---------- |
-| Generation              | 2          |
-| Feature Milestone       | 24         |
-| Patch                   | 7          |
-| Release Date (optional) | 2026-09-30 |
+4. The new version is strictly greater than the **current tip of the base branch**,
+   not merely the merge base. This is the parallel-branch collision check
+   described in [Parallel Branches & Version Collisions](#parallel-branches--version-collisions).
 
 ---
+
+## Parallel Branches & Version Collisions
+
+`version:bump` reads the **local working copy** of `version.json`. It does not and
+cannot know what other branches have already claimed, so two PRs branched from the
+same commit independently compute the _same_ next version:
+
+```text
+main          G2-F24-P8
+├─ PR-A       G2-F24-P8 → G2-F24-P9   (merged first)  → main is now G2-F24-P9
+└─ PR-B       G2-F24-P8 → G2-F24-P9   (still open)    → COLLISION
+```
+
+Without intervention, merging PR-B either produces a `version.json` merge conflict
+or — worse — silently lands `G2-F24-P9` a second time, so two different code
+states claim the same version. `CHANGELOG.md` then has two sections for one version,
+and the tag `G2-F24-P9` becomes ambiguous.
+
+### What happens on merge
+
+| Merge order        | Outcome                                                                                                                |
+| :----------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| PR-A, then PR-B    | `version.json` conflicts, or PR-B lands a duplicate version. `version-policy` fails on `main` **after** the bad merge. |
+| PR-B rebased first | Clean: PR-B rebases onto the new `main`, bumps to `G2-F24-P10`, and both versions are unique.                          |
+
+The failure is always detected, but the base-branch comparison happens **after** the
+merge is already on `main`. The `--against` check moves that detection to **PR time**,
+before a human merges anything.
+
+### Required procedure for parallel branches
+
+When the version-policy check reports a collision, rebase and re-bump:
+
+```bash
+git fetch origin
+git rebase origin/main
+pnpm run version:bump patch|feature|generation   # now derives from the fresh main version
+pnpm run version:check
+git commit -am "chore(versioning): rebump to <new version>"
+git push --force-with-lease
+```
+
+Rebasing (not merging) is preferred so the branch history stays linear and the
+version bump commit sits directly on top of the rebased code.
+
+### Merge-order rule
+
+Because the version number is allocated by the contributor, **the last merge wins
+the highest number**. Contributors must not assume their pre-assigned number
+survives; the rebase-and-rebump step above is a normal part of landing a PR, not an
+error condition.
+
+---
+
+## Feature Milestone Semantics
+
+`F` is a **milestone counter**, not a feature list. `G2-F24-P10` means "Generation 2,
+24 major feature milestones completed, 10 patches since milestone 24" — it does not
+claim the codebase contains 24 features, and it does not enumerate them. A patch
+sequence under an unchanged `F` means milestone 24 is still open and receiving fixes.
+
+Because the counter alone is not self-describing, every **feature** bump (the ones
+that advance `F`) MUST:
+
+1. Add a `## [G<n>-F<m>-P0]` section to `CHANGELOG.md` whose notes name the
+   milestone that `F` now represents.
+2. Add a row for that milestone to the registry below.
+3. State in the PR description which milestone the bump represents.
+
+A **patch** bump (advancing only `P`) does not advance `F` and therefore requires no
+new registry row.
+
+### Milestone registry
+
+Milestones are recorded here in ascending order. Milestones before the dated-version
+migration (`G-F-P`, 2026-09-30) predate this file and are listed as unrecorded rather
+than reconstructed — a guessed mapping would be worse than an acknowledged gap.
+
+| Milestone | Name                                                | Recorded         |
+| :-------- | :-------------------------------------------------- | :--------------- |
+| F1–F23    | _pre-migration, not individually mapped_            | No               |
+| F24       | Dated `G-F-P` versioning, `version.json`, CI policy | Yes — 2026-09-30 |
+| F25       | _(open)_ — next completed feature milestone         | —                |
+
+When a feature bump advances `F`, replace the `F25` placeholder with the new
+milestone and re-add the placeholder for the following number.
 
 ## Version Components
 
@@ -156,6 +250,10 @@ Indicates the number of major feature milestones that have been completed.
 **Examples:** `F1` · `F12` · `F24` · `F100`
 
 Feature Milestones increase when a feature is considered complete and ready for use.
+`F` is a **counter**, not an inventory: it states how many milestones shipped, not
+what the codebase contains. See
+[Feature Milestone Semantics](#feature-milestone-semantics) for the documentation
+obligation attached to advancing `F`.
 
 **Example milestones**
 

@@ -25,7 +25,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 - `src/` - Kode sumber utama TypeScript.
 - `dist/` - Hasil kompilasi JavaScript (output dari `pnpm build`).
-- `.agents/skills/` - Modul panduan & instruksi khusus untuk agent (misal: Baileys LID compatibility, FFmpeg buffer handling, Groq API rules, dll).
+- `.agents/skills/` - Modul panduan & instruksi khusus untuk agent (misal: Baileys LID compatibility, FFmpeg buffer handling, Groq API rules, Cosmos versioning & tabrakan branch paralel, dll).
 - `auth_info_baileys/` - Menyimpan kredensial sesi WhatsApp (Jangan di-commit / diubah secara manual).
 
 ### 🛠 Perintah Utama (PNPM Scripts)
@@ -218,7 +218,16 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     5. [ ] Tambahkan entri di `CHANGELOG.md` sesuai versi baru bila perubahan berdampak ke user.
 - **Konsistensi `package.json`:** Siapa pun yang menaikkan versi **wajib** menjalankan `pnpm run version:bump` (script menyelaraskan `package.json` secara otomatis) **atau** menyelaraskan `package.json` secara manual di commit yang sama. Dilarang hanya mengubah `package.json` tanpa `version.json`, atau sebaliknya.
 - **Pencegahan Lupa (Anti-Forget Guardrail):** Karena `version.json` bersifat text-based, CI menjadi penjaga terakhir. Job `version-policy` pada `.github/workflows/version-policy.yml` berjalan pada setiap push ke `main` dan setiap pull request, memanggil `pnpm run version:verify -- --base <base-sha>`. Perintah tersebut memastikan (a) `version.json` **berubah** setiap kali `src/**`, `prisma/**`, `scripts/**`, `docker/**`, atau `.github/workflows/**` berubah, dan (b) versi baru selalu **lebih besar** dari versi base (mencegah downgrade maupun versi duplikat). Kegagalan pada CI berarti ada perubahan kode yang belum menaikkan versi.
-- **Verifikasi Manual (Setara dengan CI):** Sebelum push, AI Agent dapat menjalankan `pnpm run version:verify -- --base HEAD` untuk meniru perilaku CI secara lokal terhadap commit terakhir.
+- **Verifikasi Manual (Setara dengan CI):** Sebelum push, AI Agent dapat menjalankan `pnpm run version:verify -- --base HEAD` untuk meniru perilaku CI secara lokal terhadap commit terakhir. Tambahkan `--against origin/main` untuk memeriksa tabrakan nomor versi dengan branch lain.
+- **Tabrakan Versi Antar Branch Paralel (WAJIB):** `version:bump` membaca `version.json` **lokal**, sehingga dua PR yang bercabang dari commit yang sama akan menghitung versi berikutnya yang **identik**. Job `version-policy` menjalankan `pnpm run version:verify -- --base <base-sha> --against origin/<base-ref>` pada setiap pull request untuk menangkap tabrakan **saat PR masih terbuka**, bukan setelah merge ke `main`. Jika CI melaporkan `Version collision`, AI Agent **wajib** melakukan rebase lalu bump ulang (bukan memaksa merge):
+    ```bash
+    git fetch origin && git rebase origin/main
+    pnpm run version:bump patch|feature|generation
+    pnpm run version:check
+    git commit -am "chore(versioning): rebump to <new version>" && git push --force-with-lease
+    ```
+    Aturan merge: **merge terakhir menang memakai nomor tertinggi**; nomor yang telah dialokasikan sebelum merge tidak dijamin bertahan. Rujukan lengkap ada di `.agents/skills/parallel-branch-versioning/SKILL.md` dan `docs/VERSIONING.md` bagian "Parallel Branches & Version Collisions".
+- **Semantik Feature Milestone (`F`):** `F` adalah **penghitung milestone**, bukan daftar fitur. `G2-F24-P10` berarti "Generasi 2, 24 milestone fitur selesai, 10 patch sejak milestone 24" — angka ini **tidak** menyatakan bahwa kodebase berisi 24 fitur. Karena angka `F` tidak bersifat self-describing, setiap bump **`feature`** (yang menaikkan `F`) **wajib**: (a) menambahkan section `## [G<n>-F<m>-P0]` di `CHANGELOG.md` yang menyebut milestone tersebut, dan (b) menambahkan baris ke tabel registry milestone di `docs/VERSIONING.md`. Bump **`patch`** tidak menaikkan `F` sehingga tidak memerlukan entri registry baru. Rujukan lengkap ada di `.agents/skills/parallel-branch-versioning/SKILL.md`.
 - **Otomasi Rilis:** Pembuatan tag dan penerbitan GitHub Release didelegasikan melalui `scripts/release.ts` (`pnpm run release:pre`). Script ini membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, lalu membuat tag dan GitHub Release. Flag penting: `--bump patch|feature|generation` untuk menaikkan versi sebelum publikasi, `--stable` untuk terbit tanpa flag `--prerelease`, `--dry-run` untuk validasi tanpa efek samping, dan `--no-push` untuk melewati push remote. Manajemen metadata harian (read/validate/bump) dilakukan `scripts/version.ts` melalui `pnpm run version:show`, `version:check`, dan `version:bump <patch|feature|generation>`.
 - **Transisi & Riwayat:** Saat migrasi ke format `G-F-P`, riwayat header `RF-*` yang sudah terbit di `CHANGELOG.md` **tetap dipertahankan apa adanya** sebagai catatan siklus pra-rilis dan **tidak boleh diubah**. Rujukan lengkap ada di `.agents/skills/cosmos-versioning/SKILL.md`.
 

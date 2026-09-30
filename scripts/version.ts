@@ -14,8 +14,11 @@
  *   pnpm run version:bump patch -- --date 2026-10-01
  *   pnpm run version:check                # validate version.json invariants
  *   pnpm run version:verify -- --base <sha>  # enforce the Rule S.1 update policy
+ *   pnpm run version:verify -- --base <sha> --against origin/main
+ *                                           # additionally detect a patch-number
+ *                                           # collision with the current base-branch tip
  */
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import {
     VERSION_FILE_PATH,
@@ -29,7 +32,8 @@ import {
     serializeVersionFile,
     today,
     validateVersionFile,
-    type VersionBumpKind
+    type VersionBumpKind,
+    type VersionInfo
 } from '../src/utils/versioning.js';
 
 const BUMP_KINDS: VersionBumpKind[] = ['patch', 'feature', 'generation'];
@@ -113,22 +117,39 @@ function bump(kind: VersionBumpKind): void {
 /** Paths whose modification mandates a version.json update (AGENTS.md Rule S.1). */
 const VERSION_TRIGGER_PATHS = ['src', 'prisma', 'scripts', 'docker', '.github/workflows'] as const;
 
-/** Runs a git command, returning trimmed stdout, or `null` when the command fails. */
-function git(args: string): string | null {
+/** Runs a git command with argument array, returning trimmed stdout, or `null` when the command fails. */
+function git(args: string[]): string | null {
     try {
-        return execSync(`git ${args}`, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+        return execFileSync('git', args, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     } catch {
         return null;
     }
 }
 
 /** Reports whether a git command succeeded, regardless of its (possibly empty) output. */
-function gitSucceeds(args: string): boolean {
+function gitSucceeds(args: string[]): boolean {
     try {
-        execSync(`git ${args}`, { stdio: 'ignore' });
+        execFileSync('git', args, { stdio: 'ignore' });
         return true;
     } catch {
         return false;
+    }
+}
+
+/**
+ * Reads and validates the version.json recorded at a git ref.
+ *
+ * Returns `null` when the ref is unavailable or predates the version.json
+ * migration, so callers can degrade to "no information" rather than failing.
+ */
+function readVersionAtRef(ref: string): VersionInfo | null {
+    if (!gitSucceeds(['cat-file', '-e', `${ref}^{commit}`])) return null;
+    const raw = git(['show', `${ref}:version.json`]);
+    if (raw === null) return null;
+    try {
+        return validateVersionFile(JSON.parse(raw));
+    } catch {
+        return null;
     }
 }
 
@@ -139,8 +160,13 @@ function gitSucceeds(args: string): boolean {
  *    version.json change.
  * 2. When version.json did change, the new version must be strictly greater
  *    than the base version (no downgrades, no duplicate versions).
+ * 3. When `--against` is supplied (typically the current base-branch tip such as
+ *    `origin/main`), the new version must also be strictly greater than *that*
+ *    version. This catches the parallel-branch collision where two PRs branched
+ *    from the same commit both bump `G2-F24-P8` to `G2-F24-P9`: the second PR to
+ *    merge would otherwise silently ship a version already taken on `main`.
  */
-function verify(baseRef: string | undefined): void {
+function verify(baseRef: string | undefined, againstRef?: string): void {
     check();
 
     if (!baseRef) {
@@ -151,12 +177,13 @@ function verify(baseRef: string | undefined): void {
         console.log('[Version] Initial push detected; skipping the update-policy check.');
         return;
     }
-    if (!gitSucceeds(`cat-file -e ${baseRef}^{commit}`)) {
-        console.log(`[Version] Base commit '${baseRef}' is unavailable; skipping the update-policy check.`);
-        return;
+    if (!gitSucceeds(['cat-file', '-e', `${baseRef}^{commit}`])) {
+        throw new Error(
+            `[Version] Base commit '${baseRef}' is unavailable. Ensure the base commit is fetched or verify the base SHA.`
+        );
     }
 
-    const baseRaw = git(`show ${baseRef}:version.json`);
+    const baseRaw = git(['show', `${baseRef}:version.json`]);
     if (baseRaw === null) {
         console.log('[Version] Base commit has no version.json (pre-migration); skipping the update-policy check.');
         return;
@@ -168,8 +195,8 @@ function verify(baseRef: string | undefined): void {
     console.log(`[Version] Head version: ${head.version}`);
 
     const problems: string[] = [];
-    const changedTriggers = git(`diff --name-only ${baseRef} -- ${VERSION_TRIGGER_PATHS.join(' ')}`) ?? '';
-    const versionFileChanged = (git(`diff --name-only ${baseRef} -- version.json`) ?? '') !== '';
+    const changedTriggers = git(['diff', '--name-only', baseRef, '--', ...VERSION_TRIGGER_PATHS]) ?? '';
+    const versionFileChanged = (git(['diff', '--name-only', baseRef, '--', 'version.json']) ?? '') !== '';
 
     if (!versionFileChanged && changedTriggers) {
         problems.push(
@@ -192,6 +219,33 @@ function verify(baseRef: string | undefined): void {
         );
     }
 
+    if (againstRef) {
+        if (!gitSucceeds(['cat-file', '-e', `${againstRef}^{commit}`])) {
+            problems.push(`Cannot resolve --against ref '${againstRef}'. Fetch the ref or fix the --against value.`);
+        } else {
+            const tip = readVersionAtRef(againstRef);
+            if (!tip) {
+                console.log(
+                    `[Version] Base-branch tip '${againstRef}' has no readable version.json (pre-migration); skipping collision check.`
+                );
+            } else {
+                console.log(`[Version] Base-branch tip version (${againstRef}): ${tip.version}`);
+                if (compareVersions(tip.version, head.version) >= 0) {
+                    problems.push(
+                        `Version collision with the base-branch tip (${againstRef} is at ${tip.version}, ` +
+                            `this branch is at ${head.version}).\n\n` +
+                            'Another branch has already claimed that version number. Rebase onto the latest ' +
+                            'base branch and bump again so this branch lands on a unique version:\n' +
+                            '  git fetch origin\n' +
+                            '  git rebase origin/main\n' +
+                            '  pnpm run version:bump patch|feature|generation\n' +
+                            '  pnpm run version:check\n' +
+                            '  git commit -am "chore(versioning): rebump to <new version>" && git push --force-with-lease'
+                    );
+                }
+            }
+        }
+    }
     if (problems.length > 0) {
         throw new Error(problems.join('\n\n'));
     }
@@ -209,7 +263,7 @@ function main(): void {
             check();
             break;
         case 'verify':
-            verify(readFlag('base'));
+            verify(readFlag('base'), readFlag('against'));
             break;
         case 'bump':
             bump((process.argv[3] ?? '') as VersionBumpKind);

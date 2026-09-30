@@ -58,8 +58,8 @@ function syncPackageJson(version: string): void {
     fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 4)}\n`);
 }
 
-/** Writes the new version into `version.json` and reconciles `package.json`. */
-function applyBump(kind: VersionBumpKind): VersionInfo {
+/** Writes the new version into `version.json` and reconciles `package.json` if persist is true. */
+function applyBump(kind: VersionBumpKind, persist: boolean): VersionInfo {
     const current = getVersionInfo();
     const bumped = bumpVersion(current, kind);
     const next: VersionInfo = {
@@ -69,24 +69,38 @@ function applyBump(kind: VersionBumpKind): VersionInfo {
         patch: bumped.patch,
         releaseDate: readFlag('date') ?? today()
     };
-    fs.writeFileSync(VERSION_FILE_PATH, serializeVersionFile(next));
-    syncPackageJson(next.version);
-    console.log(`[Release] Bumped ${current.version} -> ${next.version} (${kind} bump, released ${next.releaseDate})`);
+    if (persist) {
+        fs.writeFileSync(VERSION_FILE_PATH, serializeVersionFile(next));
+        syncPackageJson(next.version);
+    }
+    console.log(
+        `[Release] Bumped ${current.version} -> ${next.version} (${kind} bump, released ${next.releaseDate})${persist ? '' : ' [dry run]'}`
+    );
     return next;
 }
 
 /** Resolves the version to publish, honouring `--bump` and an explicit argument. */
-function resolveTargetVersion(): VersionInfo {
+function resolveTargetVersion(dryRun: boolean): VersionInfo {
     const bumpKind = readFlag('bump') as VersionBumpKind | undefined;
     if (bumpKind) {
         if (!BUMP_KINDS.includes(bumpKind)) {
             throw new Error(`[Release] Unknown --bump value '${bumpKind}'. Expected one of: ${BUMP_KINDS.join(', ')}.`);
         }
-        return applyBump(bumpKind);
+        return applyBump(bumpKind, !dryRun);
     }
 
     const info = getVersionInfo();
-    const explicit = process.argv.slice(2).find((arg) => !arg.startsWith('--') && arg !== 'release');
+    const args = process.argv.slice(2);
+    const flagValIndices = new Set<number>();
+    for (const flag of ['bump', 'date']) {
+        const idx = args.indexOf(`--${flag}`);
+        if (idx !== -1 && idx + 1 < args.length) {
+            flagValIndices.add(idx + 1);
+        }
+    }
+    const explicit = args.find(
+        (arg, index) => !arg.startsWith('--') && arg !== 'release' && !flagValIndices.has(index)
+    );
     if (explicit) {
         if (!isValidVersion(explicit)) {
             throw new Error(
@@ -107,7 +121,9 @@ function resolveTargetVersion(): VersionInfo {
         }
     }
 
-    syncPackageJson(info.version);
+    if (!dryRun) {
+        syncPackageJson(info.version);
+    }
     return info;
 }
 
@@ -119,7 +135,7 @@ async function main() {
     const isStable = hasFlag('stable');
     const releaseLabel = isStable ? 'release' : 'pre-release';
 
-    const target = resolveTargetVersion();
+    const target = resolveTargetVersion(dryRun);
     const version = target.version;
     const changelog = fs.readFileSync(changelogPath, 'utf-8');
 
@@ -168,9 +184,7 @@ async function main() {
         `## \\[${version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n## \\[|\\n---\\s*\\n## \\[|$)`
     );
     const notesMatch = changelog.match(versionHeaderRegex);
-    const releaseNotes = notesMatch
-        ? notesMatch[1].trim()
-        : `${releaseLabel === 'stable' ? 'Release' : 'Pre-release'} ${version}`;
+    const releaseNotes = notesMatch ? notesMatch[1].trim() : `${isStable ? 'Release' : 'Pre-release'} ${version}`;
 
     const tempNotesPath = path.join(rootDir, '.release_notes.tmp');
     fs.writeFileSync(tempNotesPath, releaseNotes, 'utf-8');

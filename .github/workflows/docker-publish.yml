@@ -34,10 +34,36 @@ jobs:
                   ref: website
                   path: .worktrees/website
 
+            - name: Setup pnpm toolchain
+              shell: bash
+              run: |
+                  corepack enable
+                  pnpm config set package-import-method copy
+                  pnpm config set store-dir "$HOME/.pnpm-store"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
             - name: Validate version metadata
               run: |
                   cat version.json
                   pnpm run version:check
+
+            - name: Validate release tag
+              env:
+                  RELEASE_TAG: ${{ github.ref_name }}
+              run: |
+                  canonical_version=$(node -p "JSON.parse(require('fs').readFileSync('version.json', 'utf8')).version")
+                  if [[ "$RELEASE_TAG" =~ ^(G[0-9]+-F[0-9]+-P[0-9]+)([.-].*)?$ ]]; then
+                      tag_version="${BASH_REMATCH[1]}"
+                  else
+                      echo "Invalid release tag: $RELEASE_TAG" >&2
+                      exit 1
+                  fi
+                  if [[ "$tag_version" != "$canonical_version" ]]; then
+                      echo "Release tag '$RELEASE_TAG' does not match version.json '$canonical_version'." >&2
+                      exit 1
+                  fi
 
             - name: Log in to GitHub Container Registry
               uses: docker/login-action@v3
