@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext } from './types.js';
-import { cleanId, formatMentions, getSenderJid, resolveId } from '../utils/casino.js';
+import { buildUserOrConditions, cleanId, formatMentions, getSenderJid, resolveId } from '../utils/casino.js';
+import { prisma } from '../db.js';
 import { getAllOnlineIds } from '../services/presenceService.js';
 
 const COOLDOWN_MS = 30 * 1000;
@@ -139,10 +140,36 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
                 phoneJid = `${resolved}@s.whatsapp.net`;
             }
         }
-        if (!phoneJid && rawId && !rawId.endsWith('@lid')) {
+        if (!phoneJid && rawId) {
             const resolved = await resolveId(rawId, sock, jid);
-            if (resolved && resolved.length <= 14) {
+            if (resolved && resolved !== cleanRawId && resolved.length <= 14) {
                 phoneJid = `${resolved}@s.whatsapp.net`;
+            }
+        }
+
+        let resolvedName: string | undefined = p.name || p.notify || p.verifiedName;
+        if (!phoneJid) {
+            const target = rawId || rawLid;
+            if (target) {
+                try {
+                    const conditions = buildUserOrConditions(target);
+                    if (conditions.length > 0) {
+                        const dbUser = await prisma.user.findFirst({
+                            where: { OR: conditions },
+                            select: { id: true, pushName: true, username: true }
+                        });
+                        if (dbUser) {
+                            if (dbUser.id && dbUser.id.endsWith('@s.whatsapp.net')) {
+                                phoneJid = dbUser.id;
+                            }
+                            if (!resolvedName) {
+                                resolvedName = dbUser.pushName || dbUser.username || undefined;
+                            }
+                        }
+                    }
+                } catch {
+                    // Ignore DB lookup failure
+                }
             }
         }
 
@@ -150,9 +177,7 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
             mentions.push(...formatMentions(phoneJid));
             lines.push(`@${cleanId(phoneJid)}`);
         } else {
-            const pushName = p.name || p.notify || p.verifiedName;
-            const displayName = pushName ? pushName : ctx.t('tools.check_online.unknown_member');
-            lines.push(displayName);
+            lines.push(resolvedName || ctx.t('tools.check_online.unknown_member'));
         }
     }
 

@@ -13,6 +13,14 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F24-P12] - 2026-09-30
+
+### Fixed
+
+- **Database identity lookup for online members:** Added database query against `prisma.user` in `check_online.ts` when participant LIDs cannot be resolved via group metadata alone. Resolves member pushnames and phone JIDs so registered users and previous bot callers are recognized and displayed with their names rather than falling back to `Anggota Anonim`.
+
+---
+
 ## [G2-F24-P11] - 2026-09-30
 
 ### Added
