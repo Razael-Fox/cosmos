@@ -1,0 +1,50 @@
+name: Version Policy
+
+# Enforces the mandatory version metadata update policy documented in
+# AGENTS.md Rule S.1 and .agents/skills/cosmos-versioning/SKILL.md.
+#
+# This workflow is the last line of defence against a code change shipping
+# without a version.json update:
+#   1. version.json invariants must hold and stay in sync with package.json.
+#   2. The committed version must be strictly greater than the base version.
+#   3. Any product-code change must be accompanied by a version.json change.
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: version-policy-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    version-policy:
+        name: version-policy
+        runs-on: [self-hosted, linux, debian]
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Install dependencies
+              run: |
+                  corepack enable
+                  pnpm config set package-import-method copy
+                  pnpm install --frozen-lockfile
+
+            - name: Report the version under review
+              run: |
+                  cat version.json
+                  pnpm run version:show
+
+            - name: Enforce the version update policy
+              env:
+                  BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+              run: pnpm run version:verify -- --base "$BASE_SHA"

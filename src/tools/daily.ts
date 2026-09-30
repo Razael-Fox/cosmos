@@ -8,7 +8,8 @@ import { renderCard, renderProgressBar } from '../utils/uiFormatter.js';
 const dailyTool: ToolModule = {
     definition: {
         name: 'daily',
-        aliases: ['klaim', 'claim'],
+        displayNames: { en: 'daily claim', id: 'klaim harian' },
+        aliases: ['daily claim', '.daily claim', 'klaim harian', '.klaim harian', 'klaim', 'claim'],
         description: 'Claim your daily reward.',
         descriptionKey: 'tools.commands.daily.description',
         category: 'Casino',

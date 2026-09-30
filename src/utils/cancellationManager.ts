@@ -3,7 +3,7 @@ import { cleanId } from '#utils/casino.js';
 export interface CancellableSession {
     /** Unique identifier for this cancellable session */
     sessionId: string;
-    /** Feature/tool name that registered the session (e.g. 'idcard', 'roulette') */
+    /** Feature/tool name that registered the session (e.g. 'idcard', 'bank transfer') */
     feature: string;
     /** The user ID (JID/LID or clean phone number) who owns this session */
     userJid: string;

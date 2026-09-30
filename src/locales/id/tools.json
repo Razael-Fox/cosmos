@@ -184,6 +184,7 @@
         "server_uptime_label": "Uptime Server",
         "bot_uptime_label": "Uptime Bot",
         "nodejs_label": "Node.js",
+        "cosmos_version_label": "Versi Cosmos",
         "hardware_title": "PERFORMA PERANGKAT KERAS",
         "section_runtime": "TELEMETRI RUNTIME",
         "section_memory": "PENGGUNAAN MEMORI",
@@ -218,22 +219,16 @@
     },
     "top": {
         "group_only": "❌ Perintah ini hanya dapat digunakan dalam obrolan grup. Gunakan .top global untuk melihat papan peringkat global.",
-        "roulette_title": "🔫 *Papan Peringkat Roulette Grup* 🔫\n\n",
         "casino_title": "👥 *Papan Peringkat Kasino Grup* 👥\n\n",
         "empty": "📭 Belum ada pemain yang terdaftar dalam database untuk papan peringkat ini.",
-        "roulette_row": "{{badge}} *{{rank}}.* @{{user}} - *{{wins}}* Menang / *{{rounds}}* Pertandingan\n",
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "failed": "❌ Gagal mengambil papan peringkat grup.",
-        "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Menang / *{{matches}}* Pertandingan",
         "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
-        "header_roulette": "PENGAMBIL RISIKO TINGGI ROULETTE",
         "header_casino": "PENGAMBIL RISIKO TINGGI KASINO",
         "scope_label": "Cakupan",
         "scope_value": "Papan Peringkat Grup",
         "ranked_players_label": "Pemain Terperingkat",
-        "catalog_roulette": "JUARA ROULETTE",
         "catalog_casino": "MILIARDER TERATAS",
-        "wins_matches": "Menang: {{wins}} • Pertandingan: {{matches}}",
         "balance_label": "Saldo: {{balance}}",
         "tier_label": "Tingkat: {{tier}}",
         "tip_climb": "Bertaruh dalam game atau berinvestasi di .shop / .properties untuk menaikkan peringkat!",
@@ -243,22 +238,16 @@
         "tier_bronze": "🥉 Perunggu"
     },
     "topglobal": {
-        "roulette_title": "🌍 *Papan Peringkat Roulette Global* 🌍\n\n",
         "casino_title": "🌍 *Papan Peringkat Kasino Global* 🌍\n\n",
         "empty": "Tidak ada pemain yang ditemukan.",
-        "roulette_row": "{{badge}} *{{rank}}.* @{{user}} - *{{wins}}* Menang / *{{rounds}}* Pertandingan\n",
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "footer": "\n_Diperbarui setiap 5 menit._",
-        "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Menang / *{{matches}}* Pertandingan",
         "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
-        "header_roulette": "PODIUM ROULETTE GLOBAL",
         "header_casino": "PENGAMBIL RISIKO TINGGI GLOBAL",
         "scope_label": "Cakupan",
         "scope_value": "Papan Peringkat Global",
         "ranked_players_label": "Pemain Terperingkat",
-        "catalog_roulette": "JUARA ROULETTE GLOBAL",
         "catalog_casino": "MILIARDER GLOBAL TERATAS",
-        "wins_matches": "Menang: {{wins}} • Pertandingan: {{matches}}",
         "balance_label": "Saldo: {{balance}}",
         "tier_label": "Tingkat: {{tier}}",
         "tip_climb": "Bertaruh dalam game atau berinvestasi di .shop / .properties untuk menaikkan peringkat!",
@@ -830,13 +819,13 @@
             "description": "Panggil Sara, asisten AI cerdas, untuk mengobrol, mencari informasi, atau menjalankan tindakan yang diizinkan."
         },
         "coinflip": {
-            "description": "Bermain lempar koin. Contoh: .coinflip heads 1.000.000"
+            "description": "Bermain lempar koin. Contoh: .flip coin heads 1.000.000"
         },
         "daily": {
             "description": "Klaim hadiah harian Anda."
         },
         "dice": {
-            "description": "Bermain lempar dadu. Contoh: .dice 6 1.000.000"
+            "description": "Bermain lempar dadu. Contoh: .roll dice 6 1.000.000"
         },
         "fevertime": {
             "description": "Mengaktifkan acara global Fever Time selama 15 menit."
@@ -889,24 +878,6 @@
         "rvo": {
             "description": "Membuka pesan media sekali lihat (gambar, video, atau voice note) dan mengirimkannya kembali sebagai pesan biasa."
         },
-        "bet": {
-            "description": "Memasang taruhan untuk minigame Buckshot Roulette."
-        },
-        "creategame": {
-            "description": "Membuat sesi minigame Buckshot Roulette baru."
-        },
-        "joingame": {
-            "description": "Bergabung ke dalam sesi minigame Buckshot Roulette."
-        },
-        "shoot": {
-            "description": "Menembak pemain lain atau diri sendiri dalam Buckshot Roulette."
-        },
-        "startgame": {
-            "description": "Memulai minigame Buckshot Roulette."
-        },
-        "use": {
-            "description": "Menggunakan item dalam Buckshot Roulette."
-        },
         "setgrouplang": {
             "description": "Mengatur bahasa default bot untuk grup ini (Khusus Admin)."
         },
@@ -937,9 +908,6 @@
         "system_info": {
             "description": "Menampilkan spesifikasi server, status bot, dan latensi jaringan."
         },
-        "telegramdl": {
-            "description": "Mengunduh media dari tautan kiriman Telegram (t.me). Kiriman publik diunduh langsung, sedangkan kiriman privat melalui proxy akun perantara."
-        },
         "tgadd": {
             "description": "Mendaftarkan obrolan Telegram privat agar medianya dapat diakses. Menerima tautan undangan, tautan kiriman privat, atau ID obrolan numerik."
         },
@@ -962,7 +930,7 @@
             "description": "Melihat papan peringkat kasino grup."
         },
         "topglobal": {
-            "description": "Melihat papan peringkat kasino atau roulette global."
+            "description": "Melihat papan peringkat kasino global."
         },
         "transfer": {
             "description": "Transfer saldo ke pengguna lain."
@@ -1259,7 +1227,6 @@
         "label_career": "Pekerjaan / Karir",
         "label_credit_score": "Skor Kredit",
         "label_games": "Permainan Kasino",
-        "label_roulette": "Buckshot Roulette",
         "label_items": "Item Inventaris",
         "label_contacts": "Kontak Terenkripsi",
         "tip_plan": "Ketik .my plan atau .check plan untuk melihat keuntungan paket langganan.",
@@ -1369,18 +1336,6 @@
             "step3_title": "3️⃣ FEVER TIME & PAPAN PERINGKAT",
             "step3_body": "• Fever Time: Lihat atau picu event pengganda jackpot server via `{{prefix}}fever time`.\n• Peringkat Grup: Ketik `{{prefix}}top` untuk melihat peringkat kekayaan anggota obrolan grup.\n• Peringkat Global: Ketik `{{prefix}}top global` untuk melihat pemain terkaya di seluruh Cosmos.",
             "footer": "💡 *Tips:* Simpan keuntungan Anda di `{{prefix}}vault` agar tidak habis terbawa taruhan besar."
-        },
-        "roulette": {
-            "header": "📖 *PANDUAN: ARENA RUSSIAN ROULETTE PVP*",
-            "summary": "Duel shotgun multipemain, item taktikal & strategi gertakan",
-            "prereq": "📌 *Prasyarat:* Obrolan Grup & Saldo Taruhan",
-            "step1_title": "1️⃣ PEMBUATAN LOBBY & TARUHAN",
-            "step1_body": "• Buat lobby: `{{prefix}}create game <taruhan>` (contoh: `{{prefix}}create game 100000`).\n• Gabung duel: Lawan mengetik `{{prefix}}join game` untuk menyamakan nilai taruhan.\n• Mulai game: Tuan rumah mengetik `{{prefix}}start game` saat pemain sudah siap.\n• Batal lobby: Ketik `{{prefix}}cancel` sebelum ronde dimulai untuk mengembalikan taruhan.",
-            "step2_title": "2️⃣ TEMBAKAN & MEKANISME PELURU",
-            "step2_body": "• Tabung senapan berisi kombinasi acak antara peluru ASLI dan KOSONG.\n• Tembak lawan: `{{prefix}}shoot @lawan` untuk memberi damage bila peluru asli.\n• Tembak diri: `{{prefix}}shoot self` — jika peluru kosong, Anda lolos damage DAN dapat giliran tambahan!",
-            "step3_title": "3️⃣ PENGGUNAAN ITEM TAKTIKAL",
-            "step3_body": "• Pakai item: `{{prefix}}use <nama_item>` saat giliran Anda.\n• 🔍 Kaca Pembesar: Mengintip jenis peluru di bilik tembak saat ini.\n• 🔪 Pisau: Memotong laras shotgun untuk menghasilkan 2x damage peluru asli.\n• 🍺 Bir: Mengokang shotgun dan membuang peluru saat ini tanpa meledak.\n• ⛓️ Borgol: Mengikat lawan agar giliran berikutnya terlewat.",
-            "footer": "💡 *Tips:* Manuver berisiko: menembak diri dengan peluru kosong mempertahankan giliran Anda."
         },
         "subbot": {
             "header": "📖 *PANDUAN: SUB-BOT MULTI-DEVICE PAIRING*",

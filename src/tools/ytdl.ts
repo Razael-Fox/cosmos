@@ -13,6 +13,7 @@ const MAX_FILESIZE_BYTES = 15 * 1024 * 1024;
 
 export const definition: ToolDefinition = {
     name: 'ytdl',
+    displayNames: { en: 'yt dl', id: 'yt unduh' },
     title: 'YouTube Downloader',
     category: 'Downloaders',
     aliases: ['.yt', '.ytdl', '.youtube', 'yt dl', '.yt dl'],

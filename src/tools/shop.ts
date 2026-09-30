@@ -7,7 +7,8 @@ import { renderCard, renderCatalogCard, renderAlert } from '../utils/uiFormatter
 const shopTool: ToolModule = {
     definition: {
         name: 'shop',
-        aliases: ['store', 'itemshop'],
+        displayNames: { en: 'shop buy', id: 'beli barang' },
+        aliases: ['shop buy', '.shop buy', 'beli barang', '.beli barang', 'store', 'itemshop', 'shop', '.shop'],
         description: 'Browse the Cosmos Shop categories and available items.',
         descriptionKey: 'tools.commands.shop.description',
         category: 'Economy',

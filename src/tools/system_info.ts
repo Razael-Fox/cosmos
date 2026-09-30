@@ -2,6 +2,7 @@ import os from 'os';
 import { ToolDefinition, ToolContext } from './types.js';
 import { renderCard, renderProgressBar } from '../utils/uiFormatter.js';
 import { formatUptimeDuration } from '../utils/menuFormatter.js';
+import { getVersionInfo } from '../utils/versioning.js';
 
 export const definition: ToolDefinition = {
     name: 'system_info',
@@ -32,6 +33,14 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
     const totalMem = formatBytes(os.totalmem());
     const freeMem = formatBytes(os.freemem());
     const usedMem = formatBytes(os.totalmem() - os.freemem());
+
+    // Cosmos version from the canonical version.json metadata (G-F-P format).
+    let cosmosVersionStr = unknownStr;
+    try {
+        cosmosVersionStr = getVersionInfo().version;
+    } catch {
+        console.error('[System] Failed to read version.json metadata for system info output.');
+    }
 
     let latencyStr = unknownStr;
     if (ctx && ctx.msg && ctx.msg.messageTimestamp) {
@@ -74,7 +83,8 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
                 title: ctx.t('tools.system_info.section_runtime'),
                 items: [
                     { label: ctx.t('tools.system_info.ping_label'), value: latencyStr },
-                    { label: ctx.t('tools.system_info.nodejs_label'), value: process.version }
+                    { label: ctx.t('tools.system_info.nodejs_label'), value: process.version },
+                    { label: ctx.t('tools.system_info.cosmos_version_label'), value: cosmosVersionStr }
                 ]
             },
             {

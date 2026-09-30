@@ -38,6 +38,7 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 
 export const definition: ToolDefinition = {
     name: 'tiktokdl',
+    displayNames: { en: 'tiktok dl', id: 'tiktok unduh' },
     title: 'TikTok Downloader',
     category: 'Downloaders',
     aliases: ['.tiktok', '.tt', '.tiktokdl', '.ttdl', 'tiktok dl', '.tiktok dl'],

@@ -18,7 +18,7 @@ async function runTutorialTests() {
     // Test 1: Validate all 14 suites exist and have required fields
     console.log('[Test 1] Validating Tutorial Suites count and metadata integrity...');
     const suites = tutorialService.getAllSuites();
-    assert.strictEqual(suites.length, 14, `Expected 14 tutorial suites, got ${suites.length}`);
+    assert.strictEqual(suites.length, 13, `Expected 13 tutorial suites, got ${suites.length}`);
     for (const suite of suites) {
         assert(suite.id && typeof suite.id === 'string', 'Suite must have a valid id');
         assert(suite.category && typeof suite.category === 'string', 'Suite must have a category');
@@ -34,7 +34,7 @@ async function runTutorialTests() {
             assert(step.bodyKey && typeof step.bodyKey === 'string', 'Step must have bodyKey');
         }
     }
-    console.log('✓ All 14 Tutorial Suites pass structural metadata validation.');
+    console.log('✓ All 13 Tutorial Suites pass structural metadata validation.');
 
     // Test 2: Bilingual Parity for all Tutorial Keys in EN and ID
     console.log('[Test 2] Validating full i18n key existence in both EN and ID...');
@@ -71,14 +71,14 @@ async function runTutorialTests() {
             assert(i18n.exists(suite.footerKey, { lng: 'id' }), `Missing ID footer: ${suite.footerKey}`);
         }
     }
-    console.log('✓ All 14 Tutorial Suites have 100% complete symmetric translations in EN and ID.');
+    console.log('✓ All 13 Tutorial Suites have 100% complete symmetric translations in EN and ID.');
 
     // Test 3: 100% Tool Coverage across all registered tools
     console.log('[Test 3] Loading tools and asserting 100% coverage of registered commands...');
     await toolsHandler.loadTools();
     const allTools = toolsHandler.getAllTools();
     console.log(`Loaded ${allTools.length} tools from toolsHandler.`);
-    assert(allTools.length >= 65, `Expected at least 65 tools, found ${allTools.length}`);
+    assert(allTools.length >= 55, `Expected at least 55 tools, found ${allTools.length}`);
 
     const unmappedTools: string[] = [];
     for (const tool of allTools) {
@@ -123,8 +123,6 @@ async function runTutorialTests() {
         { query: 'kerja', expectedId: 'job' },
         { query: 'casino', expectedId: 'casino' },
         { query: 'judi', expectedId: 'casino' },
-        { query: 'roulette', expectedId: 'roulette' },
-        { query: 'tembak', expectedId: 'roulette' },
         { query: 'subbot', expectedId: 'subbot' },
         { query: 'jadibot', expectedId: 'subbot' },
         { query: 'idcard', expectedId: 'idcard' },
@@ -164,7 +162,7 @@ async function runTutorialTests() {
         assert(hubEn.includes(`.menu tutorial ${suite.id}`), `Hub EN must list suite ${suite.id}`);
         assert(hubId.includes(`.menu tutorial ${suite.id}`), `Hub ID must list suite ${suite.id}`);
     }
-    console.log('✓ Tutorial Hub directory renders all 14 suites seamlessly in EN and ID.');
+    console.log('✓ Tutorial Hub directory renders all 13 suites seamlessly in EN and ID.');
 
     // Test 7: Universal Interception via toolsHandler.execute
     console.log('[Test 7] Testing command interception for .command tutorial and .command panduan...');

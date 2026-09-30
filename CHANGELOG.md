@@ -2,12 +2,34 @@
 
 All notable changes to the **Cosmos WhatsApp Bot Framework** will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to the `RF-YYMM-BUILD` version formatting.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Releases use the Cosmos dated version format `G<generation>-F<featureMilestone>-P<patch>` (for example `G2-F24-P7`).
+Machine-readable version metadata lives in [`version.json`](version.json); see [`docs/VERSIONING.md`](docs/VERSIONING.md).
+Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD` format and are retained below as historical records.
 
 ---
 
 ## [Unreleased]
+
+---
+
+## [G2-F24-P7] - 2026-09-30
+
+### Changed
+
+- **Cosmos Dated Versioning (`G-F-P`):** Migrated the framework from the legacy `RF-YYMM-BUILD` (pre-release) plus SemVer (stable) split to a single dated version format `G<generation>-F<featureMilestone>-P<patch>`, with an optional `.YYYY-MM-DD` release-date segment and an optional `-alpha|-beta|-rc1|-stable` status segment.
+- **Centralized Version Metadata:** Added `version.json` at the repository root as the single source of truth for `version`, `generation`, `featureMilestone`, `patch`, and `releaseDate`, so CI/CD pipelines, release automation, and runtime logging can all read the version without parsing Markdown or Git tags.
+- **`src/utils/versioning.ts`:** Added a centralized utility exposing `getVersionInfo`, `formatVersion`, `parseVersion`, `isValidVersion`, `bumpVersion`, `compareVersions`, `serializeVersionFile`, `validateVersionFile`, `formatDatedVersion`, and `describeVersion`, with invariant validation and descriptive errors.
+- **`scripts/version.ts`:** Added a CLI for version metadata management, exposed as `pnpm run version:show`, `pnpm run version:check`, and `pnpm run version:bump <patch|feature|generation>`.
+- **`scripts/release.ts`:** Rewritten around `version.json`. It reconciles `package.json`, validates the `CHANGELOG.md` header, and supports `--bump <patch|feature|generation>`, `--stable`, `--dry-run`, and `--no-push`.
+- **CI:** `.github/workflows/docker-publish.yml` now triggers on tags matching `G[0-9]*-F[0-9]*-P[0-9]*` and validates `version.json` before building the image.
+- **Documentation:** Rewrote the versioning section of `README.md`, AGENTS.md Rule S, and the Job and Salary System skill; added `docs/VERSIONING.md` and the new `cosmos-versioning` agent skill.
+- **Runtime Reporting:** The startup banner in `src/index.ts` and the `.stats` telemetry card now report the Cosmos version read from `version.json` instead of an implicit `package.json` value. The `Cosmos Version` label was added symmetrically to `src/locales/en/tools.json` and `src/locales/id/tools.json`.
+
+### Notes
+
+- Legacy `RF-*` changelog headers and Git tags are retained unchanged as historical pre-release records and must not be rewritten.
+- Version tags no longer use a `v` prefix and the framework no longer publishes SemVer releases.
 
 ---
 

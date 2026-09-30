@@ -13,7 +13,7 @@ async function runNonSpaceAndRemovedFeaturesTest() {
 
     // 1. Verify Strictly Non-Space Commands (No Legacy Mapping)
     console.log('[Test 1] Verifying strictly Non-Space commands are registered and unmapped in LEGACY_COMMAND_MAP...');
-    const strictNonSpaceCommands = ['coinflip', 'forceupdate', 'getprofilephoto', 'togglensfw'];
+    const strictNonSpaceCommands = ['forceupdate', 'getprofilephoto', 'togglensfw'];
 
     for (const cmd of strictNonSpaceCommands) {
         // Assert toDisplayCommand does not inject spaces into the command name
@@ -53,7 +53,13 @@ async function runNonSpaceAndRemovedFeaturesTest() {
         { legacy: 'tiktokdl', canonical: '.tiktok dl' },
         { legacy: 'ytdl', canonical: '.yt dl' },
         { legacy: 'pinterestdl', canonical: '.pinterest dl' },
-        { legacy: 'telegramdl', canonical: '.telegram dl' }
+        { legacy: 'slot', canonical: '.slot spin' },
+        { legacy: 'coinflip', canonical: '.flip coin' },
+        { legacy: 'dice', canonical: '.roll dice' },
+        { legacy: 'balance', canonical: '.check balance' },
+        { legacy: 'daily', canonical: '.daily claim' },
+        { legacy: 'shop', canonical: '.shop buy' },
+        { legacy: 'vault', canonical: '.vault status' }
     ];
 
     for (const { legacy, canonical } of transitionedCommands) {

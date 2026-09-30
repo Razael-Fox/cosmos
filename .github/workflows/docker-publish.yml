@@ -3,7 +3,8 @@ name: Publish Docker Image to GHCR
 on:
     push:
         tags:
-            - 'RF-*'
+            # Cosmos version format: G<generation>-F<feature>-P<patch>[.date][-status]
+            - 'G[0-9]*-F[0-9]*-P[0-9]*'
 
 env:
     REGISTRY: ghcr.io
@@ -32,6 +33,11 @@ jobs:
               with:
                   ref: website
                   path: .worktrees/website
+
+            - name: Validate version metadata
+              run: |
+                  cat version.json
+                  pnpm run version:check
 
             - name: Log in to GitHub Container Registry
               uses: docker/login-action@v3

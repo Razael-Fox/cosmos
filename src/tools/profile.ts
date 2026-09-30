@@ -149,11 +149,6 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
                         value: `${gamesPlayed} (${winRate} win rate)`
                     },
                     {
-                        icon: '💥',
-                        label: ctx.t('tools.profile.label_roulette', 'Buckshot Roulette'),
-                        value: `${user.rouletteWins} wins / ${user.rouletteRounds} rounds`
-                    },
-                    {
                         icon: '🎒',
                         label: ctx.t('tools.profile.label_items', 'Inventory Items'),
                         value: `${user._count?.inventories ?? 0} owned`

@@ -148,9 +148,6 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                 const { initAutoDelete } = await import('./autoDelete.js');
                 initAutoDelete(sock);
 
-                const { initRouletteAfkTimer } = await import('./rouletteAfkTimer.js');
-                initRouletteAfkTimer(sock);
-
                 const { startInflationCron } = await import('../services/inflation.js');
                 startInflationCron(sock);
             }

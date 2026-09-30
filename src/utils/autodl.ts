@@ -125,9 +125,6 @@ export async function processAutoDl(sock: WASocket, msg: WAMessage, jid: string,
         } else if (host.includes('youtube.com') || host.includes('youtu.be')) {
             platform = 'yt';
             toolName = 'ytdl';
-        } else if (host.includes('t.me')) {
-            platform = 'tg';
-            toolName = 'telegramdl';
         } else if (host.includes('twitter.com') || host.includes('x.com') || host.includes('t.co')) {
             platform = 'twitter';
             toolName = 'ytdl';

@@ -184,6 +184,7 @@
         "server_uptime_label": "Server Uptime",
         "bot_uptime_label": "Bot Uptime",
         "nodejs_label": "Node.js",
+        "cosmos_version_label": "Cosmos Version",
         "hardware_title": "HARDWARE PERFORMANCE",
         "section_runtime": "RUNTIME TELEMETRY",
         "section_memory": "MEMORY UTILIZATION",
@@ -218,22 +219,16 @@
     },
     "top": {
         "group_only": "❌ This command can only be used in a group chat. Use .top global to see the global leaderboard.",
-        "roulette_title": "🔫 *Group Roulette Leaderboard* 🔫\n\n",
         "casino_title": "👥 *Group Casino Leaderboard* 👥\n\n",
         "empty": "📭 There are no players registered in the database for this leaderboard yet.",
-        "roulette_row": "{{badge}} *{{rank}}.* @{{user}} - *{{wins}}* Wins / *{{rounds}}* Matches\n",
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "failed": "❌ Failed to fetch group leaderboard.",
-        "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Wins / *{{matches}}* Matches",
         "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
-        "header_roulette": "ROULETTE HIGH ROLLERS",
         "header_casino": "CASINO HIGH ROLLERS",
         "scope_label": "Scope",
         "scope_value": "Group Leaderboard",
         "ranked_players_label": "Ranked Players",
-        "catalog_roulette": "ROULETTE CHAMPIONS",
         "catalog_casino": "TOP BILLIONAIRES",
-        "wins_matches": "Wins: {{wins}} • Matches: {{matches}}",
         "balance_label": "Balance: {{balance}}",
         "tier_label": "Tier: {{tier}}",
         "tip_climb": "Wager in games or invest in .shop / .properties to climb the ranks!",
@@ -243,22 +238,16 @@
         "tier_bronze": "🥉 Bronze"
     },
     "topglobal": {
-        "roulette_title": "🌍 *Global Roulette Leaderboard* 🌍\n\n",
         "casino_title": "🌍 *Global Casino Leaderboard* 🌍\n\n",
         "empty": "No players found.",
-        "roulette_row": "{{badge}} *{{rank}}.* @{{user}} - *{{wins}}* Wins / *{{rounds}}* Matches\n",
         "casino_row": "{{badge}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}*\n",
         "footer": "\n_Updated every 5 minutes._",
-        "roulette_entry": "{{icon}} *{{rank}}.* @{{user}} - *{{wins}}* Wins / *{{matches}}* Matches",
         "casino_entry": "{{icon}} *{{rank}}.* @{{user}}{{name}} - *{{balance}}",
-        "header_roulette": "GLOBAL ROULETTE PODIUM",
         "header_casino": "GLOBAL HIGH ROLLERS",
         "scope_label": "Scope",
         "scope_value": "Global Leaderboard",
         "ranked_players_label": "Ranked Players",
-        "catalog_roulette": "GLOBAL ROULETTE CHAMPIONS",
         "catalog_casino": "TOP GLOBAL BILLIONAIRES",
-        "wins_matches": "Wins: {{wins}} • Matches: {{matches}}",
         "balance_label": "Balance: {{balance}}",
         "tier_label": "Tier: {{tier}}",
         "tip_climb": "Wager in games or invest in .shop / .properties to climb the ranks!",
@@ -830,13 +819,13 @@
             "description": "Invoke Sara, the intelligent AI assistant, to chat, query information, or perform permitted actions."
         },
         "coinflip": {
-            "description": "Play coinflip. Example: .coinflip heads 1.000.000"
+            "description": "Play coinflip. Example: .flip coin heads 1.000.000"
         },
         "daily": {
             "description": "Claim your daily reward."
         },
         "dice": {
-            "description": "Play dice. Example: .dice 6 1.000.000"
+            "description": "Play dice. Example: .roll dice 6 1.000.000"
         },
         "fevertime": {
             "description": "Trigger a global Fever Time event for 15 minutes."
@@ -889,24 +878,6 @@
         "rvo": {
             "description": "Reveals a view-once media message (image, video, or voice note) and resends it as a normal forwarded message."
         },
-        "bet": {
-            "description": "Place a bet for the Buckshot Roulette minigame."
-        },
-        "creategame": {
-            "description": "Create a new Buckshot Roulette minigame session."
-        },
-        "joingame": {
-            "description": "Join a Buckshot Roulette minigame session."
-        },
-        "shoot": {
-            "description": "Shoot a player or yourself in Buckshot Roulette."
-        },
-        "startgame": {
-            "description": "Start the Buckshot Roulette minigame."
-        },
-        "use": {
-            "description": "Use an item in Buckshot Roulette."
-        },
         "setgrouplang": {
             "description": "Set default bot language for the group (Admin only)."
         },
@@ -917,7 +888,7 @@
             "description": "Browse the Cosmos Shop categories and available items."
         },
         "slot": {
-            "description": "Play the slot machine. Example: .slot 1.000.000 or .slot all"
+            "description": "Play the slot machine. Example: .slot spin 1.000.000 or .slot spin all"
         },
         "startautocorrection": {
             "description": "Enables automated AI message auto-correction via OpenRouter for this chat."
@@ -936,9 +907,6 @@
         },
         "system_info": {
             "description": "Displays server specifications, bot status, and network latency."
-        },
-        "telegramdl": {
-            "description": "Downloads media from a Telegram post link (t.me). Public posts are fetched directly, while posts from registered private groups are proxied through the dummy account."
         },
         "tgadd": {
             "description": "Registers a private Telegram chat so its media can be proxied. Accepts an invite link (the dummy account joins automatically), a private post link, or a raw numeric chat id."
@@ -962,7 +930,7 @@
             "description": "View the group casino leaderboard."
         },
         "topglobal": {
-            "description": "View the global casino or roulette leaderboard."
+            "description": "View the global casino leaderboard."
         },
         "transfer": {
             "description": "Transfer balance to another user."
@@ -1259,7 +1227,6 @@
         "label_career": "Career / Job",
         "label_credit_score": "Credit Score",
         "label_games": "Casino Games",
-        "label_roulette": "Buckshot Roulette",
         "label_items": "Inventory Items",
         "label_contacts": "Encrypted Contacts",
         "tip_plan": "Type .my plan or .check plan to view subscription tier perks.",
@@ -1369,18 +1336,6 @@
             "step3_title": "3️⃣ FEVER TIME & LEADERBOARDS",
             "step3_body": "• Fever Time: Activate or view server-wide jackpot multiplier events via `{{prefix}}fever time`.\n• Group Ranks: Type `{{prefix}}top` to view local chat wealth rankings.\n• Global Ranks: Type `{{prefix}}top global` to see Cosmos-wide top players.",
             "footer": "💡 *Tip:* Store your profits in `{{prefix}}vault` to avoid accidentally losing them on big bets."
-        },
-        "roulette": {
-            "header": "📖 *TUTORIAL: RUSSIAN ROULETTE PVP ARENA*",
-            "summary": "Multiplayer shotgun showdown, tactical items & bluffing",
-            "prereq": "📌 *Prerequisites:* Group Chat & Wager Balance",
-            "step1_title": "1️⃣ LOBBY CREATION & WAGERS",
-            "step1_body": "• Create lobby: `{{prefix}}create game <bet>` (e.g. `{{prefix}}create game 100000`).\n• Join game: Opponent types `{{prefix}}join game` to match the bet amount.\n• Start match: Room host types `{{prefix}}start game` once players are ready.\n• Cancel lobby: Type `{{prefix}}cancel` before the game begins to refund all wagers.",
-            "step2_title": "2️⃣ SHOOTING & SHELL MECHANICS",
-            "step2_body": "• Shotgun chambers contain a randomized mix of LIVE and BLANK shells.\n• Shoot opponent: `{{prefix}}shoot @opponent` to inflict damage if the shell is live.\n• Shoot self: `{{prefix}}shoot self` — if the shell is blank, you skip damage AND retain your turn!",
-            "step3_title": "3️⃣ TACTICAL ITEMS",
-            "step3_body": "• Use items: `{{prefix}}use <item_name>` on your turn.\n• 🔍 Magnifying Glass: Inspect current chamber shell type.\n• 🔪 Knife: Saw off shotgun barrel for double damage on your next live shot.\n• 🍺 Beer: Rack the shotgun and eject current shell safely.\n• ⛓️ Handcuffs: Lock opponent down to skip their upcoming turn.",
-            "footer": "💡 *Tip:* Tactical risk pays off: shooting yourself with a blank shell keeps momentum on your side."
         },
         "subbot": {
             "header": "📖 *TUTORIAL: SUB-BOT MULTI-DEVICE PAIRING*",

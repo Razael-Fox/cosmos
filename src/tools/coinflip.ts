@@ -9,6 +9,8 @@ import { renderCard, renderSyntaxError, renderAlert } from '../utils/uiFormatter
 const coinflipTool: ToolModule = {
     definition: {
         name: 'coinflip',
+        displayNames: { en: 'flip coin', id: 'lempar koin' },
+        aliases: ['flip coin', '.flip coin', 'lempar koin', '.lempar koin', 'coinflip', '.coinflip'],
         description: 'Play coinflip. Example: .coinflip heads 1.000.000',
         descriptionKey: 'tools.commands.coinflip.description',
         category: 'Casino',
@@ -53,8 +55,8 @@ const coinflipTool: ToolModule = {
             return renderSyntaxError(
                 'coinflip',
                 t('games.coinflip.usage'),
-                '.coinflip <heads|tails> <bet>',
-                '.coinflip heads 50000\n• .coinflip tails 1.000.000\n• .coinflip heads all',
+                '.flip coin <heads|tails> <bet>',
+                '.flip coin heads 50000\n• .flip coin tails 1.000.000\n• .flip coin heads all',
                 t
             );
         }
@@ -67,8 +69,8 @@ const coinflipTool: ToolModule = {
             return renderSyntaxError(
                 'coinflip',
                 t('games.coinflip.min_bet', { min: formatRupiah(MIN_BET) }),
-                '.coinflip <heads|tails> <bet>',
-                '.coinflip heads 50000\n• .coinflip tails 1.000.000\n• .coinflip heads all',
+                '.flip coin <heads|tails> <bet>',
+                '.flip coin heads 50000\n• .flip coin tails 1.000.000\n• .flip coin heads all',
                 t
             );
         }

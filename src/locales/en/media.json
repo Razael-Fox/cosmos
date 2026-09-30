@@ -40,28 +40,6 @@
         "usage": "🎨 *Brat Sticker Generator*\n\nGenerate Brat text stickers or animated stickers directly on WhatsApp.\n\n*Command Formats:*\n• *.brat <text>* — Static Brat sticker\n• *.brat animated <text>* — Animated Brat sticker\n• *.brat animated -d <ms> <text>* — Animated sticker with custom delay\n• *.brat \"animasi keren\"* — Literal static text (or use ```monospace```)\n\n*Dash Delay Options:*\n• `-d 300` or `-d=300` (50–5000 ms, default 500 ms)\n• `-300ms` or `-300`\n• `--delay 300`\n\n*Examples:*\n• *.brat Hello World*\n• *.brat animated -d 250 Hello World*\n• *.brat animated 300 Hello World*\n• *.brat \"animasi keren\"* (forces static)\n\n_Tip: You can also reply to any message with `.brat` or `.brat animated -d 300`._",
         "failed": "Failed to create Brat sticker: {{error}}"
     },
-    "telegramdl": {
-        "invalid_url": "Error: Please provide a valid Telegram post link (for example https://t.me/channel/123).",
-        "group_registered": "That Telegram group has already been added to the database. Please provide the link of the specific post you wish to download (for example https://t.me/c/{{chatId}}/123).",
-        "bot_not_joined": "The bot has not been added to that Telegram group yet, so its content cannot be accessed at the moment. The owner has been notified with your request and access will be available once the group has been joined and registered. Please try again later.",
-        "size_exceeded": "Error: This media exceeds the 15MB size limit and cannot be sent via WhatsApp.",
-        "private_fetch_failed": "Error: The media could not be retrieved from that private group. The dummy account may no longer have access to it. The owner has been informed through the logs.",
-        "video_size_exceeded": "Error: The Telegram video exceeds the 15MB size limit and cannot be sent via WhatsApp.",
-        "audio_size_exceeded": "Error: The Telegram audio exceeds the 15MB size limit and cannot be sent via WhatsApp.",
-        "no_media": "Error: The media could not be retrieved. Please ensure the Telegram post contains a supported video.",
-        "unexpected_error": "Error: An unexpected issue occurred while downloading the Telegram video.",
-        "video_retrieved": "✅ The Telegram video has been successfully retrieved.",
-        "photo_retrieved": "✅ The Telegram photo has been successfully retrieved.",
-        "video_downloaded": "✅ The Telegram video has been successfully downloaded.",
-        "owner_request_title": "🔒 *Private Telegram Content Request*",
-        "owner_request_body": "A user requested media from a private Telegram chat that has not been added to the database yet.",
-        "owner_request_link": "*Requested Link:* {{link}}",
-        "owner_request_chat_id": "*Internal Chat ID:* ```{{chatId}}```",
-        "owner_request_message_id": "*Message ID:* ```{{messageId}}```",
-        "owner_request_user": "*Requester Username:* {{name}}",
-        "owner_request_phone": "*WhatsApp Number:* {{number}}",
-        "owner_request_next_steps": "*Next Steps:*\n1. If an invite link is available, run `.tg add <invite-link>` so the dummy account joins automatically.\n2. Otherwise, join the group manually using the dummy account, then register it with `.tg add <link-or-chat-id>`.\n3. The requester may retry the same command afterwards."
-    },
     "pinterestdl": {
         "document_version": "Document version",
         "card_title": "PINTEREST MEDIA"
