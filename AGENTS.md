@@ -149,10 +149,13 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 - **KTP Gate & Prasyarat Inventaris:** Seluruh akses pendaftaran pekerjaan (`.job join`) dan shift kerja (`.work`) **WAJIB** memverifikasi kepemilikan Virtual ID Card (`requireIdCard`) dan kepemilikan item peralatan aktif di inventaris (`UserInventory` dengan `ownershipStatus === 'Owned'`).
 - **Skalabilitas Makroekonomi & Payout Atomik:** Pembayaran gaji wajib dikalikan dengan `EconomyMultiplier` terkini. Pembaruan saldo pengguna dan pelacakan cooldown shift (`lastWorkedAt`) wajib dieksekusi secara atomik menggunakan `prisma.$transaction` serta dicatat ke `ActivityLog`. Rujuk panduan lengkap di `.agents/skills/job-and-salary-system/SKILL.md`.
 
-### S. Format Versi Rilis RF (RF-YYMM-BUILD Versioning Standards)
+### S. Standar Versi: Pre-Release RF & Rilis Stabil SemVer (Pre-Release RF & Stable SemVer Versioning Standards)
 
-- **Skema Penomoran Versi:** Penomoran rilis dan versi Cosmos wajib menggunakan format `RF-YYMM-BUILD` (misal: `RF-2609-03`). Dilarang menggunakan semver biasa (`v1.2.0`) pada tag rilis atau changelog.
-- **Otomasi Pre-Release:** Seluruh pembuatan tag rilis dan publikasi halaman release di GitHub didelegasikan melalui script otomasi `scripts/release.ts` (`pnpm run release:pre`).
+- **Pre-Release (Wajib `RF-YYMM-BUILD`):** Seluruh versi pre-release Cosmos **wajib** menggunakan format `RF-YYMM-BUILD` (misal: `RF-2609-21`, `RF-2608-01`). Skema ini **khusus** untuk siklus pra-rilis dan **dilarang** dipakai pada rilis stabil.
+- **Rilis Stabil (Wajib SemVer):** Seluruh rilis stabil (production release) **wajib** mengikuti standar **SemVer** (`MAJOR.MINOR.PATCH`, misal: `1.0.0`), dengan prefiks `v` pada tag Git (`v1.0.0`) dan tanpa prefiks pada field `"version"` di `package.json` (`1.0.0`). Rilis stabil **dilarang** menggunakan format `RF-YYMM-BUILD`.
+- **Transisi Pre-Release ke Stabil:** Saat versi stabil diterbitkan, field `"version"` di `package.json` harus diubah dari `RF-YYMM-BUILD` menjadi SemVer murni, dan tag Git yang stabil memakai prefiks `v`. Riwayat `RF-*` tetap dipertahankan apa adanya di `CHANGELOG.md` sebagai catatan siklus pra-rilis.
+- **Otomasi Pre-Release:** Pembuatan tag pre-release dan publikasi halaman release di GitHub didelegasikan melalui script otomasi `scripts/release.ts` (`pnpm run release:pre`), yang secara khusus menerbitkan rilis berlabel **pre-release** (flag `--prerelease`).
+- **Otomasi Rilis Stabil:** Publikasi rilis stabil SemVer **belum** memiliki script otomasi dan **wajib** dilakukan secara eksplisit serta terverifikasi (tag `v<semver>`, GitHub Release tanpa flag `--prerelease`).
 
 ### T. Standar Menu Bot & Kompatibilitas Deskripsi Perintah i18n (Menu & Command Description i18n Standards)
 

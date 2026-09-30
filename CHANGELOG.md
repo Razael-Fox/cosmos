@@ -2,8 +2,8 @@
 
 All notable changes to the **Cosmos WhatsApp Bot Framework** will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to the `RF-YYMM-BUILD` version formatting.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Pre-releases use the `RF-YYMM-BUILD` version format; stable releases follow SemVer (`1.0.0`).
 
 ---
 

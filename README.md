@@ -166,7 +166,7 @@ cosmos/
 
 ## Versioning
 
-Releases follow the `RF-YYMM-BUILD` convention, for example `RF-2609-21`. See [CHANGELOG.md](CHANGELOG.md) for history.
+Pre-releases use the `RF-YYMM-BUILD` convention (for example `RF-2609-21`). Stable releases follow SemVer (`1.0.0`, tagged `v1.0.0`). See [CHANGELOG.md](CHANGELOG.md) for history.
 
 ## License
 

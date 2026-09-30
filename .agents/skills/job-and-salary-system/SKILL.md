@@ -1,7 +1,7 @@
 ---
 name: job-and-salary-system
 description: >
-    Panduan baku arsitektur dan implementasi Subsistem Pekerjaan dan Gaji (Job & Salary System) Cosmos, mencakup katalog profesi, persyaratan ID Card & item/lisensi, perhitungan gaji dinamis berbasis EconomyMultiplier makroekonomi, pelacakan cooldown shift, serta standar versi rilis RF-YYMM-BUILD.
+    Panduan baku arsitektur dan implementasi Subsistem Pekerjaan dan Gaji (Job & Salary System) Cosmos, mencakup katalog profesi, persyaratan ID Card & item/lisensi, perhitungan gaji dinamis berbasis EconomyMultiplier makroekonomi, pelacakan cooldown shift, serta standar versi rilis (pre-release RF-YYMM-BUILD dan rilis stabil SemVer).
 ---
 
 # Cosmos Job & Salary System Standards
@@ -81,9 +81,11 @@ $$\text{Final Payout} = \text{round}(\text{Base Payout} \times \text{EconomyMult
 
 ---
 
-## 6. Standar Penomoran Versi & Rilis (`RF-YYMM-BUILD`)
+## 6. Standar Penomoran Versi & Rilis (Pre-Release `RF-YYMM-BUILD` & Rilis Stabil SemVer)
 
-Format penomoran versi rilis framework Cosmos menggunakan skema terstandarisasi:
+Cosmos memisahkan penomoran versi berdasarkan jenis rilisnya.
+
+### 6.1 Pre-Release — Skema `RF-YYMM-BUILD` (Khusus Pra-Rilis)
 
 $$\mathbf{RF\text{-}YYMM\text{-}BUILD}$$
 
@@ -91,9 +93,21 @@ $$\mathbf{RF\text{-}YYMM\text{-}BUILD}$$
 - `YY`: 2 digit tahun (contoh: `26` untuk 2026).
 - `MM`: 2 digit bulan (contoh: `09` untuk September).
 - `BUILD`: Nomor build rilis 2 digit berurutan pada bulan tersebut (contoh: `01`, `02`, `03`).
-- **Otomasi Rilis**:
-    - Script: `scripts/release.ts` (dijalankan melalui `pnpm run release:pre`).
-    - Secara otomatis memperbarui `"version"` di `package.json`, mencocokkan header rilis di `CHANGELOG.md`, membuat pre-release tag, melakukan push ke branch feature, dan mempublikasikan pre-release di GitHub via `gh release create --prerelease`.
+- Skema ini **khusus** untuk siklus pra-rilis dan **dilarang** dipakai pada rilis stabil.
+
+### 6.2 Rilis Stabil — Standar SemVer
+
+- Rilis stabil **wajib** mengikuti standar **SemVer**: `MAJOR.MINOR.PATCH` (contoh: `1.0.0`).
+- Field `"version"` di `package.json` memakai SemVer **tanpa prefiks** (`1.0.0`).
+- Tag Git dan GitHub Release untuk rilis stabil memakai prefiks `v` (`v1.0.0`).
+- Rilis stabil **dilarang** menggunakan format `RF-YYMM-BUILD`.
+- Saat transisi ke rilis stabil, riwayat header `RF-*` di `CHANGELOG.md` tetap dipertahankan sebagai catatan siklus pra-rilis.
+
+### 6.3 Otomasi Rilis
+
+- **Pre-Release** — Script: `scripts/release.ts` (dijalankan melalui `pnpm run release:pre`).
+    - Secara otomatis memperbarui `"version"` di `package.json`, mencocokkan header rilis di `CHANGELOG.md`, membuat tag pre-release, melakukan push ke branch aktif, dan mempublikasikan pre-release di GitHub via `gh release create --prerelease`.
+- **Rilis Stabil** — belum memiliki script otomasi; **wajib** dilakukan secara eksplisit dan terverifikasi (tag `v<semver>`, GitHub Release **tanpa** flag `--prerelease`).
 
 ---
 

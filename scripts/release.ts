@@ -12,9 +12,19 @@ async function main() {
     const changelogPath = path.join(rootDir, 'CHANGELOG.md');
     const packageJsonPath = path.join(rootDir, 'package.json');
 
-    // 1. Determine target version (RF-YYMM-BUILD)
+    // 1. Determine target version (RF-YYMM-BUILD).
+    // This script publishes PRE-RELEASES only. Stable releases follow SemVer and
+    // must be tagged manually (v<semver>) without the --prerelease flag.
     let version = process.argv[2];
     const changelog = fs.readFileSync(changelogPath, 'utf-8');
+
+    if (version && !/^RF-\d{4}-\d{2,}$/.test(version)) {
+        console.error(
+            `[Release] Refusing to publish '${version}'. This script handles pre-releases only and requires the RF-YYMM-BUILD format (e.g. RF-2609-21). ` +
+                `Stable releases follow SemVer and must be published manually as 'v<semver>' without the --prerelease flag.`
+        );
+        process.exit(1);
+    }
 
     if (!version) {
         // Look up top version from CHANGELOG.md matching RF-YYMM-BUILD
