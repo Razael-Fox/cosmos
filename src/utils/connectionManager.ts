@@ -393,7 +393,7 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
 
     const modService = new ModerationService(sock);
     const blacklistEnforcer = new BlacklistEnforcer(sock, modService);
-    blacklistEnforcer.startListening();
+    blacklistEnforcer.startListening(sessionId);
 
     sock.ev.on('group-participants.update', async ({ id, participants, action }) => {
         try {

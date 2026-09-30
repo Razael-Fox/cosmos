@@ -3,8 +3,10 @@ import { GroupMetadata, WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { ModerationService, resolveTargetJid } from '../src/services/moderationService.js';
 import { BlacklistEnforcer } from '../src/services/blacklistEnforcer.js';
 import toolsHandler from '../src/tools/handler.js';
-import { prisma } from '../src/db.js';
+import { prisma, disconnectPrismaClient } from '../src/db.js';
 import { getTranslator } from '../src/utils/i18n.js';
+import fs from 'fs';
+import path from 'path';
 
 function createMockSocket(initialMetadata?: Partial<GroupMetadata>): {
     sock: WASocket;
@@ -104,7 +106,16 @@ function createMockSocket(initialMetadata?: Partial<GroupMetadata>): {
         emit: async (event: string, data: any) => {
             if (event === 'group-participants.update' && data.action === 'add' && Array.isArray(data.participants)) {
                 for (const p of data.participants) {
-                    metadata.participants.push({ id: p, admin: null });
+                    if (typeof p === 'string') {
+                        metadata.participants.push({ id: p, admin: null });
+                    } else if (p && typeof p === 'object' && 'id' in p) {
+                        metadata.participants.push({
+                            id: p.id,
+                            phoneNumber: p.phoneNumber,
+                            lid: p.lid,
+                            admin: null
+                        });
+                    }
                 }
             }
             if (listeners[event]) {
@@ -364,7 +375,10 @@ async function runModerationTests() {
 
     // Verify notification was sent
     const notifyCalls = enforcerMock.calls.sendMessage.filter(
-        (c) => c[0] === groupJid && c[1].text.includes('automatically removed because they are blacklisted')
+        (c) =>
+            c[0] === groupJid &&
+            (c[1].text.includes('automatically removed because they are blacklisted') ||
+                c[1].text.includes('otomatis dikeluarkan karena berada di daftar hitam'))
     );
     assert.ok(notifyCalls.length >= 1, 'Enforcer should have notified the group');
     console.log('✓ BlacklistEnforcer auto-kick verified.');
@@ -445,9 +459,119 @@ async function runModerationTests() {
     }
     console.log('✓ All 14 moderation tools and localization keys verified.');
 
+    // 13. Baileys Non-200 Status Handling
+    console.log('[Test 13] Testing Baileys non-200 status handling...');
+    const failGroupJid = '987654321@g.us';
+    const failMock = createMockSocket({ id: failGroupJid });
+    failMock.sock.groupParticipantsUpdate = async (_jid: string, participants: string[]) => {
+        return participants.map((p) => ({ status: '403', jid: p }));
+    };
+    const failModService = new ModerationService(failMock.sock);
+    const kickFailRes = await failModService.kickMember(
+        failGroupJid,
+        '628444444444@s.whatsapp.net',
+        'Fail test',
+        '628222222222@s.whatsapp.net'
+    );
+    assert.strictEqual(kickFailRes.success, false);
+    assert.strictEqual(kickFailRes.message, 'KICK_FAILED');
+    assert.strictEqual(kickFailRes.data?.status, '403');
+    console.log('✓ Baileys non-200 status handling verified.');
+
+    // 14. BlacklistEnforcer LID Resolution & Kick Failure Abort
+    console.log('[Test 14] Testing BlacklistEnforcer LID resolution & kick failure guard...');
+    const lidGroupJid = '888777666@g.us';
+    const lidMock = createMockSocket({ id: lidGroupJid });
+    const lidModService = new ModerationService(lidMock.sock);
+    const lidEnforcer = new BlacklistEnforcer(lidMock.sock, lidModService);
+    lidEnforcer.startListening();
+
+    // Blacklist user by phone number
+    await lidModService.addToBlacklist(lidGroupJid, '628777000111@s.whatsapp.net', 'LID bypass test', 'admin');
+
+    // Emit participant with LID as id and phone number in object
+    await lidMock.emit('group-participants.update', {
+        id: lidGroupJid,
+        participants: [{ id: '120300999888@lid', phoneNumber: '628777000111' }],
+        action: 'add'
+    });
+
+    // Verify kicked target was socket id 120300999888@lid
+    const lidKickCalls = lidMock.calls.groupParticipantsUpdate.filter(
+        (c) => c[1].includes('120300999888@lid') && c[2] === 'remove'
+    );
+    assert.ok(lidKickCalls.length >= 1, 'LID participant should be kicked when matched via phoneNumber');
+
+    // Now simulate kick failure: enforcer must NOT send announcement
+    lidMock.sock.groupParticipantsUpdate = async (_jid: string, participants: string[]) => {
+        return participants.map((p) => ({ status: '400', jid: p }));
+    };
+    const beforeMsgCount = lidMock.calls.sendMessage.length;
+    await lidMock.emit('group-participants.update', {
+        id: lidGroupJid,
+        participants: [{ id: '120300999888@lid', phoneNumber: '628777000111' }],
+        action: 'add'
+    });
+    assert.strictEqual(
+        lidMock.calls.sendMessage.length,
+        beforeMsgCount,
+        'Enforcer should not send removal announcement if kick failed'
+    );
+    console.log('✓ LID resolution and kick failure guard verified.');
+
+    // 15. Blacklist Immediate Kick Rate Limit Bypass
+    console.log('[Test 15] Testing immediate kick bypasses caller cooldown...');
+    const immGroupJid = '555444333@g.us';
+    const blImmSocket = createMockSocket({
+        id: immGroupJid,
+        participants: [
+            { id: '628111111111@s.whatsapp.net', admin: 'superadmin' },
+            { id: '628222222222@s.whatsapp.net', admin: 'admin' },
+            { id: '6281234567890@s.whatsapp.net', admin: 'admin' },
+            { id: '628333333333@s.whatsapp.net', admin: null }
+        ]
+    });
+    const blImmModService = new ModerationService(blImmSocket.sock);
+    // Admin performs an action to consume their cooldown
+    await blImmModService.setGroupAnnounce(immGroupJid, true, '628222222222@s.whatsapp.net');
+    // Immediate blacklist add of 628333333333@s.whatsapp.net
+    const blAddRes = await blImmModService.addToBlacklist(
+        immGroupJid,
+        '628333333333@s.whatsapp.net',
+        'Immediate kick test',
+        '628222222222@s.whatsapp.net'
+    );
+    assert.strictEqual(blAddRes.success, true);
+    assert.strictEqual(blAddRes.data?.kicked, true, 'User should be immediately kicked despite caller cooldown');
+    console.log('✓ Blacklist immediate kick rate limit bypass verified.');
+
+    // 16. Sub-bot Session Context Isolation in BlacklistEnforcer
+    console.log('[Test 16] Testing sub-bot session context isolation in BlacklistEnforcer...');
+    const subNum = '628999888111';
+    const subSessionId = `sub_${subNum}`;
+    const subMock = createMockSocket({ id: 'subgroup@g.us' });
+    const subModService = new ModerationService(subMock.sock);
+    const subEnforcer = new BlacklistEnforcer(subMock.sock, subModService);
+    subEnforcer.startListening(subSessionId);
+
+    // Emit event and ensure it executes cleanly in sub-bot dbContext
+    await subMock.emit('group-participants.update', {
+        id: 'subgroup@g.us',
+        participants: ['628777666555@s.whatsapp.net'],
+        action: 'add'
+    });
+    await disconnectPrismaClient(subSessionId);
+    const subDir1 = path.resolve(process.cwd(), 'database', subNum);
+    const subDir2 = path.resolve(process.cwd(), 'storage', 'sub-bot', subNum);
+    if (fs.existsSync(subDir1)) fs.rmSync(subDir1, { recursive: true, force: true });
+    if (fs.existsSync(subDir2)) fs.rmSync(subDir2, { recursive: true, force: true });
+    console.log('✓ Sub-bot session context isolation verified.');
+
     // Cleanup
     await prisma.groupBlacklist.deleteMany({ where: { groupJid } });
     await prisma.moderationLog.deleteMany({ where: { groupJid } });
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: { in: [failGroupJid, lidGroupJid, immGroupJid] } } });
+    await prisma.moderationLog.deleteMany({ where: { groupJid: { in: [failGroupJid, lidGroupJid, immGroupJid] } } });
 
     console.log('\n=== ALL TESTS PASSED SUCCESSFULLY! ===');
 }

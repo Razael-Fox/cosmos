@@ -120,6 +120,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     if (result.success) {
         return t('tools.group_description.success');
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'EMPTY') {
         return t('tools.group_description.empty');
     }

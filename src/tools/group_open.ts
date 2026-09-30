@@ -36,6 +36,9 @@ export async function execute(_args: Record<string, unknown>, ctx: ToolContext):
     if (result.success) {
         return t('tools.group_open.success');
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'ALREADY_OPEN') {
         return t('tools.group_open.already_open');
     }

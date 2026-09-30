@@ -569,6 +569,8 @@ export function getPrismaClient(sessionId: string = 'default'): PrismaClient {
                         DELETE FROM BankAccount;
                         DELETE FROM User;
                         DELETE FROM WhitelistedGroup;
+                        DELETE FROM GroupBlacklist;
+                        DELETE FROM ModerationLog;
                     `);
                     db.close();
                     console.log(`[DB] Created isolated database for sub-bot session: ${sessionId}`);
@@ -580,6 +582,8 @@ export function getPrismaClient(sessionId: string = 'default'): PrismaClient {
                 console.log(`[DB] Initialized new isolated database schema for sub-bot session: ${sessionId}`);
             }
         }
+        // Ensure schema and migrations are bootstrapped unconditionally on sub-bot DB
+        ensureDatabaseSchema(targetDbPath);
     }
 
     const adapter = new PrismaBetterSqlite3({ url: targetDbPath });

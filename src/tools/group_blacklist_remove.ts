@@ -61,6 +61,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     if (result.success) {
         return t('tools.group_blacklist_remove.success', { target: targetDisplay });
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'NOT_BLACKLISTED') {
         return t('tools.group_blacklist_remove.not_blacklisted', { target: targetDisplay });
     }

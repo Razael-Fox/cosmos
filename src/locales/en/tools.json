@@ -1132,6 +1132,7 @@
         "success": "🚫 {{target}} has been added to the group blacklist.\n\nReason: {{reason}}",
         "already_blacklisted": "ℹ️ {{target}} is already blacklisted.",
         "kicked": "⚠️ {{target}} was in the group and has been removed.",
+        "auto_removed": "⚠️ @{{target}} was automatically removed because they are blacklisted from this group.",
         "no_reason": "No reason provided",
         "error": "❌ Failed to add {{target}} to blacklist: {{error}}"
     },

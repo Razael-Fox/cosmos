@@ -54,6 +54,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     if (result.success) {
         return t('tools.group_rename.success', { name: newName });
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'TOO_SHORT') {
         return t('tools.group_rename.too_short');
     }

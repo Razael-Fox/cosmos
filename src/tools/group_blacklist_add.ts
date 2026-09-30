@@ -99,6 +99,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         return response;
     }
 
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'ALREADY_BLACKLISTED') {
         return t('tools.group_blacklist_add.already_blacklisted', { target: targetDisplay });
     }

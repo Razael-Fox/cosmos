@@ -36,6 +36,9 @@ export async function execute(_args: Record<string, unknown>, ctx: ToolContext):
     if (result.success && result.data?.link) {
         return t('tools.group_link.success', { link: result.data.link });
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'BOT_NOT_ADMIN') {
         return t('tools.group_kick.bot_not_admin');
     }

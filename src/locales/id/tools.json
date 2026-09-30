@@ -1132,6 +1132,7 @@
         "success": "🚫 {{target}} telah ditambahkan ke daftar hitam grup.\n\nAlasan: {{reason}}",
         "already_blacklisted": "ℹ️ {{target}} sudah ada di daftar hitam.",
         "kicked": "⚠️ {{target}} ada di grup dan telah dikeluarkan.",
+        "auto_removed": "⚠️ @{{target}} otomatis dikeluarkan karena berada di daftar hitam grup ini.",
         "no_reason": "Tidak ada alasan yang diberikan",
         "error": "❌ Gagal menambahkan {{target}} ke daftar hitam: {{error}}"
     },

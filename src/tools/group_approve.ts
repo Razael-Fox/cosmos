@@ -68,6 +68,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     if (result.success) {
         return t('tools.group_approve.success', { phone: digits });
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'BOT_NOT_ADMIN') {
         return t('tools.group_kick.bot_not_admin');
     }

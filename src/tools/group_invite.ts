@@ -53,6 +53,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     if (result.success) {
         return t('tools.group_invite.success', { phone: targetPhone });
     }
+    if (result.message === 'RATE_LIMIT_EXCEEDED') {
+        return t('core.rate_limited');
+    }
     if (result.message === 'ALREADY_MEMBER') {
         return t('tools.group_invite.already_member', { phone: targetPhone });
     }

@@ -13,6 +13,26 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F25-P1] - 2026-09-30
+
+### Fixed
+
+- **Sub-bot Database Isolation & Schema Bootstrap (Rule U & Rule W):**
+    - Passed active `sessionId` to `BlacklistEnforcer.startListening(sessionId)` and wrapped participant event handling inside `dbContext.run({ sessionId, prisma: getPrismaClient(sessionId) }, ...)` to eliminate context leaks to the default database.
+    - Added `GroupBlacklist` and `ModerationLog` table wipes to sub-bot template database initialization in `src/db.ts`.
+    - Bootstrapped programmatic SQLite DDL schema via `ensureDatabaseSchema(targetDbPath)` unconditionally for all sub-bot sessions to ensure legacy/pre-existing sub-bot databases possess `GroupBlacklist` and `ModerationLog` tables.
+- **Blacklist Authorization & Baileys LID Identity Resolution (CWE-863):**
+    - Enhanced `BlacklistEnforcer` and `ModerationService.isBlacklisted` to cross-resolve participant identities across candidate IDs (`id`, `phoneNumber`, `lid`), `prisma.user` records, and group metadata.
+    - Verified `kickMember` outcome in `BlacklistEnforcer` to suppress false removal announcements on kick rejection or failure.
+    - Routed internal cascading kicks in `addToBlacklist` through `SYSTEM` caller to bypass interactive 3-second operational cooldowns while preserving caller attribution in reason logs.
+- **Baileys Return Status Verification:**
+    - Inspected per-participant response status arrays from Baileys `groupParticipantsUpdate` and `groupRequestParticipantsUpdate` across `kickMember`, `promoteAdmin`, `demoteAdmin`, `approveJoinRequest`, `rejectJoinRequest`, and `approveAllJoinRequests`, treating non-`200` statuses as actionable failures.
+- **UX & Internationalization (Rule O):**
+    - Localized auto-kick removal notices in `BlacklistEnforcer` using `tools.group_blacklist_add.auto_removed`.
+    - Added `core.rate_limited` translations in English and Indonesian and handled `RATE_LIMIT_EXCEEDED` across all 13 moderation tools.
+
+---
+
 ## [G2-F25-P0] - 2026-09-30
 
 ### Added
@@ -39,10 +59,10 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
         - `BlacklistEnforcer`: Background listener on `group-participants.update` event (`action === 'add'`) that automatically kicks blacklisted users upon joining and alerts the group with green mentions.
     - **Database Persistence & SQLite Migrations:**
         - Added `GroupBlacklist` and `ModerationLog` models to `prisma/schema.prisma` with indexes and unique constraints.
-        - Programmatic DDL auto-bootstrap in `src/db.ts` and `.worktrees/api/src/db.ts` following SQLite migration precedence.
+        - Programmatic DDL auto-bootstrap in `src/db.ts` following SQLite migration precedence.
     - **Rate Limiting & Safety Invariants:**
         - Enforced 3-second operational cooldown on group-level moderation actions to comply with WhatsApp API rate limits.
-        - ACID logging of all moderation actions to `ModerationLog`.
+        - Best-effort audit logging of moderation actions to `ModerationLog`.
     - **Internationalization (i18n):**
         - Added symmetric English (`src/locales/en/tools.json`) and Indonesian (`src/locales/id/tools.json`) translations for all 14 tools and their `tools.commands.<name>.description` keys.
 

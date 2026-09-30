@@ -17,7 +17,7 @@ export interface ModerationResult {
 }
 type GroupParticipant = GroupMetadata['participants'][number];
 
-function getParticipantLid(p: GroupParticipant): string | null {
+export function getParticipantLid(p: GroupParticipant): string | null {
     if ('lid' in p && typeof p.lid === 'string') {
         return cleanId(p.lid);
     }
@@ -216,7 +216,21 @@ export class ModerationService {
         }
 
         try {
-            await this.sock.groupParticipantsUpdate(groupJid, [targetParticipant.id], 'remove');
+            const res = await this.sock.groupParticipantsUpdate(groupJid, [targetParticipant.id], 'remove');
+            const status = Array.isArray(res) && res[0]?.status ? String(res[0].status) : 'UNKNOWN';
+            if (status !== '200') {
+                await this.logModeration(
+                    groupJid,
+                    'kick',
+                    targetParticipant.id,
+                    cleanId(targetParticipant.id),
+                    reason,
+                    performedBy,
+                    false,
+                    `STATUS_${status}`
+                );
+                return { success: false, message: 'KICK_FAILED', data: { status } };
+            }
             await this.logModeration(
                 groupJid,
                 'kick',
@@ -226,7 +240,7 @@ export class ModerationService {
                 performedBy,
                 true
             );
-            return { success: true, message: 'KICK_SUCCESS', data: { targetJid: targetParticipant.id } };
+            return { success: true, message: 'KICK_SUCCESS', data: { targetJid: targetParticipant.id, status } };
         } catch (err) {
             await this.logModeration(
                 groupJid,
@@ -285,7 +299,21 @@ export class ModerationService {
         }
 
         try {
-            await this.sock.groupParticipantsUpdate(groupJid, [targetParticipant.id], 'promote');
+            const res = await this.sock.groupParticipantsUpdate(groupJid, [targetParticipant.id], 'promote');
+            const status = Array.isArray(res) && res[0]?.status ? String(res[0].status) : 'UNKNOWN';
+            if (status !== '200') {
+                await this.logModeration(
+                    groupJid,
+                    'promote',
+                    targetParticipant.id,
+                    cleanId(targetParticipant.id),
+                    null,
+                    performedBy,
+                    false,
+                    `STATUS_${status}`
+                );
+                return { success: false, message: 'PROMOTE_FAILED', data: { status } };
+            }
             await this.logModeration(
                 groupJid,
                 'promote',
@@ -295,7 +323,7 @@ export class ModerationService {
                 performedBy,
                 true
             );
-            return { success: true, message: 'PROMOTE_SUCCESS', data: { targetJid: targetParticipant.id } };
+            return { success: true, message: 'PROMOTE_SUCCESS', data: { targetJid: targetParticipant.id, status } };
         } catch (err) {
             await this.logModeration(
                 groupJid,
@@ -367,7 +395,21 @@ export class ModerationService {
         }
 
         try {
-            await this.sock.groupParticipantsUpdate(groupJid, [targetParticipant.id], 'demote');
+            const res = await this.sock.groupParticipantsUpdate(groupJid, [targetParticipant.id], 'demote');
+            const status = Array.isArray(res) && res[0]?.status ? String(res[0].status) : 'UNKNOWN';
+            if (status !== '200') {
+                await this.logModeration(
+                    groupJid,
+                    'demote',
+                    targetParticipant.id,
+                    cleanId(targetParticipant.id),
+                    null,
+                    performedBy,
+                    false,
+                    `STATUS_${status}`
+                );
+                return { success: false, message: 'DEMOTE_FAILED', data: { status } };
+            }
             await this.logModeration(
                 groupJid,
                 'demote',
@@ -377,7 +419,7 @@ export class ModerationService {
                 performedBy,
                 true
             );
-            return { success: true, message: 'DEMOTE_SUCCESS', data: { targetJid: targetParticipant.id } };
+            return { success: true, message: 'DEMOTE_SUCCESS', data: { targetJid: targetParticipant.id, status } };
         } catch (err) {
             await this.logModeration(
                 groupJid,
@@ -592,9 +634,23 @@ export class ModerationService {
         }
 
         try {
-            await this.sock.groupRequestParticipantsUpdate(groupJid, [targetJid], 'approve');
+            const res = await this.sock.groupRequestParticipantsUpdate(groupJid, [targetJid], 'approve');
+            const status = Array.isArray(res) && res[0]?.status ? String(res[0].status) : 'UNKNOWN';
+            if (status !== '200') {
+                await this.logModeration(
+                    groupJid,
+                    'approve',
+                    targetJid,
+                    cleanId(targetJid),
+                    null,
+                    performedBy,
+                    false,
+                    `STATUS_${status}`
+                );
+                return { success: false, message: 'APPROVE_FAILED', data: { status } };
+            }
             await this.logModeration(groupJid, 'approve', targetJid, cleanId(targetJid), null, performedBy, true);
-            return { success: true, message: 'APPROVE_SUCCESS', data: { targetJid } };
+            return { success: true, message: 'APPROVE_SUCCESS', data: { targetJid, status } };
         } catch (err) {
             await this.logModeration(
                 groupJid,
@@ -635,9 +691,31 @@ export class ModerationService {
             }
 
             try {
-                await this.sock.groupRequestParticipantsUpdate(groupJid, [jid], 'approve');
-                approvedCount++;
-                await this.logModeration(groupJid, 'approve', jid, cleanId(jid), 'Bulk approval', performedBy, true);
+                const res = await this.sock.groupRequestParticipantsUpdate(groupJid, [jid], 'approve');
+                const status = Array.isArray(res) && res[0]?.status ? String(res[0].status) : 'UNKNOWN';
+                if (status === '200') {
+                    approvedCount++;
+                    await this.logModeration(
+                        groupJid,
+                        'approve',
+                        jid,
+                        cleanId(jid),
+                        'Bulk approval',
+                        performedBy,
+                        true
+                    );
+                } else {
+                    await this.logModeration(
+                        groupJid,
+                        'approve',
+                        jid,
+                        cleanId(jid),
+                        'Bulk approval failed',
+                        performedBy,
+                        false,
+                        `STATUS_${status}`
+                    );
+                }
             } catch (err) {
                 console.error(`[ModerationService] Error approving request for ${jid}:`, err);
                 await this.logModeration(
@@ -681,9 +759,23 @@ export class ModerationService {
         }
 
         try {
-            await this.sock.groupRequestParticipantsUpdate(groupJid, [targetJid], 'reject');
+            const res = await this.sock.groupRequestParticipantsUpdate(groupJid, [targetJid], 'reject');
+            const status = Array.isArray(res) && res[0]?.status ? String(res[0].status) : 'UNKNOWN';
+            if (status !== '200') {
+                await this.logModeration(
+                    groupJid,
+                    'reject',
+                    targetJid,
+                    cleanId(targetJid),
+                    null,
+                    performedBy,
+                    false,
+                    `STATUS_${status}`
+                );
+                return { success: false, message: 'REJECT_FAILED', data: { status } };
+            }
             await this.logModeration(groupJid, 'reject', targetJid, cleanId(targetJid), null, performedBy, true);
-            return { success: true, message: 'REJECT_SUCCESS', data: { targetJid } };
+            return { success: true, message: 'REJECT_SUCCESS', data: { targetJid, status } };
         } catch (err) {
             await this.logModeration(
                 groupJid,
@@ -781,13 +873,80 @@ export class ModerationService {
                 conditions.push({ userPhone: digits });
             }
 
+            // Cross-resolve phone number and LID mappings from User table
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        OR: [
+                            { id: targetJid },
+                            { id: `${cleaned}@s.whatsapp.net` },
+                            { lid: targetJid },
+                            { lid: cleaned },
+                            { lid: `${cleaned}@lid` }
+                        ]
+                    }
+                });
+                if (user) {
+                    if (user.id) {
+                        const uClean = cleanId(user.id);
+                        const uDigits = uClean.replace(/\D/g, '');
+                        conditions.push({ userJid: user.id }, { userJid: `${uClean}@s.whatsapp.net` });
+                        if (uDigits) {
+                            conditions.push({ userPhone: uDigits });
+                        }
+                    }
+                    if (user.lid) {
+                        const uLidClean = cleanId(user.lid);
+                        conditions.push({ userJid: user.lid }, { userJid: `${uLidClean}@lid` });
+                    }
+                }
+            } catch {
+                /* ignore User table lookup */
+            }
+
+            // Cross-resolve identities from group metadata if socket is available
+            try {
+                const metadata = await this.sock.groupMetadata(groupJid);
+                const participant = metadata.participants.find((p) => {
+                    const pClean = cleanId(p.id);
+                    const pLid = getParticipantLid(p);
+                    return pClean === cleaned || pLid === cleaned;
+                });
+                if (participant) {
+                    if (participant.id && !participant.id.endsWith('@lid')) {
+                        const pClean = cleanId(participant.id);
+                        const pDigits = pClean.replace(/\D/g, '');
+                        conditions.push({ userJid: participant.id }, { userJid: `${pClean}@s.whatsapp.net` });
+                        if (pDigits) {
+                            conditions.push({ userPhone: pDigits });
+                        }
+                    }
+                    if (
+                        'phoneNumber' in participant &&
+                        typeof participant.phoneNumber === 'string' &&
+                        participant.phoneNumber
+                    ) {
+                        const pDigits = participant.phoneNumber.replace(/\D/g, '');
+                        conditions.push({ userJid: `${pDigits}@s.whatsapp.net` });
+                        if (pDigits) {
+                            conditions.push({ userPhone: pDigits });
+                        }
+                    }
+                    const pLid = getParticipantLid(participant);
+                    if (pLid) {
+                        conditions.push({ userJid: `${pLid}@lid` });
+                    }
+                }
+            } catch {
+                /* ignore groupMetadata resolution */
+            }
+
             const existing = await prisma.groupBlacklist.findFirst({
                 where: {
                     groupJid,
                     OR: conditions
                 }
             });
-
             return Boolean(existing);
         } catch (err) {
             console.error(`[ModerationService] Error checking blacklist for ${targetJid} in ${groupJid}:`, err);
@@ -831,7 +990,12 @@ export class ModerationService {
         let kicked = false;
         const isMember = await this.isUserMember(groupJid, targetJid);
         if (isMember) {
-            const kickRes = await this.kickMember(groupJid, targetJid, `Blacklisted: ${reason}`, addedBy);
+            const kickRes = await this.kickMember(
+                groupJid,
+                targetJid,
+                `Blacklisted by ${addedBy}: ${reason}`,
+                'SYSTEM'
+            );
             kicked = kickRes.success;
         }
 
@@ -854,6 +1018,74 @@ export class ModerationService {
             ];
             if (digits) {
                 conditions.push({ userPhone: digits });
+            }
+
+            // Cross-resolve phone number and LID mappings from User table
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        OR: [
+                            { id: targetJid },
+                            { id: `${cleaned}@s.whatsapp.net` },
+                            { lid: targetJid },
+                            { lid: cleaned },
+                            { lid: `${cleaned}@lid` }
+                        ]
+                    }
+                });
+                if (user) {
+                    if (user.id) {
+                        const uClean = cleanId(user.id);
+                        const uDigits = uClean.replace(/\D/g, '');
+                        conditions.push({ userJid: user.id }, { userJid: `${uClean}@s.whatsapp.net` });
+                        if (uDigits) {
+                            conditions.push({ userPhone: uDigits });
+                        }
+                    }
+                    if (user.lid) {
+                        const uLidClean = cleanId(user.lid);
+                        conditions.push({ userJid: user.lid }, { userJid: `${uLidClean}@lid` });
+                    }
+                }
+            } catch {
+                /* ignore User table lookup */
+            }
+
+            // Cross-resolve identities from group metadata if socket is available
+            try {
+                const metadata = await this.sock.groupMetadata(groupJid);
+                const participant = metadata.participants.find((p) => {
+                    const pClean = cleanId(p.id);
+                    const pLid = getParticipantLid(p);
+                    return pClean === cleaned || pLid === cleaned;
+                });
+                if (participant) {
+                    if (participant.id && !participant.id.endsWith('@lid')) {
+                        const pClean = cleanId(participant.id);
+                        const pDigits = pClean.replace(/\D/g, '');
+                        conditions.push({ userJid: participant.id }, { userJid: `${pClean}@s.whatsapp.net` });
+                        if (pDigits) {
+                            conditions.push({ userPhone: pDigits });
+                        }
+                    }
+                    if (
+                        'phoneNumber' in participant &&
+                        typeof participant.phoneNumber === 'string' &&
+                        participant.phoneNumber
+                    ) {
+                        const pDigits = participant.phoneNumber.replace(/\D/g, '');
+                        conditions.push({ userJid: `${pDigits}@s.whatsapp.net` });
+                        if (pDigits) {
+                            conditions.push({ userPhone: pDigits });
+                        }
+                    }
+                    const pLid = getParticipantLid(participant);
+                    if (pLid) {
+                        conditions.push({ userJid: `${pLid}@lid` });
+                    }
+                }
+            } catch {
+                /* ignore groupMetadata resolution */
             }
 
             const existing = await prisma.groupBlacklist.findFirst({
