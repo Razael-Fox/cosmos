@@ -9,7 +9,10 @@
         "card_title": "MEDIA YOUTUBE",
         "label_type": "Tipe",
         "value_video": "Video",
-        "value_image": "Gambar"
+        "value_image": "Gambar",
+        "label_resolution": "Resolusi",
+        "label_bitrate": "Bitrate",
+        "audio_success": "✅ Trek audio berhasil diunduh."
     },
     "tiktokdl": {
         "invalid_url": "URL TikTok yang diberikan tidak valid.",
@@ -22,7 +25,13 @@
         "label_status": "Status",
         "value_ready": "Siap",
         "api_error": "Kesalahan API TikTok: {{message}}",
-        "unknown_error": "Kesalahan tidak diketahui"
+        "unknown_error": "Kesalahan tidak diketahui",
+        "label_type": "Tipe",
+        "value_video": "Video",
+        "value_audio": "Audio",
+        "value_photo": "Foto Tunggal",
+        "value_album": "Album Karusel",
+        "label_note": "Catatan"
     },
     "sticker": {
         "reply_media": "Balas gambar atau video dengan .sticker untuk membuat stiker.",
@@ -42,7 +51,14 @@
     },
     "pinterestdl": {
         "document_version": "Versi dokumen",
-        "card_title": "MEDIA PINTEREST"
+        "card_title": "MEDIA PINTEREST",
+        "invalid_url": "URL Pinterest yang diberikan tidak valid.",
+        "value_photo": "Foto",
+        "value_video": "Video",
+        "value_gif": "GIF Animasi",
+        "value_album": "Album Foto",
+        "note_no_audio_on_photo": "Pin ini berupa gambar statis, sehingga tidak ada trek audio yang dapat diekstraksi.",
+        "note_no_audio_stream": "Tidak ada trek audio yang terdeteksi pada media ini."
     },
     "play": {
         "results_title": "Berikut adalah hasil teratas untuk *{{query}}*.\nSilakan balas dengan nomor (1-{{count}}) ke pesan ini untuk mengunduh:\n",
@@ -77,5 +93,34 @@
         "untitled_pack": "Paket Tanpa Judul",
         "error_no_stickers": "Paket stiker tidak berisi stiker apa pun.",
         "error_download_failed": "Gagal mengunduh stiker dari paket."
+    },
+    "downloaders": {
+        "error_title": "⚠️ *KESALAHAN PARAMETER PENGUNDUH*",
+        "error_unknown_flag_tiktok": "Flag{{#flags}} `{{flags}}`{{/flags}} tidak dikenali untuk pengunduh TikTok. Hanya parameter di bawah ini yang diterima.",
+        "error_unknown_flag_youtube": "Flag{{#flags}} `{{flags}}`{{/flags}} tidak dikenali untuk pengunduh YouTube. Hanya parameter di bawah ini yang diterima.",
+        "error_unknown_flag_pinterest": "Flag{{#flags}} `{{flags}}`{{/flags}} tidak dikenali untuk pengunduh Pinterest. Hanya parameter di bawah ini yang diterima.",
+        "error_conflict_video_photo": "Tidak dapat menggabungkan --video dan --photo. Silakan pilih salah satu.",
+        "error_conflict_video_multi_photo": "Tidak dapat menggabungkan --video dan --multi-photo.",
+        "error_conflict_photo_multi_photo": "Pilih salah satu antara --photo (foto tunggal) atau --multi-photo (seluruh album foto).",
+        "error_video_quality_on_audio": "Flag resolusi video tidak valid pada perintah audio. Gunakan --128k, --192k, --320k, atau --best untuk kualitas audio.",
+        "error_audio_bitrate_on_video": "Flag bitrate audio tidak valid pada perintah video. Gunakan --360, --480, --720, --1k, --2k, --4k, atau --best untuk kualitas video, atau tambahkan `audio` sebelum tautan untuk MP3.",
+        "error_video_request_on_photos": "Tautan TikTok ini berisi kumpulan foto, bukan video. Gunakan --photo, --multi-photo, atau --audio.",
+        "error_photo_request_on_video": "Tautan TikTok ini berisi video, bukan foto. Gunakan --video atau --audio.",
+        "error_no_media": "Tidak ada media yang dapat dikirim untuk permintaan ini. Postingan mungkin pribadi, terkunci wilayah, atau sudah dihapus.",
+        "hint_tiktok_flags": "Parameter valid: --audio, --video, --photo, --multi-photo",
+        "hint_youtube_flags": "Resolusi video: --360, --480, --720, --1k, --2k, --4k, --best",
+        "hint_youtube_audio_flags": "Bitrate audio: --128k, --192k, --320k, --best",
+        "hint_pinterest_flags": "Parameter valid: --audio",
+        "usage_tiktok": "Penggunaan: .tiktok dl <url> [--audio] [--video] [--photo] [--multi-photo]",
+        "usage_youtube": "Penggunaan: .youtube dl <url> [--360] [--480] [--720] [--1k] [--2k] [--4k] [--best]",
+        "usage_youtube_audio": "Penggunaan: .youtube dl audio <url> [--128k] [--192k] [--320k] [--best]",
+        "usage_pinterest": "Penggunaan: .pinterest dl <url> [--audio]",
+        "note_carousel_truncated": "Karusel dibatasi {{count}} foto pertama.",
+        "note_single_photo_from_carousel": "Tautan karusel diresolves ke foto utamanya.",
+        "note_single_photo_album": "Postingan ini berisi satu foto, sehingga album berisi satu gambar.",
+        "note_no_audio_available": "Tidak ada soundtrack yang tersedia untuk postingan ini.",
+        "value_video_only": "Video (tanpa audio)",
+        "value_audio_mp3": "Audio (MP3)",
+        "value_files_ready": "{{count}} berkas siap"
     }
 }

@@ -13,6 +13,65 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F27-P0] - 2026-10-01
+
+### Feature Milestone 27 — Dynamic Multi-Platform Downloader Suite
+
+A complete overhaul of the downloader subsystem into a parameter-driven suite with full
+Indonesian/English parity, a dedicated tutorial menu, and updated AI agent context.
+
+#### TikTok Downloader (`.tiktok dl` / `.tt dl`)
+
+- **Dual operating modes.** Automatic mode (bare link or AutoDL) now delivers the natural
+  payload for the post plus its original soundtrack: video posts send a clean MP4 plus MP3,
+  single-photo posts send the high-resolution photo plus MP3, and carousel posts send every
+  photo back-to-back (so WhatsApp groups them into a native album) plus MP3.
+- **Custom parameter mode.** `--audio`, `--video`, `--photo`, and `--multi-photo` select
+  exactly what is delivered, in any position relative to the link.
+- **Validation matrix.** Conflicting selectors (`--video --photo`, `--video --multi-photo`,
+  `--photo --multi-photo`) and content mismatches (requesting video on a photo post, or
+  photos on a video post) return formal localized guidance cards. Unknown flags such as
+  `--vid` or `--music` are rejected with a syntax card listing the valid parameters.
+- Removed the FFmpeg slideshow synthesis that previously re-encoded carousel photos.
+
+#### YouTube Downloader (`.youtube dl` / `.yt dl`)
+
+- **Video-only by default.** Downloads the video stream without audio, avoiding the
+  WhatsApp 15 MB limit that merged streams frequently hit.
+- **Custom resolutions.** `--360`, `--480`, `--720`, `--1k` (1080p), `--2k` (1440p), `--4k`
+  (2160p), and `--best`.
+- **Dedicated audio command.** `.youtube dl audio <url>` extracts an MP3 with
+  `--128k`, `--192k`, `--320k`, or `--best` bitrate flags.
+- Cross-stream flags are rejected with guidance instead of being silently re-routed.
+
+#### Pinterest Downloader (`.pinterest dl` / `.pin dl`)
+
+- Auto-detects single photos, videos, animated GIFs, and multi-photo carousels.
+- Multi-photo pins are dispatched sequentially with no delay or interleaved text so
+  WhatsApp renders them as one native album card.
+- Audio extraction is now opt-in via `--audio`; the redundant secondary document upload
+  that cluttered chats has been removed.
+
+#### Decommissioned: Telegram User Commands
+
+- Removed the user-facing `.telegram dl`, `.tg add`, `.tg del`, and `.tg list` commands and
+  their tool modules, plus their AutoDL dispatch, AI policy entries, Groq tool registry
+  entries, legacy command mappings, and tutorial references.
+- **Preserved:** `src/utils/telegramClient.ts`, `src/tgpair.ts`, `src/utils/backup.ts`,
+  the `TelegramPrivateChat` Prisma model and its database helpers, the `TELEGRAM_*`
+  environment configuration, and the `tg`/`telegram` AutoDL platform keys (so existing
+  settings rows keep validating).
+
+#### Shared Infrastructure
+
+- New `src/utils/downloaderArgs.ts` flag-parsing engine used by all three downloaders.
+- New `tests/downloader_suite.test.ts` covering flag parsing, conflict detection,
+  content-mismatch validation, YouTube format mapping, alias resolution, tutorial
+  resolution, and Telegram decommissioning.
+- `docs/COMMANDS_CONTEXT.md` Section 6 rewritten for the new commands and parameters.
+
+---
+
 ## [G2-F26-P1] - 2026-10-01
 
 ### Security

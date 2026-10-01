@@ -177,12 +177,71 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 ## 6. Downloaders & Media Tools (Pengunduh Media)
 
-- `.tiktok dl` / `.tiktok <url>`: Mengunduh video TikTok tanpa tanda air (watermark) atau format audio MP3.
-- `.yt dl` / `.yt <url>`: Mengunduh video atau audio YouTube menggunakan mesin `yt-dlp`.
-- `.play <judul_lagu>`: Mencari lagu di YouTube Music dan mengunduh format audio langsung ke obrolan.
-- `.pinterest dl` / `.pin <url>`: Mengunduh gambar, karusel foto, atau video pendek dari Pinterest.
-- `.telegram dl` / `.tg <url>`: Mengunduh media dari postingan saluran publik Telegram atau saluran privat yang telah didaftarkan.
-- `.tg add`, `.tg del`, `.tg list`: Mendaftarkan atau mengelola sesi grup privat Telegram untuk proksi pengunduhan media bot.
+### `.tiktok dl <url> [flags]` / `.tt dl <url> [flags]` (TikTok Dual-Mode)
+
+**Fungsi:** Mengunduh media TikTok dengan dua mode operasi.
+
+**Mode Otomatis (default / bare link / AutoDL):**
+
+- Postingan video → mengunduh video bersih (tanpa watermark) **dan** soundtrack asli sebagai pesan audio terpisah.
+- Postingan foto tunggal → mengunduh foto resolusi tinggi **dan** soundtrack.
+- Postingan karusel (multi-foto) → mengunduh seluruh foto berurutan tanpa jeda (WhatsApp mengelompokkannya sebagai album native) **dan** soundtrack.
+
+**Mode Parameter Kustom:**
+
+- `--audio` — hanya soundtrack (berlaku untuk postingan video maupun foto).
+- `--video` — hanya berkas video.
+- `--photo` — hanya foto utama (foto pertama dari karusel).
+- `--multi-photo` — seluruh foto dalam karusel.
+- Kombinasi yang diizinkan: `--video --audio`, `--photo --audio`, `--multi-photo --audio`.
+- Kombinasi yang ditolak: `--video --photo`, `--video --multi-photo`, `--photo --multi-photo`.
+- Validasi ketidakcocokan konten: meminta `--video` pada postingan foto (atau sebaliknya) mengembalikan kartu panduan.
+- Flag tidak dikenal (mis. `--vid`, `--music`) ditolak dengan kartu sintaks yang memuat seluruh parameter valid.
+
+**Contoh bimbingan Sara AI:**
+
+- _"Gimana cara download foto slide TikTok aja?"_ → `.tiktok dl <link> --multi-photo`
+- _"Cara download lagu dari link TikTok?"_ → `.tiktok dl <link> --audio`
+
+### `.youtube dl <url> [--quality]` / `.yt dl <url> [--quality]` (Video-Only)
+
+**Fungsi:** Mengunduh **hanya stream video** tanpa audio. Unduhan video-audio digabung sering melebihi batas 15 MB WhatsApp; audio tersedia melalui perintah khusus di bawah.
+
+**Flag resolusi:** `--360`, `--480`, `--720`, `--1k` (1080p), `--2k` (1440p), `--4k` (2160p), `--best`.
+**Default:** `bestvideo` (terkunci dalam batas ukuran WhatsApp).
+
+### `.youtube dl audio <url> [--bitrate]` / `.yt dl audio <url> [--bitrate]` (Audio MP3)
+
+**Fungsi:** Mengunduh **hanya stream audio** yang dienkode sebagai MP3.
+**Flag bitrate:** `--128k`, `--192k`, `--320k`, `--best`.
+**Validasi:** flag resolusi video pada perintah audio (dan sebaliknya) mengembalikan kartu panduan.
+
+**Contoh bimbingan Sara AI:**
+
+- _"Mau download video YouTube kualitas 1080p tanpa suara"_ → `.youtube dl <link> --1k`
+- _"Cara download lagu MP3 dari YouTube?"_ → `.youtube dl audio <link> --320k`
+
+### `.pinterest dl <url> [--audio]` / `.pin dl <url> [--audio]`
+
+**Fungsi:** Mendeteksi jenis pin secara otomatis — foto tunggal, video, GIF animasi, atau karusel multi-foto.
+
+- Foto tunggal → gambar resolusi tertinggi.
+- Video → MP4; pin animasi → GIF.
+- Karusel multi-foto → seluruh gambar dikirimkan berurutan tanpa jeda maupun pesan teks perantara, sehingga WhatsApp mobile/web mengelompokkannya menjadi satu kartu album native.
+- Ekstraksi audio bersifat **opsional** melalui `--audio`. Tanpa flag tersebut tidak ada pesan audio sekunder.
+- Meminta `--audio` pada pin gambar statis tetap mengirimkan foto dan mencatat bahwa tidak ada trek audio.
+
+**Contoh bimbingan Sara AI:**
+
+- _"Cara download video Pinterest beserta suaranya"_ → `.pinterest dl <link> --audio`
+
+### `.play <judul_lagu>`
+
+Mencari lagu di YouTube Music dan mengunduh format audio langsung ke obrolan.
+
+### Catatan dekomisi Telegram
+
+Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah dihapus**. Infrastruktur Telegram (`src/utils/telegramClient.ts`, `src/tgpair.ts`, `src/utils/backup.ts`, model `TelegramPrivateChat`, serta kunci `TELEGRAM_*` di `.env`) tetap dipertahankan untuk pipeline backup dan notifikasi admin.
 
 ---
 

@@ -212,9 +212,10 @@ than reconstructed — a guessed mapping would be worse than an acknowledged gap
 | F24       | Dated `G-F-P` versioning, `version.json`, CI policy       | Yes — 2026-09-30 |
 | F25       | Group Moderation System (Issue #46)                       | Yes — 2026-09-30 |
 | F26       | Agent Engine Integration for Group Moderation (Issue #48) | Yes — 2026-10-01 |
-| F27       | _(open)_ — next completed feature milestone               | —                |
+| F27       | Dynamic Multi-Platform Downloader Suite (Issue #43)       | Yes — 2026-10-01 |
+| F28       | _(open)_ — next completed feature milestone               | —                |
 
-When a feature bump advances `F`, replace the `F27` placeholder with the new
+When a feature bump advances `F`, replace the `F28` placeholder with the new
 milestone and re-add the placeholder for the following number.
 
 ## Version Components

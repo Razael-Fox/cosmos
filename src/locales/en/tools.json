@@ -537,28 +537,6 @@
         "not_active": "⚠️ *Warning:* Auto-Correction is not active in this chat.",
         "deactivated": "🔴 *Auto-Correction DEACTIVATED* for this chat."
     },
-    "tgadd": {
-        "specify_link": "Error: Please provide an invite link, a private post link, or a numeric chat id.",
-        "already_registered": "That chat is already registered in the database as \"{{title}}\".",
-        "save_failed": "Error: The chat was joined successfully, but it could not be saved to the database.",
-        "join_success": "Success: The dummy account has joined and registered \"{{title}}\". Private posts from that group can now be downloaded.",
-        "join_failed": "Error: The dummy account could not join using that invitation. It may have expired, been revoked, or the Telegram client may not be paired.",
-        "invalid_format": "Error: That does not look like a valid invite link, private post link, or numeric chat id. Private post links look like https://t.me/c/1234567890/15.",
-        "already_registered_id": "That chat ({{chatId}}) is already registered in the database.",
-        "register_success": "Success: Chat {{chatId}}{{title}} has been registered. Please ensure the dummy account is a member of that group."
-    },
-    "tgdel": {
-        "specify_id": "Error: Please provide the numeric chat id, for example .tg del 1234567890. Use .tg list to see registered chats.",
-        "not_found": "Error: Chat {{chatId}} was not found in the registry.",
-        "success": "Success: Chat {{chatId}} has been removed from the registry and can no longer be proxied."
-    },
-    "tglist": {
-        "empty": "No private Telegram chats have been registered yet. Use .tg add to register one.",
-        "title": "*Registered Private Telegram Chats ({{count}}):*\n\n",
-        "untitled": "Untitled chat",
-        "chat_id_label": "Chat ID:",
-        "invite_label": "Invite:"
-    },
     "items": {
         "pedang_emas": {
             "name": "Golden Sword",
@@ -872,7 +850,7 @@
             "description": "Displays the bot navigation menu, category command lists, or full command catalog."
         },
         "pinterestdl": {
-            "description": "Downloads a video, image, or carousel from a specified Pinterest URL."
+            "description": "Automatically downloads Pinterest photos, videos, GIFs, or carousel albums, with an optional audio extraction flag."
         },
         "play": {
             "description": "Searches for a song on YouTube and downloads it as an audio file."
@@ -925,17 +903,8 @@
         "system_info": {
             "description": "Displays server specifications, bot status, and network latency."
         },
-        "tgadd": {
-            "description": "Registers a private Telegram chat so its media can be proxied. Accepts an invite link (the dummy account joins automatically), a private post link, or a raw numeric chat id."
-        },
-        "tgdel": {
-            "description": "Removes a private Telegram chat from the proxy registry so its media is no longer accessible."
-        },
-        "tglist": {
-            "description": "Displays all private Telegram chats currently registered for media proxying."
-        },
         "tiktokdl": {
-            "description": "Downloads a video from a specified TikTok URL."
+            "description": "Downloads TikTok video, music, a single photo, or a photo carousel album, in automatic mode or with custom parameters."
         },
         "toggleautocorrection": {
             "description": "Toggles automated AI message auto-correction via OpenRouter for this chat."
@@ -959,7 +928,7 @@
             "description": "Clock in for your work shift to earn salary influenced by macroeconomic inflation. Requires a valid Virtual ID Card and active job."
         },
         "ytdl": {
-            "description": "Downloads a video from a specified URL using yt-dlp. Currently supports basic video fetching."
+            "description": "Downloads YouTube video (without audio) with custom quality, or download MP3 audio via .youtube dl audio."
         },
         "subbot": {
             "description": "Pair and manage your own WhatsApp number as an autonomous sub-bot instance."
@@ -1568,15 +1537,15 @@
         },
         "downloader": {
             "header": "📖 *TUTORIAL: UNIVERSAL DOWNLOADERS*",
-            "summary": "TikTok no-watermark, YouTube Audio/Video, Pinterest & Telegram bridge",
-            "prereq": "📌 *Prerequisites:* Valid Supported Public Media URL",
-            "step1_title": "1️⃣ TIKTOK & PINTEREST MEDIA",
-            "step1_body": "• TikTok: `{{prefix}}tiktok dl <url>` — automatically downloads HD video without watermark.\n• Pinterest: `{{prefix}}pinterest dl <url>` — downloads high resolution photos and pin videos.\n• Auto Downloader: Enable automatic URL sniffing in chat via `{{prefix}}auto dl on`.",
-            "step2_title": "2️⃣ YOUTUBE VIDEO & AUDIO",
-            "step2_body": "• YouTube: `{{prefix}}yt dl <url>` (e.g. `{{prefix}}yt dl https://youtu.be/...`).\n• Supports downloading video (MP4) and audio (MP3).\n• Files are capped at 50 MB to comply with WhatsApp transmission limits.",
-            "step3_title": "3️⃣ TELEGRAM RESTRICTED CONTENT BRIDGE",
-            "step3_body": "• Download: `{{prefix}}telegram dl <post_url>` (e.g. `https://t.me/c/12345/678`).\n• Session management: Register private session keys via `{{prefix}}tg add <session_string>`.\n• View active sessions: Type `{{prefix}}tg list` or remove them with `{{prefix}}tg del`.",
-            "footer": "💡 *Tip:* Enable `{{prefix}}auto dl on` in your group to download videos without typing commands."
+            "summary": "TikTok dual-mode, YouTube video-only with custom quality, and Pinterest native albums",
+            "prereq": "📌 *Prerequisites:* A valid public media URL",
+            "step1_title": "1️⃣ TIKTOK DUAL-MODE MASTERY",
+            "step1_body": "• *Automatic mode* (bare link): `{{prefix}}tiktok dl <url>` — delivers the natural payload for the post plus its original soundtrack.\n• Video post → clean MP4 video + MP3 audio.\n• Single photo post → high-resolution photo + MP3 audio.\n• Carousel post → all photos as a native WhatsApp album + MP3 audio.\n• *Custom mode*: add flags to select exactly what you need.\n• `--audio` — only the soundtrack.\n• `--video` — only the video file.\n• `--photo` — only the primary photo of a carousel.\n• `--multi-photo` — every photo in the carousel.\n• Allowed combinations: `--video --audio`, `--photo --audio`, `--multi-photo --audio`.\n• Conflicting flags such as `--video --photo` are rejected with a guidance card.",
+            "step2_title": "2️⃣ YOUTUBE VIDEO-ONLY & DEDICATED AUDIO",
+            "step2_body": "• Video downloads are *video-only* by default: `{{prefix}}youtube dl <url>` fetches the video stream without audio, which keeps the file inside WhatsApp limits.\n• Custom resolutions: `--360`, `--480`, `--720`, `--1k` (1080p), `--2k` (1440p), `--4k` (2160p), `--best`.\n• Example: `{{prefix}}youtube dl https://youtu.be/... --1k`.\n• Dedicated audio command: `{{prefix}}youtube dl audio <url>` — extracts an MP3.\n• Audio bitrates: `--128k`, `--192k`, `--320k`, `--best`.\n• Example: `{{prefix}}youtube dl audio https://youtu.be/... --320k`.\n• Using a video resolution on the audio command (or vice versa) returns a guidance card.",
+            "step3_title": "3️⃣ PINTEREST SMART DETECTION, GIFS & WHATSAPP ALBUMS",
+            "step3_body": "• `{{prefix}}pinterest dl <url>` auto-detects the pin type: single photo, video, animated GIF, or multi-photo carousel.\n• Single photos are delivered at the highest available resolution.\n• Videos are delivered as MP4 and animated pins as GIF.\n• Multi-photo pins are dispatched back-to-back with no delay, so WhatsApp groups them into one native album card.\n• Audio extraction is opt-in: append `--audio` to also receive the soundtrack as a separate audio message.\n• Requesting `--audio` on a still image delivers the photo and notes that no audio stream exists.",
+            "footer": "💡 *Tip:* Enable `{{prefix}}auto dl on` in your group to download supported links without typing commands."
         },
         "ai": {
             "header": "📖 *TUTORIAL: AI INTELLIGENCE & SPEECH-TO-TEXT*",

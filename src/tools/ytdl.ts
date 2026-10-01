@@ -5,41 +5,153 @@ import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
 import { renderCard } from '../utils/uiFormatter.js';
+import {
+    ParsedYouTubeArgs,
+    YouTubeVideoQuality,
+    buildYouTubeAudioArgs,
+    buildYouTubeVideoFormat,
+    describeAudioBitrate,
+    describeVideoQuality,
+    parseYouTubeArgs
+} from '../utils/downloaderArgs.js';
 
 const execAsync = promisify(exec);
 
 // WhatsApp media upload limit. Files larger than this are rejected after download.
 const MAX_FILESIZE_BYTES = 15 * 1024 * 1024;
 
+/** Human readable label for a resolved video resolution, used on the info card. */
+const VIDEO_QUALITY_LABELS: Record<YouTubeVideoQuality, string> = {
+    best: 'Best',
+    360: '360p',
+    480: '480p',
+    720: '720p HD',
+    1080: '1080p Full HD',
+    1440: '1440p 2K QHD',
+    2160: '2160p 4K UHD'
+};
+
 export const definition: ToolDefinition = {
     name: 'ytdl',
     displayNames: { en: 'yt dl', id: 'yt unduh' },
     title: 'YouTube Downloader',
     category: 'Downloaders',
-    aliases: ['.yt', '.ytdl', '.youtube', 'yt dl', '.yt dl'],
-    description: 'Downloads a video from a specified URL using yt-dlp. Currently supports basic video fetching.',
+    // NOTE: `yt dl audio` / `youtube dl audio` are intentionally NOT registered as
+    // aliases. The message handler resolves `.youtube dl audio <link>` greedily to
+    // `.youtube dl` and forwards the leftover text, so the `audio` mode keyword is
+    // parsed from the argument string inside the tool. Registering it as an alias
+    // would consume the keyword and silently download the video stream instead.
+    aliases: ['.yt', '.ytdl', '.youtube', 'yt dl', '.yt dl', 'youtube dl', '.youtube dl'],
+    description:
+        'Downloads YouTube media. Video downloads deliver the video stream only; use resolutions --360, --480, --720, --1k, --2k, --4k, --best. Append "audio" before the link and a bitrate flag (--128k, --192k, --320k, --best) for an MP3.',
     descriptionKey: 'tools.commands.ytdl.description',
     parameters: {
         type: 'object',
         properties: {
             url: {
                 type: 'string',
-                description: 'The URL of the video to download.'
+                description:
+                    'The video URL. Use "audio <url>" for an audio-only MP3, optionally followed by --360/--480/--720/--1k/--2k/--4k/--best (video) or --128k/--192k/--320k/--best (audio).'
             }
         },
         required: ['url']
     }
 };
 
-export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
-    let targetUrl = args.url;
-    const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+/** Resolves the `yt-dlp` executable, preferring the pinned local installations. */
+function resolveYtDlpPath(): string {
+    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'yt-dlp')];
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) return candidate;
+    }
+    return 'yt-dlp';
+}
 
-    if (!targetUrl || targetUrl.trim() === '') {
+/** Builds the shared `yt-dlp` invocation prefix shared by both stream classes. */
+function buildBaseCommand(ytdlpPath: string): string {
+    const cookiesPath = path.resolve(process.cwd(), 'cookies.txt');
+    const cookiesArg = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : '';
+    const ffmpegLoc = ffmpeg ? `--ffmpeg-location "${ffmpeg}"` : '';
+    return `"${ytdlpPath}" --js-runtimes node ${cookiesArg} ${ffmpegLoc} --extractor-args "youtube:player_client=android,web"`;
+}
+
+/**
+ * Filters and removes downloaded artefacts that breach the WhatsApp size limit.
+ * Returns only the files that are safe to deliver.
+ */
+function collectDeliverableFiles(stdout: string): string[] {
+    return stdout
+        .trim()
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line !== '' && fs.existsSync(line))
+        .filter((file) => {
+            try {
+                if (fs.statSync(file).size > MAX_FILESIZE_BYTES) {
+                    console.error(`[YTDL Tool] Downloaded file exceeds size limit (${file})`);
+                    fs.unlinkSync(file);
+                    return false;
+                }
+                return true;
+            } catch {
+                return false;
+            }
+        });
+}
+
+/** Renders a formal rejection card for an unusable parameter combination. */
+function buildRejectionCard(ctx: ToolContext, message: string, hints: string[] = []): string {
+    return renderCard({
+        title: ctx.t('media.downloaders.error_title'),
+        icon: '⚠️',
+        headerStyle: 'light',
+        body: [message, ...hints]
+    });
+}
+
+/** Builds the info card shown alongside the delivered stream. */
+function buildMediaCard(ctx: ToolContext, parsed: ParsedYouTubeArgs, fileCount: number): string {
+    const isAudio = parsed.kind === 'audio';
+    const items: Array<{ label: string; value: string }> = [
+        {
+            label: ctx.t('media.ytdl.label_type'),
+            value: isAudio ? ctx.t('media.downloaders.value_audio_mp3') : ctx.t('media.downloaders.value_video_only')
+        },
+        {
+            label: isAudio ? ctx.t('media.ytdl.label_bitrate') : ctx.t('media.ytdl.label_resolution'),
+            value: isAudio ? describeAudioBitrate(parsed.audioBitrate) : describeVideoQuality(parsed.videoQuality)
+        },
+        {
+            label: ctx.t('media.tiktokdl.label_status'),
+            value:
+                fileCount > 1
+                    ? ctx.t('media.downloaders.value_files_ready', { count: String(fileCount) })
+                    : isAudio
+                      ? ctx.t('media.ytdl.audio_success')
+                      : ctx.t('media.ytdl.video_success')
+        }
+    ];
+
+    return renderCard({
+        title: ctx.t('media.ytdl.card_title'),
+        icon: isAudio ? '🎵' : '▶️',
+        headerStyle: 'light',
+        sections: [{ items }]
+    });
+}
+
+export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
+    const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+    const replyOptions = { quoted: ctx.msg };
+
+    // The message handler assigns the whole argument string to the single declared
+    // parameter, so the mode keyword and flags arrive together inside `args.url`.
+    let rawInput: string = typeof args.url === 'string' ? args.url : '';
+    if (!rawInput.trim()) {
         const quotedMsg = ctx.msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (quotedMsg) {
             const extText = quotedMsg.extendedTextMessage;
-            targetUrl =
+            rawInput =
                 quotedMsg.conversation ||
                 extText?.text ||
                 extText?.matchedText ||
@@ -49,217 +161,159 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
     }
 
-    if (!targetUrl) {
+    const parsed = parseYouTubeArgs(rawInput);
+
+    if (parsed.unknownFlags.length > 0) {
+        console.error(`[YTDL Tool] Rejected unknown flags: ${parsed.unknownFlags.join(', ')}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return;
+        return buildRejectionCard(ctx, ctx.t(parsed.unknownFlagsKey!), [
+            ctx.t('media.downloaders.hint_youtube_flags'),
+            ctx.t('media.downloaders.hint_youtube_audio_flags')
+        ]);
     }
 
-    const urlRegex = /(https?:\/\/[^\s]+)/;
-    const match = targetUrl.match(urlRegex);
-    if (match) {
-        targetUrl = match[1];
-    } else {
+    if (parsed.conflict) {
+        console.error(`[YTDL Tool] Rejected conflicting flags: ${parsed.conflict}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return;
+        const hints =
+            parsed.conflict === 'video_quality_on_audio'
+                ? [ctx.t('media.downloaders.hint_youtube_audio_flags'), ctx.t('media.downloaders.hint_youtube_flags')]
+                : [ctx.t('media.downloaders.hint_youtube_flags'), ctx.t('media.downloaders.hint_youtube_audio_flags')];
+        return buildRejectionCard(ctx, ctx.t(parsed.conflictKey!), hints);
+    }
+
+    if (!parsed.url) {
+        await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
+        return buildRejectionCard(ctx, ctx.t('media.ytdl.invalid_url'), [
+            ctx.t('media.downloaders.usage_youtube'),
+            ctx.t('media.downloaders.usage_youtube_audio')
+        ]);
     }
 
     await ctx.sock.sendMessage(ctx.jid, { react: { text: '⏳', key: ctx.msg.key } });
 
-    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'yt-dlp')];
-    let ytdlpPath = 'yt-dlp';
-    for (const candidate of candidates) {
-        if (fs.existsSync(candidate)) {
-            ytdlpPath = candidate;
-            break;
-        }
-    }
+    const ytdlpPath = resolveYtDlpPath();
     const storagePath = path.resolve(process.cwd(), 'storage');
-
-    if (!fs.existsSync(storagePath)) {
-        fs.mkdirSync(storagePath, { recursive: true });
-    }
+    if (!fs.existsSync(storagePath)) fs.mkdirSync(storagePath, { recursive: true });
 
     const timestamp = Date.now();
-    const outTemplate = path.join(storagePath, `ytdl_${timestamp}_%(id)s.%(ext)s`);
+    const isAudio = parsed.kind === 'audio';
+    const suffix = isAudio ? 'audio' : VIDEO_QUALITY_LABELS[parsed.videoQuality].split(' ')[0];
+    const outTemplate = path.join(storagePath, `ytdl_${timestamp}_${suffix}_%(id)s.%(ext)s`);
+    const baseCommand = buildBaseCommand(ytdlpPath);
+
+    // Video downloads intentionally target the video stream alone: merging audio in
+    // inflates the file past the WhatsApp limit and audio has its own dedicated
+    // command. Size filters are applied again after download as an exact guard.
+    const formatSelector = isAudio
+        ? buildYouTubeAudioArgs(parsed.audioBitrate)
+        : `-f "${buildYouTubeVideoFormat(parsed.videoQuality)}[filesize_approx<15M]/${buildYouTubeVideoFormat(parsed.videoQuality)}[filesize<15M]/bestvideo"`;
+    const outputFormatArg = isAudio ? '' : '--merge-output-format mp4';
+
+    let downloadedFiles: string[] = [];
+    try {
+        const command = `${baseCommand} ${formatSelector} ${outputFormatArg} -o "${outTemplate}" "${parsed.url}" --print after_move:filepath`;
+        console.log(`[YTDL Tool] Executing ${isAudio ? 'audio' : 'video-only'} download`);
+        const { stdout } = await execAsync(command);
+        downloadedFiles = collectDeliverableFiles(stdout);
+    } catch (e) {
+        console.error('[YTDL Tool] Media download failed:', e);
+    }
+
+    if (downloadedFiles.length === 0) {
+        console.error('[YTDL Tool] No deliverable file was produced.');
+        await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
+        return buildRejectionCard(ctx, ctx.t('media.downloaders.error_no_media'), [
+            ctx.t('media.downloaders.hint_youtube_flags')
+        ]);
+    }
+
+    const caption = buildMediaCard(ctx, parsed, downloadedFiles.length);
+    const forwardContext = { isForwarded: true, forwardingScore: 1 };
+    let isFirst = true;
 
     try {
-        const cookiesPath = path.resolve(process.cwd(), 'cookies.txt');
-        const cookiesArg = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : '';
-
-        // Limit the filesize to 15MB to ensure it can be sent via WhatsApp.
-        // Note: use filesize_approx because YouTube SABR-only streams often lack an
-        // exact filesize, which makes [filesize<15M] match nothing. Enforce the real
-        // limit with a post-download stat check below.
-        const ffmpegLoc = ffmpeg ? `--ffmpeg-location "${ffmpeg}"` : '';
-        const baseCommand = `"${ytdlpPath}" --js-runtimes node ${cookiesArg} ${ffmpegLoc} --extractor-args "youtube:player_client=android,web"`;
-
-        let downloadedFiles: string[] = [];
-        try {
-            // Note: Instagram carousels and other multi-media posts will output multiple lines.
-            const vidCommand = `${baseCommand} -S "vcodec:h264,acodec:m4a" -f "bestvideo[filesize_approx<15M]+bestaudio/best[filesize_approx<15M]/best" --merge-output-format mp4 -o "${outTemplate}" "${targetUrl}" --print after_move:filepath`;
-            const { stdout } = await execAsync(vidCommand);
-            downloadedFiles = stdout
-                .trim()
-                .split('\n')
-                .filter((line) => line.trim() !== '' && fs.existsSync(line.trim()))
-                .map((l) => l.trim())
-                .filter((file) => {
-                    try {
-                        if (fs.statSync(file).size > MAX_FILESIZE_BYTES) {
-                            console.error(`[YTDL Tool] Downloaded file exceeds size limit (${file})`);
-                            console.log(`[YTDL Tool] Downloaded file exceeds size limit (${file})`);
-                            fs.unlinkSync(file);
-                            return false;
-                        }
-                        return true;
-                    } catch {
-                        return false;
-                    }
-                });
-        } catch (e) {
-            console.error('[YTDL Tool] Media download failed:', e);
-        }
-
-        let downloadedAudioOnly = '';
-        if (downloadedFiles.length === 0) {
-            // Fallback for audio-only
-            try {
-                const audTemplate = path.join(storagePath, `ytdl_${timestamp}_audio.%(ext)s`);
-                const audCommand = `${baseCommand} -f "bestaudio[filesize_approx<15M]/bestaudio/best" --extract-audio --audio-format mp3 -o "${audTemplate}" "${targetUrl}" --print after_move:filepath`;
-                const { stdout } = await execAsync(audCommand);
-                const outputLines = stdout
-                    .trim()
-                    .split('\n')
-                    .filter((line) => line.trim() !== '' && fs.existsSync(line.trim()));
-                if (outputLines.length > 0) {
-                    const candidate = outputLines[outputLines.length - 1].trim();
-                    try {
-                        if (fs.statSync(candidate).size > MAX_FILESIZE_BYTES) {
-                            console.error(`[YTDL Tool] Downloaded audio exceeds size limit (${candidate})`);
-                            console.log(`[YTDL Tool] Downloaded audio exceeds size limit (${candidate})`);
-                            fs.unlinkSync(candidate);
-                        } else {
-                            downloadedAudioOnly = candidate;
-                        }
-                    } catch {
-                        // Ignore stat failures; treat as no download.
-                    }
-                }
-            } catch (e) {
-                console.error('[YTDL Tool] Audio download failed:', e);
-            }
-        }
-
-        if (downloadedFiles.length === 0 && !downloadedAudioOnly) {
-            await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-            return;
-        }
-
-        // Send all downloaded media files (for carousels)
         for (const file of downloadedFiles) {
             const ext = path.extname(file).toLowerCase();
-            if (['.mp4', '.webm', '.mkv'].includes(ext)) {
-                const videoCaption = renderCard({
-                    title: ctx.t('media.ytdl.card_title'),
-                    icon: '▶️',
-                    headerStyle: 'light',
-                    sections: [
-                        {
-                            items: [
-                                { label: ctx.t('media.ytdl.label_type'), value: ctx.t('media.ytdl.value_video') },
-                                {
-                                    label: ctx.t('media.tiktokdl.label_status'),
-                                    value: ctx.t('media.ytdl.video_success')
-                                }
-                            ]
-                        }
-                    ]
-                });
-                const sentMsg = await ctx.sock.sendMessage(
+            const mediaCaption = isFirst ? caption : undefined;
+            let sentMsg: unknown;
+
+            if (['.mp4', '.webm', '.mkv', '.m4v'].includes(ext)) {
+                sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         video: { url: file },
-                        caption: videoCaption,
+                        mimetype: 'video/mp4',
+                        caption: mediaCaption,
                         mentions: senderJid ? [senderJid] : undefined,
-                        contextInfo: { isForwarded: true, forwardingScore: 1 }
+                        contextInfo: forwardContext
                     },
-                    { quoted: ctx.msg }
+                    replyOptions
                 );
-                if (sentMsg) {
-                    const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                    scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'video');
-                }
             } else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
-                const imageCaption = renderCard({
-                    title: ctx.t('media.ytdl.card_title'),
-                    icon: '🖼️',
-                    headerStyle: 'light',
-                    sections: [
-                        {
-                            items: [
-                                { label: ctx.t('media.ytdl.label_type'), value: ctx.t('media.ytdl.value_image') },
-                                {
-                                    label: ctx.t('media.tiktokdl.label_status'),
-                                    value: ctx.t('media.ytdl.image_success')
-                                }
-                            ]
-                        }
-                    ]
-                });
-                const sentMsg = await ctx.sock.sendMessage(
+                sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         image: { url: file },
-                        caption: imageCaption,
+                        caption: mediaCaption,
                         mentions: senderJid ? [senderJid] : undefined,
-                        contextInfo: { isForwarded: true, forwardingScore: 1 }
+                        contextInfo: forwardContext
                     },
-                    { quoted: ctx.msg }
+                    replyOptions
                 );
-                if (sentMsg) {
-                    const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                    scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'image');
-                }
+            } else if (['.mp3', '.m4a', '.opus', '.ogg', '.wav', '.aac'].includes(ext)) {
+                sentMsg = await ctx.sock.sendMessage(
+                    ctx.jid,
+                    {
+                        audio: { url: file },
+                        mimetype: ext === '.mp3' ? 'audio/mpeg' : 'audio/mp4',
+                        caption: mediaCaption,
+                        mentions: senderJid ? [senderJid] : undefined,
+                        contextInfo: forwardContext
+                    },
+                    replyOptions
+                );
             } else {
-                // Document fallback
-                await ctx.sock.sendMessage(
+                sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         document: { url: file },
                         mimetype: 'application/octet-stream',
                         fileName: path.basename(file),
+                        caption: mediaCaption,
                         mentions: senderJid ? [senderJid] : undefined,
-                        contextInfo: { isForwarded: true, forwardingScore: 1 }
+                        contextInfo: forwardContext
                     },
-                    { quoted: ctx.msg }
+                    replyOptions
                 );
             }
-            fs.unlinkSync(file);
-        }
 
-        if (downloadedAudioOnly && fs.existsSync(downloadedAudioOnly)) {
-            const sentMsg = await ctx.sock.sendMessage(
-                ctx.jid,
-                {
-                    audio: { url: downloadedAudioOnly },
-                    mimetype: 'audio/mpeg',
-                    mentions: senderJid ? [senderJid] : undefined,
-                    contextInfo: { isForwarded: true, forwardingScore: 1 }
-                },
-                { quoted: ctx.msg }
-            );
             if (sentMsg) {
                 const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'audio');
+                const mediaType = ['.mp4', '.webm', '.mkv', '.m4v'].includes(ext)
+                    ? 'video'
+                    : ['.mp3', '.m4a', '.opus', '.ogg', '.wav', '.aac'].includes(ext)
+                      ? 'audio'
+                      : 'image';
+                scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg as never, mediaType);
             }
-            fs.unlinkSync(downloadedAudioOnly);
+
+            isFirst = false;
         }
 
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
         return;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[YTDL Tool] Execution error:', error);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
         return;
+    } finally {
+        for (const file of downloadedFiles) {
+            try {
+                if (fs.existsSync(file)) fs.unlinkSync(file);
+            } catch (err) {
+                console.error(`[YTDL Tool] Failed to remove temporary file ${file}:`, err);
+            }
+        }
     }
 }

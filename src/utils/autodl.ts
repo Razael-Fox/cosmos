@@ -135,6 +135,9 @@ export async function processAutoDl(sock: WASocket, msg: WAMessage, jid: string,
             platform = 'threads';
             toolName = 'ytdl';
         }
+        // NOTE: Telegram (`t.me`) auto-download is intentionally absent. The `tg` /
+        // `telegram` platform keys remain in VALID_PLATFORMS so legacy AutoDLSetting
+        // rows keep validating, but no user-facing Telegram tool is dispatched.
 
         if (platform && isAutoDlEnabled(jid, platform)) {
             const queue = getChatQueue(jid);
@@ -150,7 +153,19 @@ export async function processAutoDl(sock: WASocket, msg: WAMessage, jid: string,
                     if (toolsHandler.getTool(toolName)) {
                         const chatLang = await getChatLanguage(jid);
                         const t = getTranslator(chatLang);
-                        const result = await toolsHandler.execute(toolName, { url }, { sock, msg, jid, t });
+                        // Automatic variation: no custom flags are forwarded, so each
+                        // downloader resolves its own natural payload (TikTok video +
+                        // soundtrack, YouTube video-only stream, Pinterest auto-detect).
+                        const autoArgs: Record<string, any> = { url };
+                        if (toolName === 'ytdl') {
+                            autoArgs.quality = 'best';
+                        }
+                        const result = await toolsHandler.execute(toolName, autoArgs, {
+                            sock,
+                            msg,
+                            jid,
+                            t
+                        });
                         if (result && typeof result === 'string' && result.trim().length > 0) {
                             await sock.sendMessage(jid, { text: result }, { quoted: msg });
                             await sock.sendMessage(jid, { react: { text: '✅', key: msg.key } });

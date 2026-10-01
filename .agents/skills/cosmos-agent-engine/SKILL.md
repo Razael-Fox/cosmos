@@ -73,12 +73,12 @@ CosmosAgentEngine memisahkan perencanaan intent dari eksekusi tool untuk mencega
 
 Semua perintah dan tool AI dikelompokkan secara ketat pada `ToolAiPolicy`:
 
-| Policy Tier               | Tools                                                                                                                                                                | Penanganan                                                                             |
-| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
-| **DENIED**                | `addbalance`, `forceupdate`, `config`, `subbot`, `idcard`, `cancel`, `tgadd`, `tgdel`, `tgpair`, `roulette_*`, `slot`, `coinflip`, `dice`, `setlang`, `setgrouplang` | Dilarang dipanggil oleh AI. Otomatis difilter dari Tier 2 dan ditolak secara graceful. |
-| **READ_ONLY**             | `get_balance`, `system_info`, `market`, `property_catalog`, `property_inventory`, `myplan`, `vault`, `top`, `help`, `menu`                                           | Kueri data idempoten; langsung dieksekusi tanpa risiko mutasi state.                   |
-| **UTILITY**               | `send_message`, `send_location`, `stt`, `sticker_maker`, `stickerly`, `pinterestdl`, `tiktokdl`, `ytdl`, `play`, `quoted`, `readviewonce`                            | Utilitas media dan pengiriman pesan via WhatsApp socket native.                        |
-| **CONFIRMATION_REQUIRED** | `transfer`, `bank_action` (withdraw/transfer), `property_buy`, `property_sell`, `loan`, `shop`                                                                       | Memutasi saldo atau aset; wajib melalui staging 2-fase `.confirm` / `.cancel`.         |
+| Policy Tier               | Tools                                                                                                                                              | Penanganan                                                                             |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| **DENIED**                | `addbalance`, `forceupdate`, `config`, `subbot`, `idcard`, `cancel`, `tgpair`, `roulette_*`, `slot`, `coinflip`, `dice`, `setlang`, `setgrouplang` | Dilarang dipanggil oleh AI. Otomatis difilter dari Tier 2 dan ditolak secara graceful. |
+| **READ_ONLY**             | `get_balance`, `system_info`, `market`, `property_catalog`, `property_inventory`, `myplan`, `vault`, `top`, `help`, `menu`                         | Kueri data idempoten; langsung dieksekusi tanpa risiko mutasi state.                   |
+| **UTILITY**               | `send_message`, `send_location`, `stt`, `sticker_maker`, `stickerly`, `pinterestdl`, `tiktokdl`, `ytdl`, `play`, `quoted`, `readviewonce`          | Utilitas media dan pengiriman pesan via WhatsApp socket native.                        |
+| **CONFIRMATION_REQUIRED** | `transfer`, `bank_action` (withdraw/transfer), `property_buy`, `property_sell`, `loan`, `shop`                                                     | Memutasi saldo atau aset; wajib melalui staging 2-fase `.confirm` / `.cancel`.         |
 
 ---
 

@@ -7,10 +7,17 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import ffmpeg from 'ffmpeg-static';
 import { renderCard } from '../utils/uiFormatter.js';
+import { parsePinterestArgs } from '../utils/downloaderArgs.js';
 
 const execAsync = promisify(exec);
 
 const TEMP_MEDIA_DIR = path.join(os.tmpdir(), 'waf-pinterest');
+
+/** Upper bound on carousel items delivered per pin to avoid flooding the chat. */
+const MAX_PIN_ITEMS = 10;
+
+/** Media classes reported on the info card. */
+type PinterestMediaClass = 'photo' | 'video' | 'gif' | 'album';
 
 function ensureTempMediaDir(): string {
     if (!fs.existsSync(TEMP_MEDIA_DIR)) {
@@ -28,35 +35,122 @@ function safeUnlink(filePath: string | null | undefined): void {
     }
 }
 
+/** A single de-duplicated media asset resolved from a pin page. */
+interface PinAsset {
+    url: string;
+    kind: 'image' | 'video' | 'gif';
+}
+
 export const definition: ToolDefinition = {
     name: 'pinterestdl',
     displayNames: { en: 'pinterest dl', id: 'pinterest unduh' },
     title: 'Pinterest Downloader',
     category: 'Downloaders',
     aliases: ['.pinterest', '.pin', '.pindl', 'pinterest dl', '.pinterest dl', 'pin dl', '.pin dl'],
-    description: 'Downloads a video, image, or carousel from a specified Pinterest URL.',
+    description:
+        'Downloads a Pinterest pin. Photos, videos, and animated GIFs are detected automatically and multi-photo pins are delivered as a native WhatsApp album. Append --audio to also extract the soundtrack.',
     descriptionKey: 'tools.commands.pinterestdl.description',
     parameters: {
         type: 'object',
         properties: {
             url: {
                 type: 'string',
-                description: 'The URL of the Pinterest post (pin.it or pinterest.com).'
+                description: 'The Pinterest pin URL (pin.it or pinterest.com), optionally followed by the --audio flag.'
             }
         },
         required: ['url']
     }
 };
 
-export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
-    let targetUrl = args.url;
-    const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+/** Renders a formal rejection card for an unusable request. */
+function buildRejectionCard(ctx: ToolContext, message: string, hints: string[] = []): string {
+    return renderCard({
+        title: ctx.t('media.downloaders.error_title'),
+        icon: '⚠️',
+        headerStyle: 'light',
+        body: [message, ...hints]
+    });
+}
 
-    if (!targetUrl || targetUrl.trim() === '') {
+/** Maps an asset URL to its media class for captioning. */
+function classifyAssets(assets: PinAsset[]): PinterestMediaClass {
+    if (assets.length > 1) return 'album';
+    const single = assets[0];
+    if (single.kind === 'gif') return 'gif';
+    if (single.kind === 'video') return 'video';
+    return 'photo';
+}
+
+const MEDIA_CLASS_VALUES: Record<PinterestMediaClass, string> = {
+    photo: 'media.pinterestdl.value_photo',
+    video: 'media.pinterestdl.value_video',
+    gif: 'media.pinterestdl.value_gif',
+    album: 'media.pinterestdl.value_album'
+};
+
+/** Builds the info card attached to the first delivered asset. */
+function buildMediaCard(ctx: ToolContext, title: string, mediaClass: PinterestMediaClass, notes: string[]): string {
+    const items: Array<{ label: string; value: string }> = [];
+    if (title) items.push({ label: ctx.t('tools.downloader.title_label'), value: title.substring(0, 900) });
+    items.push({
+        label: ctx.t('media.ytdl.label_type'),
+        value: ctx.t(MEDIA_CLASS_VALUES[mediaClass])
+    });
+    for (const note of notes) {
+        items.push({ label: ctx.t('media.tiktokdl.label_note'), value: note });
+    }
+
+    return renderCard({
+        title: ctx.t('media.pinterestdl.card_title'),
+        icon: '📌',
+        headerStyle: 'light',
+        t: ctx.t,
+        sections: [{ items }]
+    });
+}
+
+/**
+ * Streams a remote asset to disk. FFmpeg runs against the resulting file path, so
+ * the buffer is always flushed to the temporary directory first.
+ */
+async function downloadFile(url: string, filepath: string): Promise<string> {
+    const writer = fs.createWriteStream(filepath);
+    const response = await axios({ url, method: 'GET', responseType: 'stream', timeout: 30000 });
+    response.data.pipe(writer);
+    return new Promise((resolve, reject) => {
+        writer.on('finish', () => resolve(filepath));
+        writer.on('error', reject);
+    });
+}
+
+/** Determines the on-disk extension for an asset URL. */
+function resolveExtension(url: string): { ext: string; kind: PinAsset['kind'] } {
+    let pathname = '';
+    try {
+        pathname = new URL(url).pathname;
+    } catch {
+        /* fall through to the string check below */
+    }
+    const haystack = `${pathname}${url}`.toLowerCase();
+    if (haystack.includes('.mp4') || haystack.includes('.m4v')) return { ext: '.mp4', kind: 'video' };
+    if (haystack.includes('.gif')) return { ext: '.gif', kind: 'gif' };
+    const match = pathname.match(/\.(jpg|jpeg|png|webp)$/i);
+    if (match) return { ext: `.${match[1].toLowerCase()}`, kind: 'image' };
+    if (haystack.includes('.png')) return { ext: '.png', kind: 'image' };
+    if (haystack.includes('.webp')) return { ext: '.webp', kind: 'image' };
+    return { ext: '.jpg', kind: 'image' };
+}
+
+export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
+    const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+    const replyOptions = { quoted: ctx.msg };
+
+    let rawInput: string = typeof args.url === 'string' ? args.url : '';
+    if (!rawInput.trim()) {
         const quotedMsg = ctx.msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (quotedMsg) {
             const extText = quotedMsg.extendedTextMessage;
-            targetUrl =
+            rawInput =
                 quotedMsg.conversation ||
                 extText?.text ||
                 extText?.matchedText ||
@@ -66,31 +160,37 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
     }
 
-    if (!targetUrl) {
+    const parsed = parsePinterestArgs(rawInput);
+
+    if (parsed.unknownFlags.length > 0) {
+        console.error(`[PinterestDL Tool] Rejected unknown flags: ${parsed.unknownFlags.join(', ')}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return;
+        return buildRejectionCard(ctx, ctx.t(parsed.unknownFlagsKey!), [
+            ctx.t('media.downloaders.hint_pinterest_flags')
+        ]);
     }
 
-    const urlRegex = /(https?:\/\/[^\s]+)/;
-    const match = targetUrl.match(urlRegex);
-    if (match) {
-        targetUrl = match[1];
-    } else {
+    if (!parsed.url) {
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return;
+        return buildRejectionCard(ctx, ctx.t('media.pinterestdl.invalid_url'), [
+            ctx.t('media.downloaders.usage_pinterest')
+        ]);
     }
 
     await ctx.sock.sendMessage(ctx.jid, { react: { text: '⏳', key: ctx.msg.key } });
 
-    const downloadedFiles: string[] = [];
+    const createdFiles: string[] = [];
     const tempDir = ensureTempMediaDir();
     const timestamp = Date.now();
 
     try {
-        // Resolve redirect for shortlinks like pin.it
+        let targetUrl = parsed.url;
         if (targetUrl.includes('pin.it')) {
             try {
-                const resRedirect = await fetch(targetUrl, { redirect: 'follow', signal: AbortSignal.timeout(10000) });
+                const resRedirect = await fetch(targetUrl, {
+                    redirect: 'follow',
+                    signal: AbortSignal.timeout(10000)
+                });
                 targetUrl = resRedirect.url;
             } catch (e) {
                 console.error('[PinterestDL Tool] Failed to resolve shortlink:', e);
@@ -109,7 +209,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const relayMatch = html.match(/window\.__PWS_RELAY_REGISTER_COMPLETED_REQUEST__\([^,]+,\s*(\{.*?\})\);/);
 
         const media = { images: new Set<string>(), videos: new Set<string>(), title: '' };
-
         const pinIdMatch = targetUrl.match(/\/pin\/(\d+)/);
         const targetPinId = pinIdMatch ? pinIdMatch[1] : null;
 
@@ -118,7 +217,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             const mainPinData = data?.data?.v3GetPinQueryv2?.data || data;
             const hasVideo = !!mainPinData.videos || !!mainPinData.storyPinData || mainPinData.isVideo;
 
-            function findMedia(obj: any) {
+            const findMedia = (obj: any) => {
                 if (typeof obj === 'string') {
                     if (obj.includes('.mp4')) {
                         media.videos.add(obj.replace(/\\/g, ''));
@@ -128,7 +227,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 } else if (Array.isArray(obj)) {
                     obj.forEach(findMedia);
                 } else if (obj !== null && typeof obj === 'object') {
-                    // Prevent traversing into unrelated pins or recommendations
                     if (obj.__typename === 'Pin' && obj.id && mainPinData.id && obj.id !== mainPinData.id) return;
                     if (obj.seoTitle && typeof obj.seoTitle === 'string' && !media.title) media.title = obj.seoTitle;
                     if (obj.title && typeof obj.title === 'string' && !media.title) media.title = obj.title;
@@ -140,10 +238,9 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                         findMedia(obj[k]);
                     });
                 }
-            }
+            };
             findMedia(mainPinData);
         } else {
-            // Fallback for older PWS_DATA structure if Relay isn't found
             const dataMatch = html.match(/<script id="__PWS_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
             if (dataMatch) {
                 const data = JSON.parse(dataMatch[1]);
@@ -154,7 +251,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 }
                 const hasVideo = !!rootData.videos || !!rootData.story_pin_data || rootData.is_video;
 
-                function findMediaFallback(obj: any) {
+                const findMediaFallback = (obj: any) => {
                     if (typeof obj === 'string') {
                         if (obj.includes('.mp4')) {
                             media.videos.add(obj.replace(/\\/g, ''));
@@ -173,13 +270,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                             findMediaFallback(obj[k]);
                         });
                     }
-                }
+                };
                 findMediaFallback(rootData);
             }
         }
 
         const rawMediaUrls = [...Array.from(media.videos), ...Array.from(media.images)];
 
+        // Collapse per-asset rendition variants down to a single best URL per asset.
         const mediaGroups = new Map<string, string[]>();
         for (const url of rawMediaUrls) {
             let mediaId = 'unknown';
@@ -192,9 +290,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
             if (mediaId.includes('_')) mediaId = mediaId.split('_')[0];
 
-            if (!mediaGroups.has(mediaId)) {
-                mediaGroups.set(mediaId, []);
-            }
+            if (!mediaGroups.has(mediaId)) mediaGroups.set(mediaId, []);
             mediaGroups.get(mediaId)!.push(url);
         }
 
@@ -217,139 +313,148 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
         }
 
-        // Limit to 10 items max to avoid spam
-        const allMediaUrls = dedupedUrls.slice(0, 10);
+        const allMediaUrls = dedupedUrls.slice(0, MAX_PIN_ITEMS);
 
         if (allMediaUrls.length === 0) {
             console.error('[PinterestDL Tool] No media found on the page.');
             await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-            return;
+            return buildRejectionCard(ctx, ctx.t('media.downloaders.error_no_media'), [
+                ctx.t('media.downloaders.usage_pinterest')
+            ]);
         }
 
-        const downloadFile = async (url: string, ext: string, index: string | number = ''): Promise<string> => {
-            const filepath = path.join(tempDir, `pinterest_${timestamp}_${index}${ext}`);
-            const writer = fs.createWriteStream(filepath);
-            const response = await axios({
-                url,
-                method: 'GET',
-                responseType: 'stream',
-                timeout: 20000
-            });
-            response.data.pipe(writer);
-            return new Promise((resolve, reject) => {
-                writer.on('finish', () => resolve(filepath));
-                writer.on('error', reject);
-            });
-        };
+        const assets: PinAsset[] = allMediaUrls.map((url) => ({ url, kind: resolveExtension(url).kind }));
+        const mediaClass = classifyAssets(assets);
+        const notes: string[] = [];
+        if (dedupedUrls.length > MAX_PIN_ITEMS) {
+            notes.push(ctx.t('media.downloaders.note_carousel_truncated', { count: String(MAX_PIN_ITEMS) }));
+        }
+        // Requesting audio from a still image cannot be satisfied.
+        if (parsed.wantsAudio && mediaClass === 'photo') {
+            notes.push(ctx.t('media.pinterestdl.note_no_audio_on_photo'));
+        }
+        if (parsed.wantsAudio && mediaClass === 'album' && assets.every((a) => a.kind === 'image')) {
+            notes.push(ctx.t('media.pinterestdl.note_no_audio_on_photo'));
+        }
 
-        const items: Array<{ label: string; value: string }> = [];
-        if (media.title)
-            items.push({ label: ctx.t('tools.downloader.title_label'), value: media.title.substring(0, 900) });
-        const mediaType = media.videos.size > 0 ? ctx.t('media.ytdl.value_video') : ctx.t('media.ytdl.value_image');
-        items.push({ label: ctx.t('media.ytdl.label_type'), value: mediaType });
+        const caption = buildMediaCard(ctx, media.title, mediaClass, notes);
+        const forwardContext = { isForwarded: true, forwardingScore: 1 };
 
-        const caption = renderCard({
-            title: ctx.t('media.pinterestdl.card_title'),
-            icon: '📌',
-            headerStyle: 'light',
-            t: ctx.t,
-            sections: [
-                {
-                    items
-                }
-            ]
-        });
+        // Assets are dispatched back-to-back with no delay and no interleaved text,
+        // which is what makes WhatsApp group them into one native album card.
+        let isFirst = true;
+        const extractedAudioPaths: string[] = [];
 
-        // Download and send each item
         for (let i = 0; i < allMediaUrls.length; i++) {
             const url = allMediaUrls[i];
-            const ext = url.includes('.mp4') ? '.mp4' : path.extname(new URL(url).pathname) || '.jpg';
-            const filepath = await downloadFile(url, ext, i);
-            downloadedFiles.push(filepath);
+            const { ext } = resolveExtension(url);
+            const filepath = path.join(tempDir, `pinterest_${timestamp}_${i}${ext}`);
+            await downloadFile(url, filepath);
+            createdFiles.push(filepath);
 
-            const isVideo = ext === '.mp4';
+            const mediaCaption = isFirst ? caption : undefined;
+            let sentMsg: unknown;
 
-            // Send as Media
-            if (isVideo) {
-                const sentMsg = await ctx.sock.sendMessage(
+            if (ext === '.mp4') {
+                sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         video: { url: filepath },
                         mimetype: 'video/mp4',
-                        caption: caption,
+                        caption: mediaCaption,
                         mentions: senderJid ? [senderJid] : undefined,
-                        contextInfo: { isForwarded: true, forwardingScore: 1 }
+                        contextInfo: forwardContext
                     },
-                    { quoted: ctx.msg }
+                    replyOptions
                 );
-                if (sentMsg) {
-                    const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                    scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'video');
-                }
-
-                const audioOut = path.join(tempDir, `pinterest_${timestamp}_${i}_audio.mp3`);
-                try {
-                    const ffmpegCmd = ffmpeg ? `"${ffmpeg}"` : 'ffmpeg';
-                    await execAsync(`${ffmpegCmd} -i "${filepath}" -q:a 0 -map a "${audioOut}" -y`);
-                    if (fs.existsSync(audioOut)) {
-                        downloadedFiles.push(audioOut);
-                        const sentMsg2 = await ctx.sock.sendMessage(
-                            ctx.jid,
-                            {
-                                audio: { url: audioOut },
-                                mimetype: 'audio/mpeg',
-                                mentions: senderJid ? [senderJid] : undefined,
-                                contextInfo: { isForwarded: true, forwardingScore: 1 }
-                            },
-                            { quoted: ctx.msg }
-                        );
-                        if (sentMsg2) {
-                            const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                            scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg2, 'audio');
-                        }
-                    }
-                } catch (e) {
-                    console.error('[PinterestDL Tool] Audio extraction failed:', e);
-                }
+            } else if (ext === '.gif') {
+                sentMsg = await ctx.sock.sendMessage(
+                    ctx.jid,
+                    {
+                        video: { url: filepath },
+                        mimetype: 'video/mp4',
+                        caption: mediaCaption,
+                        mentions: senderJid ? [senderJid] : undefined,
+                        contextInfo: forwardContext
+                    },
+                    replyOptions
+                );
             } else {
-                const sentMsg = await ctx.sock.sendMessage(
+                sentMsg = await ctx.sock.sendMessage(
                     ctx.jid,
                     {
                         image: { url: filepath },
-                        caption: caption,
+                        caption: mediaCaption,
                         mentions: senderJid ? [senderJid] : undefined,
-                        contextInfo: { isForwarded: true, forwardingScore: 1 }
+                        contextInfo: forwardContext
                     },
-                    { quoted: ctx.msg }
+                    replyOptions
                 );
-                if (sentMsg) {
-                    const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                    scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'image');
+            }
+
+            if (sentMsg) {
+                const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
+                scheduleMediaAutoDelete(
+                    ctx.sock,
+                    ctx.jid,
+                    sentMsg as never,
+                    ext === '.mp4' || ext === '.gif' ? 'video' : 'image'
+                );
+            }
+
+            // Audio extraction is opt-in: sending a second message per video used to
+            // clutter chats for users who never asked for it.
+            if (parsed.wantsAudio && (ext === '.mp4' || ext === '.gif')) {
+                const audioOut = path.join(tempDir, `pinterest_${timestamp}_${i}_audio.mp3`);
+                try {
+                    const ffmpegCmd = ffmpeg ? `"${ffmpeg}"` : 'ffmpeg';
+                    await execAsync(`"${ffmpegCmd}" -i "${filepath}" -q:a 0 -map a "${audioOut}" -y`);
+                    if (fs.existsSync(audioOut)) extractedAudioPaths.push(audioOut);
+                } catch (e) {
+                    console.error('[PinterestDL Tool] Audio extraction failed:', e);
                 }
             }
 
-            // Send as Document (requested by user)
+            isFirst = false;
+        }
+
+        for (const audioPath of extractedAudioPaths) {
+            createdFiles.push(audioPath);
+            try {
+                const sentMsg = await ctx.sock.sendMessage(
+                    ctx.jid,
+                    {
+                        audio: { url: audioPath },
+                        mimetype: 'audio/mpeg',
+                        mentions: senderJid ? [senderJid] : undefined,
+                        contextInfo: forwardContext
+                    },
+                    replyOptions
+                );
+                if (sentMsg) {
+                    const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
+                    scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg as never, 'audio');
+                }
+            } catch (e) {
+                console.error('[PinterestDL Tool] Failed to deliver extracted audio:', e);
+            }
+        }
+
+        if (parsed.wantsAudio && extractedAudioPaths.length === 0 && mediaClass !== 'photo' && mediaClass !== 'album') {
             await ctx.sock.sendMessage(
                 ctx.jid,
-                {
-                    document: { url: filepath },
-                    mimetype: isVideo ? 'video/mp4' : 'image/jpeg',
-                    fileName: `Pinterest_${timestamp}_${i}${ext}`,
-                    caption: ctx.t ? ctx.t('media.pinterestdl.document_version') : 'Document version',
-                    mentions: senderJid ? [senderJid] : undefined,
-                    contextInfo: { isForwarded: true, forwardingScore: 1 }
-                },
-                { quoted: ctx.msg }
+                { text: ctx.t('media.pinterestdl.note_no_audio_stream') },
+                replyOptions
             );
         }
 
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
         return;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[PinterestDL Tool] Execution error:', error);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
         return;
     } finally {
-        for (const file of downloadedFiles) safeUnlink(file);
+        for (const file of createdFiles) safeUnlink(file);
     }
 }
