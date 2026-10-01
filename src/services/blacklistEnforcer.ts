@@ -1,4 +1,4 @@
-import { WASocket } from '@whiskeysockets/baileys';
+import { WASocket, GroupMetadata } from '@whiskeysockets/baileys';
 import { ModerationService, getParticipantLid } from './moderationService.js';
 import { cleanId, formatMentions } from '../utils/casino.js';
 import { prisma, dbContext, getPrismaClient } from '../db.js';
@@ -22,6 +22,13 @@ export class BlacklistEnforcer {
                     const { id: groupJid, participants, action } = update;
                     if (action !== 'add' || !groupJid || !groupJid.endsWith('@g.us') || !Array.isArray(participants)) {
                         return;
+                    }
+
+                    let groupMetadata: GroupMetadata | undefined;
+                    try {
+                        groupMetadata = await this.sock.groupMetadata(groupJid);
+                    } catch {
+                        /* ignore groupMetadata resolution */
                     }
 
                     for (const p of participants) {
@@ -52,31 +59,26 @@ export class BlacklistEnforcer {
                         );
 
                         // If only LID is present, attempt to resolve phone number mapping via group metadata
-                        if (hasOnlyLid) {
-                            try {
-                                const metadata = await this.sock.groupMetadata(groupJid);
-                                const matched = metadata.participants.find((mp) => {
-                                    const mpClean = cleanId(mp.id);
-                                    const mpLid = getParticipantLid(mp);
-                                    return candidateIdentities.some((c) => {
-                                        const cClean = cleanId(c);
-                                        return mpClean === cClean || mpLid === cClean;
-                                    });
+                        if (hasOnlyLid && groupMetadata?.participants) {
+                            const matched = groupMetadata.participants.find((mp) => {
+                                const mpClean = cleanId(mp.id);
+                                const mpLid = getParticipantLid(mp);
+                                return candidateIdentities.some((c) => {
+                                    const cClean = cleanId(c);
+                                    return mpClean === cClean || mpLid === cClean;
                                 });
-                                if (matched) {
-                                    if (matched.id && !matched.id.endsWith('@lid')) {
-                                        candidateIdentities.push(matched.id);
-                                    }
-                                    if (
-                                        'phoneNumber' in matched &&
-                                        typeof matched.phoneNumber === 'string' &&
-                                        matched.phoneNumber
-                                    ) {
-                                        candidateIdentities.push(matched.phoneNumber);
-                                    }
+                            });
+                            if (matched) {
+                                if (matched.id && !matched.id.endsWith('@lid')) {
+                                    candidateIdentities.push(matched.id);
                                 }
-                            } catch {
-                                /* ignore metadata failure */
+                                if (
+                                    'phoneNumber' in matched &&
+                                    typeof matched.phoneNumber === 'string' &&
+                                    matched.phoneNumber
+                                ) {
+                                    candidateIdentities.push(matched.phoneNumber);
+                                }
                             }
                         }
 
@@ -110,7 +112,7 @@ export class BlacklistEnforcer {
 
                         let isBlacklisted = false;
                         for (const candidate of candidateIdentities) {
-                            if (await this.moderationService.isBlacklisted(groupJid, candidate)) {
+                            if (await this.moderationService.isBlacklisted(groupJid, candidate, groupMetadata)) {
                                 isBlacklisted = true;
                                 break;
                             }

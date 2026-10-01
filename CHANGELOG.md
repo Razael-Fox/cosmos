@@ -13,6 +13,16 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F25-P2] - 2026-10-01
+
+### Refactored
+
+- **Moderation Identity Resolution Consolidation:**
+    - Extracted duplicated User-table and group-participant identity resolution logic in `ModerationService.isBlacklisted` and `ModerationService.removeFromBlacklist` into a unified `resolveIdentityConditions(groupJid, targetJid, providedMetadata?)` helper.
+    - Reused already-fetched group metadata across multiple participant checks in `BlacklistEnforcer` to eliminate redundant WhatsApp group metadata network requests per join event.
+
+---
+
 ## [G2-F25-P1] - 2026-09-30
 
 ### Fixed

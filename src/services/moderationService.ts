@@ -858,95 +858,110 @@ export class ModerationService {
     }
 
     // Blacklist management
-    public async isBlacklisted(groupJid: string, targetJid: string): Promise<boolean> {
-        if (!groupJid || !targetJid) return false;
+    public async resolveIdentityConditions(
+        groupJid: string,
+        targetJid: string,
+        providedMetadata?: GroupMetadata
+    ): Promise<Array<Record<string, string>>> {
         const cleaned = cleanId(targetJid);
         const digits = cleaned.replace(/\D/g, '');
 
+        const conditions: Array<Record<string, string>> = [
+            { userJid: targetJid },
+            { userJid: `${cleaned}@s.whatsapp.net` },
+            { userJid: `${cleaned}@lid` }
+        ];
+        if (digits) {
+            conditions.push({ userPhone: digits });
+        }
+
+        // Cross-resolve phone number and LID mappings from User table
         try {
-            const conditions: Array<Record<string, string>> = [
-                { userJid: targetJid },
-                { userJid: `${cleaned}@s.whatsapp.net` },
-                { userJid: `${cleaned}@lid` }
-            ];
-            if (digits) {
-                conditions.push({ userPhone: digits });
-            }
-
-            // Cross-resolve phone number and LID mappings from User table
-            try {
-                const user = await prisma.user.findFirst({
-                    where: {
-                        OR: [
-                            { id: targetJid },
-                            { id: `${cleaned}@s.whatsapp.net` },
-                            { lid: targetJid },
-                            { lid: cleaned },
-                            { lid: `${cleaned}@lid` }
-                        ]
-                    }
-                });
-                if (user) {
-                    if (user.id) {
-                        const uClean = cleanId(user.id);
-                        const uDigits = uClean.replace(/\D/g, '');
-                        conditions.push({ userJid: user.id }, { userJid: `${uClean}@s.whatsapp.net` });
-                        if (uDigits) {
-                            conditions.push({ userPhone: uDigits });
-                        }
-                    }
-                    if (user.lid) {
-                        const uLidClean = cleanId(user.lid);
-                        conditions.push({ userJid: user.lid }, { userJid: `${uLidClean}@lid` });
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { id: targetJid },
+                        { id: `${cleaned}@s.whatsapp.net` },
+                        { lid: targetJid },
+                        { lid: cleaned },
+                        { lid: `${cleaned}@lid` }
+                    ]
+                }
+            });
+            if (user) {
+                if (user.id) {
+                    const uClean = cleanId(user.id);
+                    const uDigits = uClean.replace(/\D/g, '');
+                    conditions.push({ userJid: user.id }, { userJid: `${uClean}@s.whatsapp.net` });
+                    if (uDigits) {
+                        conditions.push({ userPhone: uDigits });
                     }
                 }
-            } catch {
-                /* ignore User table lookup */
+                if (user.lid) {
+                    const uLidClean = cleanId(user.lid);
+                    conditions.push({ userJid: user.lid }, { userJid: `${uLidClean}@lid` });
+                }
             }
+        } catch {
+            /* ignore User table lookup */
+        }
 
-            // Cross-resolve identities from group metadata if socket is available
-            try {
-                const metadata = await this.sock.groupMetadata(groupJid);
-                const participant = metadata.participants.find((p) => {
-                    const pClean = cleanId(p.id);
-                    const pLid = getParticipantLid(p);
-                    return pClean === cleaned || pLid === cleaned;
-                });
-                if (participant) {
-                    if (participant.id && !participant.id.endsWith('@lid')) {
-                        const pClean = cleanId(participant.id);
-                        const pDigits = pClean.replace(/\D/g, '');
-                        conditions.push({ userJid: participant.id }, { userJid: `${pClean}@s.whatsapp.net` });
-                        if (pDigits) {
-                            conditions.push({ userPhone: pDigits });
-                        }
-                    }
-                    if (
-                        'phoneNumber' in participant &&
-                        typeof participant.phoneNumber === 'string' &&
-                        participant.phoneNumber
-                    ) {
-                        const pDigits = participant.phoneNumber.replace(/\D/g, '');
-                        conditions.push({ userJid: `${pDigits}@s.whatsapp.net` });
-                        if (pDigits) {
-                            conditions.push({ userPhone: pDigits });
-                        }
-                    }
-                    const pLid = getParticipantLid(participant);
-                    if (pLid) {
-                        conditions.push({ userJid: `${pLid}@lid` });
+        // Cross-resolve identities from group metadata if socket is available
+        try {
+            const metadata = providedMetadata ?? (await this.sock.groupMetadata(groupJid));
+            const participant = metadata.participants.find((p) => {
+                const pClean = cleanId(p.id);
+                const pLid = getParticipantLid(p);
+                return pClean === cleaned || pLid === cleaned;
+            });
+            if (participant) {
+                if (participant.id && !participant.id.endsWith('@lid')) {
+                    const pClean = cleanId(participant.id);
+                    const pDigits = pClean.replace(/\D/g, '');
+                    conditions.push({ userJid: participant.id }, { userJid: `${pClean}@s.whatsapp.net` });
+                    if (pDigits) {
+                        conditions.push({ userPhone: pDigits });
                     }
                 }
-            } catch {
-                /* ignore groupMetadata resolution */
+                if (
+                    'phoneNumber' in participant &&
+                    typeof participant.phoneNumber === 'string' &&
+                    participant.phoneNumber
+                ) {
+                    const pDigits = participant.phoneNumber.replace(/\D/g, '');
+                    conditions.push({ userJid: `${pDigits}@s.whatsapp.net` });
+                    if (pDigits) {
+                        conditions.push({ userPhone: pDigits });
+                    }
+                }
+                const pLid = getParticipantLid(participant);
+                if (pLid) {
+                    conditions.push({ userJid: `${pLid}@lid` });
+                }
             }
+        } catch {
+            /* ignore groupMetadata resolution */
+        }
 
+        return conditions;
+    }
+
+    public async isBlacklisted(
+        groupJid: string,
+        targetJid: string,
+        providedMetadata?: GroupMetadata
+    ): Promise<boolean> {
+        if (!groupJid || !targetJid) return false;
+
+        try {
+            const conditions = await this.resolveIdentityConditions(groupJid, targetJid, providedMetadata);
             const existing = await prisma.groupBlacklist.findFirst({
                 where: {
                     groupJid,
                     OR: conditions
                 }
             });
+
             return Boolean(existing);
         } catch (err) {
             console.error(`[ModerationService] Error checking blacklist for ${targetJid} in ${groupJid}:`, err);
@@ -1005,89 +1020,11 @@ export class ModerationService {
     public async removeFromBlacklist(
         groupJid: string,
         targetJid: string,
-        performedBy = 'SYSTEM'
+        performedBy = 'SYSTEM',
+        providedMetadata?: GroupMetadata
     ): Promise<ModerationResult> {
-        const cleaned = cleanId(targetJid);
-        const digits = cleaned.replace(/\D/g, '');
-
         try {
-            const conditions: Array<Record<string, string>> = [
-                { userJid: targetJid },
-                { userJid: `${cleaned}@s.whatsapp.net` },
-                { userJid: `${cleaned}@lid` }
-            ];
-            if (digits) {
-                conditions.push({ userPhone: digits });
-            }
-
-            // Cross-resolve phone number and LID mappings from User table
-            try {
-                const user = await prisma.user.findFirst({
-                    where: {
-                        OR: [
-                            { id: targetJid },
-                            { id: `${cleaned}@s.whatsapp.net` },
-                            { lid: targetJid },
-                            { lid: cleaned },
-                            { lid: `${cleaned}@lid` }
-                        ]
-                    }
-                });
-                if (user) {
-                    if (user.id) {
-                        const uClean = cleanId(user.id);
-                        const uDigits = uClean.replace(/\D/g, '');
-                        conditions.push({ userJid: user.id }, { userJid: `${uClean}@s.whatsapp.net` });
-                        if (uDigits) {
-                            conditions.push({ userPhone: uDigits });
-                        }
-                    }
-                    if (user.lid) {
-                        const uLidClean = cleanId(user.lid);
-                        conditions.push({ userJid: user.lid }, { userJid: `${uLidClean}@lid` });
-                    }
-                }
-            } catch {
-                /* ignore User table lookup */
-            }
-
-            // Cross-resolve identities from group metadata if socket is available
-            try {
-                const metadata = await this.sock.groupMetadata(groupJid);
-                const participant = metadata.participants.find((p) => {
-                    const pClean = cleanId(p.id);
-                    const pLid = getParticipantLid(p);
-                    return pClean === cleaned || pLid === cleaned;
-                });
-                if (participant) {
-                    if (participant.id && !participant.id.endsWith('@lid')) {
-                        const pClean = cleanId(participant.id);
-                        const pDigits = pClean.replace(/\D/g, '');
-                        conditions.push({ userJid: participant.id }, { userJid: `${pClean}@s.whatsapp.net` });
-                        if (pDigits) {
-                            conditions.push({ userPhone: pDigits });
-                        }
-                    }
-                    if (
-                        'phoneNumber' in participant &&
-                        typeof participant.phoneNumber === 'string' &&
-                        participant.phoneNumber
-                    ) {
-                        const pDigits = participant.phoneNumber.replace(/\D/g, '');
-                        conditions.push({ userJid: `${pDigits}@s.whatsapp.net` });
-                        if (pDigits) {
-                            conditions.push({ userPhone: pDigits });
-                        }
-                    }
-                    const pLid = getParticipantLid(participant);
-                    if (pLid) {
-                        conditions.push({ userJid: `${pLid}@lid` });
-                    }
-                }
-            } catch {
-                /* ignore groupMetadata resolution */
-            }
-
+            const conditions = await this.resolveIdentityConditions(groupJid, targetJid, providedMetadata);
             const existing = await prisma.groupBlacklist.findFirst({
                 where: {
                     groupJid,
