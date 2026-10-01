@@ -210,9 +210,10 @@ than reconstructed — a guessed mapping would be worse than an acknowledged gap
 | :-------- | :-------------------------------------------------- | :--------------- |
 | F1–F23    | _pre-migration, not individually mapped_            | No               |
 | F24       | Dated `G-F-P` versioning, `version.json`, CI policy | Yes — 2026-09-30 |
-| F25       | _(open)_ — next completed feature milestone         | —                |
+| F25       | Group Moderation System (Issue #46)                 | Yes — 2026-09-30 |
+| F26       | _(open)_ — next completed feature milestone         | —                |
 
-When a feature bump advances `F`, replace the `F25` placeholder with the new
+When a feature bump advances `F`, replace the `F26` placeholder with the new
 milestone and re-add the placeholder for the following number.
 
 ## Version Components

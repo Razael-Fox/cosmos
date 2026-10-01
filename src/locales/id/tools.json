@@ -999,7 +999,159 @@
         },
         "unarchive": {
             "description": "Buka arsip chat tertentu atau grup saat ini secara manual."
+        },
+        "group_kick": {
+            "description": "Keluarkan anggota non-admin dari grup."
+        },
+        "group_close": {
+            "description": "Atur grup ke mode pesan khusus admin."
+        },
+        "group_open": {
+            "description": "Izinkan semua anggota mengirim pesan di grup."
+        },
+        "group_invite": {
+            "description": "Kirim tautan undangan grup melalui pesan langsung sebagai pesan Markdown native."
+        },
+        "group_link": {
+            "description": "Dapatkan tautan undangan grup saat ini."
+        },
+        "group_approve": {
+            "description": "Setujui permintaan bergabung yang tertunda."
+        },
+        "group_reject": {
+            "description": "Tolak permintaan bergabung yang tertunda."
+        },
+        "group_promote": {
+            "description": "Berikan hak admin kepada anggota grup."
+        },
+        "group_demote": {
+            "description": "Cabut hak admin dari admin grup."
+        },
+        "group_rename": {
+            "description": "Ubah judul/nama grup."
+        },
+        "group_description": {
+            "description": "Ubah deskripsi grup."
+        },
+        "group_blacklist_add": {
+            "description": "Tambahkan pengguna ke daftar hitam grup."
+        },
+        "group_blacklist_remove": {
+            "description": "Hapus pengguna dari daftar hitam grup."
+        },
+        "group_blacklist_list": {
+            "description": "Daftar semua pengguna yang ada di daftar hitam grup ini."
         }
+    },
+    "group_kick": {
+        "description": "Keluarkan anggota non-admin dari grup.",
+        "success": "✅ {{target}} telah dikeluarkan dari grup.",
+        "bot_not_admin": "❌ Saya bukan admin grup. Mohon berikan hak admin untuk melakukan tindakan moderasi.",
+        "caller_not_admin": "❌ Anda harus menjadi admin grup untuk menggunakan perintah ini.",
+        "target_not_member": "❌ {{target}} bukan anggota grup ini.",
+        "target_is_admin": "❌ Tidak dapat mengeluarkan {{target}} karena mereka adalah admin grup. WhatsApp tidak mengizinkan mengeluarkan admin.",
+        "target_is_self": "❌ Saya tidak dapat mengeluarkan diri sendiri dari grup.",
+        "no_target": "❌ Mohon tentukan target. Penggunaan: .group kick <nomor telepon atau @mention>",
+        "error": "❌ Gagal mengeluarkan {{target}}: {{error}}"
+    },
+    "group_close": {
+        "description": "Atur grup ke mode pesan khusus admin.",
+        "success": "🔒 Grup sekarang ditutup. Hanya admin yang dapat mengirim pesan.",
+        "already_closed": "ℹ️ Grup sudah dalam mode tertutup.",
+        "error": "❌ Gagal menutup grup: {{error}}"
+    },
+    "group_open": {
+        "description": "Izinkan semua anggota mengirim pesan di grup.",
+        "success": "🔓 Grup sekarang dibuka. Semua anggota dapat mengirim pesan.",
+        "already_open": "ℹ️ Grup sudah dalam mode terbuka.",
+        "error": "❌ Gagal membuka grup: {{error}}"
+    },
+    "group_invite": {
+        "description": "Kirim tautan undangan grup melalui pesan langsung sebagai pesan Markdown native.",
+        "success": "✅ Undangan telah dikirim ke {{phone}} melalui pesan langsung.",
+        "already_member": "ℹ️ {{phone}} sudah menjadi anggota grup ini.",
+        "invalid_phone": "❌ Format nomor telepon tidak valid. Gunakan format internasional (mis., 6281234567890).",
+        "dm_failed": "❌ Gagal mengirim undangan ke {{phone}}. Pengguna mungkin memblokir DM dari non-kontak.",
+        "error": "❌ Gagal mengundang {{phone}}: {{error}}",
+        "dm_message": "*📋 UNDANGAN GRUP*\n\n> 👋 Halo!\n> *{{userDisplay}}* mengundang Anda untuk bergabung dengan grup.\n\n- 📋 *Nama Grup:* {{groupName}}\n- 👥 *Anggota:* {{memberCount}}\n\n> 🔗 *Tautan Undangan:*\n> {{inviteLink}}\n\n> ℹ️ Undangan ini dikirim oleh admin grup. Anda dapat memilih untuk menerima atau mengabaikan undangan ini."
+    },
+    "group_link": {
+        "description": "Dapatkan tautan undangan grup saat ini.",
+        "success": "🔗 Tautan undangan grup:\n\n{{link}}",
+        "error": "❌ Gagal mendapatkan tautan grup: {{error}}"
+    },
+    "group_approve": {
+        "description": "Setujui permintaan bergabung yang tertunda.",
+        "usage": "Format tidak valid. Gunakan: .group approve <nomor telepon> atau .group approve all",
+        "success": "✅ Permintaan bergabung dari {{phone}} telah disetujui.",
+        "success_all": "✅ {{count}} permintaan bergabung yang tertunda telah disetujui.",
+        "empty": "ℹ️ Tidak ada permintaan bergabung yang tertunda.",
+        "no_pending": "ℹ️ Tidak ada permintaan bergabung yang tertunda dari {{phone}}.",
+        "invalid_phone": "❌ Format nomor telepon tidak valid. Gunakan hanya digit, mis. 62123456789000.",
+        "error": "❌ Gagal menyetujui permintaan bergabung: {{error}}"
+    },
+    "group_reject": {
+        "description": "Tolak permintaan bergabung yang tertunda.",
+        "success": "✅ Permintaan bergabung dari {{target}} telah ditolak.",
+        "no_pending": "ℹ️ Tidak ada permintaan bergabung yang tertunda dari {{target}}.",
+        "error": "❌ Gagal menolak permintaan bergabung: {{error}}"
+    },
+    "group_promote": {
+        "description": "Berikan hak admin kepada anggota grup.",
+        "success": "✅ {{target}} telah dipromosikan menjadi admin grup.",
+        "already_admin": "ℹ️ {{target}} sudah menjadi admin grup.",
+        "target_not_member": "❌ {{target}} bukan anggota grup ini.",
+        "error": "❌ Gagal mempromosikan {{target}}: {{error}}"
+    },
+    "group_demote": {
+        "description": "Cabut hak admin dari admin grup.",
+        "success": "✅ {{target}} telah diturunkan dari admin grup.",
+        "not_admin": "ℹ️ {{target}} bukan admin grup.",
+        "target_is_creator": "❌ Tidak dapat menurunkan {{target}} karena mereka adalah pembuat grup.",
+        "error": "❌ Gagal menurunkan {{target}}: {{error}}"
+    },
+    "group_rename": {
+        "description": "Ubah judul/nama grup.",
+        "success": "✅ Judul grup telah diubah menjadi:\n\n*{{name}}*",
+        "too_short": "❌ Judul grup minimal 1 karakter.",
+        "too_long": "❌ Judul grup tidak boleh lebih dari 25 karakter.",
+        "error": "❌ Gagal mengubah judul grup: {{error}}"
+    },
+    "group_description": {
+        "description": "Ubah deskripsi grup.",
+        "usage": "Format tidak valid. Gunakan: .group description <teks>, balas pesan, atau lampirkan file .txt/.md",
+        "success": "✅ Deskripsi grup telah diperbarui.",
+        "empty": "❌ Teks deskripsi kosong. Berikan teks, balas pesan, atau lampirkan file .txt/.md.",
+        "unsupported_file": "❌ Hanya file .txt dan .md yang didukung untuk deskripsi grup.",
+        "file_too_large": "❌ File yang dilampirkan melebihi batas 100 KB.",
+        "too_long": "❌ Deskripsi grup tidak boleh lebih dari 512 karakter.",
+        "error": "❌ Gagal memperbarui deskripsi grup: {{error}}"
+    },
+    "group_blacklist_add": {
+        "description": "Tambahkan pengguna ke daftar hitam grup.",
+        "success": "🚫 {{target}} telah ditambahkan ke daftar hitam grup.\n\nAlasan: {{reason}}",
+        "already_blacklisted": "ℹ️ {{target}} sudah ada di daftar hitam.",
+        "kicked": "⚠️ {{target}} ada di grup dan telah dikeluarkan.",
+        "auto_removed": "⚠️ @{{target}} otomatis dikeluarkan karena berada di daftar hitam grup ini.",
+        "no_reason": "Tidak ada alasan yang diberikan",
+        "error": "❌ Gagal menambahkan {{target}} ke daftar hitam: {{error}}"
+    },
+    "group_blacklist_remove": {
+        "description": "Hapus pengguna dari daftar hitam grup.",
+        "success": "✅ {{target}} telah dihapus dari daftar hitam grup.",
+        "not_blacklisted": "ℹ️ {{target}} tidak ada di daftar hitam.",
+        "error": "❌ Gagal menghapus {{target}} dari daftar hitam: {{error}}"
+    },
+    "group_blacklist_list": {
+        "description": "Daftar semua pengguna yang ada di daftar hitam grup ini.",
+        "title": "🚫 Daftar Hitam Grup ({{count}} pengguna)",
+        "empty": "ℹ️ Daftar hitam kosong.",
+        "entry": "• {{target}}\n  Alasan: {{reason}}\n  Ditambahkan: {{date}}",
+        "error": "❌ Gagal mendapatkan daftar hitam: {{error}}"
+    },
+    "moderation": {
+        "log_title": "📋 Log Moderasi",
+        "no_logs": "ℹ️ Tidak ada tindakan moderasi yang tercatat."
     },
     "myplan": {
         "title": "📊 *Langganan & Batasan Cosmos*",

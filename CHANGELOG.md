@@ -13,6 +13,71 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F25-P2] - 2026-10-01
+
+### Refactored
+
+- **Moderation Identity Resolution Consolidation:**
+    - Extracted duplicated User-table and group-participant identity resolution logic in `ModerationService.isBlacklisted` and `ModerationService.removeFromBlacklist` into a unified `resolveIdentityConditions(groupJid, targetJid, providedMetadata?)` helper.
+    - Reused already-fetched group metadata across multiple participant checks in `BlacklistEnforcer` to eliminate redundant WhatsApp group metadata network requests per join event.
+
+---
+
+## [G2-F25-P1] - 2026-09-30
+
+### Fixed
+
+- **Sub-bot Database Isolation & Schema Bootstrap (Rule U & Rule W):**
+    - Passed active `sessionId` to `BlacklistEnforcer.startListening(sessionId)` and wrapped participant event handling inside `dbContext.run({ sessionId, prisma: getPrismaClient(sessionId) }, ...)` to eliminate context leaks to the default database.
+    - Added `GroupBlacklist` and `ModerationLog` table wipes to sub-bot template database initialization in `src/db.ts`.
+    - Bootstrapped programmatic SQLite DDL schema via `ensureDatabaseSchema(targetDbPath)` unconditionally for all sub-bot sessions to ensure legacy/pre-existing sub-bot databases possess `GroupBlacklist` and `ModerationLog` tables.
+- **Blacklist Authorization & Baileys LID Identity Resolution (CWE-863):**
+    - Enhanced `BlacklistEnforcer` and `ModerationService.isBlacklisted` to cross-resolve participant identities across candidate IDs (`id`, `phoneNumber`, `lid`), `prisma.user` records, and group metadata.
+    - Verified `kickMember` outcome in `BlacklistEnforcer` to suppress false removal announcements on kick rejection or failure.
+    - Routed internal cascading kicks in `addToBlacklist` through `SYSTEM` caller to bypass interactive 3-second operational cooldowns while preserving caller attribution in reason logs.
+- **Baileys Return Status Verification:**
+    - Inspected per-participant response status arrays from Baileys `groupParticipantsUpdate` and `groupRequestParticipantsUpdate` across `kickMember`, `promoteAdmin`, `demoteAdmin`, `approveJoinRequest`, `rejectJoinRequest`, and `approveAllJoinRequests`, treating non-`200` statuses as actionable failures.
+- **UX & Internationalization (Rule O):**
+    - Localized auto-kick removal notices in `BlacklistEnforcer` using `tools.group_blacklist_add.auto_removed`.
+    - Added `core.rate_limited` translations in English and Indonesian and handled `RATE_LIMIT_EXCEEDED` across all 13 moderation tools.
+
+---
+
+## [G2-F25-P0] - 2026-09-30
+
+### Added
+
+- **Group Moderation System (Milestone F25 — GitHub Issue #46):** Comprehensive group moderation suite empowering group administrators with automated protections, join-request processing, participant control, metadata editing, and a group blacklist system.
+    - **Core Moderation Commands:**
+        - `.group kick` / `.gkick`: Remove a non-admin member from the group with permission guards preventing removal of admins, self, or creator.
+        - `.group close` / `.gclose`: Lock group to admin-only messaging mode via Baileys `announcement` setting.
+        - `.group open` / `.gopen`: Re-open group to all members via Baileys `not_announcement` setting.
+        - `.group invite <phone>` / `.ginvite`: Send direct message invitations with WhatsApp-native Markdown card containing group invite link to avoid direct-add anti-spam detection.
+        - `.group link` / `.glink`: Retrieve the current group invite link.
+        - `.group promote <target>` / `.gpromote`: Grant admin privileges to a group member.
+        - `.group demote <target>` / `.gdemote`: Revoke admin privileges from an admin with superadmin/creator protection.
+    - **Group Metadata & Information Commands:**
+        - `.group rename <name>` / `.grename`: Update group subject (1–25 characters).
+        - `.group description <desc>` / `.gdesc`: Update group description (1–512 characters) with multi-source input fallback supporting inline text, quoted message text, and `.txt`/`.md` document attachments up to 100 KB.
+    - **Join Request Approval & Queue Management:**
+        - `.group approve <phone|all>` / `.gapprove`: Approve pending membership approval requests for a specific phone number or bulk-approve all requests sequentially with a 3-second rate limit.
+        - `.group reject <target>` / `.greject`: Decline pending membership requests.
+    - **Group Blacklist System & Participant Auto-Enforcement:**
+        - `.group blacklist add <target> [reason]` / `.gbl add`: Add a user to the group blacklist and immediately kick them if currently in the group.
+        - `.group blacklist remove <target>` / `.gbl remove`: Remove a user from the group blacklist.
+        - `.group blacklist list` / `.gbl list`: View all active blacklisted users for the group.
+        - `BlacklistEnforcer`: Background listener on `group-participants.update` event (`action === 'add'`) that automatically kicks blacklisted users upon joining and alerts the group with green mentions.
+    - **Database Persistence & SQLite Migrations:**
+        - Added `GroupBlacklist` and `ModerationLog` models to `prisma/schema.prisma` with indexes and unique constraints.
+        - Programmatic DDL auto-bootstrap in `src/db.ts` following SQLite migration precedence.
+    - **Rate Limiting & Safety Invariants:**
+        - Enforced 3-second operational cooldown on group-level moderation actions to comply with WhatsApp API rate limits.
+        - Best-effort audit logging of moderation actions to `ModerationLog`.
+    - **Internationalization (i18n):**
+        - Added symmetric English (`src/locales/en/tools.json`) and Indonesian (`src/locales/id/tools.json`) translations for all 14 tools and their `tools.commands.<name>.description` keys.
+
+---
+
 ## [G2-F24-P12] - 2026-09-30
 
 ### Fixed

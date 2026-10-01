@@ -9,7 +9,7 @@ export { formatRupiah, formatNumberId, parseCurrencyAmount } from './currency.js
 export const chance = new Chance();
 
 export const cleanId = (idStr: string | null | undefined): string => {
-    if (!idStr) return '';
+    if (!idStr || typeof idStr !== 'string') return '';
     return idStr.split(':')[0].split('@')[0];
 };
 

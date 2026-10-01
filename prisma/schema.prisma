@@ -492,3 +492,34 @@ model MaliciousActor {
   @@index([severity])
 }
 
+model GroupBlacklist {
+  id        String   @id @default(cuid())
+  groupJid  String
+  userJid   String
+  userPhone String?
+  reason    String
+  addedBy   String
+  addedAt   DateTime @default(now())
+
+  @@unique([groupJid, userJid])
+  @@index([groupJid])
+  @@index([userJid])
+}
+
+model ModerationLog {
+  id          String   @id @default(cuid())
+  groupJid    String
+  action      String
+  targetJid   String?
+  targetPhone String?
+  reason      String?
+  performedBy String
+  performedAt DateTime @default(now())
+  success     Boolean  @default(true)
+  error       String?
+
+  @@index([groupJid])
+  @@index([performedBy])
+  @@index([performedAt])
+}
+

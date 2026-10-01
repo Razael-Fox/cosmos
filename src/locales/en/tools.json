@@ -999,7 +999,159 @@
         },
         "unarchive": {
             "description": "Manually unarchive a specific chat or the current group chat."
+        },
+        "group_kick": {
+            "description": "Remove a member from the group. Only non-admin members can be removed."
+        },
+        "group_close": {
+            "description": "Set the group to admin-only messaging mode."
+        },
+        "group_open": {
+            "description": "Allow all members to send messages in the group."
+        },
+        "group_invite": {
+            "description": "Send a group invite link via direct message as a native Markdown message."
+        },
+        "group_link": {
+            "description": "Retrieve the current group invite link."
+        },
+        "group_approve": {
+            "description": "Approve a pending join request."
+        },
+        "group_reject": {
+            "description": "Reject a pending join request."
+        },
+        "group_promote": {
+            "description": "Grant admin privileges to a group member."
+        },
+        "group_demote": {
+            "description": "Revoke admin privileges from a group admin."
+        },
+        "group_rename": {
+            "description": "Change the group title/name."
+        },
+        "group_description": {
+            "description": "Change the group description."
+        },
+        "group_blacklist_add": {
+            "description": "Add a user to the group blacklist."
+        },
+        "group_blacklist_remove": {
+            "description": "Remove a user from the group blacklist."
+        },
+        "group_blacklist_list": {
+            "description": "List all blacklisted users for this group."
         }
+    },
+    "group_kick": {
+        "description": "Remove a non-admin member from the group.",
+        "success": "✅ {{target}} has been removed from the group.",
+        "bot_not_admin": "❌ I am not a group admin. Please grant me admin privileges to perform moderation actions.",
+        "caller_not_admin": "❌ You must be a group admin to use this command.",
+        "target_not_member": "❌ {{target}} is not a member of this group.",
+        "target_is_admin": "❌ Cannot remove {{target}} because they are a group admin. WhatsApp does not allow removing admins.",
+        "target_is_self": "❌ I cannot remove myself from the group.",
+        "no_target": "❌ Please specify a target. Usage: .group kick <phone number or @mention>",
+        "error": "❌ Failed to remove {{target}}: {{error}}"
+    },
+    "group_close": {
+        "description": "Set the group to admin-only messaging mode.",
+        "success": "🔒 Group is now closed. Only admins can send messages.",
+        "already_closed": "ℹ️ The group is already in closed mode.",
+        "error": "❌ Failed to close the group: {{error}}"
+    },
+    "group_open": {
+        "description": "Allow all members to send messages in the group.",
+        "success": "🔓 Group is now open. All members can send messages.",
+        "already_open": "ℹ️ The group is already in open mode.",
+        "error": "❌ Failed to open the group: {{error}}"
+    },
+    "group_invite": {
+        "description": "Send a group invite link via direct message as a native Markdown message.",
+        "success": "✅ An invitation has been sent to {{phone}} via direct message.",
+        "already_member": "ℹ️ {{phone}} is already a member of this group.",
+        "invalid_phone": "❌ Invalid phone number format. Use international format (e.g., 6281234567890).",
+        "dm_failed": "❌ Failed to send invitation to {{phone}}. The user may have blocked DMs from non-contacts.",
+        "error": "❌ Failed to invite {{phone}}: {{error}}",
+        "dm_message": "*📋 GROUP INVITATION*\n\n> 👋 Hello!\n> *{{userDisplay}}* invites you to join the group.\n\n- 📋 *Group Name:* {{groupName}}\n- 👥 *Members:* {{memberCount}}\n\n> 🔗 *Invite Link:*\n> {{inviteLink}}\n\n> ℹ️ This invitation was sent by a group admin. You can choose to accept or ignore this invitation."
+    },
+    "group_link": {
+        "description": "Retrieve the current group invite link.",
+        "success": "🔗 Group invite link:\n\n{{link}}",
+        "error": "❌ Failed to retrieve the group link: {{error}}"
+    },
+    "group_approve": {
+        "description": "Approve a pending join request.",
+        "usage": "Invalid format. Use: .group approve <phone number> or .group approve all",
+        "success": "✅ Join request from {{phone}} has been approved.",
+        "success_all": "✅ Approved {{count}} pending join requests.",
+        "empty": "ℹ️ There are no pending join requests.",
+        "no_pending": "ℹ️ There are no pending join requests from {{phone}}.",
+        "invalid_phone": "❌ Invalid phone number format. Provide digits only, e.g. 62123456789000.",
+        "error": "❌ Failed to approve join request: {{error}}"
+    },
+    "group_reject": {
+        "description": "Reject a pending join request.",
+        "success": "✅ Join request from {{target}} has been rejected.",
+        "no_pending": "ℹ️ There are no pending join requests from {{target}}.",
+        "error": "❌ Failed to reject join request: {{error}}"
+    },
+    "group_promote": {
+        "description": "Grant admin privileges to a group member.",
+        "success": "✅ {{target}} has been promoted to group admin.",
+        "already_admin": "ℹ️ {{target}} is already a group admin.",
+        "target_not_member": "❌ {{target}} is not a member of this group.",
+        "error": "❌ Failed to promote {{target}}: {{error}}"
+    },
+    "group_demote": {
+        "description": "Revoke admin privileges from a group admin.",
+        "success": "✅ {{target}} has been demoted from group admin.",
+        "not_admin": "ℹ️ {{target}} is not a group admin.",
+        "target_is_creator": "❌ Cannot demote {{target}} because they are the group creator.",
+        "error": "❌ Failed to demote {{target}}: {{error}}"
+    },
+    "group_rename": {
+        "description": "Change the group title/name.",
+        "success": "✅ Group title has been changed to:\n\n*{{name}}*",
+        "too_short": "❌ Group title must be at least 1 character long.",
+        "too_long": "❌ Group title cannot exceed 25 characters.",
+        "error": "❌ Failed to change group title: {{error}}"
+    },
+    "group_description": {
+        "description": "Change the group description.",
+        "usage": "Invalid format. Use: .group description <text>, reply to a message, or attach a .txt/.md file",
+        "success": "✅ Group description has been updated.",
+        "empty": "❌ Description text is empty. Provide text, reply to a message, or attach a .txt/.md file.",
+        "unsupported_file": "❌ Only .txt and .md files are supported for group descriptions.",
+        "file_too_large": "❌ The attached file exceeds the 100 KB limit.",
+        "too_long": "❌ Group description cannot exceed 512 characters.",
+        "error": "❌ Failed to update group description: {{error}}"
+    },
+    "group_blacklist_add": {
+        "description": "Add a user to the group blacklist.",
+        "success": "🚫 {{target}} has been added to the group blacklist.\n\nReason: {{reason}}",
+        "already_blacklisted": "ℹ️ {{target}} is already blacklisted.",
+        "kicked": "⚠️ {{target}} was in the group and has been removed.",
+        "auto_removed": "⚠️ @{{target}} was automatically removed because they are blacklisted from this group.",
+        "no_reason": "No reason provided",
+        "error": "❌ Failed to add {{target}} to blacklist: {{error}}"
+    },
+    "group_blacklist_remove": {
+        "description": "Remove a user from the group blacklist.",
+        "success": "✅ {{target}} has been removed from the group blacklist.",
+        "not_blacklisted": "ℹ️ {{target}} is not blacklisted.",
+        "error": "❌ Failed to remove {{target}} from blacklist: {{error}}"
+    },
+    "group_blacklist_list": {
+        "description": "List all blacklisted users for this group.",
+        "title": "🚫 Group Blacklist ({{count}} users)",
+        "empty": "ℹ️ The blacklist is empty.",
+        "entry": "• {{target}}\n  Reason: {{reason}}\n  Added: {{date}}",
+        "error": "❌ Failed to retrieve blacklist: {{error}}"
+    },
+    "moderation": {
+        "log_title": "📋 Moderation Log",
+        "no_logs": "ℹ️ No moderation actions have been recorded."
     },
     "myplan": {
         "title": "📊 *Cosmos Subscription & Limits*",

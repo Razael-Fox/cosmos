@@ -13,6 +13,8 @@ import { archiveChat, recordMessage } from '#services/chatArchiveService.js';
 import { addGroup } from '#db.js';
 import { cleanId } from '#utils/casino.js';
 import { securityEnforcementService } from '#services/securityEnforcementService.js';
+import { ModerationService } from '#services/moderationService.js';
+import { BlacklistEnforcer } from '#services/blacklistEnforcer.js';
 
 const logger = pino({ level: 'debug' });
 const MAX_RECONNECT_ATTEMPTS = 15;
@@ -388,6 +390,10 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             updateUserPresence(id, 'available').catch(() => {});
         }
     });
+
+    const modService = new ModerationService(sock);
+    const blacklistEnforcer = new BlacklistEnforcer(sock, modService);
+    blacklistEnforcer.startListening(sessionId);
 
     sock.ev.on('group-participants.update', async ({ id, participants, action }) => {
         try {
