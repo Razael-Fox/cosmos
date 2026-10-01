@@ -163,7 +163,21 @@ function extractSuppliedVariables(text: string, fromIndex: number): Set<string> 
         const ch = text[j];
 
         if (ch === '"' || ch === "'") {
-            j = skipString(text, j) - 1;
+            // At a key position a quoted string may be a quoted property key
+            // (e.g. `{ 'target': target }`). Only treat it as a key when a colon
+            // actually follows; otherwise it is a string value and we skip it.
+            const strEnd = skipString(text, j);
+            if (depth === 1 && expectingKey) {
+                const quotedKey = /^(['"])(.*?)\1\s*:/.exec(text.slice(strEnd));
+                if (quotedKey) {
+                    supplied.add(quotedKey[2]);
+                    j = strEnd - 1;
+                    expectingKey = false;
+                    continue;
+                }
+                return null; // unresolvable: a quoted token where a key is expected
+            }
+            j = strEnd - 1;
             expectingKey = false;
             continue;
         }
