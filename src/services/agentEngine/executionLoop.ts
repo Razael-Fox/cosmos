@@ -1,6 +1,7 @@
 import { SaraPromptContext, GuidanceBrief, AgentExecutionContext, GroqChatMessage } from './types.js';
 import { AgentExecutor } from './executor.js';
 import { AgentToolRegistry } from './tools/registry.js';
+import { AgentSchemaNormalizer } from './normalizer.js';
 import { AgentToolPolicyManager } from './policy.js';
 import { AgentConfirmationManager } from './confirmationManager.js';
 import { ToolAiPolicy } from './types.js';
@@ -52,7 +53,7 @@ export class AgentExecutionLoop {
             for (const toolCall of assistantMsg.tool_calls) {
                 const funcName = toolCall.function.name;
                 const toolCallId = toolCall.id;
-                let parsedArgs: Record<string, unknown> = {};
+                let parsedArgs: Record<string, unknown>;
 
                 try {
                     parsedArgs = JSON.parse(toolCall.function.arguments || '{}');
@@ -60,8 +61,20 @@ export class AgentExecutionLoop {
                     parsedArgs = {};
                 }
 
+                // TRUST BOUNDARY — strip internal control flags from model output.
+                // See AgentSchemaNormalizer.stripReservedFlags for why absence from the tool
+                // schema is not enforcement. `safeArgs` is used for both the unconfirmed
+                // execution and the staged re-entry, so a smuggled flag can neither reach
+                // the tool now nor be replayed later after the user confirms.
+                const safeArgs = AgentSchemaNormalizer.stripReservedFlags(parsedArgs);
+                if (safeArgs !== parsedArgs) {
+                    console.warn(
+                        `[CosmosAgentEngine] [SECURITY_SANITIZED] Stripped reserved control flags from Tool: ${funcName}, Caller: ${execCtx.callerJid}`
+                    );
+                }
+
                 console.log(
-                    `[CosmosAgentEngine] [TIER2_EXEC] Tool: ${funcName}, Arguments: ${JSON.stringify(parsedArgs)}, Latency: ${Date.now() - turnStartTime}ms`
+                    `[CosmosAgentEngine] [TIER2_EXEC] Tool: ${funcName}, Arguments: ${JSON.stringify(safeArgs)}, Latency: ${Date.now() - turnStartTime}ms`
                 );
 
                 // Policy & Permission Guard
@@ -95,7 +108,7 @@ export class AgentExecutionLoop {
                 }
 
                 // Execute the tool adapter
-                const result = await tool.execute(parsedArgs, execCtx);
+                const result = await tool.execute(safeArgs, execCtx);
                 if (result.success) {
                     executedToolsCount++;
                 }
@@ -111,11 +124,13 @@ export class AgentExecutionLoop {
                         userLid: execCtx.callerLid,
                         chatJid: execCtx.chatJid,
                         toolName: funcName,
-                        arguments: parsedArgs,
+                        arguments: safeArgs,
                         summary: result.confirmationPrompt || 'Pending Action',
                         execute: async () => {
-                            // Re-execute tool upon explicit user confirmation
-                            const confirmedResult = await tool.execute({ ...parsedArgs, _confirmed: true }, execCtx);
+                            // TRUSTED RE-ENTRY — the only place `_confirmed` may be set.
+                            // Reached solely after the human replied `.confirm`, which
+                            // AgentConfirmationManager has already identity-verified.
+                            const confirmedResult = await tool.execute({ ...safeArgs, _confirmed: true }, execCtx);
                             if (!confirmedResult.success) {
                                 throw new Error(confirmedResult.error || 'Execution failed');
                             }

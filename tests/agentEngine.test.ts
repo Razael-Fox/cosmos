@@ -12,10 +12,15 @@ import { AgentEntityResolver, cleanTargetQuery, scoreTargetMatch } from '../src/
 import { buildSaraGuidancePrompt } from '../src/services/agentEngine/prompts/saraGuidance.js';
 import { buildSaraPersonaPrompt } from '../src/services/agentEngine/prompts/saraPersona.js';
 import { maskPhoneNumber, cleanPhoneNumber, toCanonicalJid } from '../src/utils/phone.js';
+import { getTranslator } from '../src/utils/i18n.js';
+import { ModerationService } from '../src/services/moderationService.js';
 import { cancelActiveSession, hasCancellableSession } from '../src/utils/cancellationManager.js';
 import { CosmosAgentEngine } from '../src/services/agentEngine/index.js';
 import { bankTool } from '../src/services/agentEngine/tools/bank.js';
 import { sendMessageTool } from '../src/services/agentEngine/tools/sendMessage.js';
+import { groupModerationTool } from '../src/services/agentEngine/tools/groupModeration.js';
+import { AgentExecutionLoop } from '../src/services/agentEngine/executionLoop.js';
+import { AgentExecutor } from '../src/services/agentEngine/executor.js';
 import { prisma } from '../src/db.js';
 import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/tools/contact.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
@@ -856,25 +861,25 @@ async function runTests() {
     console.log('[Test 16] Testing .contact add & del with WhatsApp monospace formatting...');
 
     // Parsing checks
-    const parsed1 = parseContactAddArgs('`Ls Friends` 123456789');
-    assert.strictEqual(parsed1.alias, 'Ls Friends');
+    const parsed1 = parseContactAddArgs('`Budi Santoso` 123456789');
+    assert.strictEqual(parsed1.alias, 'Budi Santoso');
     assert.strictEqual(parsed1.phoneInput, '123456789');
 
-    const parsed2 = parseContactAddArgs('```Ls Friends``` +62 812 3456 789');
-    assert.strictEqual(parsed2.alias, 'Ls Friends');
+    const parsed2 = parseContactAddArgs('```Budi Santoso``` +62 812 3456 789');
+    assert.strictEqual(parsed2.alias, 'Budi Santoso');
     assert.strictEqual(parsed2.phoneInput, '+62 812 3456 789');
 
     const parsed3 = parseContactAddArgs('Mom 6281234567890');
     assert.strictEqual(parsed3.alias, 'Mom');
     assert.strictEqual(parsed3.phoneInput, '6281234567890');
 
-    const parsed4 = parseContactAddArgs('`Ls Friends`');
-    assert.strictEqual(parsed4.alias, 'Ls Friends');
+    const parsed4 = parseContactAddArgs('`Budi Santoso`');
+    assert.strictEqual(parsed4.alias, 'Budi Santoso');
     assert.strictEqual(parsed4.phoneInput, '');
 
-    assert.strictEqual(parseContactDelArgs('`Ls Friends`'), 'Ls Friends');
-    assert.strictEqual(parseContactDelArgs('```Ls Friends```'), 'Ls Friends');
-    assert.strictEqual(parseContactDelArgs('Ls Friends'), 'Ls Friends');
+    assert.strictEqual(parseContactDelArgs('`Budi Santoso`'), 'Budi Santoso');
+    assert.strictEqual(parseContactDelArgs('```Budi Santoso```'), 'Budi Santoso');
+    assert.strictEqual(parseContactDelArgs('Budi Santoso'), 'Budi Santoso');
 
     // End-to-end tool execution check
     const contactTestUser = '628199999999@s.whatsapp.net';
@@ -895,7 +900,7 @@ async function runTests() {
 
     const contactMockMsg = {
         key: { remoteJid: contactTestUser, participant: contactTestUser, fromMe: false },
-        message: { conversation: '.contact add `Ls Friends` 123456789' }
+        message: { conversation: '.contact add `Budi Santoso` 123456789' }
     };
 
     const contactCtx = {
@@ -906,34 +911,525 @@ async function runTests() {
     };
 
     // Execute add
-    await contactTool.execute({ rawText: 'add `Ls Friends` 123456789' }, contactCtx);
-    assert(lastContactSentText.includes('Ls Friends'), 'Success message must mention Ls Friends');
+    await contactTool.execute({ rawText: 'add `Budi Santoso` 123456789' }, contactCtx);
+    assert(lastContactSentText.includes('Budi Santoso'), 'Success message must mention Budi Santoso');
     assert(lastContactSentText.includes('12345****6789'), 'Success message must contain masked number');
 
     const savedEntry = await prisma.userContactBook.findUnique({
         where: {
             ownerJid_alias: {
                 ownerJid: contactTestUser,
-                alias: 'ls friends'
+                alias: 'budi santoso'
             }
         }
     });
-    assert(savedEntry, 'Contact "ls friends" must exist in database');
+    assert(savedEntry, 'Contact "budi santoso" must exist in database');
 
     // Execute delete
-    await contactTool.execute({ rawText: 'del `Ls Friends`' }, contactCtx);
+    await contactTool.execute({ rawText: 'del `Budi Santoso`' }, contactCtx);
     assert(lastContactSentText.includes('deleted'), 'Delete message must confirm deletion');
 
     const deletedEntry = await prisma.userContactBook.findUnique({
         where: {
             ownerJid_alias: {
                 ownerJid: contactTestUser,
-                alias: 'ls friends'
+                alias: 'budi santoso'
             }
         }
     });
-    assert.strictEqual(deletedEntry, null, 'Contact "ls friends" must be deleted from database');
+    assert.strictEqual(deletedEntry, null, 'Contact "budi santoso" must be deleted from database');
     console.log('  ✔ .contact add and del with WhatsApp monospace verified successfully.');
+    // =========================================================================
+    // Test 17. Group Moderation Tool — Policy, Registry, Schema, and Execution
+    // =========================================================================
+    console.log('[Test 17] Testing group_moderation tool integration (4-blocker verification)...');
+
+    // Blocker 1: POLICY_MAP entry must be CONFIRMATION_REQUIRED (not DENIED)
+    assert.strictEqual(
+        AgentToolPolicyManager.getPolicy('group_moderation'),
+        ToolAiPolicy.CONFIRMATION_REQUIRED,
+        'group_moderation must be CONFIRMATION_REQUIRED in POLICY_MAP'
+    );
+    // Name normalizer variants must also resolve correctly
+    assert.strictEqual(AgentToolPolicyManager.getPolicy('group_moderation'), ToolAiPolicy.CONFIRMATION_REQUIRED);
+
+    // Blocker 2: Registry must contain the tool
+    const registeredMod = AgentToolRegistry.getTool('group_moderation');
+    assert(registeredMod !== undefined, 'group_moderation must be registered in AgentToolRegistry');
+    assert.strictEqual(registeredMod!.name, 'group_moderation');
+
+    // Blocker 3: getScopedGroqTools must return exactly 1 schema when candidateToolName = 'group_moderation'
+    const scopedMod = AgentToolRegistry.getScopedGroqTools('group_moderation');
+    assert.strictEqual(scopedMod.length, 1, 'Scoped registry must return 1 tool for group_moderation');
+    assert.strictEqual(scopedMod[0].function.name, 'group_moderation');
+
+    // Blocker 4: sanitized name must be snake_case — no spaces, no dots
+    const sanitized = AgentSchemaNormalizer.sanitizeFunctionName('group_moderation');
+    assert.strictEqual(sanitized, 'group_moderation', 'Tool name must survive sanitizeFunctionName unchanged');
+    assert(!sanitized.includes(' '), 'Tool name must not contain spaces');
+
+    // Schema: action enum and moderation-specific parameters must be present
+    const modSchema = scopedMod[0].function.parameters as { properties: Record<string, unknown>; required?: string[] };
+    assert(modSchema.properties.action, 'Schema must expose action parameter');
+    assert(modSchema.properties.targetPhone, 'Schema must expose targetPhone parameter');
+    assert(modSchema.properties.newName, 'Schema must expose newName parameter');
+    assert(modSchema.properties.newDescription, 'Schema must expose newDescription parameter');
+    assert(modSchema.properties.reason, 'Schema must expose reason parameter');
+    assert(Array.isArray(modSchema.required) && modSchema.required.includes('action'), 'action must be required');
+    console.log('  ✔ All 4 blockers cleared: POLICY_MAP, registry, Tier-1 prompt, snake_case name.');
+
+    // Tier 1 guidance prompt must list group_moderation as a candidate
+    const groupGuidancePrompt = buildSaraGuidancePrompt({
+        callerName: 'Admin',
+        callerJid: '628111111111@s.whatsapp.net',
+        isOwner: false,
+        isGroupAdmin: true,
+        hasIdCard: true,
+        chatType: 'group',
+        groupTitle: 'Test Group',
+        chatJid: '123456789@g.us',
+        botName: 'Sara',
+        locale: 'id',
+        knownContactTokens: [],
+        referencedMessage: null
+    });
+    assert(
+        groupGuidancePrompt.includes('group_moderation'),
+        'Tier 1 guidance prompt must contain group_moderation in candidate list'
+    );
+    assert(
+        groupGuidancePrompt.includes('targetPhone'),
+        'Tier 1 extractedParameters schema must include targetPhone key'
+    );
+    assert(groupGuidancePrompt.includes('newName'), 'Tier 1 extractedParameters schema must include newName key');
+    console.log('  ✔ Tier 1 guidance prompt correctly lists group_moderation with parameter schema.');
+
+    // Real translators are used so the localized templates are exercised end-to-end (Rule O)
+    // instead of a pass-through identity function.
+    const tEn = getTranslator('en');
+
+    const BOT_JID = '628999999999@s.whatsapp.net';
+    const CALLER_JID = '628111111111@s.whatsapp.net';
+    const GROUP_JID = '123456789@g.us';
+
+    const makeMsg = (remoteJid: string, participant: string, contextInfo?: Record<string, unknown>) =>
+        ({
+            key: { remoteJid, participant, fromMe: false },
+            message: contextInfo ? { extendedTextMessage: { text: 'moderation request', contextInfo } } : {}
+        }) as unknown as WAMessage;
+
+    // NOTE: the group owner is deliberately a third party. `ModerationService.isUserAdmin`
+    // short-circuits to true for the owner, which would make the non-admin assertion vacuous.
+    const makeMetadata = (
+        callerAdmin: 'admin' | 'superadmin' | null,
+        extraParticipant = false,
+        owner: string = '628444444444@s.whatsapp.net'
+    ) => ({
+        id: GROUP_JID,
+        subject: 'Test Group',
+        owner,
+        announce: false,
+        participants: [
+            { id: BOT_JID, admin: 'admin' as const },
+            { id: CALLER_JID, admin: callerAdmin },
+            ...(extraParticipant ? [{ id: '628222222222@s.whatsapp.net', admin: null }] : [])
+        ]
+    });
+
+    const buildCtx = (
+        overrides: Record<string, unknown> = {},
+        opts: { callerJid?: string; contextInfo?: Record<string, unknown> } = {}
+    ): AgentExecutionContext =>
+        ({
+            sock: { user: { id: BOT_JID }, ...overrides },
+            msg: makeMsg(GROUP_JID, opts.callerJid || CALLER_JID, opts.contextInfo),
+            chatJid: GROUP_JID,
+            callerJid: opts.callerJid || CALLER_JID,
+            callerName: 'Admin',
+            isOwner: false,
+            locale: 'en',
+            t: tEn
+        }) as unknown as AgentExecutionContext;
+
+    // Execution: non-group chat must be rejected before any socket access
+    const dmResult = await groupModerationTool.execute({ action: 'close' }, {
+        sock: {},
+        msg: makeMsg(CALLER_JID, CALLER_JID),
+        chatJid: CALLER_JID,
+        callerJid: CALLER_JID,
+        callerName: 'Admin',
+        isOwner: false,
+        locale: 'en',
+        t: tEn
+    } as unknown as AgentExecutionContext);
+    assert.strictEqual(dmResult.success, false, 'DM context must be rejected');
+    assert.strictEqual(dmResult.error, tEn('core.group_only'), 'DM context must return the group-only message');
+
+    // Execution: an unknown action must fail before any socket access
+    const unknownResult = await groupModerationTool.execute({ action: 'nuke_group' }, buildCtx());
+    assert.strictEqual(unknownResult.success, false, 'Unknown action must fail');
+    assert.strictEqual(unknownResult.error, tEn('tools.agent_moderation.unknown_action'));
+
+    // Execution: a non-admin caller must be rejected
+    const nonAdminCtx = buildCtx({ groupMetadata: async () => makeMetadata(null) });
+    const nonAdminResult = await groupModerationTool.execute(
+        { action: 'kick', targetPhone: '628222222222' },
+        nonAdminCtx
+    );
+    assert.strictEqual(nonAdminResult.success, false, 'Non-admin caller must be rejected');
+    assert.strictEqual(
+        nonAdminResult.error,
+        tEn('tools.group_kick.caller_not_admin'),
+        'Non-admin caller must receive the caller_not_admin message'
+    );
+
+    // Execution: read-only get_link delivers the invite link straight to the chat, never to the LLM
+    const sentToChat: string[] = [];
+    const adminCtx = buildCtx({
+        groupMetadata: async () => makeMetadata('admin'),
+        groupInviteCode: async () => 'AbCdEfGhIjKlMn',
+        sendMessage: async (_jid: string, content: { text?: string }) => {
+            sentToChat.push(content.text || '');
+        }
+    });
+    const linkResult = await groupModerationTool.execute({ action: 'get_link' }, adminCtx);
+    assert.strictEqual(linkResult.success, true, 'get_link must succeed for an admin');
+    assert(!linkResult.requiresConfirmation, 'get_link must NOT stage a confirmation');
+    assert.strictEqual(
+        String(linkResult.data),
+        tEn('tools.agent_moderation.link_sent'),
+        'get_link must acknowledge without leaking the invite code into the model context'
+    );
+    assert(
+        sentToChat.some((m) => m.includes('AbCdEfGhIjKlMn')),
+        'get_link must deliver the invite link directly to the group chat'
+    );
+    console.log('  ✔ get_link delivers the invite link out-of-band and never exposes it to the LLM.');
+
+    // Execution: mutating close must stage a localized confirmation on the first call
+    const closeStagedResult = await groupModerationTool.execute({ action: 'close' }, adminCtx);
+    assert.strictEqual(closeStagedResult.success, true, 'close staging must report success');
+    assert.strictEqual(closeStagedResult.requiresConfirmation, true, 'close must require confirmation');
+    assert.strictEqual(
+        closeStagedResult.confirmationPrompt,
+        `${tEn('tools.agent_moderation.confirm_close')} ${tEn('tools.agent_moderation.confirm_suffix')}`,
+        'The confirmation prompt must be localized (Rule O)'
+    );
+
+    // Execution: confirmed close must invoke the Baileys announcement update
+    let announcedSetting: string | null = null;
+    const confirmedCtx = buildCtx({
+        groupMetadata: async () => makeMetadata('admin'),
+        groupSettingUpdate: async (_jid: string, setting: string) => {
+            announcedSetting = setting;
+        }
+    });
+    const closeResult = await groupModerationTool.execute({ action: 'close', _confirmed: true }, confirmedCtx);
+    assert.strictEqual(closeResult.success, true, 'Confirmed close must succeed');
+    assert.strictEqual(announcedSetting, 'announcement', 'close must apply the announcement setting');
+
+    // Execution: an unresolvable target must fail before staging
+    const noTargetResult = await groupModerationTool.execute({ action: 'kick' }, adminCtx);
+    assert.strictEqual(noTargetResult.success, false, 'kick without a target must fail');
+    assert.strictEqual(noTargetResult.error, tEn('tools.agent_moderation.no_target'));
+
+    // Execution: kick resolves its target from message metadata and masks the result for the LLM
+    let kickedTarget: string | null = null;
+    const kickCtx = buildCtx(
+        {
+            groupMetadata: async () => makeMetadata('admin', true),
+            groupParticipantsUpdate: async (_jid: string, targets: string[]) => {
+                kickedTarget = targets[0];
+                return [{ status: '200' }];
+            }
+        },
+        { contextInfo: { mentionedJid: ['628222222222@s.whatsapp.net'] } }
+    );
+    const kickStaged = await groupModerationTool.execute({ action: 'kick' }, kickCtx);
+    assert.strictEqual(kickStaged.requiresConfirmation, true, 'kick must stage a confirmation');
+    assert(
+        String(kickStaged.confirmationPrompt).includes('628222222222'),
+        'The confirmation prompt shown to the human admin may name the target verbatim'
+    );
+    ModerationService.clearRateLimit(GROUP_JID);
+    const kickResult = await groupModerationTool.execute({ action: 'kick', _confirmed: true }, kickCtx);
+    assert.strictEqual(kickResult.success, true, `Confirmed kick must succeed: ${kickResult.error}`);
+    assert.strictEqual(kickedTarget, '628222222222@s.whatsapp.net', 'kick must target the mentioned participant');
+    assert(
+        !String(kickResult.data).includes('628222222222'),
+        'The kick result handed back to the LLM must mask the participant phone number'
+    );
+    console.log('  ✔ Kick resolves its target from message metadata and masks the result for the LLM.');
+
+    // Execution: the title length limit is enforced before staging
+    const longNameResult = await groupModerationTool.execute({ action: 'rename', newName: 'A'.repeat(26) }, adminCtx);
+    assert.strictEqual(longNameResult.success, false, 'A 26-character title must fail validation');
+    assert.strictEqual(longNameResult.error, tEn('tools.group_rename.too_long'));
+
+    // Execution: invite validates the phone number before staging
+    const badPhoneResult = await groupModerationTool.execute({ action: 'invite', targetPhone: '123' }, adminCtx);
+    assert.strictEqual(badPhoneResult.success, false, 'A 3-digit invite number must fail validation');
+    assert.strictEqual(badPhoneResult.error, tEn('tools.group_invite.invalid_phone'));
+
+    // Execution: invite DM is sent to the normalized number and the result masks it
+    let inviteDm: { jid: string; text: string } | null = null;
+    const inviteCtx = buildCtx({
+        groupMetadata: async () => makeMetadata('admin'),
+        groupInviteCode: async () => 'AbCdEfGhIjKlMn',
+        sendMessage: async (jid: string, content: { text?: string }) => {
+            inviteDm = { jid, text: content.text || '' };
+        }
+    });
+    ModerationService.clearRateLimit(GROUP_JID);
+    const inviteResult = await groupModerationTool.execute(
+        { action: 'invite', targetPhone: '0812-3456-7890', _confirmed: true },
+        inviteCtx
+    );
+    assert.strictEqual(inviteResult.success, true, 'Confirmed invite must succeed');
+    assert.strictEqual(
+        inviteDm?.jid,
+        '6281234567890@s.whatsapp.net',
+        'invite must normalize the number and direct-message the invitee'
+    );
+    assert(
+        !String(inviteResult.data).includes('6281234567890'),
+        'The invite result handed back to the LLM must mask the invitee phone number'
+    );
+    console.log('  ✔ Invite normalizes phone input and masks the invitee in the tool result.');
+
+    // Execution: blacklist_list masks third-party identifiers before they reach the LLM
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: GROUP_JID } });
+    await prisma.groupBlacklist.create({
+        data: {
+            groupJid: GROUP_JID,
+            userJid: '628777777777@s.whatsapp.net',
+            userPhone: '628777777777',
+            reason: 'Spam',
+            addedBy: CALLER_JID
+        }
+    });
+    const rosterSent: string[] = [];
+    const rosterResult = await groupModerationTool.execute(
+        { action: 'blacklist_list' },
+        buildCtx({
+            groupMetadata: async () => makeMetadata('admin'),
+            sendMessage: async (_jid: string, content: { text?: string }) => {
+                rosterSent.push(content.text || '');
+            }
+        })
+    );
+    assert.strictEqual(rosterResult.success, true, 'blacklist_list must succeed');
+    assert.strictEqual(
+        String(rosterResult.data),
+        tEn('tools.agent_moderation.blacklist_sent'),
+        'blacklist_list must acknowledge without leaking the roster into the model context'
+    );
+    assert(!String(rosterResult.data).includes('628777777777'), 'Blacklisted numbers must never reach the LLM');
+    assert(
+        rosterSent.some((m) => m.includes('****')),
+        'blacklist_list must deliver a masked roster to the group chat'
+    );
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: GROUP_JID } });
+    console.log('  ✔ blacklist_list delivers a masked roster out-of-band (Rule AB zero-knowledge).');
+
+    console.log(
+        '  ✔ group_moderation guards, read-only bypass, confirmation staging, and confirmed execution verified.'
+    );
+
+    // ── Security regression: a model must never be able to skip confirmation ──────
+    // `_confirmed` is the flag that lets a tool bypass interactive confirmation. It lives
+    // inside the model-controlled argument bag, so a hallucinated or injected flag would
+    // otherwise satisfy the confirmation gate and run a mutating action with no `.confirm`
+    // prompt. This asserts the gate holds at the trust boundary in AgentExecutionLoop.
+    console.log('[Test 18] Testing that model-supplied _confirmed cannot bypass confirmation...');
+
+    // 18a. Unit-level: the sanitizer strips reserved flags and leaves the input untouched
+    const smuggledArgs = { action: 'kick', targetPhone: '6281234567890', _confirmed: true };
+    const sanitizedArgs = AgentSchemaNormalizer.stripReservedFlags(smuggledArgs);
+    assert(!('_confirmed' in sanitizedArgs), 'stripReservedFlags must remove the reserved _confirmed flag');
+    assert.strictEqual(sanitizedArgs.action, 'kick', 'stripReservedFlags must preserve legitimate arguments');
+    assert.strictEqual(sanitizedArgs.targetPhone, '6281234567890', 'stripReservedFlags must preserve other arguments');
+    assert('_confirmed' in smuggledArgs, 'stripReservedFlags must not mutate the caller-supplied object');
+
+    const cleanArgs = { action: 'kick' };
+    assert(
+        AgentSchemaNormalizer.stripReservedFlags(cleanArgs) === cleanArgs,
+        'stripReservedFlags must be a no-op when no reserved flag is present'
+    );
+
+    // 18b. End-to-end through the real execution loop with a model that smuggles the flag.
+    // AgentExecutor.executeTurn is stubbed so no network call is made and the only thing
+    // under test is how the loop handles model-controlled arguments.
+    // Must match the extra participant added by makeMetadata(..., true)
+    const victimJid = '628222222222@s.whatsapp.net';
+    let kickReached = false;
+    const loopSock = {
+        user: { id: BOT_JID },
+        groupMetadata: async () => makeMetadata('admin', true),
+        groupParticipantsUpdate: async () => {
+            kickReached = true;
+            return [{ status: '200' }];
+        },
+        sendMessage: async () => undefined,
+        sendPresenceUpdate: async () => undefined
+    } as unknown as WASocket;
+
+    const loopExecCtx = {
+        sock: loopSock,
+        msg: makeMsg(GROUP_JID, CALLER_JID),
+        chatJid: GROUP_JID,
+        callerJid: CALLER_JID,
+        callerName: 'Admin',
+        isOwner: false,
+        locale: 'en',
+        t: tEn
+    } as unknown as AgentExecutionContext;
+
+    const loopPromptCtx = {
+        callerName: 'Admin',
+        callerJid: CALLER_JID,
+        isOwner: false,
+        isGroupAdmin: true,
+        hasIdCard: true,
+        chatType: 'group' as const,
+        groupTitle: 'Test Group',
+        chatJid: GROUP_JID,
+        botName: 'Sara',
+        locale: 'en',
+        knownContactTokens: [],
+        referencedMessage: null
+    };
+
+    const originalExecuteTurn = AgentExecutor.executeTurn;
+    AgentExecutor.executeTurn = async () => ({
+        message: {
+            role: 'assistant' as const,
+            content: null,
+            tool_calls: [
+                {
+                    id: 'call_injected_confirmed',
+                    type: 'function' as const,
+                    function: {
+                        name: 'group_moderation',
+                        // A malicious model injects the reserved control flag.
+                        arguments: JSON.stringify({
+                            action: 'kick',
+                            targetPhone: '628222222222',
+                            _confirmed: true
+                        })
+                    }
+                }
+            ]
+        },
+        finishReason: 'tool_calls',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+    });
+
+    AgentConfirmationManager.clearAll();
+    ModerationService.clearRateLimit(GROUP_JID);
+
+    let loopReply: string;
+    try {
+        loopReply = await AgentExecutionLoop.run('kick that person', loopPromptCtx, loopExecCtx, {
+            intent: 'GROUP_MODERATION',
+            primaryTool: 'group_moderation'
+        });
+    } finally {
+        AgentExecutor.executeTurn = originalExecuteTurn;
+    }
+
+    assert.strictEqual(kickReached, false, 'A model-supplied _confirmed flag must NOT reach the mutating Baileys call');
+    assert(
+        String(loopReply).includes('.confirm'),
+        'The user must be shown a confirmation prompt instead of the action being executed'
+    );
+
+    const staged = AgentConfirmationManager.findAction(CALLER_JID, GROUP_JID);
+    assert(staged !== undefined, 'The action must be staged for confirmation');
+    assert(
+        !('_confirmed' in (staged!.arguments as Record<string, unknown>)),
+        'The staged arguments must not carry a reserved control flag'
+    );
+
+    // 18c. The trusted re-entry path must still work after the user replies .confirm
+    ModerationService.clearRateLimit(GROUP_JID);
+    const confirmed = await AgentConfirmationManager.processConfirmation(
+        loopSock,
+        makeMsg(GROUP_JID, CALLER_JID),
+        CALLER_JID,
+        GROUP_JID,
+        '.confirm'
+    );
+    assert.strictEqual(confirmed, true, 'The .confirm reply must be handled by the confirmation manager');
+    assert.strictEqual(kickReached, true, 'After an explicit .confirm the trusted re-entry path MUST execute the kick');
+    assert.strictEqual(victimJid, '628222222222@s.whatsapp.net', 'Sanity check on the fixture target');
+
+    AgentConfirmationManager.clearAll();
+    ModerationService.clearRateLimit(GROUP_JID);
+    console.log('  ✔ Model-supplied _confirmed is stripped at the trust boundary; the trusted path still works.');
+
+    // ── Finding 1 regression: interpolation arguments must reach every template ────
+    // `pnpm validate:i18n` checks en/id parity and key existence, but NOT whether a call
+    // site supplies the variables its template interpolates. These assertions close that gap.
+    console.log('[Test 19] Testing that no raw {{placeholder}} leaks to end users...');
+
+    const placeholderLeakCtx = buildCtx({
+        groupMetadata: async () => makeMetadata('admin'),
+        groupInviteCode: async () => 'AbCdEfGhIjKlMn',
+        sendMessage: async () => undefined
+    });
+    // Force the invite DM to fail so the `tools.group_invite.error` template is exercised.
+    const failingInviteCtx = {
+        ...placeholderLeakCtx,
+        sock: {
+            ...(placeholderLeakCtx.sock as unknown as Record<string, unknown>),
+            sendMessage: async () => {
+                throw new Error('blocked');
+            }
+        }
+    } as unknown as AgentExecutionContext;
+    ModerationService.clearRateLimit(GROUP_JID);
+    const inviteFail = await groupModerationTool.execute(
+        { action: 'invite', targetPhone: '6285555555555', _confirmed: true },
+        failingInviteCtx
+    );
+    assert.strictEqual(inviteFail.success, false, 'A failed invite must report failure');
+    assert(
+        !/\{\{\s*\w+\s*\}\}/.test(String(inviteFail.error)),
+        `Invite error must not leak a raw placeholder: ${inviteFail.error}`
+    );
+
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: GROUP_JID } });
+    const blCtx = buildCtx(
+        { groupMetadata: async () => makeMetadata('admin', true) },
+        {
+            contextInfo: { mentionedJid: ['628222222222@s.whatsapp.net'] }
+        }
+    );
+    ModerationService.clearRateLimit(GROUP_JID);
+    const blAdd = await groupModerationTool.execute({ action: 'blacklist_add', _confirmed: true }, blCtx);
+    assert.strictEqual(blAdd.success, true, 'blacklist_add must succeed for an admin');
+
+    // A different member, so this exercises the NOT_BLACKLISTED error template
+    // rather than a successful removal of the entry added just above.
+    const blRemoveCtx = buildCtx(
+        { groupMetadata: async () => makeMetadata('admin') },
+        {
+            contextInfo: { mentionedJid: ['628666666666@s.whatsapp.net'] }
+        }
+    );
+    ModerationService.clearRateLimit(GROUP_JID);
+    const blRemoveFail = await groupModerationTool.execute(
+        { action: 'blacklist_remove', _confirmed: true },
+        blRemoveCtx
+    );
+    assert.strictEqual(blRemoveFail.success, false, 'Removing a non-blacklisted member must fail');
+    assert(
+        !/\{\{\s*\w+\s*\}\}/.test(String(blRemoveFail.error)),
+        `Blacklist error must not leak a raw placeholder: ${blRemoveFail.error}`
+    );
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: GROUP_JID } });
+    console.log('  ✔ Error templates receive their interpolation arguments; no raw {{placeholder}} escapes.');
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('======================================================\n');

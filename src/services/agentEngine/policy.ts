@@ -64,7 +64,8 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     property_buy: ToolAiPolicy.CONFIRMATION_REQUIRED,
     property_sell: ToolAiPolicy.CONFIRMATION_REQUIRED,
     loan: ToolAiPolicy.CONFIRMATION_REQUIRED,
-    shop: ToolAiPolicy.CONFIRMATION_REQUIRED
+    shop: ToolAiPolicy.CONFIRMATION_REQUIRED,
+    group_moderation: ToolAiPolicy.CONFIRMATION_REQUIRED
 };
 
 const OWNER_ONLY_TOOLS: Record<string, true> = {

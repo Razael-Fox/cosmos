@@ -8,38 +8,58 @@ const __dirname = path.dirname(__filename);
 const srcDir = path.resolve(__dirname, '../src');
 const localesDir = path.join(srcDir, 'locales/id');
 
-function getLeafKeys(obj: Record<string, unknown>, prefix = ''): string[] {
-    let keys: string[] = [];
-    for (const [k, v] of Object.entries(obj)) {
-        const fullKey = prefix ? `${prefix}.${k}` : k;
-        if (v && typeof v === 'object' && !Array.isArray(v)) {
-            keys = keys.concat(getLeafKeys(v as Record<string, unknown>, fullKey));
-        } else {
-            keys.push(fullKey);
-        }
-    }
-    return keys;
+// ── Catalogue ────────────────────────────────────────────────────────────────────
+
+interface Catalog {
+    keys: Set<string>;
+    /** key -> the `{{variable}}` names that key's template interpolates */
+    variables: Map<string, Set<string>>;
 }
 
-function loadAllLocaleKeys(): Set<string> {
-    const allKeys = new Set<string>();
+function collectTemplateVariables(value: string): Set<string> {
+    const vars = new Set<string>();
+    const regex = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(value)) !== null) {
+        vars.add(m[1]);
+    }
+    return vars;
+}
+
+function loadCatalog(): Catalog {
+    const keys = new Set<string>();
+    const variables = new Map<string, Set<string>>();
     const files = fs.readdirSync(localesDir).filter((f) => f.endsWith('.json'));
+
+    const walk = (obj: Record<string, unknown>, prefix: string): void => {
+        for (const [k, v] of Object.entries(obj)) {
+            const fullKey = prefix ? `${prefix}.${k}` : k;
+            if (v && typeof v === 'object' && !Array.isArray(v)) {
+                walk(v as Record<string, unknown>, fullKey);
+            } else {
+                keys.add(fullKey);
+                if (typeof v === 'string') {
+                    variables.set(fullKey, collectTemplateVariables(v));
+                }
+            }
+        }
+    };
+
     for (const file of files) {
         const namespace = file.replace('.json', '');
         const filePath = path.join(localesDir, file);
         try {
-            const content = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<string, unknown>;
-            const keys = getLeafKeys(content, namespace);
-            for (const k of keys) {
-                allKeys.add(k);
-            }
+            walk(JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<string, unknown>, namespace);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             console.error(`[check-i18n-usage] Failed to parse ${filePath}:`, msg);
         }
     }
-    return allKeys;
+
+    return { keys, variables };
 }
+
+// ── Source scanning ──────────────────────────────────────────────────────────────
 
 function walkTsFiles(dir: string): string[] {
     let results: string[] = [];
@@ -57,71 +77,298 @@ function walkTsFiles(dir: string): string[] {
     return results;
 }
 
+/** Advances past a string literal starting at `i` (which must be a quote char). */
+function skipString(text: string, i: number): number {
+    const quote = text[i];
+    let j = i + 1;
+    while (j < text.length) {
+        if (text[j] === '\\') {
+            j += 2;
+            continue;
+        }
+        if (text[j] === quote) return j + 1;
+        j++;
+    }
+    return text.length;
+}
+
+/**
+ * Advances past a template literal, honouring `${ ... }` interpolation so that a
+ * translator call nested inside an interpolation is still matched by the caller.
+ * Returns the index just past the closing backtick.
+ */
+function skipTemplate(text: string, i: number): number {
+    let j = i + 1;
+    while (j < text.length) {
+        if (text[j] === '\\') {
+            j += 2;
+            continue;
+        }
+        if (text[j] === '`') return j + 1;
+        if (text[j] === '$' && text[j + 1] === '{') {
+            // Skip the interpolation expression, tracking nested braces and strings.
+            let depth = 1;
+            j += 2;
+            while (j < text.length && depth > 0) {
+                const ch = text[j];
+                if (ch === '"' || ch === "'") {
+                    j = skipString(text, j);
+                    continue;
+                }
+                if (ch === '`') {
+                    j = skipTemplate(text, j);
+                    continue;
+                }
+                if (ch === '{') depth++;
+                else if (ch === '}') depth--;
+                j++;
+            }
+            continue;
+        }
+        j++;
+    }
+    return text.length;
+}
+
+/**
+ * Extracts the top-level property names of the object literal that supplies a
+ * translator call's interpolation variables.
+ *
+ * Walks the literal with balanced-delimiter tracking so that nested calls, nested
+ * objects, arrays, and string values are stepped over rather than mistaken for
+ * property names — e.g. `{ error: explainStatus(t, r.message) }` yields `{error}`.
+ *
+ * Returns null when no object literal is supplied, or when the literal contains
+ * syntax that cannot be statically resolved (spread `...x`, computed `[k]:`, or a
+ * bare identifier whose meaning is unknown). Such call sites are skipped rather than
+ * reported, so the check never produces a false positive.
+ */
+function extractSuppliedVariables(text: string, fromIndex: number): Set<string> | null {
+    // `fromIndex` sits just past the key's closing quote. Allow only whitespace and a
+    // single separating comma before the optional object literal, so a `{` belonging to
+    // an enclosing expression (`t('k'), { other: 1 }`) is never mistaken for argument 2.
+    let i = fromIndex;
+    while (i < text.length && /\s/.test(text[i])) i++;
+    if (text[i] === ',') {
+        i++;
+        while (i < text.length && /\s/.test(text[i])) i++;
+    }
+    if (i >= text.length || text[i] !== '{') return null;
+
+    const supplied = new Set<string>();
+    let depth = 0;
+    let expectingKey = true;
+
+    for (let j = i; j < text.length; j++) {
+        const ch = text[j];
+
+        if (ch === '"' || ch === "'") {
+            // At a key position a quoted string may be a quoted property key
+            // (e.g. `{ 'target': target }`). Only treat it as a key when a colon
+            // actually follows; otherwise it is a string value and we skip it.
+            const strEnd = skipString(text, j);
+            if (depth === 1 && expectingKey) {
+                const quotedKey = /^(['"])(.*?)\1\s*:/.exec(text.slice(strEnd));
+                if (quotedKey) {
+                    supplied.add(quotedKey[2]);
+                    j = strEnd - 1;
+                    expectingKey = false;
+                    continue;
+                }
+                return null; // unresolvable: a quoted token where a key is expected
+            }
+            j = strEnd - 1;
+            expectingKey = false;
+            continue;
+        }
+        if (ch === '`') {
+            j = skipTemplate(text, j) - 1;
+            expectingKey = false;
+            continue;
+        }
+        if (ch === '(' || ch === '[') {
+            // Skip the whole parenthesised / bracketed value.
+            const open = ch;
+            const close = open === '(' ? ')' : ']';
+            let d = 0;
+            while (j < text.length) {
+                const c = text[j];
+                if (c === '"' || c === "'") {
+                    j = skipString(text, j) - 1;
+                } else if (c === '`') {
+                    j = skipTemplate(text, j) - 1;
+                } else if (c === open) d++;
+                else if (c === close) {
+                    d--;
+                    if (d === 0) break;
+                }
+                j++;
+            }
+            expectingKey = false;
+            continue;
+        }
+        if (ch === '{') {
+            depth++;
+            if (depth === 1) {
+                expectingKey = true;
+                continue;
+            }
+            expectingKey = false;
+            continue;
+        }
+        if (ch === '}') {
+            depth--;
+            if (depth === 0) break;
+            expectingKey = false;
+            continue;
+        }
+        if (ch === ',') {
+            expectingKey = depth === 1;
+            continue;
+        }
+        if (/\s/.test(ch)) continue;
+
+        // Any other character while depth === 1 means we are at a property position.
+        if (depth === 1 && expectingKey) {
+            if (ch === '.' || ch === '[') return null; // spread or computed key
+            const prop = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*:/.exec(text.slice(j));
+            if (prop) {
+                supplied.add(prop[1]);
+                j += prop[0].length - 1;
+                expectingKey = false;
+                continue;
+            }
+            const ident = /^[A-Za-z_$][A-Za-z0-9_$]*/.exec(text.slice(j));
+            if (ident) {
+                const after = text.slice(j + ident[0].length);
+                if (/^\s*[},]/.test(after)) {
+                    // Shorthand `{ phone }`.
+                    supplied.add(ident[0]);
+                    j += ident[0].length - 1;
+                    expectingKey = false;
+                    continue;
+                }
+                return null; // unresolvable value position
+            }
+            return null;
+        }
+    }
+
+    if (depth !== 0) return null;
+    return supplied;
+}
+
 interface KeyUsage {
     file: string;
     line: number;
     key: string;
+    /** null when no statically-resolvable object literal accompanies the call */
+    suppliedVariables: Set<string> | null;
 }
 
 function extractKeyUsages(filePath: string): KeyUsage[] {
     const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n');
     const usages: KeyUsage[] = [];
+    const relativePath = path.relative(path.resolve(__dirname, '..'), filePath);
 
     // Match static string calls: t('key'), ctx.t('key'), targetT('key'), etc., and descriptionKey: 'key'
     const keyRegex =
         /(?:\b(?:ctx\.)?t|descriptionKey:\s*)\(\s*['"]([a-zA-Z0-9_.-]+)['"]|descriptionKey:\s*['"]([a-zA-Z0-9_.-]+)['"]/g;
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        let match: RegExpExecArray | null;
-        while ((match = keyRegex.exec(line)) !== null) {
-            const key = match[1] || match[2];
-            if (key && key.includes('.')) {
-                usages.push({
-                    file: path.relative(path.resolve(__dirname, '..'), filePath),
-                    line: i + 1,
-                    key
-                });
-            }
-        }
+    // The regex runs over the whole file rather than line-by-line, because the object
+    // literal supplying a template's variables frequently spans multiple lines.
+    // `match.index` is therefore an absolute offset into `content`.
+    let match: RegExpExecArray | null;
+    while ((match = keyRegex.exec(content)) !== null) {
+        const key = match[1] || match[2];
+        if (!key || !key.includes('.')) continue;
+
+        usages.push({
+            file: relativePath,
+            line: content.slice(0, match.index).split('\n').length,
+            key,
+            suppliedVariables: extractSuppliedVariables(content, match.index + match[0].length)
+        });
     }
 
     return usages;
 }
 
-function checkUsage(): boolean {
-    console.log('[check-i18n-usage] Scanning source code for i18n key references...');
-    const catalogKeys = loadAllLocaleKeys();
-    const tsFiles = walkTsFiles(srcDir);
+// ── Checks ───────────────────────────────────────────────────────────────────────
 
-    let missingCount = 0;
-    const missingUsages: KeyUsage[] = [];
+interface InterpolationGap {
+    file: string;
+    line: number;
+    key: string;
+    missing: string[];
+}
+
+/**
+ * A template that interpolates `{{vars}}` must be given those variables at every call
+ * site. When one is absent, i18next silently emits the raw placeholder to the end user,
+ * so this class of defect is invisible to a catalogue-parity check.
+ */
+function findInterpolationGaps(catalog: Catalog, tsFiles: string[]): InterpolationGap[] {
+    const gaps: InterpolationGap[] = [];
 
     for (const file of tsFiles) {
-        const usages = extractKeyUsages(file);
-        for (const usage of usages) {
-            if (!catalogKeys.has(usage.key)) {
-                // Ignore dynamic patterns or test fixtures if any
-                missingUsages.push(usage);
-                missingCount++;
+        for (const usage of extractKeyUsages(file)) {
+            const required = catalog.variables.get(usage.key);
+            if (!required || required.size === 0 || usage.suppliedVariables === null) continue;
+
+            const missing = [...required].filter((v) => !usage.suppliedVariables!.has(v));
+            if (missing.length > 0) {
+                gaps.push({ file: usage.file, line: usage.line, key: usage.key, missing });
             }
         }
     }
 
-    if (missingCount > 0) {
-        console.error(`[check-i18n-usage] Found ${missingCount} key reference(s) missing from catalog:`);
-        for (const m of missingUsages) {
-            console.error(`  - ${m.file}:${m.line} -> "${m.key}"`);
+    return gaps;
+}
+
+function checkUsage(): boolean {
+    console.log('[check-i18n-usage] Scanning source code for i18n key references...');
+    const catalog = loadCatalog();
+    const tsFiles = walkTsFiles(srcDir);
+
+    const missingKeys: KeyUsage[] = [];
+    for (const file of tsFiles) {
+        for (const usage of extractKeyUsages(file)) {
+            if (!catalog.keys.has(usage.key)) missingKeys.push(usage);
         }
-        return false;
     }
 
-    console.log(`✓ [check-i18n-usage] All static key references in source files exist in translation catalog.`);
+    let ok = true;
+
+    if (missingKeys.length > 0) {
+        ok = false;
+        console.error(`[check-i18n-usage] Found ${missingKeys.length} key reference(s) missing from catalog:`);
+        for (const m of missingKeys) {
+            console.error(`  - ${m.file}:${m.line} -> "${m.key}"`);
+        }
+    }
+
+    const gaps = findInterpolationGaps(catalog, tsFiles);
+    if (gaps.length > 0) {
+        ok = false;
+        console.error(
+            `[check-i18n-usage] Found ${gaps.length} call site(s) missing interpolation argument(s) ` +
+                '(these render as raw {{placeholders}} to end users):'
+        );
+        for (const g of gaps) {
+            console.error(`  - ${g.file}:${g.line} -> "${g.key}" is missing: ${g.missing.join(', ')}`);
+        }
+    }
+
+    if (!ok) return false;
+
+    console.log(
+        '✓ [check-i18n-usage] All static key references in source files exist in translation catalog, ' +
+            'and every call site supplies the variables its template interpolates.'
+    );
     return true;
 }
 
-const success = checkUsage();
-if (!success) {
+if (!checkUsage()) {
     process.exit(1);
 }

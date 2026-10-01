@@ -13,6 +13,88 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F26-P1] - 2026-10-01
+
+### Security
+
+- **Model-Controlled Confirmation Bypass (CWE-693, high severity).** `_confirmed` is the flag a
+  tool reads to skip interactive confirmation, but it arrived inside the model-controlled argument
+  bag. Because the tool JSON schemas do not declare `additionalProperties: false` and Groq does not
+  enforce it, an undeclared key survives `AgentSchemaNormalizer.normalizeTool` intact, so a model
+  that hallucinated the field — or was steered into emitting it by prompt injection — could satisfy
+  the confirmation gate and run a mutating action with no `.confirm` prompt. Reproduced locally: a
+  group member was removed via `group_moderation` with the flag smuggled into the tool-call
+  arguments.
+    - Added `AgentSchemaNormalizer.stripReservedFlags` and `RESERVED_CONTROL_FLAGS`, applied at the
+      trust boundary in `AgentExecutionLoop` before the arguments reach `tool.execute()` or
+      `AgentConfirmationManager.stageAction()`. The sanitised bag is used for both the unconfirmed
+      execution and the staged re-entry, so a smuggled flag can neither take effect now nor be
+      replayed after the user confirms. The trusted re-entry path remains the only writer of
+      `_confirmed`, and is documented as such.
+    - The `tools/bank.ts` `withdraw` / `transfer` gate shares the same read of `args._confirmed` and
+      is now covered by the same fix, closing the pre-existing instance of this weakness.
+    - The `[TIER2_EXEC]` log now prints the sanitised arguments so a smuggled flag cannot even
+      appear in the audit trail.
+
+### Fixed
+
+- **Raw `{{placeholder}}` leaking to end users.** `tools.group_invite.error`,
+  `tools.group_promote.error`, and `tools.group_demote.error` were called without the `phone` /
+  `target` variable their templates interpolate, so a failure path rendered the literal
+  `{{phone}}` / `{{target}}` to the user. All three call sites now supply the masked identifier.
+- **Unguarded `msg` dereference.** `resolveTargetJid` dereferenced `msg.message` without a guard,
+  which would throw if a `WAMessage` ever arrived malformed. Added a null check in the shared
+  helper (covering every `.group *` command) and an optional chain at the agent call site.
+- **Non-deterministic test aborting the agent-engine suite.** Test 16 (`.contact add` monospace)
+  used the alias `Ls Friends`, which the LLM-backed contact-name validator rejects as implausible.
+  The assertion therefore depended on model output and aborted the suite before Test 17 could run,
+  leaving the added tests unexercised. Switched to an alias the validator accepts, preserving the
+  test's actual purpose (spaced-alias monospace parsing).
+
+### Added
+
+- **`pnpm validate:i18n` now detects missing interpolation arguments.** `scripts/check-i18n-usage.ts`
+  previously verified only en/id catalogue parity and key existence, so it could not catch the
+  `{{placeholder}}` class of defect — which is why the defect above survived a green check. It now
+  resolves each template's `{{variables}}` and compares them against the object literal supplied at
+  every call site, reporting any variable the template needs but the call site omits. The argument
+  extractor tracks nested calls, objects, arrays, strings, and template literals so it does not
+  misread a nested expression as a property name, and it returns "unknown" for syntax it cannot
+  resolve statically (spread, computed keys), skipping those call sites rather than reporting a
+  false positive. The new check caught two further real instances (`group_promote.error`,
+  `group_demote.error`) beyond the three identified in review.
+
+### Tests
+
+- **Test 18 — confirmation-bypass regression.** Asserts at three levels that a model-supplied
+  `_confirmed: true` cannot skip confirmation: the sanitizer strips it and leaves the caller's
+  object untouched; an end-to-end run through the real `AgentExecutionLoop` with a stubbed model
+  that smuggles the flag stages the action instead of executing it and records no flag in the
+  staged arguments; and the trusted `.confirm` re-entry still executes afterwards.
+- **Test 19 — placeholder-leak regression.** Drives the `invite` and `blacklist_remove` failure
+  paths and asserts no raw `{{placeholder}}` appears in the user-facing error.
+
+---
+
+## [G2-F26-P0] - 2026-10-01
+
+### Added
+
+- **Cosmos Agent Engine Integration (Sara AI) for Group Moderation (Issue #48, sub-issue of #46):**
+    - **Milestone F26 — Natural-Language Group Administration.** Registered the Group Moderation System (Issue #46) with `CosmosAgentEngine` so Sara AI can perform group administration on a group admin's behalf. The `.group *` dot-prefixed commands remain fully available for scripted use.
+    - Introduced a single `group_moderation` agent tool with an `action` discriminator covering all fourteen moderation actions (`kick`, `close`, `open`, `invite`, `get_link`, `approve`, `reject`, `promote`, `demote`, `rename`, `description`, `blacklist_add`, `blacklist_remove`, `blacklist_list`) instead of fourteen separate tools, preserving the one-tool Tier 2 scope limit enforced by `AgentToolRegistry.getScopedGroqTools`.
+    - Cleared all four reachability blockers: added `group_moderation` to `POLICY_MAP` as `CONFIRMATION_REQUIRED`, registered the tool in `AgentToolRegistry.ensureInitialized()`, listed the tool and its full action map in the Tier 1 guidance prompt candidate list, and kept the agent-side name snake_case (`group_moderation`) so it survives `AgentSchemaNormalizer.sanitizeFunctionName` while the bot-side command names stay spaced per Rule AF.
+    - Re-derived the caller's admin status inside `execute()` through `ModerationService.isUserAdmin` rather than trusting `SaraPromptContext.isGroupAdmin`, which is deliberately not propagated into `AgentExecutionContext`. This keeps the agent path on the exact same LID/JID-aware identity resolution as the dot-prefixed commands (Rule E) and correctly honours the group-creator short circuit.
+    - Derived the target group exclusively from `ctx.chatJid` and never from model output, so no group JID, phone number, or participant identifier reaches the LLM and no `EphemeralTokenStore.mintToken` call site needed widening (Rule AB zero-knowledge).
+    - Staged every mutating action through `requiresConfirmation` / `confirmationPrompt`, wiring it into the existing two-phase `.confirm` flow and `.cancel` integration in `AgentConfirmationManager` with no bespoke machinery. Guard rails are re-evaluated on the confirmed re-entry, so admin status is validated against live group metadata at execution time (TOCTOU protection).
+    - Routed every user-facing string through `ctx.t` using the existing `tools.group_*` catalogs plus a new `tools.agent_moderation` confirmation and error block in both `en` and `id` (Rule O, Rule H).
+    - Delivered identifier-bearing read-only payloads (group invite link, blacklist roster) directly to the originating chat and handed the ReAct loop only a short acknowledgement, so participant phone numbers are masked out of the model context entirely.
+    - Normalized model-supplied phone input through the shared `cleanPhoneNumber` multi-token sanitizer (Rule AB), so `0812-3456-7890` resolves to `6281234567890`.
+    - Added a code-enforced Tier 1 policy gate in `AgentGuidancePlanner` that discards a `group_moderation` plan when the chat is not a group or the caller is not a group admin, mirroring the guard inside the tool so a misfiring planner never burns a Tier 2 turn.
+    - Documented the complete `.group *` command surface and the natural-language `.sara` path in `docs/COMMANDS_CONTEXT.md` so Sara can answer grounded questions about group moderation.
+
+---
+
 ## [G2-F25-P2] - 2026-10-01
 
 ### Refactored

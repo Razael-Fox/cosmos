@@ -11,7 +11,46 @@ export interface NormalizedGroqTool {
     };
 }
 
+/**
+ * Internal control flags that the ReAct runtime owns and the model must never set.
+ *
+ * These are transport-level switches between the unconfirmed and confirmed halves of a
+ * staged action, not tool parameters. They are deliberately absent from every tool JSON
+ * schema, but absence is not enforcement: Groq does not honour
+ * `additionalProperties: false`, and `AgentSchemaNormalizer.normalizeTool` rebuilds the
+ * schema from `properties` / `required` only. A model that hallucinates the flag, or is
+ * steered into emitting it by prompt injection, would otherwise be able to satisfy the
+ * interactive confirmation gate and run a mutating action with no `.confirm` prompt.
+ */
+export const RESERVED_CONTROL_FLAGS = ['_confirmed'] as const;
+
 export class AgentSchemaNormalizer {
+    /**
+     * Strips reserved internal control flags from a model-supplied argument bag.
+     *
+     * MUST be applied at the trust boundary before the args reach `tool.execute()` or
+     * `AgentConfirmationManager.stageAction()`. Returns a new object; the input is left
+     * untouched so callers cannot accidentally re-read the stripped value.
+     */
+    public static stripReservedFlags(args: Record<string, unknown>): Record<string, unknown> {
+        let found = false;
+        for (const flag of RESERVED_CONTROL_FLAGS) {
+            if (flag in args) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) return args;
+
+        const safe: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(args)) {
+            if (!(RESERVED_CONTROL_FLAGS as readonly string[]).includes(key)) {
+                safe[key] = value;
+            }
+        }
+        return safe;
+    }
+
     /**
      * Sanitizes a tool/function name to match ^[a-zA-Z0-9_-]+$ without leading dots/dashes.
      */
