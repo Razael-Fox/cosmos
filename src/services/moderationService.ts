@@ -1097,6 +1097,7 @@ export class ModerationService {
  * Resolves the target JID from message mentions, quoted message, or raw text input.
  */
 export function resolveTargetJid(msg: WAMessage, input?: string): string | null {
+    if (!msg) return null;
     const mentions = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid;
     if (mentions && mentions.length > 0 && mentions[0]) {
         return mentions[0];

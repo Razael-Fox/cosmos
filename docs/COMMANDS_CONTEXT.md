@@ -258,7 +258,7 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 ## 9.1 Moderasi Grup (Group Moderation — Admin Only)
 
-Seluruh perintah di bawah ini hanya dapat dipakai **di dalam obrolan grup**, hanya oleh **admin grup**, dan hanya berlaku pada grup tempat perintah dikirim. R-prefixed aliases tersedia untuk perintah yang umum dipakai.
+Seluruh perintah di bawah ini hanya dapat dipakai **di dalam obrolan grup**, hanya oleh **admin grup**, dan hanya berlaku pada grup tempat perintah dikirim. Alias singkat berawalan `g` tersedia untuk perintah yang umum dipakai.
 
 | Perintah                                 | Alias                      | Fungsi                                           |
 | :--------------------------------------- | :------------------------- | :----------------------------------------------- |
@@ -282,7 +282,7 @@ Seluruh perintah di bawah ini hanya dapat dipakai **di dalam obrolan grup**, han
 - **Fungsi:** Menjalankan tindakan moderasi grup dalam bahasa alami, misalnya `.sara keluarkan dia`, `.sara tutup grup ini`, atau `.sara ganti judul grup jadi Tim Cosmos`.
 - **Penggunaan:** `.sara <permintaan>` di dalam grup, sebagai admin grup.
 - **Catatan:**
-    - Sara hanya dapat memoderasi **grup tempat percakapan sedang berlangsung**. Permintaan untuk mengmoderate grup lain tidak didukung.
+    - Sara hanya dapat memoderasi **grup tempat percakapan sedang berlangsung**. Permintaan untuk memoderasi grup lain tidak didukung.
     - Setiap tindakan yang mengubah state grup memerlukan konfirmasi. Balas `.confirm` untuk melanjutkan atau `.cancel` untuk membatalkan.
     - Tindakan baca-saja (`.group link` dan daftar hitam) langsung dijawab tanpa konfirmasi.
     - Jika admin membalas pesan atau menyebut `@anggota`, anggota itulah yang menjadi target. Jika tidak, sebutkan nomor teleponnya.

@@ -19,6 +19,8 @@ import { CosmosAgentEngine } from '../src/services/agentEngine/index.js';
 import { bankTool } from '../src/services/agentEngine/tools/bank.js';
 import { sendMessageTool } from '../src/services/agentEngine/tools/sendMessage.js';
 import { groupModerationTool } from '../src/services/agentEngine/tools/groupModeration.js';
+import { AgentExecutionLoop } from '../src/services/agentEngine/executionLoop.js';
+import { AgentExecutor } from '../src/services/agentEngine/executor.js';
 import { prisma } from '../src/db.js';
 import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/tools/contact.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
@@ -859,25 +861,25 @@ async function runTests() {
     console.log('[Test 16] Testing .contact add & del with WhatsApp monospace formatting...');
 
     // Parsing checks
-    const parsed1 = parseContactAddArgs('`Ls Friends` 123456789');
-    assert.strictEqual(parsed1.alias, 'Ls Friends');
+    const parsed1 = parseContactAddArgs('`Budi Santoso` 123456789');
+    assert.strictEqual(parsed1.alias, 'Budi Santoso');
     assert.strictEqual(parsed1.phoneInput, '123456789');
 
-    const parsed2 = parseContactAddArgs('```Ls Friends``` +62 812 3456 789');
-    assert.strictEqual(parsed2.alias, 'Ls Friends');
+    const parsed2 = parseContactAddArgs('```Budi Santoso``` +62 812 3456 789');
+    assert.strictEqual(parsed2.alias, 'Budi Santoso');
     assert.strictEqual(parsed2.phoneInput, '+62 812 3456 789');
 
     const parsed3 = parseContactAddArgs('Mom 6281234567890');
     assert.strictEqual(parsed3.alias, 'Mom');
     assert.strictEqual(parsed3.phoneInput, '6281234567890');
 
-    const parsed4 = parseContactAddArgs('`Ls Friends`');
-    assert.strictEqual(parsed4.alias, 'Ls Friends');
+    const parsed4 = parseContactAddArgs('`Budi Santoso`');
+    assert.strictEqual(parsed4.alias, 'Budi Santoso');
     assert.strictEqual(parsed4.phoneInput, '');
 
-    assert.strictEqual(parseContactDelArgs('`Ls Friends`'), 'Ls Friends');
-    assert.strictEqual(parseContactDelArgs('```Ls Friends```'), 'Ls Friends');
-    assert.strictEqual(parseContactDelArgs('Ls Friends'), 'Ls Friends');
+    assert.strictEqual(parseContactDelArgs('`Budi Santoso`'), 'Budi Santoso');
+    assert.strictEqual(parseContactDelArgs('```Budi Santoso```'), 'Budi Santoso');
+    assert.strictEqual(parseContactDelArgs('Budi Santoso'), 'Budi Santoso');
 
     // End-to-end tool execution check
     const contactTestUser = '628199999999@s.whatsapp.net';
@@ -898,7 +900,7 @@ async function runTests() {
 
     const contactMockMsg = {
         key: { remoteJid: contactTestUser, participant: contactTestUser, fromMe: false },
-        message: { conversation: '.contact add `Ls Friends` 123456789' }
+        message: { conversation: '.contact add `Budi Santoso` 123456789' }
     };
 
     const contactCtx = {
@@ -909,33 +911,33 @@ async function runTests() {
     };
 
     // Execute add
-    await contactTool.execute({ rawText: 'add `Ls Friends` 123456789' }, contactCtx);
-    assert(lastContactSentText.includes('Ls Friends'), 'Success message must mention Ls Friends');
+    await contactTool.execute({ rawText: 'add `Budi Santoso` 123456789' }, contactCtx);
+    assert(lastContactSentText.includes('Budi Santoso'), 'Success message must mention Budi Santoso');
     assert(lastContactSentText.includes('12345****6789'), 'Success message must contain masked number');
 
     const savedEntry = await prisma.userContactBook.findUnique({
         where: {
             ownerJid_alias: {
                 ownerJid: contactTestUser,
-                alias: 'ls friends'
+                alias: 'budi santoso'
             }
         }
     });
-    assert(savedEntry, 'Contact "ls friends" must exist in database');
+    assert(savedEntry, 'Contact "budi santoso" must exist in database');
 
     // Execute delete
-    await contactTool.execute({ rawText: 'del `Ls Friends`' }, contactCtx);
+    await contactTool.execute({ rawText: 'del `Budi Santoso`' }, contactCtx);
     assert(lastContactSentText.includes('deleted'), 'Delete message must confirm deletion');
 
     const deletedEntry = await prisma.userContactBook.findUnique({
         where: {
             ownerJid_alias: {
                 ownerJid: contactTestUser,
-                alias: 'ls friends'
+                alias: 'budi santoso'
             }
         }
     });
-    assert.strictEqual(deletedEntry, null, 'Contact "ls friends" must be deleted from database');
+    assert.strictEqual(deletedEntry, null, 'Contact "budi santoso" must be deleted from database');
     console.log('  ✔ .contact add and del with WhatsApp monospace verified successfully.');
     // =========================================================================
     // Test 17. Group Moderation Tool — Policy, Registry, Schema, and Execution
@@ -1233,6 +1235,201 @@ async function runTests() {
     console.log(
         '  ✔ group_moderation guards, read-only bypass, confirmation staging, and confirmed execution verified.'
     );
+
+    // ── Security regression: a model must never be able to skip confirmation ──────
+    // `_confirmed` is the flag that lets a tool bypass interactive confirmation. It lives
+    // inside the model-controlled argument bag, so a hallucinated or injected flag would
+    // otherwise satisfy the confirmation gate and run a mutating action with no `.confirm`
+    // prompt. This asserts the gate holds at the trust boundary in AgentExecutionLoop.
+    console.log('[Test 18] Testing that model-supplied _confirmed cannot bypass confirmation...');
+
+    // 18a. Unit-level: the sanitizer strips reserved flags and leaves the input untouched
+    const smuggledArgs = { action: 'kick', targetPhone: '6281234567890', _confirmed: true };
+    const sanitizedArgs = AgentSchemaNormalizer.stripReservedFlags(smuggledArgs);
+    assert(!('_confirmed' in sanitizedArgs), 'stripReservedFlags must remove the reserved _confirmed flag');
+    assert.strictEqual(sanitizedArgs.action, 'kick', 'stripReservedFlags must preserve legitimate arguments');
+    assert.strictEqual(sanitizedArgs.targetPhone, '6281234567890', 'stripReservedFlags must preserve other arguments');
+    assert('_confirmed' in smuggledArgs, 'stripReservedFlags must not mutate the caller-supplied object');
+
+    const cleanArgs = { action: 'kick' };
+    assert(
+        AgentSchemaNormalizer.stripReservedFlags(cleanArgs) === cleanArgs,
+        'stripReservedFlags must be a no-op when no reserved flag is present'
+    );
+
+    // 18b. End-to-end through the real execution loop with a model that smuggles the flag.
+    // AgentExecutor.executeTurn is stubbed so no network call is made and the only thing
+    // under test is how the loop handles model-controlled arguments.
+    // Must match the extra participant added by makeMetadata(..., true)
+    const victimJid = '628222222222@s.whatsapp.net';
+    let kickReached = false;
+    const loopSock = {
+        user: { id: BOT_JID },
+        groupMetadata: async () => makeMetadata('admin', true),
+        groupParticipantsUpdate: async () => {
+            kickReached = true;
+            return [{ status: '200' }];
+        },
+        sendMessage: async () => undefined,
+        sendPresenceUpdate: async () => undefined
+    } as unknown as WASocket;
+
+    const loopExecCtx = {
+        sock: loopSock,
+        msg: makeMsg(GROUP_JID, CALLER_JID),
+        chatJid: GROUP_JID,
+        callerJid: CALLER_JID,
+        callerName: 'Admin',
+        isOwner: false,
+        locale: 'en',
+        t: tEn
+    } as unknown as AgentExecutionContext;
+
+    const loopPromptCtx = {
+        callerName: 'Admin',
+        callerJid: CALLER_JID,
+        isOwner: false,
+        isGroupAdmin: true,
+        hasIdCard: true,
+        chatType: 'group' as const,
+        groupTitle: 'Test Group',
+        chatJid: GROUP_JID,
+        botName: 'Sara',
+        locale: 'en',
+        knownContactTokens: [],
+        referencedMessage: null
+    };
+
+    const originalExecuteTurn = AgentExecutor.executeTurn;
+    AgentExecutor.executeTurn = async () => ({
+        message: {
+            role: 'assistant' as const,
+            content: null,
+            tool_calls: [
+                {
+                    id: 'call_injected_confirmed',
+                    type: 'function' as const,
+                    function: {
+                        name: 'group_moderation',
+                        // A malicious model injects the reserved control flag.
+                        arguments: JSON.stringify({
+                            action: 'kick',
+                            targetPhone: '628222222222',
+                            _confirmed: true
+                        })
+                    }
+                }
+            ]
+        },
+        finishReason: 'tool_calls',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+    });
+
+    AgentConfirmationManager.clearAll();
+    ModerationService.clearRateLimit(GROUP_JID);
+
+    let loopReply: string;
+    try {
+        loopReply = await AgentExecutionLoop.run('kick that person', loopPromptCtx, loopExecCtx, {
+            intent: 'GROUP_MODERATION',
+            primaryTool: 'group_moderation'
+        });
+    } finally {
+        AgentExecutor.executeTurn = originalExecuteTurn;
+    }
+
+    assert.strictEqual(kickReached, false, 'A model-supplied _confirmed flag must NOT reach the mutating Baileys call');
+    assert(
+        String(loopReply).includes('.confirm'),
+        'The user must be shown a confirmation prompt instead of the action being executed'
+    );
+
+    const staged = AgentConfirmationManager.findAction(CALLER_JID, GROUP_JID);
+    assert(staged !== undefined, 'The action must be staged for confirmation');
+    assert(
+        !('_confirmed' in (staged!.arguments as Record<string, unknown>)),
+        'The staged arguments must not carry a reserved control flag'
+    );
+
+    // 18c. The trusted re-entry path must still work after the user replies .confirm
+    ModerationService.clearRateLimit(GROUP_JID);
+    const confirmed = await AgentConfirmationManager.processConfirmation(
+        loopSock,
+        makeMsg(GROUP_JID, CALLER_JID),
+        CALLER_JID,
+        GROUP_JID,
+        '.confirm'
+    );
+    assert.strictEqual(confirmed, true, 'The .confirm reply must be handled by the confirmation manager');
+    assert.strictEqual(kickReached, true, 'After an explicit .confirm the trusted re-entry path MUST execute the kick');
+    assert.strictEqual(victimJid, '628222222222@s.whatsapp.net', 'Sanity check on the fixture target');
+
+    AgentConfirmationManager.clearAll();
+    ModerationService.clearRateLimit(GROUP_JID);
+    console.log('  ✔ Model-supplied _confirmed is stripped at the trust boundary; the trusted path still works.');
+
+    // ── Finding 1 regression: interpolation arguments must reach every template ────
+    // `pnpm validate:i18n` checks en/id parity and key existence, but NOT whether a call
+    // site supplies the variables its template interpolates. These assertions close that gap.
+    console.log('[Test 19] Testing that no raw {{placeholder}} leaks to end users...');
+
+    const placeholderLeakCtx = buildCtx({
+        groupMetadata: async () => makeMetadata('admin'),
+        groupInviteCode: async () => 'AbCdEfGhIjKlMn',
+        sendMessage: async () => undefined
+    });
+    // Force the invite DM to fail so the `tools.group_invite.error` template is exercised.
+    const failingInviteCtx = {
+        ...placeholderLeakCtx,
+        sock: {
+            ...(placeholderLeakCtx.sock as unknown as Record<string, unknown>),
+            sendMessage: async () => {
+                throw new Error('blocked');
+            }
+        }
+    } as unknown as AgentExecutionContext;
+    ModerationService.clearRateLimit(GROUP_JID);
+    const inviteFail = await groupModerationTool.execute(
+        { action: 'invite', targetPhone: '6285555555555', _confirmed: true },
+        failingInviteCtx
+    );
+    assert.strictEqual(inviteFail.success, false, 'A failed invite must report failure');
+    assert(
+        !/\{\{\s*\w+\s*\}\}/.test(String(inviteFail.error)),
+        `Invite error must not leak a raw placeholder: ${inviteFail.error}`
+    );
+
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: GROUP_JID } });
+    const blCtx = buildCtx(
+        { groupMetadata: async () => makeMetadata('admin', true) },
+        {
+            contextInfo: { mentionedJid: ['628222222222@s.whatsapp.net'] }
+        }
+    );
+    ModerationService.clearRateLimit(GROUP_JID);
+    const blAdd = await groupModerationTool.execute({ action: 'blacklist_add', _confirmed: true }, blCtx);
+    assert.strictEqual(blAdd.success, true, 'blacklist_add must succeed for an admin');
+
+    // A different member, so this exercises the NOT_BLACKLISTED error template
+    // rather than a successful removal of the entry added just above.
+    const blRemoveCtx = buildCtx(
+        { groupMetadata: async () => makeMetadata('admin') },
+        {
+            contextInfo: { mentionedJid: ['628666666666@s.whatsapp.net'] }
+        }
+    );
+    ModerationService.clearRateLimit(GROUP_JID);
+    const blRemoveFail = await groupModerationTool.execute(
+        { action: 'blacklist_remove', _confirmed: true },
+        blRemoveCtx
+    );
+    assert.strictEqual(blRemoveFail.success, false, 'Removing a non-blacklisted member must fail');
+    assert(
+        !/\{\{\s*\w+\s*\}\}/.test(String(blRemoveFail.error)),
+        `Blacklist error must not leak a raw placeholder: ${blRemoveFail.error}`
+    );
+    await prisma.groupBlacklist.deleteMany({ where: { groupJid: GROUP_JID } });
+    console.log('  ✔ Error templates receive their interpolation arguments; no raw {{placeholder}} escapes.');
     console.log('\n======================================================');
     console.log('🎉 ALL COSMOS AGENT ENGINE TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('======================================================\n');

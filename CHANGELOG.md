@@ -13,6 +13,69 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F26-P1] - 2026-10-01
+
+### Security
+
+- **Model-Controlled Confirmation Bypass (CWE-693, high severity).** `_confirmed` is the flag a
+  tool reads to skip interactive confirmation, but it arrived inside the model-controlled argument
+  bag. Because the tool JSON schemas do not declare `additionalProperties: false` and Groq does not
+  enforce it, an undeclared key survives `AgentSchemaNormalizer.normalizeTool` intact, so a model
+  that hallucinated the field — or was steered into emitting it by prompt injection — could satisfy
+  the confirmation gate and run a mutating action with no `.confirm` prompt. Reproduced locally: a
+  group member was removed via `group_moderation` with the flag smuggled into the tool-call
+  arguments.
+    - Added `AgentSchemaNormalizer.stripReservedFlags` and `RESERVED_CONTROL_FLAGS`, applied at the
+      trust boundary in `AgentExecutionLoop` before the arguments reach `tool.execute()` or
+      `AgentConfirmationManager.stageAction()`. The sanitised bag is used for both the unconfirmed
+      execution and the staged re-entry, so a smuggled flag can neither take effect now nor be
+      replayed after the user confirms. The trusted re-entry path remains the only writer of
+      `_confirmed`, and is documented as such.
+    - The `tools/bank.ts` `withdraw` / `transfer` gate shares the same read of `args._confirmed` and
+      is now covered by the same fix, closing the pre-existing instance of this weakness.
+    - The `[TIER2_EXEC]` log now prints the sanitised arguments so a smuggled flag cannot even
+      appear in the audit trail.
+
+### Fixed
+
+- **Raw `{{placeholder}}` leaking to end users.** `tools.group_invite.error`,
+  `tools.group_promote.error`, and `tools.group_demote.error` were called without the `phone` /
+  `target` variable their templates interpolate, so a failure path rendered the literal
+  `{{phone}}` / `{{target}}` to the user. All three call sites now supply the masked identifier.
+- **Unguarded `msg` dereference.** `resolveTargetJid` dereferenced `msg.message` without a guard,
+  which would throw if a `WAMessage` ever arrived malformed. Added a null check in the shared
+  helper (covering every `.group *` command) and an optional chain at the agent call site.
+- **Non-deterministic test aborting the agent-engine suite.** Test 16 (`.contact add` monospace)
+  used the alias `Ls Friends`, which the LLM-backed contact-name validator rejects as implausible.
+  The assertion therefore depended on model output and aborted the suite before Test 17 could run,
+  leaving the added tests unexercised. Switched to an alias the validator accepts, preserving the
+  test's actual purpose (spaced-alias monospace parsing).
+
+### Added
+
+- **`pnpm validate:i18n` now detects missing interpolation arguments.** `scripts/check-i18n-usage.ts`
+  previously verified only en/id catalogue parity and key existence, so it could not catch the
+  `{{placeholder}}` class of defect — which is why the defect above survived a green check. It now
+  resolves each template's `{{variables}}` and compares them against the object literal supplied at
+  every call site, reporting any variable the template needs but the call site omits. The argument
+  extractor tracks nested calls, objects, arrays, strings, and template literals so it does not
+  misread a nested expression as a property name, and it returns "unknown" for syntax it cannot
+  resolve statically (spread, computed keys), skipping those call sites rather than reporting a
+  false positive. The new check caught two further real instances (`group_promote.error`,
+  `group_demote.error`) beyond the three identified in review.
+
+### Tests
+
+- **Test 18 — confirmation-bypass regression.** Asserts at three levels that a model-supplied
+  `_confirmed: true` cannot skip confirmation: the sanitizer strips it and leaves the caller's
+  object untouched; an end-to-end run through the real `AgentExecutionLoop` with a stubbed model
+  that smuggles the flag stages the action instead of executing it and records no flag in the
+  staged arguments; and the trusted `.confirm` re-entry still executes afterwards.
+- **Test 19 — placeholder-leak regression.** Drives the `invite` and `blacklist_remove` failure
+  paths and asserts no raw `{{placeholder}}` appears in the user-facing error.
+
+---
+
 ## [G2-F26-P0] - 2026-10-01
 
 ### Added

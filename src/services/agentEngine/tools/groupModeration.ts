@@ -45,7 +45,10 @@ async function deriveIsGroupAdmin(modService: ModerationService, groupJid: strin
  *     sanitized through the shared multi-token phone normalizer before use (Rule AB).
  */
 function resolveTarget(ctx: AgentExecutionContext, targetPhone: unknown): string | null {
-    const fromMessage = resolveTargetJid(ctx.msg);
+    // `ctx.msg` is typed non-optional in AgentExecutionContext, but resolveTargetJid
+    // dereferences `msg.message` unguarded. The optional chain is cheap insurance
+    // against a crash in a tool that only exists to serve a confirmation prompt.
+    const fromMessage = ctx.msg ? resolveTargetJid(ctx.msg) : null;
     if (fromMessage) return fromMessage;
 
     if (typeof targetPhone === 'string') {
@@ -383,7 +386,10 @@ export const groupModerationTool: AgentTool = {
                         };
                     return {
                         success: false,
-                        error: t('tools.group_invite.error', { error: explainStatus(t, r.message) })
+                        error: t('tools.group_invite.error', {
+                            phone: maskPhoneNumber(invitePhone),
+                            error: explainStatus(t, r.message)
+                        })
                     };
                 }
 
@@ -426,7 +432,10 @@ export const groupModerationTool: AgentTool = {
                         };
                     return {
                         success: false,
-                        error: t('tools.group_promote.error', { error: explainStatus(t, r.message) })
+                        error: t('tools.group_promote.error', {
+                            target: maskedTarget,
+                            error: explainStatus(t, r.message)
+                        })
                     };
                 }
 
@@ -443,7 +452,10 @@ export const groupModerationTool: AgentTool = {
                         };
                     return {
                         success: false,
-                        error: t('tools.group_demote.error', { error: explainStatus(t, r.message) })
+                        error: t('tools.group_demote.error', {
+                            target: maskedTarget,
+                            error: explainStatus(t, r.message)
+                        })
                     };
                 }
 
@@ -485,7 +497,10 @@ export const groupModerationTool: AgentTool = {
                         };
                     return {
                         success: false,
-                        error: t('tools.group_blacklist_add.error', { error: explainStatus(t, r.message) })
+                        error: t('tools.group_blacklist_add.error', {
+                            target: maskedTarget,
+                            error: explainStatus(t, r.message)
+                        })
                     };
                 }
 
@@ -499,7 +514,10 @@ export const groupModerationTool: AgentTool = {
                         };
                     return {
                         success: false,
-                        error: t('tools.group_blacklist_remove.error', { error: explainStatus(t, r.message) })
+                        error: t('tools.group_blacklist_remove.error', {
+                            target: maskedTarget,
+                            error: explainStatus(t, r.message)
+                        })
                     };
                 }
 
