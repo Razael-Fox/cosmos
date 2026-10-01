@@ -256,6 +256,39 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
 
 ---
 
+## 9.1 Moderasi Grup (Group Moderation — Admin Only)
+
+Seluruh perintah di bawah ini hanya dapat dipakai **di dalam obrolan grup**, hanya oleh **admin grup**, dan hanya berlaku pada grup tempat perintah dikirim. R-prefixed aliases tersedia untuk perintah yang umum dipakai.
+
+| Perintah                                 | Alias                      | Fungsi                                           |
+| :--------------------------------------- | :------------------------- | :----------------------------------------------- |
+| `.group kick <target>`                   | `.gkick`, `.g kick`        | Mengeluarkan anggota non-admin dari grup.        |
+| `.group close`                           | `.gclose`, `.g close`      | Mengatur grup ke mode pesan khusus admin.        |
+| `.group open`                            | `.gopen`, `.g open`        | Mengizinkan seluruh anggota mengirim pesan.      |
+| `.group invite <phone>`                  | `.ginvite`, `.g invite`    | Mengirim tautan undangan via pesan langsung.     |
+| `.group link`                            | `.glink`, `.g link`        | Menampilkan tautan undangan grup.                |
+| `.group approve <target>`                | `.gapprove`, `.g approve`  | Menyetujui permintaan bergabung tertunda.        |
+| `.group reject <target>`                 | `.greject`, `.g reject`    | Menolak permintaan bergabung tertunda.           |
+| `.group promote <target>`                | `.gpromote`, `.g promote`  | Memberikan hak admin kepada anggota.             |
+| `.group demote <target>`                 | `.gdemote`, `.g demote`    | Mencabut hak admin dari admin grup.              |
+| `.group rename <name>`                   | `.grename`, `.g rename`    | Mengubah judul grup (maksimal 25 karakter).      |
+| `.group description <desc>`              | `.gdesc`, `.g description` | Mengubah deskripsi grup (maksimal 512 karakter). |
+| `.group blacklist add <target> [reason]` | `.gbl add`                 | Menambahkan anggota ke daftar hitam grup.        |
+| `.group blacklist remove <target>`       | `.gbl remove`              | Menghapus anggota dari daftar hitam grup.        |
+| `.group blacklist list`                  | `.gbl list`                | Menampilkan daftar hitam grup.                   |
+
+### `.sara <permintaan moderasi>` (Moderasi Lewat Sara AI)
+
+- **Fungsi:** Menjalankan tindakan moderasi grup dalam bahasa alami, misalnya `.sara keluarkan dia`, `.sara tutup grup ini`, atau `.sara ganti judul grup jadi Tim Cosmos`.
+- **Penggunaan:** `.sara <permintaan>` di dalam grup, sebagai admin grup.
+- **Catatan:**
+    - Sara hanya dapat memoderasi **grup tempat percakapan sedang berlangsung**. Permintaan untuk mengmoderate grup lain tidak didukung.
+    - Setiap tindakan yang mengubah state grup memerlukan konfirmasi. Balas `.confirm` untuk melanjutkan atau `.cancel` untuk membatalkan.
+    - Tindakan baca-saja (`.group link` dan daftar hitam) langsung dijawab tanpa konfirmasi.
+    - Jika admin membalas pesan atau menyebut `@anggota`, anggota itulah yang menjadi target. Jika tidak, sebutkan nomor teleponnya.
+
+---
+
 ## 10. System, Help & Administration (Bantuan & Administrasi)
 
 ### `.menu` / `.help` (Navigasi Sistem & Bantuan)
