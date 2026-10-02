@@ -27,6 +27,15 @@ export interface StatusNotifierConfig {
         /** Whether to fall back to an owner direct message. */
         fallbackToOwnerDm: boolean;
     };
+    backupArtifacts: {
+        /**
+         * Explicit opt-in for uploading the raw SQLite snapshot to file-capable
+         * status channels (Discord, WhatsApp). Defaults to off: the database
+         * contains session credentials and financial records, so exfiltration
+         * to broad channel audiences requires a deliberate decision.
+         */
+        enabled: boolean;
+    };
     /** Minimum severity that gets dispatched to external channels. */
     minSeverity: NotifySeverity;
     /** Cron expression for the outbox retry worker. */
@@ -84,7 +93,10 @@ export function getStatusNotifierConfig(forceReload = false): StatusNotifierConf
     const discordUrl = firstNonEmpty(process.env.DISCORD_STATUS_WEBHOOK_URL);
     const slackUrl = firstNonEmpty(process.env.SLACK_STATUS_WEBHOOK_URL);
     const newsletterJid = firstNonEmpty(process.env.WA_STATUS_NEWSLETTER_JID, process.env.WA_STATUS_CHANNEL_ID);
-    const ownerJid = firstNonEmpty(process.env.WA_STATUS_OWNER_JID, process.env.OWNER_PHONE_NUMBER);
+    // Explicit owner JID only. The transport resolves the primary owner number
+    // via getOwnerNumbers() when unset, so a comma-separated
+    // OWNER_PHONE_NUMBER list is never mangled into a single invalid JID.
+    const ownerJid = firstNonEmpty(process.env.WA_STATUS_OWNER_JID);
 
     cached = {
         enabled: masterEnabled,
@@ -103,6 +115,9 @@ export function getStatusNotifierConfig(forceReload = false): StatusNotifierConf
             fallbackToOwnerDm: parseBoolean(process.env.WA_STATUS_FALLBACK_DM, true)
         },
         minSeverity: parseSeverity(process.env.STATUS_NOTIFY_MIN_SEVERITY, 'WARN'),
+        backupArtifacts: {
+            enabled: masterEnabled && parseBoolean(process.env.STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED, false)
+        },
         outboxCronExpression: firstNonEmpty(process.env.STATUS_NOTIFY_OUTBOX_CRON) ?? '*/2 * * * *',
         auditDigestCronExpression: firstNonEmpty(process.env.STATUS_NOTIFY_DIGEST_CRON) ?? '0 23 * * *',
         requestTimeoutMs: Number(process.env.STATUS_NOTIFY_TIMEOUT_MS) || 10000,
@@ -126,7 +141,8 @@ export function logStatusNotifierConfig(): void {
         `[StatusNotifier] enabled=${config.enabled} minSeverity=${config.minSeverity} ` +
             `discord=${config.discord.enabled}(${maskSecret(config.discord.webhookUrl)}) ` +
             `slack=${config.slack.enabled}(${maskSecret(config.slack.webhookUrl)}) ` +
-            `whatsapp=${config.whatsapp.enabled}(${config.whatsapp.newsletterJid ?? '(unset)'})`
+            `whatsapp=${config.whatsapp.enabled}(${config.whatsapp.newsletterJid ?? '(unset)'}) ` +
+            `backupArtifacts=${config.backupArtifacts.enabled}`
     );
 }
 

@@ -13,6 +13,26 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F28-P2] - 2026-10-02
+
+### Fixed (Independent re-review on PR #55)
+
+- **Raw database artifacts now explicit opt-in (default off):** `runBackupCycle`
+  uploads the SQLite snapshot to Discord/WhatsApp only when
+  `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED=true`. The snapshot contains session
+  credentials and financial records — hash/metadata-only alerts are always sent
+  regardless.
+- **Owner-DM fallback no longer mangles multi-owner lists:** the transport
+  resolves the primary owner via `getOwnerNumbers()` instead of collapsing the
+  comma-separated `OWNER_PHONE_NUMBER` into one invalid JID.
+- **Outbox rows validated before dispatch:** persisted event/severity/channel
+  discriminators and payload shape are checked against `NOTIFY_EVENTS`,
+  `NOTIFY_SEVERITIES`, and the channel union; invalid rows terminally fail.
+- **Rule AF aliases:** dropped the single-token underscore aliases
+  `status_notify` / `status_report`; spaced multi-word names remain canonical.
+
+---
+
 ## [G2-F28-P1] - 2026-10-02
 
 ### Fixed (CodeRabbit review on PR #55)

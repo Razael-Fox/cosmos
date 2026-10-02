@@ -50,23 +50,24 @@ connect does not trigger a false outage.
 
 ## 3. Environment variables
 
-| Variable                     | Default       | Purpose                                                         |
-| :--------------------------- | :------------ | :-------------------------------------------------------------- |
-| `STATUS_NOTIFY_ENABLED`      | `true`        | Master switch (console logging always remains).                 |
-| `STATUS_NOTIFY_MIN_SEVERITY` | `WARN`        | Minimum severity dispatched to external channels.               |
-| `DISCORD_STATUS_WEBHOOK_URL` | —             | Discord webhook URL (empty = disabled).                         |
-| `DISCORD_STATUS_ENABLED`     | `true`        | Per-channel toggle.                                             |
-| `SLACK_STATUS_WEBHOOK_URL`   | —             | Slack incoming webhook URL (empty = disabled).                  |
-| `SLACK_STATUS_ENABLED`       | `true`        | Per-channel toggle.                                             |
-| `WA_STATUS_NEWSLETTER_JID`   | —             | WhatsApp channel JID, e.g. `1234567890@newsletter`.             |
-| `WA_STATUS_CHANNEL_ID`       | —             | Alias for the channel JID.                                      |
-| `WA_STATUS_ENABLED`          | `true`        | Per-channel toggle.                                             |
-| `WA_STATUS_OWNER_JID`        | —             | Owner JID for DM fallback (falls back to `OWNER_PHONE_NUMBER`). |
-| `WA_STATUS_FALLBACK_DM`      | `true`        | Enable owner-DM fallback when the channel send fails.           |
-| `STATUS_NOTIFY_OUTBOX_CRON`  | `*/2 * * * *` | Outbox retry worker schedule.                                   |
-| `STATUS_NOTIFY_DIGEST_CRON`  | `0 23 * * *`  | Audit digest schedule (WIB).                                    |
-| `STATUS_NOTIFY_TIMEOUT_MS`   | `10000`       | Per-request HTTP timeout.                                       |
-| `STATUS_NOTIFY_MAX_ATTEMPTS` | `3`           | Delivery attempts before outbox terminal failure.               |
+| Variable                                 | Default       | Purpose                                                                                                                                                                                |
+| :--------------------------------------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `STATUS_NOTIFY_ENABLED`                  | `true`        | Master switch (console logging always remains).                                                                                                                                        |
+| `STATUS_NOTIFY_MIN_SEVERITY`             | `WARN`        | Minimum severity dispatched to external channels.                                                                                                                                      |
+| `DISCORD_STATUS_WEBHOOK_URL`             | —             | Discord webhook URL (empty = disabled).                                                                                                                                                |
+| `DISCORD_STATUS_ENABLED`                 | `true`        | Per-channel toggle.                                                                                                                                                                    |
+| `SLACK_STATUS_WEBHOOK_URL`               | —             | Slack incoming webhook URL (empty = disabled).                                                                                                                                         |
+| `SLACK_STATUS_ENABLED`                   | `true`        | Per-channel toggle.                                                                                                                                                                    |
+| `WA_STATUS_NEWSLETTER_JID`               | —             | WhatsApp channel JID, e.g. `1234567890@newsletter`.                                                                                                                                    |
+| `WA_STATUS_CHANNEL_ID`                   | —             | Alias for the channel JID.                                                                                                                                                             |
+| `WA_STATUS_ENABLED`                      | `true`        | Per-channel toggle.                                                                                                                                                                    |
+| `WA_STATUS_OWNER_JID`                    | —             | Owner JID for DM fallback (falls back to the primary `OWNER_PHONE_NUMBER`, correctly handling comma-separated lists).                                                                  |
+| `WA_STATUS_FALLBACK_DM`                  | `true`        | Enable owner-DM fallback when the channel send fails.                                                                                                                                  |
+| `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED` | `false`       | **Opt-in** for raw SQLite file uploads to Discord/WhatsApp. **Warning:** the snapshot contains session credentials and financial records — enable only for a trusted recovery channel. |
+| `STATUS_NOTIFY_OUTBOX_CRON`              | `*/2 * * * *` | Outbox retry worker schedule.                                                                                                                                                          |
+| `STATUS_NOTIFY_DIGEST_CRON`              | `0 23 * * *`  | Audit digest schedule (WIB).                                                                                                                                                           |
+| `STATUS_NOTIFY_TIMEOUT_MS`               | `10000`       | Per-request HTTP timeout.                                                                                                                                                              |
+| `STATUS_NOTIFY_MAX_ATTEMPTS`             | `3`           | Delivery attempts before outbox terminal failure.                                                                                                                                      |
 
 Secrets are resolved from the environment (Doppler in production) and are masked
 in logs (`••••xxxxxx`).
@@ -106,8 +107,12 @@ daily at 00:00 WIB:
 
 1. compute the SQLite SHA-256 digest;
 2. upload to Telegram (unchanged behavior);
-3. deliver the **raw SQLite snapshot** as a file attachment to file-capable
-   channels (Discord via multipart webhook, WhatsApp via Baileys document send);
+3. when `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED=true` (explicit opt-in, default
+   off), deliver the **raw SQLite snapshot** as a file attachment to
+   file-capable channels (Discord via multipart webhook, WhatsApp via Baileys
+   document send). **Warning:** the snapshot contains Baileys session
+   credentials, bank ledgers, and user data — enable only for a trusted
+   recovery channel, never a broad audience channel;
 4. dispatch a **truthful** outcome alert: `DB_BACKUP_SUCCESS` only when Telegram
    uploaded, a file delivery succeeded, or the database was unchanged since the
    last backup; otherwise `DB_BACKUP_FAILED` (CRITICAL) with the hash and reason.

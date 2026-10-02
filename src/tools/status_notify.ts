@@ -10,7 +10,7 @@ export const definition: ToolDefinition = {
         id: 'status notifikasi'
     },
     category: 'System & Help',
-    aliases: ['status notify', 'status ping', 'status test', 'notify status', 'status_notify'],
+    aliases: ['status notify', 'status ping', 'status test', 'notify status'],
     description: 'Owner-only: display external status channel health and send a test notification.',
     descriptionKey: 'tools.commands.status_notify.description',
     owner: true,

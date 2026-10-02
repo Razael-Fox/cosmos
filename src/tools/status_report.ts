@@ -11,7 +11,7 @@ export const definition: ToolDefinition = {
         id: 'status laporan'
     },
     category: 'System & Help',
-    aliases: ['status report', 'status audit', 'status health', 'status_report'],
+    aliases: ['status report', 'status audit', 'status health'],
     description: 'Owner-only: display an on-demand health snapshot and audit digest.',
     descriptionKey: 'tools.commands.status_report.description',
     owner: true,

@@ -8,6 +8,7 @@
  */
 import { activeConnections } from '#utils/connectionManager.js';
 import fs from 'fs';
+import { getPrimaryOwnerNumber } from '#utils/owner.js';
 import { getStatusNotifierConfig } from '../config.js';
 import { formatWhatsAppText } from '../formatters.js';
 import type { NotifyEvent, NotifyPayload, NotifySeverity, DeliveryResult } from '../types.js';
@@ -18,6 +19,17 @@ async function sendToJid(jid: string, text: string): Promise<void> {
         throw new Error('default Baileys socket is not connected');
     }
     await sock.sendMessage(jid, { text });
+}
+
+/**
+ * Resolves the owner direct-message target. Prefers the explicit
+ * `WA_STATUS_OWNER_JID` override, otherwise uses the primary owner number
+ * (which correctly handles the comma-separated `OWNER_PHONE_NUMBER` list).
+ */
+function resolveOwnerJid(configured: string | null): string | null {
+    const raw = configured ?? getPrimaryOwnerNumber();
+    if (!raw) return null;
+    return raw.includes('@') ? raw : `${raw.replace(/\D/g, '')}@s.whatsapp.net`;
 }
 
 export async function sendWhatsApp(
@@ -45,10 +57,8 @@ export async function sendWhatsApp(
     }
 
     // Fallback: owner direct message.
-    if (config.whatsapp.fallbackToOwnerDm && config.whatsapp.ownerJid) {
-        const ownerJid = config.whatsapp.ownerJid.includes('@')
-            ? config.whatsapp.ownerJid
-            : `${config.whatsapp.ownerJid.replace(/\D/g, '')}@s.whatsapp.net`;
+    const ownerJid = config.whatsapp.fallbackToOwnerDm ? resolveOwnerJid(config.whatsapp.ownerJid) : null;
+    if (ownerJid) {
         try {
             await sendToJid(ownerJid, text);
             console.log(`[StatusNotifier] WhatsApp owner-DM fallback delivered ${event}.`);
@@ -94,14 +104,8 @@ export async function sendWhatsAppFile(filePath: string, fileName: string, capti
         caption
     };
 
-    const targets = [
-        config.whatsapp.newsletterJid,
-        config.whatsapp.fallbackToOwnerDm && config.whatsapp.ownerJid
-            ? config.whatsapp.ownerJid.includes('@')
-                ? config.whatsapp.ownerJid
-                : `${config.whatsapp.ownerJid.replace(/\D/g, '')}@s.whatsapp.net`
-            : null
-    ].filter((jid): jid is string => !!jid);
+    const ownerJid = config.whatsapp.fallbackToOwnerDm ? resolveOwnerJid(config.whatsapp.ownerJid) : null;
+    const targets = [config.whatsapp.newsletterJid, ownerJid].filter((jid): jid is string => !!jid);
 
     for (const jid of targets) {
         try {

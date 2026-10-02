@@ -193,9 +193,19 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
     }
 
     // Deliver the raw snapshot to file-capable channels as a best-effort extra.
+    // Gated behind STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED (default off): the
+    // database contains session credentials and financial records, so raw
+    // exfiltration to broad channel audiences requires explicit opt-in.
     const fileResults: string[] = [];
     let fileDelivered = false;
-    if (hash && fs.existsSync(dbPath)) {
+    let artifactsEnabled = false;
+    try {
+        const { getStatusNotifierConfig } = await import('../services/statusNotifier/config.js');
+        artifactsEnabled = getStatusNotifierConfig().backupArtifacts.enabled;
+    } catch (err) {
+        console.error('[Backup] Failed to resolve artifact opt-in flag:', err);
+    }
+    if (hash && artifactsEnabled && fs.existsSync(dbPath)) {
         const fileName = `cosmos-database-${new Date().toISOString().slice(0, 10)}.sqlite`;
         const caption = `Cosmos database backup — SHA-256 ${hash.slice(0, 16)}…`;
         try {

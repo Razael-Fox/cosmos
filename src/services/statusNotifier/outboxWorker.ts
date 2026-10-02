@@ -11,10 +11,19 @@ import { sendDiscord } from './transports/discord.js';
 import { sendSlack } from './transports/slack.js';
 import { sendWhatsApp } from './transports/whatsappChannel.js';
 import { claimDueOutbox, markOutboxFailed, markOutboxSent, pruneOutbox, type OutboxEntry } from './outbox.js';
-import type { NotifyChannel, NotifyEvent, NotifyPayload, NotifySeverity } from './types.js';
+import {
+    NOTIFY_EVENTS,
+    NOTIFY_SEVERITIES,
+    type NotifyChannel,
+    type NotifyEvent,
+    type NotifyPayload,
+    type NotifySeverity
+} from './types.js';
 
 let task: ReturnType<typeof cron.schedule> | null = null;
 let running = false;
+
+const VALID_CHANNELS: readonly string[] = ['discord', 'slack', 'whatsapp'];
 
 /** Retries a single due outbox entry through its original transport. Never throws. */
 async function processEntry(entry: OutboxEntry): Promise<void> {
@@ -23,6 +32,20 @@ async function processEntry(entry: OutboxEntry): Promise<void> {
         payload = JSON.parse(entry.payload) as NotifyPayload;
     } catch {
         await markOutboxFailed(entry.id, entry.maxAttempts, entry.maxAttempts, 'invalid payload JSON');
+        return;
+    }
+
+    // Validate persisted discriminators before dispatch: a corrupt or tampered
+    // row must terminally fail instead of flowing into a transport unchecked.
+    if (
+        !(NOTIFY_EVENTS as readonly string[]).includes(entry.event) ||
+        !(NOTIFY_SEVERITIES as readonly string[]).includes(entry.severity) ||
+        !VALID_CHANNELS.includes(entry.channel) ||
+        typeof payload !== 'object' ||
+        payload === null ||
+        typeof (payload as NotifyPayload).summary !== 'string'
+    ) {
+        await markOutboxFailed(entry.id, entry.maxAttempts, entry.maxAttempts, 'invalid persisted outbox row');
         return;
     }
 
