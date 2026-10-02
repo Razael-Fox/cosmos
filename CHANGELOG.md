@@ -13,6 +13,21 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F28-P3] - 2026-10-02
+
+### Fixed (Review follow-up on PR #55)
+
+- **Unconfigured backups no longer report success:** `runBackupCycle` dispatches
+  `DB_BACKUP_FAILED` when no destination is configured while the database has
+  changed; success is reserved for real deliveries and genuine
+  unchanged-database skips.
+- **Artifact opt-in enforced at the exfiltration boundary:** `sendDiscordFile`
+  and `sendWhatsAppFile` independently refuse uploads while
+  `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED` is off, so no future call site can
+  bypass the gate.
+
+---
+
 ## [G2-F28-P2] - 2026-10-02
 
 ### Fixed (Independent re-review on PR #55)

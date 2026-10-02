@@ -231,20 +231,25 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
     }
 
     // Report success only when a snapshot was actually persisted somewhere:
-    // Telegram upload, a file-channel delivery, or an unchanged-database skip
-    // (hash known, nothing to upload). Anything else is a real failure.
+    // Telegram upload, a file-channel delivery, or a genuine unchanged-database
+    // skip. An unconfigured destination with a changed database is a failure so
+    // monitoring can alert on "backups are not running".
     const fileAttempted = fileResults.length > 0;
     if (!hash) {
         await dispatchBackupStatus(false, hash, 'Database file is missing or unreadable; no backup was persisted.');
     } else if (uploaded || fileDelivered) {
         await dispatchBackupStatus(true, hash, undefined, fileResults.join(', ') || undefined);
-    } else if (!fileAttempted && !isTelegramConfigured()) {
-        // No channel is configured or the database is unchanged: nothing was
-        // attempted, so there is no failure to report.
-        await dispatchBackupStatus(true, hash, undefined, 'no delivery attempted (unchanged or unconfigured)');
     } else if (!fileAttempted && hash === readLastBackupHash() && !options.force) {
-        // Telegram skipped because the database is unchanged since last backup.
+        // Telegram skipped because the database is unchanged since the last backup.
         await dispatchBackupStatus(true, hash, undefined, 'unchanged since last backup');
+    } else if (!fileAttempted && !isTelegramConfigured()) {
+        // Nothing configured while the database has changed: no snapshot exists
+        // anywhere, so this must not report success.
+        await dispatchBackupStatus(
+            false,
+            hash,
+            'No backup destination is configured (Telegram credentials absent and artifact upload disabled) and the database has changed since the last backup.'
+        );
     } else {
         await dispatchBackupStatus(
             false,

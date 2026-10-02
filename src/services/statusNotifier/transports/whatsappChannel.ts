@@ -83,6 +83,12 @@ export async function sendWhatsAppFile(filePath: string, fileName: string, capti
         return { channel: 'whatsapp', success: false, skipped: true, error: 'whatsapp disabled or unconfigured' };
     }
 
+    // Defense-in-depth: the artifact opt-in is enforced at the boundary that
+    // performs the exfiltration, so a future call site cannot bypass the gate.
+    if (!config.backupArtifacts.enabled) {
+        return { channel: 'whatsapp', success: false, skipped: true, error: 'artifact upload not authorized' };
+    }
+
     const sock = activeConnections.get('default');
     if (!sock) {
         return { channel: 'whatsapp', success: false, error: 'default Baileys socket is not connected', attempts: 1 };

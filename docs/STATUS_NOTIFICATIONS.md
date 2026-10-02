@@ -110,7 +110,9 @@ daily at 00:00 WIB:
 3. when `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED=true` (explicit opt-in, default
    off), deliver the **raw SQLite snapshot** as a file attachment to
    file-capable channels (Discord via multipart webhook, WhatsApp via Baileys
-   document send). **Warning:** the snapshot contains Baileys session
+   document send). The opt-in is enforced both at the call site and inside
+   each file transport, so no future call site can bypass the gate.
+   **Warning:** the snapshot contains Baileys session
    credentials, bank ledgers, and user data — enable only for a trusted
    recovery channel, never a broad audience channel;
 4. dispatch a **truthful** outcome alert: `DB_BACKUP_SUCCESS` only when Telegram

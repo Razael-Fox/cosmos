@@ -42,6 +42,12 @@ export async function sendDiscordFile(filePath: string, fileName: string, captio
         return { channel: 'discord', success: false, skipped: true, error: 'discord disabled or unconfigured' };
     }
 
+    // Defense-in-depth: the artifact opt-in is enforced at the boundary that
+    // performs the exfiltration, so a future call site cannot bypass the gate.
+    if (!config.backupArtifacts.enabled) {
+        return { channel: 'discord', success: false, skipped: true, error: 'artifact upload not authorized' };
+    }
+
     try {
         const FormData = (await import('form-data')).default;
         const fs = (await import('fs')).default;
