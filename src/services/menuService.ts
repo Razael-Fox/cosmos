@@ -1,6 +1,7 @@
 import { ToolModule, resolveToolDescription } from '../tools/types.js';
 import toolsHandler from '../tools/handler.js';
 import { toDisplayCommand, getDisplayName } from '../utils/commandFormat.js';
+import { normalizeCommandKey } from '../utils/commandNormalize.js';
 import { formatTutorialHub, formatGenericTutorial } from '../utils/menuFormatter.js';
 import tutorialService from './tutorialService.js';
 
@@ -404,9 +405,10 @@ export class MenuService {
      */
     public findCommand(query: string, customTools?: ToolModule[], lang: string = 'id'): NormalizedTool | null {
         if (!query) return null;
-        const clean = query.trim().toLowerCase();
-        const undotted = clean.startsWith('.') ? clean.slice(1).trim() : clean;
-        const dotted = clean.startsWith('.') ? clean : `.${clean}`;
+        // Normalize up front so ". menu", ".MENU", and "menu" all match the same entry.
+        const undotted = normalizeCommandKey(query);
+        if (!undotted) return null;
+        const dotted = `.${undotted}`;
 
         const tools = this.getTools(customTools, lang);
 

@@ -11,6 +11,7 @@ import { sendDiscord } from './transports/discord.js';
 import { sendSlack } from './transports/slack.js';
 import { sendWhatsApp } from './transports/whatsappChannel.js';
 import { claimDueOutbox, markOutboxFailed, markOutboxSent, pruneOutbox, type OutboxEntry } from './outbox.js';
+import { BROADCAST_CHANNEL_PREFIX, BROADCAST_EVENT } from '../broadcastService.js';
 import {
     NOTIFY_EVENTS,
     NOTIFY_SEVERITIES,
@@ -27,6 +28,13 @@ const VALID_CHANNELS: readonly string[] = ['discord', 'slack', 'whatsapp'];
 
 /** Retries a single due outbox entry through its original transport. Never throws. */
 async function processEntry(entry: OutboxEntry): Promise<void> {
+    // Broadcast fan-out deliveries share the outbox table for persistence but
+    // are scheduled by `services/broadcastService.ts`, not by this worker. They
+    // must never be claimed here or the two schedulers would race on the row.
+    if (entry.event === BROADCAST_EVENT || entry.channel.startsWith(BROADCAST_CHANNEL_PREFIX)) {
+        return;
+    }
+
     let payload: NotifyPayload;
     try {
         payload = JSON.parse(entry.payload) as NotifyPayload;

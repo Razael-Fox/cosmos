@@ -4,6 +4,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { sendStickerFromBuffer } from './sticker_maker.js';
 import { cleanId } from '#utils/casino.js';
 import { unwrapMonospace } from '#utils/monospace.js';
+import { commandNameWords, getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
 
 const BRAT_BASE_URL = 'https://api.siputzx.my.id/api/m/brat';
 const DEFAULT_DELAY = 500;
@@ -235,10 +236,13 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     const msg = ctx.msg;
     const rawMsgText = (msg.message?.conversation || msg.message?.extendedTextMessage?.text || '').trim();
 
-    // Check if the command itself was triggered via .bratanimasi, .bratanimated, or "brat animasi", "brat animated"
-    const firstTokens = rawMsgText.toLowerCase().replace(/^\./, '').split(/\s+/);
-    const triggerWord = firstTokens[0] || '';
-    const twoWordTrigger = firstTokens.slice(0, 2).join(' ');
+    // Check if the command itself was triggered via .bratanimasi, .bratanimated, or "brat animasi", "brat animated".
+    // Prefer the handler-resolved command key: it is the spelling the registry
+    // actually matched, including aliases such as `stiker brat`.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const commandWords = commandNameWords(resolved, rawMsgText);
+    const twoWordTrigger = commandWords.slice(0, 2).join(' ');
+    const triggerWord = commandWords[0] || '';
 
     let commandIsAnimated = false;
     if (
@@ -253,8 +257,15 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
 
     if (!input) {
         // Try extracting text from the command message body
-        if (rawMsgText) {
-            const parts = rawMsgText.split(/\s+/);
+        if (resolved.commandKey) {
+            // Everything after the matched command is the caption. It is taken
+            // from the byte-faithful remainder rather than from re-joined tokens,
+            // because monospace payloads (Rule AC) and deliberate double spaces
+            // have to survive intact.
+            input = resolved.args;
+        } else if (rawMsgText) {
+            // Fallback for direct invocations that bypass the message handler.
+            const parts = getCommandWords(rawMsgText);
             if (twoWordTrigger === 'brat animasi' || twoWordTrigger === 'brat animated') {
                 input = parts.slice(2).join(' ').trim();
             } else if (triggerWord === 'brat' || triggerWord === 'bratanimasi' || triggerWord === 'bratanimated') {

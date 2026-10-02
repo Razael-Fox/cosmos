@@ -9,6 +9,426 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P6] - 2026-10-02
+
+### Fixed — separator variants of the group-list and whitelist-all aliases
+
+Reported by the round-4 review (`SUMMARY-v4.md` §5.1) as LOW and pre-existing.
+Verified by execution before fixing: the finding was accurate.
+
+#### Fixed
+
+- **`.list-group` and `.list_group` routed to the dashboard instead of the LIST
+  branch.** The registry's last-resort stripped index matches separator variants
+  by ignoring spaces, hyphens, and underscores, so those spellings reach
+  `whitelist.ts` as `['list', 'group']` — the first word only. The alias mapping
+  compared `tokens[0]`, so `listgroup` never matched, `subArgs[0]` became
+  `group`, and execution fell through to the status dashboard.
+
+    The mapping now compares `stripCommandKey(resolved.commandKey)`, collapsing
+    every spelling onto one key:
+
+    ```
+    .listgroup  .list-group  .list_group       -> listgroup    -> list
+    .grouplist  .group-list  .group_list .group list -> grouplist -> list
+    .groups                                          -> groups     -> list
+    .whitelistall .whitelist-all .whitelist_all .whitelist all -> whitelistall -> all
+    ```
+
+    Two-word aliases that carry their own subcommand now agree with the positional
+    path instead of relying on it.
+
+#### Added
+
+- `tests/whitelist.test.ts` covers all eleven separator variants of the list and
+  all aliases through the handler-resolved envelope, asserting each routes to its
+  own subcommand rather than the dashboard. Verified by reverting the mapping to
+  `tokens[0]`: the new assertions fail on `.list-group`, and pass once fixed.
+
+#### Note on a prior review claim
+
+Round 3 (`SUMMARY-v3.md` §3.2) asserted that `.list_group` resolved to subcommand
+`list`, derived from reasoning about `normalizeCommandKey` rather than from
+observing the token array. It did not: the first word is `list` and the outcome
+was the dashboard. The round-3 verdict was unaffected, but its evidence table was
+overstated by one spelling.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/whitelist.test.ts` passes with both new guards ·
+`tests/spaced_command_prefix.test.ts` 16/16 groups · `autoarchive`,
+`multiword_commands`, `nonspace_commands_and_removed_features`, `menu`, `cancel`,
+`monospace`, `idcard`, `job`, `loan`, `versioning` (30), `statusNotifier` (5),
+`i18n`, `commandsKnowledge` all pass · `tests/cosmosMcp.test.ts` 46/46 · MCP stdio
+smoke 23/23.
+
+---
+
+## [G2-F29-P5] - 2026-10-02
+
+### Changed — cosmetic cleanups from the round-3 review
+
+Round 3 approved PR #56 with no blockers and two optional cosmetic findings.
+Both are addressed here; neither was a behavioural change.
+
+#### Removed
+
+- **Unreachable alias mapping in `whitelist.ts`.** The `invokedKey ===
+'whitelist all'` comparison added in `G2-F29-P4` can never be true:
+  `commandTokens()` always splits the resolved command key on spaces, so
+  `tokens[0]` is a single word and two-word spellings arrive positionally
+  (`['whitelist', 'all']`) with the subcommand already resolved by
+  `subArgs[0]`. Verified across the multiword alias set — `tokens[0]` contained a
+  space in 0 of 8 cases. The comment now explains why two-word spellings need no
+  mapping, so the omission does not read as an oversight.
+
+#### Documented
+
+- **`commandNameWords`' `activePrefix` parameter.** It is forwarded only on the
+  raw-text fallback, and no caller passes it: the message handler always supplies
+  `commandName`, so the parameter is never consulted in practice. The JSDoc now
+  states this plainly and tells a caller that can genuinely receive raw text from
+  a sub-bot with a non-dot prefix to pass it rather than relying on the default.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/whitelist.test.ts` passes including the two-word alias regression guard ·
+`tests/spaced_command_prefix.test.ts` 16/16 groups · full suite sweep and
+`tests/cosmosMcp.test.ts` re-run green.
+
+---
+
+## [G2-F29-P4] - 2026-10-02
+
+### Fixed — round-2 review findings on PR #56
+
+Addresses the second `Request changes` verdict (see `SUMMARY-v2.md`): one
+blocker regression introduced by the round-1 fix, plus the structural hardening
+and documentation corrections requested alongside it.
+
+#### Fixed
+
+- **`.whitelist all` and `.group list` no longer silently no-op.** Both are
+  two-word aliases, so the registry resolves them into a single canonical key
+  containing a space. `whitelist.ts` inserted that key into its token array
+  _unsplit_ — unlike its six sibling tools — so `tokens[0]` became the literal
+  string `"whitelist all"`, no subcommand was resolved, and the command fell
+  through to the status dashboard. This was a regression introduced by the
+  round-1 fix, in the very call sites meant to remove duplicated tokenization.
+- **Alias mapping in `whitelist.ts` now compares canonical keys.** The
+  `listgroup` / `grouplist` / `groups` / `whitelistall` / `addallgroups`
+  mappings run through `normalizeCommandKey`, so hyphen and underscore spellings
+  resolve identically to what the registry already treats as equivalent, and
+  `whitelist all` maps to the batch subcommand explicitly.
+- **`.add whitelist`, `.add-whitelist`, `.del group`, and `.remove whitelist` now
+  resolve.** `normalizeCommandKey` maps those spellings to `add whitelist`,
+  never to `addwhitelist`, so the previous six-entry set could not match them;
+  they parsed to their first word, matched no tool, and did nothing. The set is
+  now split into `INLINE_ADD_COMMAND_KEYS` and `INLINE_REMOVE_COMMAND_KEYS`,
+  both extended with the spaced spellings, and the message handler dispatches by
+  membership instead of three hardcoded string comparisons per family — which is
+  what would otherwise have reproduced the same silent no-op.
+
+#### Changed
+
+- **Token-array construction is consolidated into `commandTokens()`**, and
+  `commandNameWords()` covers the three tools that need only the command name.
+  All seven call sites now share one implementation. Round 1's defect was _dead_
+  context fields; round 2's was an _unsplit_ key written while wiring those same
+  fields up. Both defects occupied these seven sites, so the construction now
+  exists exactly once.
+- **Corrected the `allowUnknownPrefix` documentation.** The JSDoc claimed the
+  option was "reserved for the sub-bot rendering paths"; no such caller exists.
+  It is now described accurately as defensive — no `src/` caller passes it,
+  sub-bot prefixes are already handled because the handler passes the active
+  prefix explicitly, and the option exists for a future caller that genuinely
+  cannot know the prefix in force.
+
+#### Added
+
+- `tests/whitelist.test.ts` now exercises the handler-resolved envelope
+  (`commandName` / `argsStr`) for `.whitelist all`, `.group list`,
+  `.whitelist list`, `.whitelistall`, `.listgroup`, and `.whitelist status`,
+  asserting each resolves to _its own_ subcommand. Every pre-existing case in
+  that suite omits the envelope and so exercised only the raw-text fallback,
+  which is precisely why the regression was invisible. Verified by
+  reintroducing the unsplit key: the new assertions fail, and pass once fixed.
+- Inline-command coverage assertions for all ten spellings, including that the
+  add and remove families remain disjoint and that their union equals
+  `INLINE_COMMAND_KEYS`.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/spaced_command_prefix.test.ts` 16/16 groups including the 284-command /
+6816-invocation sweep · `whitelist`, `autoarchive`, `multiword_commands`,
+`nonspace_commands_and_removed_features`, `menu`, `cancel`, `monospace`,
+`idcard`, `job`, `loan`, `versioning` (30), `statusNotifier` (5), `i18n`,
+`commandsKnowledge` all pass · `tests/cosmosMcp.test.ts` 46/46 · MCP stdio smoke
+23/23. `brat` and `tutorials` remain failing on the pre-change baseline, verified
+unaffected.
+
+---
+
+## [G2-F29-P3] - 2026-10-02
+
+### Fixed — review findings on the command prefix normalization change
+
+Addresses the `Request changes` verdict on PR #56 (see `SUMMARY.md`): three
+high-severity blockers, one medium blocker, and three of the five non-blocking
+findings.
+
+#### Fixed
+
+- **Free-text arguments no longer lose internal whitespace.** The handler rebuilt
+  the argument remainder with `words.slice(n).join(' ')`, which collapsed every
+  whitespace run. Inputs such as `.sara halo     dunia` and
+  `` .contact add `John  Doe` `` reached the tool as single-spaced, silently
+  corrupting all 38 single-parameter commands and violating Rule AC, whose whole
+  purpose is preserving literal monospace text. The remainder is now sliced from
+  the original message body via `sliceArgsAfterWords`, so the bytes survive.
+- **The shared tokenizer no longer strips leading punctuation from free text.**
+  `splitCommandPrefix` treated any leading non-alphanumeric run as a command
+  prefix, and six tools run it over raw captions: `#promo` became `promo`,
+  `- 5 item` lost its hyphen, and an emoji was consumed — shifting every
+  positional index those tools read. Unknown prefixes are now opt-in via
+  `allowUnknownPrefix`; the message handler already passes the active prefix, so
+  sub-bot prefixes are unaffected. The leading dot run is also consumed
+  consistently now, so `...selamat` yields `selamat` rather than `..selamat`.
+- **`ToolContext.commandName` and `argsStr` are now consumed.** They were
+  declared and populated but read by nothing, while every affected tool
+  re-derived its own tokens from raw message text. `brat`, `whitelist`,
+  `autoarchive`, `job`, `loan`, `idcard`, and `help` now read the handler-resolved
+  envelope through `resolveCommandArgs`, falling back to raw tokenization only
+  when invoked outside the message handler. The earlier claim that tools had
+  stopped re-deriving arguments was inaccurate; it is true as of this release.
+- **Cancellation keywords match narrowly again.** `normalizeCommandKey` folds
+  `[-_\s]+` into spaces, which made `-cancel`, `cancel-`, and `_cancel` all
+  cancel a live bank transfer, loan application, job selection, or Sticker.ly
+  session. Cancellation is a destructive control and now uses
+  `normalizeControlKeyword`, which tolerates casing, a detached prefix, and
+  whitespace but keeps hyphens and underscores significant.
+
+#### Changed
+
+- **`getMaxCommandWords()` is cached at registry load.** It previously walked
+  every tool and alias key on every inbound message in the hot parse path.
+- **`MAX_COMMAND_WORDS` no longer truncates the vocabulary.** The clamp was
+  applied to the discovered maximum, so an over-long command would become
+  silently unreachable with no diagnostic. The registry now reports its true
+  maximum and the handler logs a one-time warning when it exceeds the expected
+  ceiling of five words.
+- **`UNKNOWN_FIELD` is now emitted by the mutation planner.** The code was
+  declared in the `McpErrorCode` union and asserted in `AGENTS.md` as the
+  anti-hallucination anchor, but had zero throw sites — hallucinated columns
+  surfaced as a generic `UNSAFE_MUTATION` with prose blockers. Plans now carry a
+  machine-readable `unknownFields` list, and `cosmos_db_apply_mutation` raises
+  `UNKNOWN_FIELD` with those fields when a plan is refused for that reason.
+
+#### Added
+
+- Regression coverage for the surfaces the previous sweep never asserted:
+  `argsStr` byte-fidelity across multi-space, tab, and monospace input;
+  `getCommandWords` behaviour on non-command captions (`#promo`, `- 5 item`,
+  emoji, `...selamat`); cancel-keyword acceptance and rejection; and the
+  `resolveCommandArgs` envelope. The suite's parser mirror now delegates to the
+  same helpers the handler uses, which is why it previously stayed green while
+  the handler was collapsing whitespace.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/spaced_command_prefix.test.ts` 15/15 groups including the 284-command /
+6816-invocation sweep · `multiword_commands`, `menu`, `cancel`, `monospace`,
+`versioning`, `statusNotifier`, `whitelist`, `autoarchive`, `idcard`, `job`,
+`loan`, `i18n`, `commandsKnowledge` all pass · `tests/cosmosMcp.test.ts` 46/46 ·
+MCP stdio smoke 23/23 · live MCP run confirms `UNKNOWN_FIELD` is returned for an
+invented column.
+
+#### Known limitation
+
+`INLINE_COMMAND_KEYS` still covers six spellings; `.add whitelist`, `.del group`,
+and `.remove whitelist` parse to their first word and no-op. This matches
+pre-change behaviour, so it is a coverage gap rather than a regression, and is
+deferred to a follow-up release.
+
+---
+
+## [G2-F29-P2] - 2026-10-02
+
+### Fixed
+
+- **Commands with a detached or irregular prefix now resolve identically to attached ones.**
+  Typing `. menu` (a space between the prefix and the command word) previously produced a different
+  result from `.menu`. The message handler split the raw text on whitespace and treated the lone
+  `.` as the command token, so the real command was misparsed: some commands silently did nothing,
+  while others were routed with the wrong arguments. For example `. stiker brat` failed to resolve
+  at all and `. bantuan` returned no tool, whereas the attached spellings worked.
+- **Unified command normalization across every resolution layer.** Resolution was previously
+  re-implemented in several places with subtly different rules, so the same logical command could
+  resolve in the message handler but not in the tools registry, the menu service, or the
+  deprecation map. Added `src/utils/commandNormalize.ts` as the single source of truth
+  (`normalizeCommandKey`, `stripCommandKey`, `isCommandInvocation`, `splitCommandPrefix`,
+  `getCommandWords`), and routed `ToolsHandler.getTool`, `menuService.findCommand`,
+  `getLegacyCanonical`, and the message handler parser through it.
+- **Fixed dotted aliases that were unreachable when written without the dot.** The registry stored
+  aliases verbatim, so 47 aliases (`.bantuan`, `.pin`, `.stiker brat`, `.startautocorrect`, and
+  others) resolved only in dotted form. The registry is now keyed by canonical command key, with a
+  stripped-separator index retained as a last-resort fallback.
+- **Tools no longer re-derive arguments by fixed text index.** Tools such as `autoarchive`,
+  `whitelist`, `job`, `loan`, `brat`, `idcard`, and `help` sliced the raw message text at a fixed
+  offset, which misparsed a detached prefix. They now use prefix-aware tokenization. The handler
+  also passes the already-resolved `commandName` and `argsStr` through `ToolContext`; those fields
+  became load-bearing in `G2-F29-P3`, see above.
+- **Deprecated-command notices no longer misfire on canonical forms.** Legacy lookup keeps hyphens
+  significant, so `register-id` is still flagged as deprecated while the canonical `register id` is
+  not. Detached and mixed-case spellings (`. addbalance`, `.ADDBALANCE`) now correctly resolve.
+- **Cancel keywords tolerate spacing and casing.** `. cancel`, `CANCEL`, and `.batal ` are now
+  recognized like `.cancel`.
+
+### Added
+
+- `tests/spaced_command_prefix.test.ts`, covering prefix detachment, casing, separator variants,
+  custom sub-bot prefixes, argument integrity, deprecation notices, and fail-closed behavior for
+  unknown commands. The suite sweeps the full registered vocabulary (284 commands) across 6816
+  invocations and asserts that every spelling resolves to the same tool with the same arguments.
+
+---
+
+## [G2-F29-P1] - 2026-10-02
+
+### Completed the engine-side IPC surface for the Cosmos MCP Server
+
+The milestone commit shipped `src/mcp/` and the read-only database surface, but the
+engine half of the bridge — the `/internal/...` handlers the `cosmos_bot_*` tools call —
+was still missing from version control, so the server could only ever answer `BOT_OFFLINE`.
+This patch lands that half.
+
+#### Added
+
+- **`src/utils/runtimeHealth.ts`** — dependency-free runtime probes (uptime, RSS, event-loop
+  lag, last `connection.update`) shared by `connectionManager.ts` and `ipcServer.ts`. Kept
+  in its own module because those two already import each other and a third file is the
+  only way to share state without an import cycle.
+- **`/internal/bot/status`** — connectivity, session count, registration state, uptime,
+  memory, and event-loop lag for `cosmos_bot_status`. An unreachable engine still returns
+  `BOT_OFFLINE`; no value is ever fabricated (Rule Y).
+- **`/internal/bot/reconnect`**, **`/internal/bot/logout`** — operator recovery for a wedged
+  socket. Both require an explicit `confirm` in the request body.
+- **`/internal/messages/send`**, **`/internal/groups/all`**, **`/internal/subbots/list`** —
+  target resolution and single-message delivery, so the MCP server never has to enumerate
+  groups or sub-bot instances itself.
+
+#### Changed
+
+- **`/internal/broadcast`** no longer runs an in-memory `setTimeout` loop that died with the
+  process. It now delegates to `broadcastService.startBroadcast`, so a multi-hour fan-out is
+  persisted in `StatusNotificationOutbox` with a tiered `nextAttemptAt` and survives a restart
+  (Rule J). `/internal/broadcast/preview`, `/internal/broadcast/status`, and
+  `/internal/broadcast/cancel` expose preview, progress, and cancellation.
+- **`startBroadcastWorker()` is started when the IPC server begins listening**, so a restart
+  resumes an interrupted fan-out instead of stranding it in `PENDING`.
+
+#### Verification
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm build`: clean.
+- `tests/cosmosMcp.test.ts`: 46/46 pass (11 suites).
+- `tests/smoke/cosmosMcpSmoke.mjs`: 23/23 pass over the real stdio protocol.
+
+---
+
+## [G2-F29-P0] - 2026-10-02
+
+### Feature Milestone 29 — Cosmos MCP Server for AI Coding Agents (Issue #49)
+
+A first-party Model Context Protocol server gives AI coding agents — OpenCode, Claude Code,
+Pi, and Google Antigravity — typed, guarded, audited access to the Cosmos database, feature
+catalogue, and live bot actions. It replaces the recurring pattern where an agent reached for
+`npm`, installed an ad-hoc CLI, and wrote a throwaway script (for example
+`scripts/broadcast.mjs`) that bypassed every guardrail in `AGENTS.md`.
+
+The motivating request — _"broadcast to all groups with a 5-second delay per group that the
+bot will be undergoing maintenance"_ — is now exactly one `cosmos_bot_broadcast` call.
+
+#### Added
+
+- **`src/mcp/`** — the Cosmos MCP server (`@modelcontextprotocol/sdk` with Zod input schemas):
+    - `config.ts` — environment-driven configuration and the Rule V loopback-bind guard.
+    - `auth.ts` — single-owner key authentication with constant-time comparison and fail-closed
+      behaviour; the key never appears in a result, an error, or a log line.
+    - `privacy.ts` — JID/phone masking plus ephemeral `contact_ref_...` aliases (3-minute TTL,
+      10 000-entry LRU, RAM only) mirroring the zero-knowledge policy of Rules AB and AG.
+    - `audit.ts` — sliding-window rate limiter, mutation concurrency ceiling, and `ActivityLog`
+      audit writes that record the acting **holder** rather than the credential.
+    - `errors.ts` — the stable, machine-readable error-code contract.
+    - `sql/guardrails.ts`, `sql/readOnlyDb.ts` — read-only SQLite access on a genuinely
+      `readonly` handle, mandatory `LIMIT`, mandatory explicit projection, credential table and
+      column denylists, and mandatory `WHERE` on high-value ledgers.
+    - `schema/prismaCatalog.ts` — dependency-free parser for `prisma/schema.prisma`; the
+      anti-hallucination anchor that reports the live models, fields, defaults, indexes,
+      composite constraints, enums, and relations.
+    - `schema/mutationPlanner.ts` — the dry-run planner returning `safe`, blockers, the exact
+      `prisma.$transaction` boilerplate, the Rule W 3-phase DDL mirror targets, the ACID and
+      `balanceAfter` requirements, and a per-rule checklist.
+    - `schema/applyMutation.ts` — the executor, gated behind a byte-identical plan fingerprint,
+      `prisma.$transaction`, an `ActivityLog` row, a console log line, and a before/after diff.
+    - `schema/ddlMirror.ts`, `schema/toolingIsolation.ts`, `schema/i18nAudit.ts` — Rule W dual
+      maintenance and 3-phase ordering, Rule X worktree isolation, and Rule O translation parity
+      as machine-checkable reports.
+    - `tools/dbTools.ts`, `tools/featureTools.ts`, `tools/botTools.ts` — the `cosmos_db_*`,
+      `cosmos_*`, and `cosmos_bot_*` namespaces, plus `cosmos_guidance` (the machine-readable
+      agent contract and intent → tool map).
+    - `server.ts`, `http.ts`, `index.ts` — per-identity server assembly, the loopback-only
+      Streamable HTTP transport, and the CLI entrypoint.
+- **`cosmos_bot_broadcast` and the rest of `cosmos_bot_*`** — every live bot action is proxied
+  over the existing authenticated Unix-socket IPC bridge to the engine that owns the Baileys
+  sockets. `BOT_OFFLINE` is returned when the engine is unreachable; nothing is ever
+  fabricated (Rule Y).
+- **`src/services/broadcastService.ts`** — persisted broadcast fan-out. One
+  `StatusNotificationLog` row per job plus one `StatusNotificationOutbox` row per target with a
+  staggered `nextAttemptAt`, so a multi-hour run survives a restart (Rule J). Reusing the
+  existing status-notification tables means no schema change and therefore no additional Rule W
+  dual-maintenance burden. Cancellable through `cosmos_bot_broadcast_cancel` and through
+  `.cancel` via `cancellationManager` (Rule N).
+- **New IPC routes** — `/internal/bot/status`, `/internal/bot/reconnect`,
+  `/internal/bot/logout`, `/internal/messages/send`, `/internal/groups/all`,
+  `/internal/subbots/list`, `/internal/broadcast/preview`, `/internal/broadcast/status`, and
+  `/internal/broadcast/cancel`.
+- **Per-client configuration** — `.mcp.json` (Claude Code) plus `docs/mcp/` examples for
+  OpenCode, Pi, Google Antigravity, and the remote HTTP transport. All four clients reference
+  the same single owner key; none is committed.
+- **`AGENTS.md` §AH**, **`.agents/skills/cosmos-mcp/SKILL.md`**, and **`docs/COSMOS_MCP.md`** —
+  the agent contract (no npm, no ad-hoc CLI packages, no throwaway scripts, no direct SQLite
+  access), the intent → tool selection map, and the operator/deployment guide.
+- **Tests** — `tests/cosmosMcp.test.ts` (46 assertions across authentication, SQL guardrails,
+  the schema catalogue, the mutation planner, privacy, rate limiting, the persisted fan-out,
+  read-only execution, and read-only tool compilation) and
+  `tests/smoke/cosmosMcpSmoke.mjs`, which speaks the real MCP stdio protocol against the real
+  server process.
+
+#### Changed
+
+- **`src/services/ipcServer.ts`** — the `/internal/broadcast` handler no longer runs an
+  in-memory `setTimeout` loop. It now schedules a persisted job and returns per-target
+  receipts, a cancellable job id, and a hard target ceiling. The previous fire-and-forget
+  behaviour could silently lose an in-progress fan-out on restart.
+- **`src/services/statusNotifier/outboxWorker.ts`** — explicitly skips rows belonging to the
+  broadcast scheduler (`event = 'BROADCAST'` or a `broadcast:` channel) so the two schedulers
+  never contend for the same row.
+- **`src/utils/connectionManager.ts`** — records every `connection.update` timestamp so
+  `cosmos_bot_status` can report the last known connection event.
+- **`docker/ecosystem.config.cjs`** — new `cosmos-mcp` PM2 app running the Streamable HTTP
+  transport on `127.0.0.1:4100`, skipped automatically when the bot build was not packaged.
+- **`docker/nginx.conf`** — `/mcp` explicitly returns `404` on the public listener. The MCP
+  surface is deliberately not proxied; it is reachable only from a co-located process or an SSH
+  tunnel.
+- **`.env.example`**, **`README.md`** — documented the new environment variables, the scripts,
+  and the MCP surface.
+
+---
+
 ## [Unreleased]
 
 ### Fixed (health monitor false-positive, found via the improved logging)

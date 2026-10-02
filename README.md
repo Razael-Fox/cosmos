@@ -143,11 +143,12 @@ cosmos/
 │   ├── index.ts            # Entrypoint and cron scheduler
 │   ├── handlers/           # Message router and command dispatcher
 │   ├── locales/            # Translation dictionaries (en, id)
-│   ├── services/           # AI, bank, loans, jobs, shop, menu, inflation
+│   ├── mcp/                # Cosmos MCP server for AI coding agents
+│   ├── services/           # AI, bank, loans, jobs, shop, menu, broadcast, inflation
 │   ├── tools/              # Command handlers
 │   └── utils/              # Auto-delete, cancellation, currency, UI, caching, versioning
 ├── tests/                  # Vitest test suites
-├── docs/                   # Versioning spec and command reference
+├── docs/                   # Versioning spec, command reference, and the MCP operator guide
 ├── version.json            # Canonical version metadata (G-F-P)
 ├── CHANGELOG.md
 └── package.json
@@ -164,8 +165,34 @@ cosmos/
 | `pnpm start:bg` / `status:bg` / `stop:bg`                                 | Manage the nohup daemon                             |
 | `pnpm typecheck` / `pnpm lint` / `pnpm format`                            | Static checks and formatting                        |
 | `pnpm validate:i18n`                                                      | Assert key parity between `en` and `id`             |
+| `pnpm mcp:start` / `pnpm mcp:http`                                        | Start the Cosmos MCP server (stdio / loopback HTTP) |
 | `pnpm version:show` / `version:check` / `version:verify` / `version:bump` | Inspect, validate, and increment the Cosmos version |
 | `pnpm release:pre`                                                        | Publish a tagged release                            |
+
+## Cosmos MCP Server for AI Coding Agents
+
+Cosmos ships a first-party [Model Context Protocol](https://modelcontextprotocol.io) server so
+AI coding agents — OpenCode, Claude Code, Pi, and Google Antigravity — can read the database,
+inspect the feature catalogue, and perform live bot actions through typed, guarded, audited
+tools instead of ad-hoc `npm` installs and throwaway scripts.
+
+```bash
+export COSMOS_MCP_TOKEN="..."   # single owner key; the server fails closed without it
+pnpm mcp:start                  # stdio transport (local)
+pnpm mcp:http                   # Streamable HTTP on 127.0.0.1:4100 (loopback only)
+```
+
+```text
+"Please broadcast to all groups with a 5-second delay that the bot will be under maintenance."
+
+    -> cosmos_bot_broadcast({ message, delayMs: 5000, dryRun: false, confirm: true })
+```
+
+Access is gated behind **exactly one** owner-held API key, every mutation requires a prior
+`cosmos_db_mutation_plan` pass, live bot actions return `BOT_OFFLINE` rather than fabricating
+data, and the broadcast fan-out is persisted so it survives a restart. See
+[`docs/COSMOS_MCP.md`](docs/COSMOS_MCP.md) for the operator guide and
+[`docs/mcp/`](docs/mcp/) for per-client configuration.
 
 ## Versioning
 

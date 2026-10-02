@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "cosmos": {
+            "command": "pnpm",
+            "args": ["mcp:start"],
+            "env": {
+                "COSMOS_MCP_TOKEN": "${COSMOS_MCP_TOKEN}"
+            }
+        }
+    }
+}

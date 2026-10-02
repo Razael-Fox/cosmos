@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid } from '#utils/casino.js';
+import { commandNameWords, resolveCommandArgs } from '#utils/commandNormalize.js';
 import {
     getIdCardByUser,
     startRegistrationSession,
@@ -59,7 +60,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    const rawTokens = rawText.toLowerCase().replace(/^\./, '').split(/\s+/);
+    // Prefer the handler-resolved command name so the trigger comparison below
+    // sees the canonical key the registry actually matched, rather than tokens
+    // re-derived from the raw message.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const rawTokens = commandNameWords(resolved, rawText).map((w) => w.toLowerCase());
     const firstToken = rawTokens[0] || '';
     const twoTokens = rawTokens.slice(0, 2).join(' ');
     const actionArg = (args.action || '').trim().toLowerCase();

@@ -237,6 +237,129 @@ async function runTests() {
     assert(statusOutput.includes('.whitelistall'));
     console.log('  ✔ .whitelist status dashboard passed.');
 
+    // =========================================================================
+    // 8. Two-word aliases through the handler-resolved envelope
+    // =========================================================================
+    // Regression guard: `whitelist all` and `group list` are two-word aliases, so
+    // the registry resolves them into a single canonical key containing a space.
+    // A tool that inserts that key into its token array unsplit ends up with
+    // tokens ["whitelist all"] and no subcommand, and silently sends nothing.
+    // Every earlier case in this suite omits commandName/argsStr and therefore
+    // exercises only the raw-text fallback, which is exactly why that regression
+    // stayed invisible. These cases populate the envelope the handler supplies.
+    console.log('[Test 8] Testing two-word aliases via the resolved command envelope...');
+
+    const envelopeCases: Array<{
+        commandName: string;
+        argsStr: string;
+        label: string;
+        expect: (text: string) => boolean;
+    }> = [
+        {
+            commandName: '.whitelist all',
+            argsStr: '',
+            label: '.whitelist all',
+            // Two-word alias: must map to the batch subcommand, not the dashboard.
+            // The batch wording differs depending on how many groups are still
+            // unwitelisted ("Batch Whitelist Complete" vs "Batch Whitelist
+            // Status"), so match the family and reject the dashboard explicitly.
+            expect: (text) => text.includes('Batch Whitelist') && !text.includes('Group Whitelist Suite')
+        },
+        {
+            commandName: '.group list',
+            argsStr: '',
+            label: '.group list',
+            expect: (text) => text.includes('Total: 3 groups')
+        },
+        {
+            commandName: '.whitelist list',
+            argsStr: '',
+            label: '.whitelist list',
+            expect: (text) => text.includes('Total: 3 groups')
+        },
+        {
+            commandName: '.whitelistall',
+            argsStr: '',
+            label: '.whitelistall',
+            expect: (text) => text.includes('Batch Whitelist') && !text.includes('Group Whitelist Suite')
+        },
+        {
+            commandName: '.listgroup',
+            argsStr: '',
+            label: '.listgroup',
+            expect: (text) => text.includes('Total: 3 groups')
+        },
+        {
+            commandName: '.whitelist status',
+            argsStr: '',
+            label: '.whitelist status',
+            expect: (text) => text.includes('Group Whitelist Suite')
+        }
+    ];
+
+    for (const testCase of envelopeCases) {
+        sentMessages.length = 0;
+        const envelopeCtx: ToolContext = {
+            sock: mockSock,
+            msg: makeMsg(ownerNumber, `${testCase.commandName}${testCase.argsStr ? ` ${testCase.argsStr}` : ''}`),
+            jid: '120363111001@g.us',
+            t,
+            commandName: testCase.commandName,
+            argsStr: testCase.argsStr
+        };
+        await executeWhitelist({}, envelopeCtx);
+        assert.strictEqual(sentMessages.length, 1, `${testCase.label} must reply exactly once`);
+        assert.ok(
+            testCase.expect(sentMessages[0].text),
+            `${testCase.label} must resolve to its own subcommand. An unsplit command key yields an empty subcommand, which falls through to the status dashboard instead.`
+        );
+    }
+    console.log('  ✔ Two-word alias envelope resolution passed.');
+
+    // =========================================================================
+    // 9. Separator variants of the list/all aliases
+    // =========================================================================
+    // The registry's last-resort stripped index matches `.list-group` and
+    // `.list_group` by ignoring separators, so those spellings reach the tool as
+    // ['list', 'group'] — first word only. Mapping on tokens[0] therefore missed
+    // the `listgroup` alias and fell through to the dashboard. Mapping on the
+    // stripped command key collapses every separator variant onto one
+    // comparison.
+    console.log('[Test 9] Testing separator variants of the list/all aliases...');
+
+    const separatorCases: Array<{ commandName: string; expect: (text: string) => boolean }> = [
+        { commandName: '.listgroup', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.list-group', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.list_group', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.grouplist', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.group-list', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.group_list', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.groups', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.whitelistall', expect: (text) => text.includes('Batch Whitelist') },
+        { commandName: '.whitelist-all', expect: (text) => text.includes('Batch Whitelist') },
+        { commandName: '.whitelist_all', expect: (text) => text.includes('Batch Whitelist') },
+        { commandName: '.addallgroups', expect: (text) => text.includes('Batch Whitelist') }
+    ];
+
+    for (const testCase of separatorCases) {
+        sentMessages.length = 0;
+        const separatorCtx: ToolContext = {
+            sock: mockSock,
+            msg: makeMsg(ownerNumber, testCase.commandName),
+            jid: '120363111001@g.us',
+            t,
+            commandName: testCase.commandName,
+            argsStr: ''
+        };
+        await executeWhitelist({}, separatorCtx);
+        assert.strictEqual(sentMessages.length, 1, `${testCase.commandName} must reply exactly once`);
+        assert.ok(
+            testCase.expect(sentMessages[0].text),
+            `${testCase.commandName} must route to its own subcommand, not the dashboard. Separator variants reach the tool with the first word only, so the alias must be matched on the stripped command key.`
+        );
+    }
+    console.log('  ✔ Separator variant routing passed.');
+
     // Teardown test groups
     for (const gid of Object.keys(mockGroups)) {
         await removeGroup(gid);

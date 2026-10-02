@@ -87,6 +87,12 @@ dist/
 # Local SQLite Database
 storage/*.sqlite
 storage/*.sqlite-journal
+
+# Per-sub-bot runtime state (config holds the owner JID and session bindings)
+database/*/config.json
+database/*/*.sqlite
+database/*/*.sqlite-journal
+database/*/auth_info_baileys/
 storage/.telegram-backup-hash
 
 # Telegram dummy-account session (credentials - never commit)

@@ -109,9 +109,46 @@ export const LEGACY_COMMAND_MAP: Record<string, string> = {
 };
 
 /**
+ * Normalizes a command token for legacy-lookup purposes only.
+ *
+ * Unlike `normalizeCommandKey` this deliberately preserves hyphens and
+ * underscores. The legacy table distinguishes `register-id` (deprecated) from
+ * `register id` (canonical); collapsing separators would make the canonical
+ * form look deprecated and emit a spurious notice. Prefix detachment, casing,
+ * and whitespace runs are still normalized so `. addbalance` and `.ADDBALANCE`
+ * resolve to the same entry.
+ */
+function normalizeLegacyLookupKey(raw: string | null | undefined): string {
+    if (!raw) return '';
+    return raw
+        .toLowerCase()
+        .replace(/^[.\s]+/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Legacy lookup table with both sides normalized for lookup.
+ * Built once on first use.
+ */
+let normalizedLegacyMap: Map<string, string> | null = null;
+
+function getNormalizedLegacyMap(): Map<string, string> {
+    if (!normalizedLegacyMap) {
+        normalizedLegacyMap = new Map<string, string>();
+        for (const [trigger, canonical] of Object.entries(LEGACY_COMMAND_MAP)) {
+            const key = normalizeLegacyLookupKey(trigger);
+            if (!normalizedLegacyMap.has(key)) {
+                normalizedLegacyMap.set(key, canonical);
+            }
+        }
+    }
+    return normalizedLegacyMap;
+}
+
+/**
  * Determines whether a given command token is a legacy command and returns its canonical form.
  */
 export function getLegacyCanonical(commandName: string): string | null {
-    const clean = commandName.trim().replace(/^\./, '').toLowerCase();
-    return LEGACY_COMMAND_MAP[clean] || null;
+    return getNormalizedLegacyMap().get(normalizeLegacyLookupKey(commandName)) || null;
 }

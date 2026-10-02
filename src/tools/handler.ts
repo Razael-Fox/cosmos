@@ -5,12 +5,19 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { ToolModule, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
+import { normalizeCommandKey, stripCommandKey } from '../utils/commandNormalize.js';
 
 class ToolsHandler {
+    /** Registry keyed by canonical command key (see normalizeCommandKey). */
     private tools = new Map<string, ToolModule>();
     private aliases = new Map<string, string>();
+    /** Fully stripped fallback index, used only when the canonical lookup misses. */
+    private strippedIndex = new Map<string, ToolModule>();
 
     private isLoaded = false;
+
+    /** Longest registered command name in words; computed once during load. */
+    private maxCommandWords = 1;
 
     async loadTools(): Promise<void> {
         if (this.isLoaded) return;
@@ -43,12 +50,14 @@ class ToolsHandler {
 
                 if (toolModule.definition && typeof toolModule.execute === 'function') {
                     const { name, aliases } = toolModule.definition;
-                    const normalizedName = name.toLowerCase();
+                    const normalizedName = normalizeCommandKey(name);
                     this.tools.set(normalizedName, toolModule);
+                    this.strippedIndex.set(stripCommandKey(name), toolModule);
                     if (aliases && Array.isArray(aliases)) {
                         for (const alias of aliases) {
-                            const normalizedAlias = alias.toLowerCase();
+                            const normalizedAlias = normalizeCommandKey(alias);
                             this.aliases.set(normalizedAlias, normalizedName);
+                            this.strippedIndex.set(stripCommandKey(alias), toolModule);
                         }
                     }
                 }
@@ -57,48 +66,64 @@ class ToolsHandler {
             }
         }
         this.isLoaded = true;
+
+        // Cache the vocabulary maximum now that the registry is final, so the
+        // message handler never has to re-walk every key while parsing a message.
+        let maxWords = 1;
+        for (const key of [...this.tools.keys(), ...this.aliases.keys()]) {
+            const words = key.split(/\s+/).filter(Boolean).length;
+            if (words > maxWords) maxWords = words;
+        }
+        this.maxCommandWords = maxWords;
     }
 
+    /**
+     * Resolves a command name or alias to its tool module.
+     *
+     * Resolution is fully normalized, so all of the following reach the same tool:
+     *   `.menu`, `. menu`, `menu`, `.MENU`, `.  menu`
+     *   `.apply-license`, `.apply license`, `.apply_license`, `.applylicense`
+     */
     getTool(nameOrAlias?: string): ToolModule | null {
         if (!nameOrAlias) return null;
-        const normalized = nameOrAlias.trim().toLowerCase();
-        const undotted = normalized.startsWith('.') ? normalized.slice(1).trim() : normalized;
+        const key = normalizeCommandKey(nameOrAlias);
+        if (!key) return null;
 
-        // 1. Direct match with raw input or undotted
-        if (this.tools.has(normalized)) return this.tools.get(normalized) || null;
-        if (this.aliases.has(normalized)) {
-            const name = this.aliases.get(normalized)!;
-            return this.tools.get(name) || null;
-        }
+        // 1. Canonical match against tool names, then aliases.
+        const direct = this.tools.get(key);
+        if (direct) return direct;
+        const aliased = this.aliases.get(key);
+        if (aliased) return this.tools.get(aliased) || null;
 
-        if (this.tools.has(undotted)) return this.tools.get(undotted) || null;
-        if (this.aliases.has(undotted)) {
-            const name = this.aliases.get(undotted)!;
-            return this.tools.get(name) || null;
-        }
+        // 2. Last-resort stripped match (spaces/hyphens/underscores ignored).
+        return this.strippedIndex.get(stripCommandKey(key)) || null;
+    }
 
-        // 2. Normalized matching (hyphens/underscores to spaces)
-        const spaceNormalized = undotted.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
-        if (this.tools.has(spaceNormalized)) return this.tools.get(spaceNormalized) || null;
-        if (this.aliases.has(spaceNormalized)) {
-            const name = this.aliases.get(spaceNormalized)!;
-            return this.tools.get(name) || null;
-        }
+    /**
+     * Returns the canonical registered name of the tool that owns a command,
+     * or null when the command does not resolve.
+     */
+    getCanonicalName(nameOrAlias?: string): string | null {
+        const tool = this.getTool(nameOrAlias);
+        if (!tool) return null;
+        return normalizeCommandKey(tool.definition.name);
+    }
 
-        // 3. Stripped matching (no spaces, hyphens, or underscores)
-        const stripped = undotted.replace(/[-_\s]+/g, '');
-        for (const [toolName, toolModule] of this.tools.entries()) {
-            if (toolName.replace(/[-_\s]+/g, '') === stripped) {
-                return toolModule;
-            }
-        }
-        for (const [aliasName, toolName] of this.aliases.entries()) {
-            if (aliasName.replace(/[-_\s]+/g, '') === stripped) {
-                return this.tools.get(toolName) || null;
-            }
-        }
-
-        return null;
+    /**
+     * The maximum number of whitespace-separated words used by any registered
+     * command name or alias, so parsers can bound their longest-prefix scan.
+     *
+     * Computed once while the registry is populated rather than per message: this
+     * sits in the hot parse path and previously walked every tool and alias key
+     * on each inbound message.
+     *
+     * The value is the true vocabulary maximum. `MAX_COMMAND_WORDS` bounds how
+     * deep a *caller* may usefully scan, but it must never truncate the
+     * discovered maximum — doing so would make an over-long command silently
+     * unreachable with no diagnostic instead of merely expensive to match.
+     */
+    getMaxCommandWords(): number {
+        return Math.max(this.maxCommandWords, 1);
     }
 
     isOwnerOnly(nameOrAlias: string): boolean {

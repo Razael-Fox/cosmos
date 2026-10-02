@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
+import { commandTokens, normalizeCommandKey, resolveCommandArgs } from '#utils/commandNormalize.js';
 import { getTranslator } from '#utils/i18n.js';
 import { formatRupiah } from '#utils/currency.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
@@ -243,15 +244,23 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     };
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    const parts = rawText.split(/\s+/);
+    // Prefer the handler-resolved envelope: `subcommand` is the first word after
+    // the command and `rest` is the remainder with its original bytes intact, so
+    // a job title containing repeated spaces survives. Falls back to tokenizing
+    // the raw text for direct invocations that bypass the message handler.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const parts = commandTokens(resolved, rawText);
     const subCommand = (parts[1] || args.action || '').toLowerCase();
-    const query = parts.slice(2).join(' ') || args.target || args.job_name || '';
+    const query =
+        (resolved.commandKey ? resolved.rest : parts.slice(2).join(' ')) || args.target || args.job_name || '';
 
     // Handle job application shortcut commands (.apply job, .apply-job, .applyjob, .lamar kerja, etc.)
-    const triggerTwo = parts.length >= 2 ? `${parts[0]} ${parts[1]}`.toLowerCase() : '';
-    const triggerOne = (parts[0] || '').toLowerCase();
-    const applyTriggersTwo = ['.apply job', '.lamar kerja', '.lamar pekerjaan', '.daftar kerja'];
-    const applyTriggersOne = ['.apply-job', '.applyjob'];
+    // Triggers are compared as normalized keys so prefix spelling, casing, and
+    // hyphen/space variants all match.
+    const triggerTwo = parts.length >= 2 ? normalizeCommandKey(`${parts[0]} ${parts[1]}`) : '';
+    const triggerOne = normalizeCommandKey(parts[0] || '');
+    const applyTriggersTwo = ['apply job', 'lamar kerja', 'lamar pekerjaan', 'daftar kerja'];
+    const applyTriggersOne = ['apply job', 'applyjob'];
 
     if (applyTriggersTwo.includes(triggerTwo) || applyTriggersOne.includes(triggerOne)) {
         const applyTarget = applyTriggersTwo.includes(triggerTwo)

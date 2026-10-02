@@ -3,6 +3,7 @@ import { prisma, addGroup, removeGroup, isGroupWhitelisted, getAllWhitelistedGro
 import { getSenderJid } from '../utils/casino.js';
 import { isOwnerId } from '../utils/owner.js';
 import { renderCard, renderCatalogCard, renderBadge, CatalogItem } from '../utils/uiFormatter.js';
+import { commandTokens, resolveCommandArgs, stripCommandKey } from '../utils/commandNormalize.js';
 import {
     isAutoWhitelistEnabled,
     setAutoWhitelist,
@@ -62,18 +63,40 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         unwrapped?.videoMessage?.caption ||
         '';
 
-    const tokens = rawText.trim().split(/\s+/);
-    const invokedCommand = tokens[0]?.toLowerCase().replace(/^\./, '') || 'whitelist';
+    // Prefer the handler-resolved command name and byte-faithful argument
+    // remainder. `commandTokens` is shared with the other six tools so this
+    // construction cannot drift again — it did once, and the unsplit command
+    // key silently broke the two-word alias `.whitelist all`.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const tokens = commandTokens(resolved, rawText);
+    const invokedCommand = tokens[0]?.toLowerCase() || 'whitelist';
     const subArgs = tokens.slice(1);
 
     let subcommand = (
         subArgs[0]?.toLowerCase() || (typeof args.subcommand === 'string' ? args.subcommand.toLowerCase() : '')
     ).trim();
 
-    // Map command aliases to appropriate subcommands
-    if (invokedCommand === 'listgroup' || invokedCommand === 'grouplist' || invokedCommand === 'groups') {
+    // Map command aliases to appropriate subcommands.
+    //
+    // The key is the resolved command name with separators stripped, NOT the
+    // first token. The registry's last-resort stripped index matches separator
+    // variants (`.list_group`, `.list-group`) by ignoring spaces, hyphens, and
+    // underscores, so those spellings arrive here as `['list', 'group']` —
+    // first word only. Comparing `tokens[0]` therefore missed the `listgroup`
+    // alias entirely and routed `.list_group` to the dashboard instead of the
+    // LIST branch. Stripping separators from the whole command key collapses
+    // every spelling onto one comparison:
+    //
+    //   .listgroup  .list-group  .list_group  ->  listgroup
+    //   .group list  .group-list  .group_list ->  grouplist
+    //
+    // Two-word aliases carrying their own subcommand (`whitelist all`,
+    // `group list`) also collapse to `whitelistall` / `grouplist`, which agrees
+    // with the positional path rather than conflicting with it.
+    const aliasKey = stripCommandKey(resolved.commandKey || invokedCommand);
+    if (aliasKey === 'listgroup' || aliasKey === 'grouplist' || aliasKey === 'groups') {
         subcommand = 'list';
-    } else if (invokedCommand === 'whitelistall' || invokedCommand === 'addallgroups') {
+    } else if (aliasKey === 'whitelistall' || aliasKey === 'addallgroups') {
         subcommand = 'all';
     }
 

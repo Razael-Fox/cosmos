@@ -214,9 +214,10 @@ than reconstructed — a guessed mapping would be worse than an acknowledged gap
 | F26       | Agent Engine Integration for Group Moderation (Issue #48) | Yes — 2026-10-01 |
 | F27       | Dynamic Multi-Platform Downloader Suite (Issue #43)       | Yes — 2026-10-01 |
 | F28       | External Status Channel Integration (Issue #47)           | Yes — 2026-10-02 |
-| F29       | _(open)_ — next completed feature milestone               | —                |
+| F29       | Cosmos MCP Server for AI Coding Agents (Issue #49)        | Yes — 2026-10-02 |
+| F30       | _(open)_ — next completed feature milestone               | —                |
 
-When a feature bump advances `F`, replace the `F29` placeholder with the new
+When a feature bump advances `F`, replace the open placeholder with the new
 milestone and re-add the placeholder for the following number.
 
 ## Version Components

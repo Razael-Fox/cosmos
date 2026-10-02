@@ -7,6 +7,7 @@ import { usePrismaAuthState } from '#utils/prismaAuthState.js';
 import { initActiveSessions } from '#utils/sessionStore.js';
 import { dbContext, getPrismaClient, disconnectPrismaClient } from '#db.js';
 import { updateUserPresence } from '#services/presenceService.js';
+import { noteConnectionUpdate } from '#utils/runtimeHealth.js';
 import { isAutoWhitelistEnabled, isAutoArchiveEnabled } from '#services/systemConfigService.js';
 import { isFeatureEnabled } from '#services/subBotConfigService.js';
 import { archiveChat, recordMessage } from '#services/chatArchiveService.js';
@@ -166,6 +167,9 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
+        // Surfaced through the IPC `/internal/bot/status` route and, in turn,
+        // through the Cosmos MCP `cosmos_bot_status` tool.
+        noteConnectionUpdate();
 
         if (connection === 'open') {
             console.log(`[Connection] [${sessionId}] Opened`);

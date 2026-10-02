@@ -2,6 +2,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
 import { getMenuBannerBuffer } from '../utils/menuAssets.js';
 import menuService from '../services/menuService.js';
+import { commandNameWords, resolveCommandArgs } from '../utils/commandNormalize.js';
 import {
     formatDashboardHeader,
     formatCategoryOverview,
@@ -39,7 +40,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     await toolsHandler.loadTools();
 
     const textMessage = ctx?.msg?.message?.conversation || ctx?.msg?.message?.extendedTextMessage?.text || '';
-    const words = textMessage.trim().split(/\s+/);
+    // Prefer the handler-resolved envelope; fall back to tokenizing the raw text
+    // for direct invocations that bypass the message handler.
+    const resolved = resolveCommandArgs(ctx?.commandName, ctx?.argsStr);
+    const words = commandNameWords(resolved, textMessage);
     const firstWord = words[0]?.toLowerCase() || '';
 
     let rawQuery =
@@ -51,11 +55,13 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                 ? args.command.trim()
                 : '';
 
-    if (!rawQuery && words.length > 1) {
+    if (!rawQuery && resolved.commandKey) {
+        rawQuery = resolved.args;
+    } else if (!rawQuery && words.length > 1) {
         rawQuery = words.slice(1).join(' ').trim();
     }
 
-    if (firstWord === '.allmenu' && !rawQuery) {
+    if (firstWord === 'allmenu' && !rawQuery) {
         rawQuery = 'all';
     }
 
