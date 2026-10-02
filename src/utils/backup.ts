@@ -72,6 +72,19 @@ function isTelegramConfigured(): boolean {
     return !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
 }
 
+// Last failure detail from the Telegram upload, so `DB_BACKUP_FAILED` can name
+// the actual cause (e.g. "chat not found") instead of a generic string.
+let lastTelegramError: string | null = null;
+
+/** Returns the last Telegram upload failure detail, or null when none occurred. */
+export function getLastTelegramBackupError(): string | null {
+    return lastTelegramError;
+}
+
+function setTelegramError(detail: string): void {
+    lastTelegramError = detail.slice(0, 300);
+}
+
 /**
  * Uploads the SQLite snapshot to Telegram. Returns true only when a fresh
  * snapshot was delivered; false when Telegram is unconfigured, the database
@@ -82,13 +95,18 @@ export async function sendBackupToTelegram(options: { force?: boolean } = {}): P
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
+    lastTelegramError = null;
+
     if (!token || !chatId) {
+        const detail = 'Telegram credentials are not configured';
+        setTelegramError(detail);
         console.warn('[Backup] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing. Skipping auto-backup.');
         return false;
     }
 
     const dbPath = getDatabasePath();
     if (!fs.existsSync(dbPath)) {
+        setTelegramError('SQLite database file not found');
         console.warn('[Backup] SQLite database file not found. Skipping backup.');
         return false;
     }
@@ -122,6 +140,8 @@ export async function sendBackupToTelegram(options: { force?: boolean } = {}): P
         console.log('[Backup] Database backup sent successfully to Telegram.');
         return true;
     } catch (err: any) {
+        const apiError = err?.response?.data?.description || err?.response?.data?.error_code || err?.message;
+        setTelegramError(`Telegram upload failed: ${apiError ?? 'unknown error'}`);
         console.error('[Backup] Failed to send database backup to Telegram:', err.response?.data || err.message);
         return false;
     } finally {
@@ -263,10 +283,12 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
             'No backup destination is configured (Telegram credentials absent and artifact upload disabled) and the database has changed since the last backup.'
         );
     } else {
+        const tgError = getLastTelegramBackupError();
+        const fileSummary = fileResults.length > 0 ? fileResults.join(', ') : 'no file-capable channel attempted';
         await dispatchBackupStatus(
             false,
             hash,
-            `Telegram upload failed and all attempted file deliveries failed (${fileResults.join(', ') || 'telegram only'}).`
+            `No backup snapshot was persisted. ${tgError ? `${tgError}. ` : ''}File deliveries: ${fileSummary}.`
         );
     }
     return uploaded;

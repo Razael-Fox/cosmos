@@ -116,6 +116,32 @@ async function persistLog(
 }
 
 /**
+ * Builds the single console line for a notification.
+ *
+ * Always emits the severity header and summary. For WARN and CRITICAL events
+ * it additionally prints each `details` line and `fields` entry so an operator
+ * reading only the console (the common case when no external status channel is
+ * configured) can see *why* something degraded instead of just that it did.
+ */
+function buildConsoleLine(event: NotifyEvent, severity: NotifySeverity, payload: NotifyPayload): string {
+    const header = `[StatusNotifier] ${getSeverityIcon(severity)} ${getEventTitle(event)} [${severity}] ${payload.summary}`;
+
+    if (severity !== 'WARN' && severity !== 'CRITICAL') return header;
+
+    const lines: string[] = [];
+    for (const detail of payload.details ?? []) {
+        lines.push(`\n    - ${detail}`);
+    }
+    if (payload.fields) {
+        for (const [key, value] of Object.entries(payload.fields)) {
+            if (value === undefined || value === null) continue;
+            lines.push(`\n    - ${key}: ${value}`);
+        }
+    }
+    return lines.length > 0 ? `${header}${lines.join('')}` : header;
+}
+
+/**
  * Dispatches a sanitized notification to all enabled external channels.
  * Resolves to the per-channel delivery results (never rejects).
  */
@@ -135,9 +161,10 @@ export async function notify(
         timestamp: payload.timestamp ?? new Date().toISOString()
     };
 
-    console.log(
-        `[StatusNotifier] ${getSeverityIcon(severity)} ${getEventTitle(event)} [${severity}] ${enriched.summary}`
-    );
+    // Console output is the only diagnostic channel when no external status
+    // channel is configured, so WARN/CRITICAL events must print their reason
+    // details inline. Otherwise the operator sees "degraded" with no cause.
+    console.log(buildConsoleLine(event, severity, enriched));
 
     const belowMin = !options.force && SEVERITY_RANK[severity] < SEVERITY_RANK[config.minSeverity];
 

@@ -11,6 +11,16 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ## [Unreleased]
 
+### Fixed (operability follow-up after the `G2-F28-P4` deploy)
+
+- **Actionable status logs:** `WARN` / `CRITICAL` notifications now print their
+  `details` and `fields` on the console line. Previously the console showed only
+  "degraded" with no cause, which was undiagnosable when no external status
+  channel is configured. `INFO` events remain a single terse line.
+- **Named backup failure cause:** `DB_BACKUP_FAILED` now reports the actual
+  Telegram API error (for example `Bad Request: chat not found`) and an explicit
+  per-channel delivery summary instead of a generic "telegram only" string.
+
 ---
 
 ## [G2-F28-P4] - 2026-10-02
