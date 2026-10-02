@@ -9,6 +9,46 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P2] - 2026-10-02
+
+### Fixed
+
+- **Commands with a detached or irregular prefix now resolve identically to attached ones.**
+  Typing `. menu` (a space between the prefix and the command word) previously produced a different
+  result from `.menu`. The message handler split the raw text on whitespace and treated the lone
+  `.` as the command token, so the real command was misparsed: some commands silently did nothing,
+  while others were routed with the wrong arguments. For example `. stiker brat` failed to resolve
+  at all and `. bantuan` returned no tool, whereas the attached spellings worked.
+- **Unified command normalization across every resolution layer.** Resolution was previously
+  re-implemented in several places with subtly different rules, so the same logical command could
+  resolve in the message handler but not in the tools registry, the menu service, or the
+  deprecation map. Added `src/utils/commandNormalize.ts` as the single source of truth
+  (`normalizeCommandKey`, `stripCommandKey`, `isCommandInvocation`, `splitCommandPrefix`,
+  `getCommandWords`), and routed `ToolsHandler.getTool`, `menuService.findCommand`,
+  `getLegacyCanonical`, and the message handler parser through it.
+- **Fixed dotted aliases that were unreachable when written without the dot.** The registry stored
+  aliases verbatim, so 47 aliases (`.bantuan`, `.pin`, `.stiker brat`, `.startautocorrect`, and
+  others) resolved only in dotted form. The registry is now keyed by canonical command key, with a
+  stripped-separator index retained as a last-resort fallback.
+- **Tools no longer re-derive arguments by fixed text index.** Tools such as `autoarchive`,
+  `whitelist`, `job`, `loan`, `brat`, `idcard`, and `help` sliced the raw message text at a fixed
+  offset, which misparsed a detached prefix. They now use prefix-aware tokenization, and the handler
+  passes the already-resolved `commandName` and `argsStr` through `ToolContext`.
+- **Deprecated-command notices no longer misfire on canonical forms.** Legacy lookup keeps hyphens
+  significant, so `register-id` is still flagged as deprecated while the canonical `register id` is
+  not. Detached and mixed-case spellings (`. addbalance`, `.ADDBALANCE`) now correctly resolve.
+- **Cancel keywords tolerate spacing and casing.** `. cancel`, `CANCEL`, and `.batal ` are now
+  recognized like `.cancel`.
+
+### Added
+
+- `tests/spaced_command_prefix.test.ts`, covering prefix detachment, casing, separator variants,
+  custom sub-bot prefixes, argument integrity, deprecation notices, and fail-closed behavior for
+  unknown commands. The suite sweeps the full registered vocabulary (284 commands) across 6816
+  invocations and asserts that every spelling resolves to the same tool with the same arguments.
+
+---
+
 ## [G2-F29-P1] - 2026-10-02
 
 ### Completed the engine-side IPC surface for the Cosmos MCP Server

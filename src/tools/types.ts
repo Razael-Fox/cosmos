@@ -22,6 +22,18 @@ export interface ToolContext {
     jid: string;
     t: (key: string, variablesOrFallback?: Record<string, any> | string, variables?: Record<string, any>) => string;
     lang?: string;
+    /**
+     * The canonical dotted command name the message handler resolved for this
+     * invocation (for example `.apply license`). Supplied by the handler so tools
+     * never have to re-derive it from raw message text.
+     */
+    commandName?: string;
+    /**
+     * The argument string that followed the command name, already stripped of the
+     * prefix and the command words. Tools should prefer this over slicing the raw
+     * message text, which breaks on detached prefixes like ". menu".
+     */
+    argsStr?: string;
 }
 
 export interface ToolModule {

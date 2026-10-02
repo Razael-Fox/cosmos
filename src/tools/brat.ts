@@ -4,6 +4,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { sendStickerFromBuffer } from './sticker_maker.js';
 import { cleanId } from '#utils/casino.js';
 import { unwrapMonospace } from '#utils/monospace.js';
+import { getCommandWords } from '#utils/commandNormalize.js';
 
 const BRAT_BASE_URL = 'https://api.siputzx.my.id/api/m/brat';
 const DEFAULT_DELAY = 500;
@@ -236,7 +237,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     const rawMsgText = (msg.message?.conversation || msg.message?.extendedTextMessage?.text || '').trim();
 
     // Check if the command itself was triggered via .bratanimasi, .bratanimated, or "brat animasi", "brat animated"
-    const firstTokens = rawMsgText.toLowerCase().replace(/^\./, '').split(/\s+/);
+    const firstTokens = getCommandWords(rawMsgText).map((w) => w.toLowerCase());
     const triggerWord = firstTokens[0] || '';
     const twoWordTrigger = firstTokens.slice(0, 2).join(' ');
 
@@ -254,7 +255,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     if (!input) {
         // Try extracting text from the command message body
         if (rawMsgText) {
-            const parts = rawMsgText.split(/\s+/);
+            const parts = getCommandWords(rawMsgText);
             if (twoWordTrigger === 'brat animasi' || twoWordTrigger === 'brat animated') {
                 input = parts.slice(2).join(' ').trim();
             } else if (triggerWord === 'brat' || triggerWord === 'bratanimasi' || triggerWord === 'bratanimated') {

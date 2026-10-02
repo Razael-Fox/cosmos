@@ -2,6 +2,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
 import { getMenuBannerBuffer } from '../utils/menuAssets.js';
 import menuService from '../services/menuService.js';
+import { getCommandWords } from '../utils/commandNormalize.js';
 import {
     formatDashboardHeader,
     formatCategoryOverview,
@@ -39,7 +40,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     await toolsHandler.loadTools();
 
     const textMessage = ctx?.msg?.message?.conversation || ctx?.msg?.message?.extendedTextMessage?.text || '';
-    const words = textMessage.trim().split(/\s+/);
+    // Prefix-aware tokenization so ". allmenu" behaves like ".allmenu".
+    const words = getCommandWords(textMessage);
     const firstWord = words[0]?.toLowerCase() || '';
 
     let rawQuery =

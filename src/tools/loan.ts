@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
+import { getCommandWords } from '#utils/commandNormalize.js';
 import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
 import { requireIdCard } from '#utils/idCard.js';
 import { getBankAccountByUser } from '#services/bankService.js';
@@ -168,7 +169,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const bankAccount = await getBankAccountByUser(senderJid);
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    const parts = rawText.split(/\s+/);
+    // Prefix-aware tokenization so ". loan apply" behaves like ".loan apply".
+    const parts = getCommandWords(rawText);
     // Format: .loan <subcommand> [amount] [collateral...]
     const subCommand = (parts[1] || args.subcommand || '').toLowerCase();
     const remainingParts = parts.slice(2);

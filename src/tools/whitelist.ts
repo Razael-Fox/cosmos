@@ -3,6 +3,7 @@ import { prisma, addGroup, removeGroup, isGroupWhitelisted, getAllWhitelistedGro
 import { getSenderJid } from '../utils/casino.js';
 import { isOwnerId } from '../utils/owner.js';
 import { renderCard, renderCatalogCard, renderBadge, CatalogItem } from '../utils/uiFormatter.js';
+import { getCommandWords } from '../utils/commandNormalize.js';
 import {
     isAutoWhitelistEnabled,
     setAutoWhitelist,
@@ -62,8 +63,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         unwrapped?.videoMessage?.caption ||
         '';
 
-    const tokens = rawText.trim().split(/\s+/);
-    const invokedCommand = tokens[0]?.toLowerCase().replace(/^\./, '') || 'whitelist';
+    // Prefix-aware tokenization so ". list" behaves like ".list".
+    const tokens = getCommandWords(rawText);
+    const invokedCommand = tokens[0]?.toLowerCase() || 'whitelist';
     const subArgs = tokens.slice(1);
 
     let subcommand = (

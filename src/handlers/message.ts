@@ -13,6 +13,12 @@ import { processJobSelection } from '#tools/job.js';
 import { formatMentions } from '#utils/casino.js';
 import { getLegacyCanonical } from '#utils/commandFormat.js';
 import {
+    splitCommandPrefix,
+    isCommandInvocation,
+    normalizeCommandKey,
+    isInlineCommand
+} from '#utils/commandNormalize.js';
+import {
     hasCancellableSession,
     cancelActiveSession,
     unregisterCancellableSessionByUser
@@ -475,18 +481,11 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     }
 
     const activePrefix = subBotConfig?.prefix || '.';
-    const startsWithActivePrefix = trimmedText.startsWith(activePrefix);
-    const startsWithDot = trimmedText.startsWith('.');
-    const isCommand = startsWithActivePrefix || startsWithDot || isPlayReply;
+    const isCommand = isCommandInvocation(trimmedText, activePrefix) || isPlayReply;
 
-    const lowerText = trimmedText.toLowerCase();
-    const isCancelKeyword =
-        lowerText === '.cancel' ||
-        lowerText === 'cancel' ||
-        lowerText === '.batal' ||
-        lowerText === 'batal' ||
-        lowerText === '.abort' ||
-        lowerText === 'abort';
+    // Normalize first so ". cancel", "CANCEL", and ".batal " are all recognized.
+    const cancelKey = normalizeCommandKey(trimmedText);
+    const isCancelKeyword = cancelKey === 'cancel' || cancelKey === 'batal' || cancelKey === 'abort';
 
     let isQuotingCommand = false;
     if (msg.key.fromMe && msg.message) {
@@ -497,7 +496,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
         if (qMsg) {
             const qText = qMsg.conversation || qMsg.extendedTextMessage?.text || '';
-            if (qText.trim().startsWith('.') || (activePrefix !== '.' && qText.trim().startsWith(activePrefix))) {
+            if (isCommandInvocation(qText, activePrefix)) {
                 isQuotingCommand = true;
             }
         }
@@ -604,7 +603,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
         // Check if sender is currently in an active ID Card registration flow in this chat
         if (senderRaw && !isQuotingCommand && isUserRegistering(senderRaw, jid)) {
-            if (!trimmedText.startsWith('.')) {
+            if (!isCommandInvocation(trimmedText, activePrefix)) {
                 const handled = await processRegistrationStep(sock, msg, senderRaw, jid, trimmedText, t);
                 if (handled) return;
             }
@@ -635,13 +634,13 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
 
         // Check if sender is confirming a pending bank transfer
-        if (senderRaw && !trimmedText.startsWith('.')) {
+        if (senderRaw && !isCommandInvocation(trimmedText, activePrefix)) {
             const handledBankConfirm = await processBankTransferConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
             if (handledBankConfirm) return;
         }
 
         // Check if sender is confirming a pending loan application
-        if (senderRaw && !trimmedText.startsWith('.')) {
+        if (senderRaw && !isCommandInvocation(trimmedText, activePrefix)) {
             const handledLoanConfirm = await processLoanConfirmation(sock, msg, senderRaw, jid, trimmedText, t);
             if (handledLoanConfirm) return;
         }
@@ -653,7 +652,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
 
         // Check if sender is in an active job application selection flow
-        if (senderRaw && !trimmedText.startsWith('.')) {
+        if (senderRaw && !isCommandInvocation(trimmedText, activePrefix)) {
             const handledJobSelect = await processJobSelection(sock, msg, senderRaw, jid, trimmedText, t);
             if (handledJobSelect) return;
         }
@@ -666,29 +665,36 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 commandName = '.play';
                 argsStr = trimmedText;
             } else {
-                const parts = trimmedText.split(/\s+/);
-                let rawCmd = parts[0];
-                if (startsWithActivePrefix && activePrefix !== '.') {
-                    rawCmd = '.' + rawCmd.slice(activePrefix.length);
-                }
-                commandName = rawCmd;
-                argsStr = trimmedText.substring(parts[0].length).trim();
+                // Strip the prefix first so a detached prefix (". menu") is handled
+                // identically to an attached one (".menu").
+                const { body } = splitCommandPrefix(trimmedText, activePrefix);
+                const words = body.split(/\s+/).filter(Boolean);
 
-                // Multi-word command resolution (greedy longest-prefix matching from 4 words down to 2)
-                const maxTokens = Math.min(parts.length, 4);
-                for (let len = maxTokens; len >= 2; len--) {
-                    const candidate = `${rawCmd} ${parts.slice(1, len).join(' ')}`;
-                    if (toolsHandler.getTool(candidate)) {
-                        commandName = candidate;
-                        const pattern = new RegExp(`^\\S+(?:\\s+\\S+){${len - 1}}`);
-                        const match = trimmedText.match(pattern);
-                        argsStr = match ? trimmedText.substring(match[0].length).trim() : '';
-                        break;
+                if (words.length === 0) {
+                    commandName = '.';
+                    argsStr = '';
+                } else {
+                    // Greedy longest-prefix matching across the whole registered vocabulary.
+                    const maxWords = Math.min(words.length, toolsHandler.getMaxCommandWords());
+                    let matchedWords = 1;
+                    for (let len = maxWords; len >= 1; len--) {
+                        const candidate = words.slice(0, len).join(' ');
+                        if (toolsHandler.getTool(candidate) || isInlineCommand(candidate)) {
+                            matchedWords = len;
+                            break;
+                        }
                     }
+
+                    // Rebuild a canonical, consistently dotted command name so every
+                    // downstream string comparison (legacy map, whitelist, group
+                    // shortcuts) sees one stable representation.
+                    commandName = `.${words.slice(0, matchedWords).join(' ')}`;
+                    argsStr = words.slice(matchedWords).join(' ');
                 }
             }
 
-            if (commandName === '.addgroup' || commandName === '.addwhitelist' || commandName === '.group add') {
+            const commandKey = normalizeCommandKey(commandName);
+            if (commandKey === 'addgroup' || commandKey === 'addwhitelist' || commandKey === 'group add') {
                 console.log('Command executed', { command: '.addgroup', jid });
                 if (!jid.endsWith('@g.us')) {
                     await sock.sendMessage(jid, { text: t('core.group_only') });
@@ -748,7 +754,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 return;
             }
 
-            if (commandName === '.delgroup' || commandName === '.removewhitelist' || commandName === '.group del') {
+            if (commandKey === 'delgroup' || commandKey === 'removewhitelist' || commandKey === 'group del') {
                 console.log('Command executed', { command: '.delgroup', jid });
                 if (!jid.endsWith('@g.us')) {
                     await sock.sendMessage(jid, { text: t('core.group_only') });
@@ -797,11 +803,11 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
 
                 if (jid.endsWith('@g.us') && !isOwner) {
                     const isWhitelistCmd =
-                        tool.definition?.name === 'whitelist' ||
-                        commandName === '.whitelist' ||
-                        commandName === '.listgroup' ||
-                        commandName === '.grouplist' ||
-                        commandName === '.groups';
+                        normalizeCommandKey(tool.definition?.name || '') === 'whitelist' ||
+                        commandKey === 'whitelist' ||
+                        commandKey === 'listgroup' ||
+                        commandKey === 'grouplist' ||
+                        commandKey === 'groups';
                     if (!isWhitelistCmd) {
                         const whitelisted = await isGroupWhitelisted(jid);
                         if (!whitelisted) return;
@@ -890,7 +896,15 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 }
 
                 await sock.sendPresenceUpdate('composing', jid);
-                const result = await toolsHandler.execute(commandName, args, { sock, msg, jid, t, lang: chatLang });
+                const result = await toolsHandler.execute(commandName, args, {
+                    sock,
+                    msg,
+                    jid,
+                    t,
+                    lang: chatLang,
+                    commandName,
+                    argsStr
+                });
                 if (result && typeof result === 'string' && result.trim().length > 0) {
                     const matches = result.match(/@(\d+)/g);
                     const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
@@ -966,7 +980,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
             if (qMsg) {
                 const qText = qMsg.conversation || qMsg.extendedTextMessage?.text || '';
-                if (qText.trim().startsWith('.') || (activePrefix !== '.' && qText.trim().startsWith(activePrefix))) {
+                if (isCommandInvocation(qText, activePrefix)) {
                     isQuotingCommand = true;
                 }
             }
