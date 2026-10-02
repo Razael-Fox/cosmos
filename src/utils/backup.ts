@@ -111,7 +111,12 @@ export async function sendBackupToTelegram(options: { force?: boolean } = {}): P
  * @param hash    The SHA-256 digest of the database at backup time, if known.
  * @param reason  Failure reason (only used when `success` is false).
  */
-export async function dispatchBackupStatus(success: boolean, hash: string | null, reason?: string): Promise<void> {
+export async function dispatchBackupStatus(
+    success: boolean,
+    hash: string | null,
+    reason?: string,
+    artifactDelivery?: string
+): Promise<void> {
     try {
         const { notify } = await import('../services/statusNotifier/notifier.js');
         if (success) {
@@ -122,7 +127,8 @@ export async function dispatchBackupStatus(success: boolean, hash: string | null
                     summary: 'SQLite database snapshot persisted successfully.',
                     fields: {
                         Hash: hash ? hash.slice(0, 16) : 'unchanged',
-                        Database: 'storage/database.sqlite'
+                        Database: 'storage/database.sqlite',
+                        Artifacts: artifactDelivery ?? 'n/a'
                     },
                     sessionId: 'default'
                 },
@@ -148,8 +154,10 @@ export async function dispatchBackupStatus(success: boolean, hash: string | null
 
 /**
  * Runs a full backup cycle: persists the snapshot to Telegram (unchanged
- * behavior) and then reports the outcome to every enabled external status
- * channel. Telegram absence no longer suppresses status reporting.
+ * behavior), delivers the raw SQLite artifact to channels that support file
+ * uploads (Discord, WhatsApp), and then reports the outcome to every enabled
+ * external status channel. Telegram absence no longer suppresses status
+ * reporting.
  */
 export async function runBackupCycle(options: { force?: boolean } = {}): Promise<boolean> {
     const dbPath = getDatabasePath();
@@ -169,7 +177,32 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
         console.error('[Backup] Telegram backup cycle threw:', err);
     }
 
-    await dispatchBackupStatus(true, hash);
+    // Deliver the raw snapshot to file-capable channels as a best-effort extra.
+    const fileResults: string[] = [];
+    if (hash && fs.existsSync(dbPath)) {
+        const fileName = `cosmos-database-${new Date().toISOString().slice(0, 10)}.sqlite`;
+        const caption = `Cosmos database backup — SHA-256 ${hash.slice(0, 16)}…`;
+        try {
+            const { sendDiscordFile } = await import('../services/statusNotifier/transports/discord.js');
+            const discordResult = await sendDiscordFile(dbPath, fileName, caption);
+            if (!discordResult.skipped) {
+                fileResults.push(`discord=${discordResult.success ? 'delivered' : 'failed'}`);
+            }
+        } catch (err) {
+            console.error('[Backup] Discord artifact delivery failed:', err);
+        }
+        try {
+            const { sendWhatsAppFile } = await import('../services/statusNotifier/transports/whatsappChannel.js');
+            const waResult = await sendWhatsAppFile(dbPath, fileName, caption);
+            if (!waResult.skipped) {
+                fileResults.push(`whatsapp=${waResult.success ? 'delivered' : 'failed'}`);
+            }
+        } catch (err) {
+            console.error('[Backup] WhatsApp artifact delivery failed:', err);
+        }
+    }
+
+    await dispatchBackupStatus(true, hash, undefined, fileResults.join(', ') || undefined);
     return uploaded;
 }
 

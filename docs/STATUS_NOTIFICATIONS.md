@@ -105,8 +105,13 @@ daily at 00:00 WIB:
 
 1. compute the SQLite SHA-256 digest;
 2. upload to Telegram (unchanged behavior);
-3. dispatch `DB_BACKUP_SUCCESS` (or `DB_BACKUP_FAILED`) to every enabled external
-   channel.
+3. deliver the **raw SQLite snapshot** as a file attachment to file-capable
+   channels (Discord via multipart webhook, WhatsApp via Baileys document send);
+4. dispatch `DB_BACKUP_SUCCESS` (or `DB_BACKUP_FAILED`) to every enabled external
+   channel, including the per-channel artifact delivery result.
+
+Slack incoming webhooks cannot upload files, so Slack receives the text alert
+with the hash and reason only (file upload is tracked as a Phase 4 upgrade).
 
 If Telegram is unconfigured, the status report is still dispatched — Telegram
 absence no longer suppresses status reporting.

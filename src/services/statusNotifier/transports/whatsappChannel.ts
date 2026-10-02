@@ -7,6 +7,7 @@
  * surfaced as a `DeliveryResult` so the notifier can enqueue a retry.
  */
 import { activeConnections } from '#utils/connectionManager.js';
+import fs from 'fs';
 import { getStatusNotifierConfig } from '../config.js';
 import { formatWhatsAppText } from '../formatters.js';
 import type { NotifyEvent, NotifyPayload, NotifySeverity, DeliveryResult } from '../types.js';
@@ -60,4 +61,49 @@ export async function sendWhatsApp(
     }
 
     return { channel: 'whatsapp', success: false, error: 'no WhatsApp channel or owner fallback available' };
+}
+
+/**
+ * Sends a document artifact (e.g. the SQLite backup snapshot) through the live
+ * Baileys socket to the configured channel, with owner-DM fallback. Never throws.
+ */
+export async function sendWhatsAppFile(filePath: string, fileName: string, caption: string): Promise<DeliveryResult> {
+    const config = getStatusNotifierConfig();
+    if (!config.whatsapp.enabled) {
+        return { channel: 'whatsapp', success: false, skipped: true, error: 'whatsapp disabled or unconfigured' };
+    }
+
+    const sock = activeConnections.get('default');
+    if (!sock) {
+        return { channel: 'whatsapp', success: false, error: 'default Baileys socket is not connected', attempts: 1 };
+    }
+
+    const document = {
+        document: fs.readFileSync(filePath),
+        fileName,
+        mimetype: 'application/octet-stream',
+        caption
+    };
+
+    const targets = [
+        config.whatsapp.newsletterJid,
+        config.whatsapp.fallbackToOwnerDm && config.whatsapp.ownerJid
+            ? config.whatsapp.ownerJid.includes('@')
+                ? config.whatsapp.ownerJid
+                : `${config.whatsapp.ownerJid.replace(/\D/g, '')}@s.whatsapp.net`
+            : null
+    ].filter((jid): jid is string => !!jid);
+
+    for (const jid of targets) {
+        try {
+            await sock.sendMessage(jid, document);
+            console.log(`[StatusNotifier] WhatsApp delivered backup artifact (${fileName}).`);
+            return { channel: 'whatsapp', success: true, attempts: 1 };
+        } catch (err) {
+            const error = err instanceof Error ? err.message : String(err);
+            console.warn(`[StatusNotifier] WhatsApp backup artifact send to ${jid.slice(0, 6)}… failed: ${error}`);
+        }
+    }
+
+    return { channel: 'whatsapp', success: false, error: 'all WhatsApp targets failed', attempts: 1 };
 }

@@ -62,7 +62,9 @@ continues. A broken status channel can never take down the bot it monitors.
 - **`src/utils/connectionManager.ts`** — emits bot-down/reconnected/degraded
   events on close, logout, max-reconnect, and open.
 - **`src/utils/backup.ts`** — `runBackupCycle()` reports backup outcome to the
-  external channels; the existing Telegram upload is unchanged.
+  external channels and delivers the raw SQLite snapshot to Discord (multipart)
+  and WhatsApp (document) where supported; the existing Telegram upload is
+  unchanged.
 - **`prisma/schema.prisma` + `src/db.ts`** — added `StatusNotificationLog` and
   `StatusNotificationOutbox` models and symmetric 3-phase programmatic DDL
   (Rule W).
