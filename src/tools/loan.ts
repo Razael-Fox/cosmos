@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
-import { getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { commandTokens, getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
 import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
 import { requireIdCard } from '#utils/idCard.js';
 import { getBankAccountByUser } from '#services/bankService.js';
@@ -171,9 +171,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
     // Prefer the handler-resolved envelope over re-parsing the raw message.
     const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
-    const parts = resolved.commandKey
-        ? [...resolved.commandKey.split(' '), ...getCommandWords(resolved.args)]
-        : getCommandWords(rawText);
+    const parts = commandTokens(resolved, rawText);
     // Format: .loan <subcommand> [amount] [collateral...]
     const subCommand = (parts[1] || args.subcommand || '').toLowerCase();
     const remainingParts = resolved.commandKey ? getCommandWords(resolved.rest) : parts.slice(2);

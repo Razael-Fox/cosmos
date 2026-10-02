@@ -2,7 +2,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
 import { getMenuBannerBuffer } from '../utils/menuAssets.js';
 import menuService from '../services/menuService.js';
-import { getCommandWords, resolveCommandArgs } from '../utils/commandNormalize.js';
+import { commandNameWords, resolveCommandArgs } from '../utils/commandNormalize.js';
 import {
     formatDashboardHeader,
     formatCategoryOverview,
@@ -43,7 +43,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     // Prefer the handler-resolved envelope; fall back to tokenizing the raw text
     // for direct invocations that bypass the message handler.
     const resolved = resolveCommandArgs(ctx?.commandName, ctx?.argsStr);
-    const words = resolved.commandKey ? resolved.commandKey.split(' ') : getCommandWords(textMessage);
+    const words = commandNameWords(resolved, textMessage);
     const firstWord = words[0]?.toLowerCase() || '';
 
     let rawQuery =

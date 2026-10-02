@@ -237,6 +237,85 @@ async function runTests() {
     assert(statusOutput.includes('.whitelistall'));
     console.log('  ✔ .whitelist status dashboard passed.');
 
+    // =========================================================================
+    // 8. Two-word aliases through the handler-resolved envelope
+    // =========================================================================
+    // Regression guard: `whitelist all` and `group list` are two-word aliases, so
+    // the registry resolves them into a single canonical key containing a space.
+    // A tool that inserts that key into its token array unsplit ends up with
+    // tokens ["whitelist all"] and no subcommand, and silently sends nothing.
+    // Every earlier case in this suite omits commandName/argsStr and therefore
+    // exercises only the raw-text fallback, which is exactly why that regression
+    // stayed invisible. These cases populate the envelope the handler supplies.
+    console.log('[Test 8] Testing two-word aliases via the resolved command envelope...');
+
+    const envelopeCases: Array<{
+        commandName: string;
+        argsStr: string;
+        label: string;
+        expect: (text: string) => boolean;
+    }> = [
+        {
+            commandName: '.whitelist all',
+            argsStr: '',
+            label: '.whitelist all',
+            // Two-word alias: must map to the batch subcommand, not the dashboard.
+            // The batch wording differs depending on how many groups are still
+            // unwitelisted ("Batch Whitelist Complete" vs "Batch Whitelist
+            // Status"), so match the family and reject the dashboard explicitly.
+            expect: (text) => text.includes('Batch Whitelist') && !text.includes('Group Whitelist Suite')
+        },
+        {
+            commandName: '.group list',
+            argsStr: '',
+            label: '.group list',
+            expect: (text) => text.includes('Total: 3 groups')
+        },
+        {
+            commandName: '.whitelist list',
+            argsStr: '',
+            label: '.whitelist list',
+            expect: (text) => text.includes('Total: 3 groups')
+        },
+        {
+            commandName: '.whitelistall',
+            argsStr: '',
+            label: '.whitelistall',
+            expect: (text) => text.includes('Batch Whitelist') && !text.includes('Group Whitelist Suite')
+        },
+        {
+            commandName: '.listgroup',
+            argsStr: '',
+            label: '.listgroup',
+            expect: (text) => text.includes('Total: 3 groups')
+        },
+        {
+            commandName: '.whitelist status',
+            argsStr: '',
+            label: '.whitelist status',
+            expect: (text) => text.includes('Group Whitelist Suite')
+        }
+    ];
+
+    for (const testCase of envelopeCases) {
+        sentMessages.length = 0;
+        const envelopeCtx: ToolContext = {
+            sock: mockSock,
+            msg: makeMsg(ownerNumber, `${testCase.commandName}${testCase.argsStr ? ` ${testCase.argsStr}` : ''}`),
+            jid: '120363111001@g.us',
+            t,
+            commandName: testCase.commandName,
+            argsStr: testCase.argsStr
+        };
+        await executeWhitelist({}, envelopeCtx);
+        assert.strictEqual(sentMessages.length, 1, `${testCase.label} must reply exactly once`);
+        assert.ok(
+            testCase.expect(sentMessages[0].text),
+            `${testCase.label} must resolve to its own subcommand. An unsplit command key yields an empty subcommand, which falls through to the status dashboard instead.`
+        );
+    }
+    console.log('  ✔ Two-word alias envelope resolution passed.');
+
     // Teardown test groups
     for (const gid of Object.keys(mockGroups)) {
         await removeGroup(gid);

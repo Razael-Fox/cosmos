@@ -9,6 +9,78 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P4] - 2026-10-02
+
+### Fixed — round-2 review findings on PR #56
+
+Addresses the second `Request changes` verdict (see `SUMMARY-v2.md`): one
+blocker regression introduced by the round-1 fix, plus the structural hardening
+and documentation corrections requested alongside it.
+
+#### Fixed
+
+- **`.whitelist all` and `.group list` no longer silently no-op.** Both are
+  two-word aliases, so the registry resolves them into a single canonical key
+  containing a space. `whitelist.ts` inserted that key into its token array
+  _unsplit_ — unlike its six sibling tools — so `tokens[0]` became the literal
+  string `"whitelist all"`, no subcommand was resolved, and the command fell
+  through to the status dashboard. This was a regression introduced by the
+  round-1 fix, in the very call sites meant to remove duplicated tokenization.
+- **Alias mapping in `whitelist.ts` now compares canonical keys.** The
+  `listgroup` / `grouplist` / `groups` / `whitelistall` / `addallgroups`
+  mappings run through `normalizeCommandKey`, so hyphen and underscore spellings
+  resolve identically to what the registry already treats as equivalent, and
+  `whitelist all` maps to the batch subcommand explicitly.
+- **`.add whitelist`, `.add-whitelist`, `.del group`, and `.remove whitelist` now
+  resolve.** `normalizeCommandKey` maps those spellings to `add whitelist`,
+  never to `addwhitelist`, so the previous six-entry set could not match them;
+  they parsed to their first word, matched no tool, and did nothing. The set is
+  now split into `INLINE_ADD_COMMAND_KEYS` and `INLINE_REMOVE_COMMAND_KEYS`,
+  both extended with the spaced spellings, and the message handler dispatches by
+  membership instead of three hardcoded string comparisons per family — which is
+  what would otherwise have reproduced the same silent no-op.
+
+#### Changed
+
+- **Token-array construction is consolidated into `commandTokens()`**, and
+  `commandNameWords()` covers the three tools that need only the command name.
+  All seven call sites now share one implementation. Round 1's defect was _dead_
+  context fields; round 2's was an _unsplit_ key written while wiring those same
+  fields up. Both defects occupied these seven sites, so the construction now
+  exists exactly once.
+- **Corrected the `allowUnknownPrefix` documentation.** The JSDoc claimed the
+  option was "reserved for the sub-bot rendering paths"; no such caller exists.
+  It is now described accurately as defensive — no `src/` caller passes it,
+  sub-bot prefixes are already handled because the handler passes the active
+  prefix explicitly, and the option exists for a future caller that genuinely
+  cannot know the prefix in force.
+
+#### Added
+
+- `tests/whitelist.test.ts` now exercises the handler-resolved envelope
+  (`commandName` / `argsStr`) for `.whitelist all`, `.group list`,
+  `.whitelist list`, `.whitelistall`, `.listgroup`, and `.whitelist status`,
+  asserting each resolves to _its own_ subcommand. Every pre-existing case in
+  that suite omits the envelope and so exercised only the raw-text fallback,
+  which is precisely why the regression was invisible. Verified by
+  reintroducing the unsplit key: the new assertions fail, and pass once fixed.
+- Inline-command coverage assertions for all ten spellings, including that the
+  add and remove families remain disjoint and that their union equals
+  `INLINE_COMMAND_KEYS`.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/spaced_command_prefix.test.ts` 16/16 groups including the 284-command /
+6816-invocation sweep · `whitelist`, `autoarchive`, `multiword_commands`,
+`nonspace_commands_and_removed_features`, `menu`, `cancel`, `monospace`,
+`idcard`, `job`, `loan`, `versioning` (30), `statusNotifier` (5), `i18n`,
+`commandsKnowledge` all pass · `tests/cosmosMcp.test.ts` 46/46 · MCP stdio smoke
+23/23. `brat` and `tutorials` remain failing on the pre-change baseline, verified
+unaffected.
+
+---
+
 ## [G2-F29-P3] - 2026-10-02
 
 ### Fixed — review findings on the command prefix normalization change

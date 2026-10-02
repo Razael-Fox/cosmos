@@ -4,7 +4,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { sendStickerFromBuffer } from './sticker_maker.js';
 import { cleanId } from '#utils/casino.js';
 import { unwrapMonospace } from '#utils/monospace.js';
-import { getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { commandNameWords, getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
 
 const BRAT_BASE_URL = 'https://api.siputzx.my.id/api/m/brat';
 const DEFAULT_DELAY = 500;
@@ -240,8 +240,9 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     // Prefer the handler-resolved command key: it is the spelling the registry
     // actually matched, including aliases such as `stiker brat`.
     const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
-    const twoWordTrigger = resolved.commandKey;
-    const triggerWord = resolved.commandKey.split(' ')[0] || '';
+    const commandWords = commandNameWords(resolved, rawMsgText);
+    const twoWordTrigger = commandWords.slice(0, 2).join(' ');
+    const triggerWord = commandWords[0] || '';
 
     let commandIsAnimated = false;
     if (

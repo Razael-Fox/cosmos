@@ -8,6 +8,9 @@ import {
     getCommandWords,
     splitCommandPrefix,
     isInlineCommand,
+    INLINE_COMMAND_KEYS,
+    INLINE_ADD_COMMAND_KEYS,
+    INLINE_REMOVE_COMMAND_KEYS,
     normalizeControlKeyword,
     resolveCommandArgs,
     sliceArgsAfterWords
@@ -342,6 +345,36 @@ async function runSpacedCommandTests() {
     // normalizeCommandKey remains forgiving on purpose (used for lookup).
     assert.strictEqual(normalizeCommandKey('-cancel'), 'cancel');
     console.log('✓ Cancel keyword narrowness verified.');
+
+    // 16. Inline whitelist commands must resolve in every documented spelling
+    console.log('[Test 16] Testing inline command coverage across spellings...');
+    for (const key of [
+        'addgroup',
+        'addwhitelist',
+        'add group',
+        'add whitelist',
+        'group add',
+        'delgroup',
+        'del group',
+        'removewhitelist',
+        'remove whitelist',
+        'group del'
+    ]) {
+        assert.ok(isInlineCommand(key), `"${key}" must be recognized as an inline command`);
+        assert.ok(INLINE_COMMAND_KEYS.has(key), `"${key}" must be a member of INLINE_COMMAND_KEYS`);
+        assert.strictEqual(
+            normalizeCommandKey(`.${key.split(' ').join('-')}`),
+            key,
+            `hyphen form of "${key}" must normalize to it`
+        );
+    }
+    // The add and remove families must stay disjoint, since the handler
+    // dispatches on membership of each.
+    for (const key of INLINE_ADD_COMMAND_KEYS) {
+        assert.ok(!INLINE_REMOVE_COMMAND_KEYS.has(key), `"${key}" must not appear in both families`);
+    }
+    assert.strictEqual(INLINE_ADD_COMMAND_KEYS.size + INLINE_REMOVE_COMMAND_KEYS.size, INLINE_COMMAND_KEYS.size);
+    console.log('✓ Inline command coverage verified.');
 
     console.log('--- ALL SPACED / DETACHED PREFIX COMMAND TESTS COMPLETED SUCCESSFULLY! ---');
 }

@@ -3,7 +3,7 @@ import { prisma, addGroup, removeGroup, isGroupWhitelisted, getAllWhitelistedGro
 import { getSenderJid } from '../utils/casino.js';
 import { isOwnerId } from '../utils/owner.js';
 import { renderCard, renderCatalogCard, renderBadge, CatalogItem } from '../utils/uiFormatter.js';
-import { getCommandWords, resolveCommandArgs } from '../utils/commandNormalize.js';
+import { commandTokens, normalizeCommandKey, resolveCommandArgs } from '../utils/commandNormalize.js';
 import {
     isAutoWhitelistEnabled,
     setAutoWhitelist,
@@ -64,14 +64,11 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         '';
 
     // Prefer the handler-resolved command name and byte-faithful argument
-    // remainder. Re-deriving tokens from the raw text is only a fallback for
-    // direct invocations that bypass the message handler (tests, internal
-    // callers), because every layer re-parsing the message is how the command
-    // boundary and the argument boundary drifted apart in the first place.
+    // remainder. `commandTokens` is shared with the other six tools so this
+    // construction cannot drift again — it did once, and the unsplit command
+    // key silently broke the two-word alias `.whitelist all`.
     const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
-    const tokens = resolved.commandKey
-        ? [resolved.commandKey, ...getCommandWords(resolved.args)]
-        : getCommandWords(rawText);
+    const tokens = commandTokens(resolved, rawText);
     const invokedCommand = tokens[0]?.toLowerCase() || 'whitelist';
     const subArgs = tokens.slice(1);
 
@@ -79,10 +76,14 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         subArgs[0]?.toLowerCase() || (typeof args.subcommand === 'string' ? args.subcommand.toLowerCase() : '')
     ).trim();
 
-    // Map command aliases to appropriate subcommands
-    if (invokedCommand === 'listgroup' || invokedCommand === 'grouplist' || invokedCommand === 'groups') {
+    // Map command aliases to appropriate subcommands.
+    // Compared on the canonical key rather than the raw token so hyphen and
+    // underscore spellings (`group-list`, `list_group`) map the same way the
+    // registry already treats them.
+    const invokedKey = normalizeCommandKey(invokedCommand);
+    if (invokedKey === 'listgroup' || invokedKey === 'grouplist' || invokedKey === 'groups') {
         subcommand = 'list';
-    } else if (invokedCommand === 'whitelistall' || invokedCommand === 'addallgroups') {
+    } else if (invokedKey === 'whitelistall' || invokedKey === 'addallgroups' || invokedKey === 'whitelist all') {
         subcommand = 'all';
     }
 

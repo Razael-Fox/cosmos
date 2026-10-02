@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid } from '#utils/casino.js';
-import { getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { commandNameWords, resolveCommandArgs } from '#utils/commandNormalize.js';
 import {
     getIdCardByUser,
     startRegistrationSession,
@@ -64,9 +64,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     // sees the canonical key the registry actually matched, rather than tokens
     // re-derived from the raw message.
     const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
-    const rawTokens = resolved.commandKey
-        ? resolved.commandKey.split(' ')
-        : getCommandWords(rawText).map((w) => w.toLowerCase());
+    const rawTokens = commandNameWords(resolved, rawText).map((w) => w.toLowerCase());
     const firstToken = rawTokens[0] || '';
     const twoTokens = rawTokens.slice(0, 2).join(' ');
     const actionArg = (args.action || '').trim().toLowerCase();

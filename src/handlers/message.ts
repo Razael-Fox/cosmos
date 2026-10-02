@@ -19,6 +19,8 @@ import {
     normalizeControlKeyword,
     sliceArgsAfterWords,
     isInlineCommand,
+    INLINE_ADD_COMMAND_KEYS,
+    INLINE_REMOVE_COMMAND_KEYS,
     MAX_COMMAND_WORDS
 } from '#utils/commandNormalize.js';
 import {
@@ -718,7 +720,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             }
 
             const commandKey = normalizeCommandKey(commandName);
-            if (commandKey === 'addgroup' || commandKey === 'addwhitelist' || commandKey === 'group add') {
+            if (INLINE_ADD_COMMAND_KEYS.has(commandKey)) {
                 console.log('Command executed', { command: '.addgroup', jid });
                 if (!jid.endsWith('@g.us')) {
                     await sock.sendMessage(jid, { text: t('core.group_only') });
@@ -778,7 +780,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 return;
             }
 
-            if (commandKey === 'delgroup' || commandKey === 'removewhitelist' || commandKey === 'group del') {
+            if (INLINE_REMOVE_COMMAND_KEYS.has(commandKey)) {
                 console.log('Command executed', { command: '.delgroup', jid });
                 if (!jid.endsWith('@g.us')) {
                     await sock.sendMessage(jid, { text: t('core.group_only') });

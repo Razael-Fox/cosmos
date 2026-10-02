@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
-import { getCommandWords, normalizeCommandKey, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { commandTokens, normalizeCommandKey, resolveCommandArgs } from '#utils/commandNormalize.js';
 import { getTranslator } from '#utils/i18n.js';
 import { formatRupiah } from '#utils/currency.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
@@ -249,9 +249,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     // a job title containing repeated spaces survives. Falls back to tokenizing
     // the raw text for direct invocations that bypass the message handler.
     const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
-    const parts = resolved.commandKey
-        ? [...resolved.commandKey.split(' '), ...getCommandWords(resolved.args)]
-        : getCommandWords(rawText);
+    const parts = commandTokens(resolved, rawText);
     const subCommand = (parts[1] || args.action || '').toLowerCase();
     const query =
         (resolved.commandKey ? resolved.rest : parts.slice(2).join(' ')) || args.target || args.job_name || '';

@@ -4,7 +4,7 @@ import { archiveChat, unarchiveChat } from '../services/chatArchiveService.js';
 import { getSenderJid } from '../utils/casino.js';
 import { isOwnerId } from '../utils/owner.js';
 import { renderCard } from '../utils/uiFormatter.js';
-import { getCommandWords, resolveCommandArgs } from '../utils/commandNormalize.js';
+import { commandTokens, resolveCommandArgs } from '../utils/commandNormalize.js';
 
 export const definition: ToolDefinition = {
     name: 'autoarchive',
@@ -70,9 +70,7 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
     // remainder; fall back to tokenizing the raw text only when the tool is
     // invoked without going through the message handler.
     const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
-    const tokens = resolved.commandKey
-        ? [...resolved.commandKey.split(' '), ...getCommandWords(resolved.args)]
-        : getCommandWords(rawText);
+    const tokens = commandTokens(resolved, rawText);
     const firstToken = (tokens[0] || '').toLowerCase();
     const secondToken = (tokens[1] || '').toLowerCase();
 

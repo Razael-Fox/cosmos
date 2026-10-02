@@ -73,9 +73,15 @@ export function isCommandInvocation(text: string, activePrefix: string = '.'): b
  * unless the caller explicitly opts in with `allowUnknownPrefix`. Several tools
  * feed raw captions and free text through this helper, where `#promo`,
  * `- 5 item`, or an emoji are ordinary content; stripping those characters
- * silently shifts every positional index the caller reads. Opting in is
- * reserved for the sub-bot rendering paths that genuinely cannot know the prefix
- * in force.
+ * silently shifts every positional index the caller reads.
+ *
+ * The opt-in is defensive rather than load-bearing: no `src/` caller passes it
+ * today. Sub-bot prefixes are already handled correctly because the message
+ * handler passes the active prefix explicitly, and every tool reads the
+ * handler-resolved envelope before falling back to raw tokenization. It exists
+ * so that a future caller which genuinely cannot know the prefix in force has a
+ * supported way to ask for the old lenient behaviour instead of reintroducing a
+ * bespoke prefix-stripping regex.
  *
  * The whole leading dot run is consumed, so `...selamat` yields `selamat`
  * rather than the inconsistent `..selamat` produced by consuming one dot.
@@ -125,21 +131,41 @@ export function splitCommandPrefix(
 export const MAX_COMMAND_WORDS = 5;
 
 /**
- * Commands that are intercepted and handled inline by the message handler
- * rather than dispatched through the tools registry (for example the group
- * whitelist add/remove flows, which manage their own quota and ownership rules).
+ * Commands that whitelist the current group, handled inline by the message
+ * handler rather than dispatched through the tools registry (the flow manages
+ * its own quota, ownership, and idempotency rules).
+ *
+ * Spaced spellings are listed explicitly rather than relying on the registry:
+ * `normalizeCommandKey` maps `.add-whitelist` to `add whitelist`, so a
+ * hyphenated or spaced user input produces the spaced key, never `addwhitelist`.
+ * Omitting them made `.add whitelist` parse to `.add`, match no tool, and
+ * silently do nothing.
  *
  * They are kept separate from tool aliases on purpose: other subsystems such as
  * the auto-download resolver use `ToolsHandler.getTool()` to decide whether a
  * command is dispatchable, and these commands are not.
  */
-export const INLINE_COMMAND_KEYS: ReadonlySet<string> = new Set([
+export const INLINE_ADD_COMMAND_KEYS: ReadonlySet<string> = new Set([
     'addgroup',
     'addwhitelist',
-    'group add',
+    'add group',
+    'add whitelist',
+    'group add'
+]);
+
+/** Inline commands that remove the current group from the whitelist. */
+export const INLINE_REMOVE_COMMAND_KEYS: ReadonlySet<string> = new Set([
     'delgroup',
+    'del group',
     'removewhitelist',
+    'remove whitelist',
     'group del'
+]);
+
+/** Every inline-handled command, used to bound the parser's longest-prefix scan. */
+export const INLINE_COMMAND_KEYS: ReadonlySet<string> = new Set([
+    ...INLINE_ADD_COMMAND_KEYS,
+    ...INLINE_REMOVE_COMMAND_KEYS
 ]);
 
 /**
@@ -245,6 +271,42 @@ export function resolveCommandArgs(
         rest: subcommand ? sliceArgsAfterWords(args, 1) : args,
         args
     };
+}
+
+/**
+ * Builds the token array a tool reads its subcommand and payload from.
+ *
+ * All seven tools that used to re-derive this independently need the exact same
+ * shape, and when they each built it by hand they drifted: `whitelist.ts`
+ * inserted `commandKey` unsplit, so the two-word alias `whitelist all` became a
+ * single token `"whitelist all"`, left no subcommand, and silently no-opped.
+ * That regression was introduced *by* wiring up the resolved envelope, in the
+ * very call sites meant to remove duplicated tokenization — so the construction
+ * now lives here exactly once.
+ *
+ * The command key is split on spaces because the registry's greedy
+ * longest-prefix match resolves multi-word commands and aliases (`bank deposit`,
+ * `whitelist all`) into a single canonical key.
+ *
+ * `rawText` is used only when the handler did not supply an envelope, which
+ * happens for direct invocations from tests and internal callers.
+ */
+export function commandTokens(resolved: ResolvedCommandArgs, rawText: string): string[] {
+    if (!resolved.commandKey) return getCommandWords(rawText);
+    return [...resolved.commandKey.split(' ').filter(Boolean), ...getCommandWords(resolved.args)];
+}
+
+/**
+ * Returns only the words of the matched command name, excluding arguments.
+ *
+ * Some tools need to recognise which spelling was invoked (`.brat animasi`,
+ * `.allmenu`, `.register id`) without the payload, so `commandTokens` would mix
+ * argument words into the comparison. Like `commandTokens` this reads the
+ * handler-resolved key first and only tokenizes raw text as a fallback.
+ */
+export function commandNameWords(resolved: ResolvedCommandArgs, rawText: string, activePrefix: string = '.'): string[] {
+    if (!resolved.commandKey) return getCommandWords(rawText, activePrefix);
+    return resolved.commandKey.split(' ').filter(Boolean);
 }
 
 /**
