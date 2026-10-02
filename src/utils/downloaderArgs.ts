@@ -12,6 +12,8 @@
  * renders them through `ctx.t(...)` so the active chat language is honoured.
  */
 
+import { unwrapMonospace } from './monospace.js';
+
 /** Canonical media selectors accepted by the TikTok downloader. */
 export type TikTokSelector = 'audio' | 'video' | 'photo' | 'multi-photo';
 
@@ -136,14 +138,19 @@ export const UNKNOWN_FLAG_KEYS = {
     pinterest: 'media.downloaders.error_unknown_flag_pinterest'
 } as const;
 
-const URL_PATTERN = /https?:\/\/[^\s"'<>\\]+/i;
+// Shell metacharacters (`$(...)`, backticks, `;`) are deliberately NOT stripped by
+// the URL grammar: stripping them would silently rewrite the user's link. Safety is
+// guaranteed instead by never passing a URL through a shell — every downloader uses
+// execFile/axios with the URL as a discrete argument.
+const URL_PATTERN = /https?:\/\/[^\s"'<>\\`|]+/i;
 
 /**
- * Removes trailing sentence punctuation that chat clients frequently append to bare
- * links (for example `https://t.co/abc123.` or `https://pin.it/x)` ).
+ * Removes trailing sentence punctuation and quoting characters that chat clients
+ * frequently append to bare links (for example `https://t.co/abc123.`,
+ * `https://pin.it/x)`, or a link still wrapped in backticks).
  */
 export function sanitizeUrl(rawUrl: string): string {
-    return rawUrl.trim().replace(/[.,!?)>"']+$/, '');
+    return rawUrl.trim().replace(/[.,!?)>"'`]+$/, '');
 }
 
 /** Extracts the first HTTP(S) URL from arbitrary free text. */
@@ -157,13 +164,19 @@ export function extractUrl(rawText: string): string | null {
  * Splits raw argument text into normalised flag tokens and remaining literal tokens.
  * A token counts as a flag only when it looks like `--name` or `-name`, which keeps
  * URL fragments containing dashes from being misread as parameters.
+ *
+ * WhatsApp users habitually wrap parameters in backticks or quotes (the tutorial
+ * itself renders flags that way), so each token is unwrapped first — otherwise a
+ * `` `--audio` `` token would be silently dropped and the tool would fall back to
+ * automatic mode, delivering the wrong payload.
  */
 function tokenize(rawText: string): { flags: string[]; literals: string[] } {
     const flags: string[] = [];
     const literals: string[] = [];
 
-    for (const token of String(rawText ?? '').split(/\s+/)) {
-        if (!token) continue;
+    for (const rawToken of String(rawText ?? '').split(/\s+/)) {
+        if (!rawToken) continue;
+        const token = unwrapMonospace(rawToken).text || rawToken;
         if (/^--?[A-Za-z0-9][\w-]*$/.test(token)) {
             flags.push(token.replace(/^-+/, '').toLowerCase());
             continue;
@@ -390,15 +403,17 @@ export function buildYouTubeVideoFormat(quality: YouTubeVideoQuality): string {
 }
 
 /**
- * Builds the `yt-dlp` arguments for a dedicated audio-only MP3 extraction.
- * The returned fragment is appended to the base download command.
+ * Builds the `yt-dlp` argument vector for a dedicated audio-only MP3 extraction.
+ *
+ * Returned as discrete argv elements (never a shell fragment) so the caller can
+ * pass it straight to `execFile`, keeping user-supplied URLs out of a shell.
  */
-export function buildYouTubeAudioArgs(bitrate: YouTubeAudioBitrate): string {
-    const args = ['-f bestaudio', '--extract-audio', '--audio-format mp3'];
+export function buildYouTubeAudioArgv(bitrate: YouTubeAudioBitrate): string[] {
+    const args = ['-f', 'bestaudio', '--extract-audio', '--audio-format', 'mp3'];
     if (bitrate !== 'best') {
-        args.push(`--audio-quality ${bitrate}K`);
+        args.push('--audio-quality', `${bitrate}K`);
     }
-    return args.join(' ');
+    return args;
 }
 
 /** Human readable label for the resolved video quality, used on the info card. */

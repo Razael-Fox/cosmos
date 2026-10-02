@@ -103,7 +103,7 @@ function buildMediaCard(
         });
 
     items.push({
-        label: MEDIA_CLASS_KEYS[mediaClass].label,
+        label: ctx.t(MEDIA_CLASS_KEYS[mediaClass].label),
         value: ctx.t(MEDIA_CLASS_KEYS[mediaClass].value)
     });
 
@@ -163,7 +163,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (parsed.unknownFlags.length > 0) {
         console.error(`[TikTokDL Tool] Rejected unknown flags: ${parsed.unknownFlags.join(', ')}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return buildRejectionCard(ctx, ctx.t(parsed.unknownFlagsKey!), [ctx.t('media.downloaders.hint_tiktok_flags')]);
+        return buildRejectionCard(
+            ctx,
+            ctx.t(parsed.unknownFlagsKey!, { flags: parsed.unknownFlags.map((f) => `--${f}`).join(', ') }),
+            [ctx.t('media.downloaders.hint_tiktok_flags')]
+        );
     }
 
     if (parsed.conflict) {
@@ -290,12 +294,6 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
               : wantPhotos.length === 1
                 ? 'photo'
                 : 'audio';
-        const caption = buildMediaCard(
-            ctx,
-            { title: data.title, author: data.author?.nickname, duration: data.duration },
-            mediaClass,
-            notes
-        );
 
         const schedule = async (sent: unknown, kind: 'video' | 'image' | 'audio') => {
             if (!sent) return;
@@ -336,6 +334,15 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         if (wantAudio && !audioPath) {
             notes.push(ctx.t('media.downloaders.note_no_audio_available'));
         }
+
+        // The card is built only now, after asset acquisition, so every note
+        // (including "no soundtrack available") actually reaches the caption.
+        const caption = buildMediaCard(
+            ctx,
+            { title: data.title, author: data.author?.nickname, duration: data.duration },
+            mediaClass,
+            notes
+        );
 
         // ── Dispatch ──────────────────────────────────────────────────────────
         // Images are dispatched back-to-back with no interleaved text so WhatsApp

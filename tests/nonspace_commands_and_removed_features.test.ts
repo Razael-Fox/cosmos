@@ -149,7 +149,9 @@ async function runNonSpaceAndRemovedFeaturesTest() {
             }
         }
     }
-    console.log('✓ All 4 removed features verified completely absent from runtime, disk, and tutorials.');
+    console.log(
+        `✓ All ${removedFeatures.length} removed features verified completely absent from runtime, disk, and tutorials.`
+    );
 
     console.log('--- ALL NON-SPACE AND REMOVED FEATURES TESTS PASSED! ---');
 }

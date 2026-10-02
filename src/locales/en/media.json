@@ -96,9 +96,9 @@
     },
     "downloaders": {
         "error_title": "⚠️ *DOWNLOADER PARAMETER ERROR*",
-        "error_unknown_flag_tiktok": "Unrecognized flag{{#flags}} `{{flags}}`{{/flags}} for the TikTok downloader. Only the parameters below are accepted.",
-        "error_unknown_flag_youtube": "Unrecognized flag{{#flags}} `{{flags}}`{{/flags}} for the YouTube downloader. Only the parameters below are accepted.",
-        "error_unknown_flag_pinterest": "Unrecognized flag{{#flags}} `{{flags}}`{{/flags}} for the Pinterest downloader. Only the parameters below are accepted.",
+        "error_unknown_flag_tiktok": "Unrecognized flag `{{flags}}` for the TikTok downloader. Only the parameters below are accepted.",
+        "error_unknown_flag_youtube": "Unrecognized flag `{{flags}}` for the YouTube downloader. Only the parameters below are accepted.",
+        "error_unknown_flag_pinterest": "Unrecognized flag `{{flags}}` for the Pinterest downloader. Only the parameters below are accepted.",
         "error_conflict_video_photo": "Cannot combine --video and --photo. Please select either video or photo.",
         "error_conflict_video_multi_photo": "Cannot combine --video and --multi-photo.",
         "error_conflict_photo_multi_photo": "Cannot combine --photo and --multi-photo. Choose --photo for a single image or --multi-photo for all images.",

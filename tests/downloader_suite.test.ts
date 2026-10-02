@@ -1,6 +1,7 @@
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
+import { execFile } from 'child_process';
 import toolsHandler from '../src/tools/handler.js';
 import tutorialService from '../src/services/tutorialService.js';
 import menuService from '../src/services/menuService.js';
@@ -8,7 +9,7 @@ import { getTranslator } from '../src/utils/i18n.js';
 import { initI18n } from '../src/locales/i18n.config.js';
 import { getLegacyCanonical } from '../src/utils/commandFormat.js';
 import {
-    buildYouTubeAudioArgs,
+    buildYouTubeAudioArgv,
     buildYouTubeVideoFormat,
     describeAudioBitrate,
     describeVideoQuality,
@@ -99,6 +100,40 @@ async function runDownloaderSuiteTests() {
     assert.strictEqual(
         parseTikTokArgs('https://vt.tiktok.com/abc123 --music').unknownFlagsKey,
         'media.downloaders.error_unknown_flag_tiktok'
+    );
+
+    // Monospace/quoted flags must still parse. WhatsApp users wrap parameters in
+    // backticks (as the tutorial renders them), and silently dropping the token
+    // would fall back to automatic mode and deliver the wrong payload.
+    assert.deepStrictEqual(
+        parseTikTokArgs('https://vt.tiktok.com/abc123 `--audio`').selectors,
+        ['audio'],
+        'Backtick-wrapped --audio must parse'
+    );
+    assert.deepStrictEqual(
+        parseTikTokArgs('https://vt.tiktok.com/abc123 "--video"').selectors,
+        ['video'],
+        'Double-quoted --video must parse'
+    );
+    assert.deepStrictEqual(
+        parseTikTokArgs("https://vt.tiktok.com/abc123 '--multi-photo'").selectors,
+        ['multi-photo'],
+        'Single-quoted --multi-photo must parse'
+    );
+    assert.strictEqual(
+        parseTikTokArgs('https://vt.tiktok.com/abc123 ```--photo```').wantsPhoto,
+        true,
+        'Triple-backtick --photo must parse'
+    );
+    assert.strictEqual(
+        extractUrl('`https://pin.it/4fK2xQ`'),
+        'https://pin.it/4fK2xQ',
+        'A backtick-wrapped URL must not leak the delimiter'
+    );
+    assert.strictEqual(
+        parseYouTubeArgs('audio `https://youtu.be/abc` --320k').audioBitrate,
+        320,
+        'Monospace-wrapped audio mode must parse'
     );
     console.log('✓ TikTok flag parsing verified.');
 
@@ -202,15 +237,33 @@ async function runDownloaderSuiteTests() {
 
     // ── 5. YouTube dedicated audio command ───────────────────────────────────
     console.log('[Test 5] YouTube dedicated audio command and bitrate flags...');
-    assert.strictEqual(buildYouTubeAudioArgs('best'), '-f bestaudio --extract-audio --audio-format mp3');
-    assert.strictEqual(
-        buildYouTubeAudioArgs(128),
-        '-f bestaudio --extract-audio --audio-format mp3 --audio-quality 128K'
-    );
-    assert.strictEqual(
-        buildYouTubeAudioArgs(320),
-        '-f bestaudio --extract-audio --audio-format mp3 --audio-quality 320K'
-    );
+    // Audio args are returned as discrete argv elements so callers can use execFile
+    // and keep user-controlled input out of a shell.
+    assert.deepStrictEqual(buildYouTubeAudioArgv('best'), [
+        '-f',
+        'bestaudio',
+        '--extract-audio',
+        '--audio-format',
+        'mp3'
+    ]);
+    assert.deepStrictEqual(buildYouTubeAudioArgv(128), [
+        '-f',
+        'bestaudio',
+        '--extract-audio',
+        '--audio-format',
+        'mp3',
+        '--audio-quality',
+        '128K'
+    ]);
+    assert.deepStrictEqual(buildYouTubeAudioArgv(320), [
+        '-f',
+        'bestaudio',
+        '--extract-audio',
+        '--audio-format',
+        'mp3',
+        '--audio-quality',
+        '320K'
+    ]);
     assert.strictEqual(describeAudioBitrate('best'), 'Best');
     assert.strictEqual(describeAudioBitrate(192), '192 kbps');
 
@@ -273,6 +326,41 @@ async function runDownloaderSuiteTests() {
     assert.strictEqual(generic.isAutomatic, false);
     assert.strictEqual(generic.unknownFlagsKey, null);
     console.log('✓ Generic flag parser verified.');
+
+    // ── 7b. Shell-injection regression guard ─────────────────────────────────
+    // A URL is user-controlled, so it must never reach a shell. The downloaders
+    // use execFile (yt-dlp, ffmpeg) or axios, which bypass the shell entirely.
+    // Here we prove that a payload containing $(...) survives parsing verbatim and
+    // is NOT expanded when passed as a discrete argv element.
+    console.log('[Test 7b] Verifying shell metacharacters in URLs are inert...');
+    // Space-free payload so tokenisation does not simply truncate at whitespace.
+    const injectionUrl = 'https://evil.tild/$(touch /tmp/pwned)x';
+    const injectionParsed = parseTikTokArgs(injectionUrl);
+    assert(injectionParsed.url, 'Parser must still accept the payload URL');
+    assert(
+        injectionParsed.url.includes('$('),
+        `Payload must be preserved verbatim, not silently rewritten: ${injectionParsed.url}`
+    );
+
+    const argvOutput = await new Promise<string>((resolve, reject) => {
+        execFile('printf', ['%s', injectionParsed.url as string], (err, stdout) =>
+            err ? reject(err) : resolve(stdout)
+        );
+    });
+    // A shell string would expand the substitution to a path; argv echoes it literally.
+    assert(argvOutput.includes('$('), `argv must pass the substitution literally: ${argvOutput}`);
+    assert(!fs.existsSync('/tmp/pwned'), 'Shell substitution must never execute');
+
+    // Backticks terminate the URL instead of being carried into it, so no
+    // substitution syntax can survive extraction.
+    const backtickParsed = extractUrl('https://evil.tild/`id`x') ?? '';
+    assert(!backtickParsed.includes('`'), `Backtick must not survive into the URL: ${backtickParsed}`);
+    assert(!backtickParsed.includes('$'), `No shell substitution may survive extraction: ${backtickParsed}`);
+
+    // Trailing quoting must be stripped rather than becoming part of the URL.
+    assert.strictEqual(extractUrl('`https://pin.it/abc`'), 'https://pin.it/abc');
+    assert.strictEqual(extractUrl('"https://pin.it/abc"'), 'https://pin.it/abc');
+    console.log('✓ Shell-injection regression guard verified.');
 
     // ── 8. Command alias resolution ──────────────────────────────────────────
     console.log('[Test 8] Command alias resolution for spaced downloader commands...');
@@ -418,6 +506,36 @@ async function runDownloaderSuiteTests() {
     assert.strictEqual(ytConflict, 'media.downloaders.error_video_quality_on_audio');
     assert(tEn(ytConflict).includes('--128k'), 'EN audio guidance must list audio bitrates');
     assert(tId(ytConflict).includes('--128k'), 'ID audio guidance must list audio bitrates');
+
+    // Unknown-flag cards must interpolate {{flags}} and never leak Handlebars
+    // section syntax into user-facing text (regression test for the mustache bug).
+    const unknownFlagCases: Array<[string, { unknownFlagsKey: string; unknownFlags: string[] }]> = [
+        ['tiktok', parseTikTokArgs('https://vt.tiktok.com/x --vid')],
+        ['youtube', parseYouTubeArgs('https://youtu.be/x --8k')],
+        ['pinterest', parsePinterestArgs('https://pin.it/x --video')]
+    ];
+    for (const [platform, parsed] of unknownFlagCases) {
+        const variables = { flags: parsed.unknownFlags.map((f) => `--${f}`).join(', ') };
+        for (const [lang, translator] of [
+            ['en', tEn],
+            ['id', tId]
+        ] as const) {
+            const rendered = translator(parsed.unknownFlagsKey, variables);
+            assert(
+                !rendered.includes('{{') && !rendered.includes('}}'),
+                `${platform}/${lang} unknown-flag card must not leak mustache syntax: ${rendered}`
+            );
+            assert(
+                rendered.includes('--'),
+                `${platform}/${lang} unknown-flag card must name the rejected flag: ${rendered}`
+            );
+            assert.notStrictEqual(
+                rendered,
+                parsed.unknownFlagsKey,
+                `${platform}/${lang} unknown-flag card must be translated, not a raw key`
+            );
+        }
+    }
     console.log('✓ Localised error cards verified.');
 
     // ── 12. Command descriptions are localised ────────────────────────────────

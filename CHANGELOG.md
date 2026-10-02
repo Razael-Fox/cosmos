@@ -13,6 +13,39 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F27-P1] - 2026-10-02
+
+### Fixed
+
+- **Security (command injection):** All shell-string concatenation of the user-controlled
+  URL removed — `ytdl` and `pinterestdl` now use `execFile` with discrete argv elements
+  instead of `exec` with interpolated shell strings, so URLs containing `$(...)` or
+  backticks can no longer execute arbitrary commands.
+- **i18n mustache artifacts:** `error_unknown_flag_*` cards no longer render raw
+  `{{#flags}} {{/flags}}` Handlebars section syntax; unknown flags are now interpolated
+  as `` `--flag` `` in both English and Indonesian.
+- **Pinterest `--audio` silently broken:** removed the double-quoted FFmpeg binary path
+  (`""/path/ffmpeg""`) that prevented every extraction from running.
+- **Pinterest `--audio` on GIFs:** audio extraction is skipped for GIF assets (no audio
+  track), and a localized "no audio stream" note is delivered instead of failing.
+- **TikTok caption note ordering:** the media card is now built after asset acquisition,
+  so the "no soundtrack available" note actually reaches the delivered caption, and the
+  media-class label resolves through `ctx.t()` instead of leaking the raw i18n key.
+- **YouTube codec pinning restored:** `-S vcodec:h264,acodec:m4a` selector re-applied so
+  downloads stay WhatsApp-playable MP4/AAC instead of possibly-VP9 webm/mkv.
+- **YouTube quality fallback respects ceiling:** `--360` can no longer ship a 4K stream via
+  the uncapped `/bestvideo` fallback; both branches keep the requested height ceiling, and
+  the misleading `--merge-output-format` on a video-only stream is gone.
+- **AutoDL audio regression fixed:** AutoDL-triggered yt-dlp downloads now pass
+  `withAudio: true` so merged video+audio streams are delivered again; the dead `quality`
+  argument is removed. Explicit `.youtube dl` remains video-only by design.
+- **Monospace-wrapped flags honored:** `` `--audio` ``, `"--video"`, and quoted flags are
+  unwrapped before tokenization, and backticks/quotes can no longer leak into extracted
+  URLs (Rule AC compliance).
+- Indonesian mixed-language string `note_single_photo_from_carousel` cleaned up.
+
+---
+
 ## [G2-F27-P0] - 2026-10-01
 
 ### Feature Milestone 27 — Dynamic Multi-Platform Downloader Suite

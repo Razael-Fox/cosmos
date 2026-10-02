@@ -156,10 +156,11 @@ export async function processAutoDl(sock: WASocket, msg: WAMessage, jid: string,
                         // Automatic variation: no custom flags are forwarded, so each
                         // downloader resolves its own natural payload (TikTok video +
                         // soundtrack, YouTube video-only stream, Pinterest auto-detect).
-                        const autoArgs: Record<string, any> = { url };
-                        if (toolName === 'ytdl') {
-                            autoArgs.quality = 'best';
-                        }
+                        // yt-dlp-backed platforms (Instagram, Twitter, Facebook,
+                        // Threads, YouTube) request a merged, size-capped stream so
+                        // AutoDL keeps delivering videos *with sound*. An explicit
+                        // `.youtube dl` stays video-only by design.
+                        const autoArgs: Record<string, any> = toolName === 'ytdl' ? { url, withAudio: true } : { url };
                         const result = await toolsHandler.execute(toolName, autoArgs, {
                             sock,
                             msg,

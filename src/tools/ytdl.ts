@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from './types.js';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
@@ -8,27 +8,39 @@ import { renderCard } from '../utils/uiFormatter.js';
 import {
     ParsedYouTubeArgs,
     YouTubeVideoQuality,
-    buildYouTubeAudioArgs,
+    buildYouTubeAudioArgv,
     buildYouTubeVideoFormat,
     describeAudioBitrate,
     describeVideoQuality,
     parseYouTubeArgs
 } from '../utils/downloaderArgs.js';
 
-const execAsync = promisify(exec);
+/**
+ * Runs yt-dlp with a discrete argv array.
+ *
+ * The target URL is user-controlled (anyone in a whitelisted group can type
+ * `.youtube dl <url>`), so it MUST NEVER be interpolated into a shell command
+ * string: a URL such as `https://evil.tild/$(id)x` would otherwise be expanded by
+ * the shell. `execFile` bypasses the shell entirely.
+ */
+const execFileAsync = promisify(execFile);
 
 // WhatsApp media upload limit. Files larger than this are rejected after download.
 const MAX_FILESIZE_BYTES = 15 * 1024 * 1024;
 
-/** Human readable label for a resolved video resolution, used on the info card. */
-const VIDEO_QUALITY_LABELS: Record<YouTubeVideoQuality, string> = {
-    best: 'Best',
+/**
+ * Short, filesystem-safe token for the output filename, derived from the resolved
+ * quality. `describeVideoQuality` in the parser module owns the user-facing wording;
+ * duplicating the human labels here would let the two drift apart.
+ */
+const VIDEO_QUALITY_FILE_TOKENS: Record<YouTubeVideoQuality, string> = {
+    best: 'best',
     360: '360p',
     480: '480p',
-    720: '720p HD',
-    1080: '1080p Full HD',
-    1440: '1440p 2K QHD',
-    2160: '2160p 4K UHD'
+    720: '720p',
+    1080: '1080p',
+    1440: '1440p',
+    2160: '2160p'
 };
 
 export const definition: ToolDefinition = {
@@ -67,12 +79,17 @@ function resolveYtDlpPath(): string {
     return 'yt-dlp';
 }
 
-/** Builds the shared `yt-dlp` invocation prefix shared by both stream classes. */
-function buildBaseCommand(ytdlpPath: string): string {
+/** Builds the shared `yt-dlp` argument vector used by both stream classes. */
+function buildBaseArgs(): string[] {
+    const args: string[] = ['--js-runtimes', 'node'];
+
     const cookiesPath = path.resolve(process.cwd(), 'cookies.txt');
-    const cookiesArg = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : '';
-    const ffmpegLoc = ffmpeg ? `--ffmpeg-location "${ffmpeg}"` : '';
-    return `"${ytdlpPath}" --js-runtimes node ${cookiesArg} ${ffmpegLoc} --extractor-args "youtube:player_client=android,web"`;
+    if (fs.existsSync(cookiesPath)) args.push('--cookies', cookiesPath);
+
+    if (ffmpeg) args.push('--ffmpeg-location', ffmpeg as unknown as string);
+
+    args.push('--extractor-args', 'youtube:player_client=android,web');
+    return args;
 }
 
 /**
@@ -166,10 +183,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (parsed.unknownFlags.length > 0) {
         console.error(`[YTDL Tool] Rejected unknown flags: ${parsed.unknownFlags.join(', ')}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return buildRejectionCard(ctx, ctx.t(parsed.unknownFlagsKey!), [
-            ctx.t('media.downloaders.hint_youtube_flags'),
-            ctx.t('media.downloaders.hint_youtube_audio_flags')
-        ]);
+        return buildRejectionCard(
+            ctx,
+            ctx.t(parsed.unknownFlagsKey!, { flags: parsed.unknownFlags.map((f) => `--${f}`).join(', ') }),
+            [ctx.t('media.downloaders.hint_youtube_flags'), ctx.t('media.downloaders.hint_youtube_audio_flags')]
+        );
     }
 
     if (parsed.conflict) {
@@ -198,23 +216,47 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
     const timestamp = Date.now();
     const isAudio = parsed.kind === 'audio';
-    const suffix = isAudio ? 'audio' : VIDEO_QUALITY_LABELS[parsed.videoQuality].split(' ')[0];
+    const suffix = isAudio ? 'audio' : VIDEO_QUALITY_FILE_TOKENS[parsed.videoQuality];
     const outTemplate = path.join(storagePath, `ytdl_${timestamp}_${suffix}_%(id)s.%(ext)s`);
-    const baseCommand = buildBaseCommand(ytdlpPath);
 
-    // Video downloads intentionally target the video stream alone: merging audio in
-    // inflates the file past the WhatsApp limit and audio has its own dedicated
-    // command. Size filters are applied again after download as an exact guard.
-    const formatSelector = isAudio
-        ? buildYouTubeAudioArgs(parsed.audioBitrate)
-        : `-f "${buildYouTubeVideoFormat(parsed.videoQuality)}[filesize_approx<15M]/${buildYouTubeVideoFormat(parsed.videoQuality)}[filesize<15M]/bestvideo"`;
-    const outputFormatArg = isAudio ? '' : '--merge-output-format mp4';
+    // An explicit `.youtube dl` is video-only by design: merging audio in inflates
+    // the file past the WhatsApp limit, and audio has its own dedicated command.
+    // AutoDL, however, routes IG/Twitter/FB/Threads/YouTube through this tool and
+    // those users expect sound, so `withAudio` requests a merged, size-capped
+    // stream. This preserves the pre-existing AutoDL behaviour.
+    const withAudio = args.withAudio === true && !isAudio;
+
+    const streamArgs: string[] = [];
+    if (isAudio) {
+        streamArgs.push(...buildYouTubeAudioArgv(parsed.audioBitrate));
+    } else if (withAudio) {
+        // Merged best video + best audio, clamped to the WhatsApp delivery limit.
+        // The size filter is repeated because YouTube's SABR-only streams often
+        // omit an approximate filesize; the post-download stat check is the real guard.
+        streamArgs.push(
+            '-f',
+            'bestvideo[filesize_approx<15M]+bestaudio[filesize_approx<15M]/best[filesize_approx<15M]'
+        );
+        streamArgs.push('--merge-output-format', 'mp4');
+    } else {
+        const format = buildYouTubeVideoFormat(parsed.videoQuality);
+        // Both branches keep the requested height ceiling, so `--360` can never
+        // silently ship a 4K stream through the size-filter fallback.
+        streamArgs.push('-f', `${format}[filesize_approx<15M]/${format}`);
+    }
+
+    if (!isAudio) {
+        // WhatsApp cannot reliably play VP9/AV1 in a webm/mkv container while the
+        // message still declares video/mp4, so pin the codecs to H.264/AAC.
+        streamArgs.push('-S', 'vcodec:h264,acodec:m4a');
+    }
+
+    const ytArgs = [...buildBaseArgs(), ...streamArgs, '-o', outTemplate, parsed.url, '--print', 'after_move:filepath'];
 
     let downloadedFiles: string[] = [];
     try {
-        const command = `${baseCommand} ${formatSelector} ${outputFormatArg} -o "${outTemplate}" "${parsed.url}" --print after_move:filepath`;
-        console.log(`[YTDL Tool] Executing ${isAudio ? 'audio' : 'video-only'} download`);
-        const { stdout } = await execAsync(command);
+        console.log(`[YTDL Tool] Executing ${isAudio ? 'audio' : withAudio ? 'merged' : 'video-only'} download`);
+        const { stdout } = await execFileAsync(ytdlpPath, ytArgs, { maxBuffer: 1024 * 1024 * 20 });
         downloadedFiles = collectDeliverableFiles(stdout);
     } catch (e) {
         console.error('[YTDL Tool] Media download failed:', e);

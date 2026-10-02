@@ -3,13 +3,13 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import axios from 'axios';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import ffmpeg from 'ffmpeg-static';
 import { renderCard } from '../utils/uiFormatter.js';
 import { parsePinterestArgs } from '../utils/downloaderArgs.js';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const TEMP_MEDIA_DIR = path.join(os.tmpdir(), 'waf-pinterest');
 
@@ -165,9 +165,11 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     if (parsed.unknownFlags.length > 0) {
         console.error(`[PinterestDL Tool] Rejected unknown flags: ${parsed.unknownFlags.join(', ')}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return buildRejectionCard(ctx, ctx.t(parsed.unknownFlagsKey!), [
-            ctx.t('media.downloaders.hint_pinterest_flags')
-        ]);
+        return buildRejectionCard(
+            ctx,
+            ctx.t(parsed.unknownFlagsKey!, { flags: parsed.unknownFlags.map((f) => `--${f}`).join(', ') }),
+            [ctx.t('media.downloaders.hint_pinterest_flags')]
+        );
     }
 
     if (!parsed.url) {
@@ -403,12 +405,17 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             // Audio extraction is opt-in: sending a second message per video used to
-            // clutter chats for users who never asked for it.
-            if (parsed.wantsAudio && (ext === '.mp4' || ext === '.gif')) {
+            // clutter chats for users who never asked for it. Restricted to MP4
+            // videos: animated GIFs carry no audio track, so `-map a` would only
+            // produce a noisy failed ffmpeg call.
+            if (parsed.wantsAudio && ext === '.mp4') {
                 const audioOut = path.join(tempDir, `pinterest_${timestamp}_${i}_audio.mp3`);
                 try {
-                    const ffmpegCmd = ffmpeg ? `"${ffmpeg}"` : 'ffmpeg';
-                    await execAsync(`"${ffmpegCmd}" -i "${filepath}" -q:a 0 -map a "${audioOut}" -y`);
+                    // execFile with discrete argv keeps paths out of a shell, and
+                    // avoids the `""/path/ffmpeg""` quoting bug that silently
+                    // prevented extraction.
+                    const bin = (ffmpeg as unknown as string) || 'ffmpeg';
+                    await execFileAsync(bin, ['-i', filepath, '-q:a', '0', '-map', 'a', audioOut, '-y']);
                     if (fs.existsSync(audioOut)) extractedAudioPaths.push(audioOut);
                 } catch (e) {
                     console.error('[PinterestDL Tool] Audio extraction failed:', e);
