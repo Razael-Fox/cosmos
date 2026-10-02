@@ -11,6 +11,15 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ## [Unreleased]
 
+### Fixed (health monitor false-positive, found via the improved logging)
+
+- **Heap pressure measured against the V8 heap limit:** the health monitor
+  compared `heapUsed` to `heapTotal`, which V8 grows lazily, so a healthy
+  process sitting at 232 MB RSS of 8 GB reported a permanent
+  `heap usage high (96%)` degraded alert. It now compares against
+  `v8.getHeapStatistics().heap_size_limit` (81.5% → 4.7% on the same process),
+  which is a genuine pressure signal. RSS remains the primary memory guard.
+
 ### Fixed (operability follow-up after the `G2-F28-P4` deploy)
 
 - **Actionable status logs:** `WARN` / `CRITICAL` notifications now print their

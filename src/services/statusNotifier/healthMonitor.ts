@@ -7,6 +7,7 @@
  */
 import os from 'os';
 import fs from 'fs';
+import v8 from 'v8';
 import cron from 'node-cron';
 import { activeConnections } from '#utils/connectionManager.js';
 import { prisma } from '#db.js';
@@ -16,7 +17,13 @@ import { getLastDbIntegrity } from './dbGuard.js';
 
 const HEARTBEAT_CRON = '* * * * *'; // every minute
 const RSS_WARN_BYTES = 1.5 * 1024 * 1024 * 1024; // 1.5 GB
-const HEAP_WARN_RATIO = 0.9;
+/**
+ * Heap pressure is measured against V8's configured heap *limit*, never against
+ * `heapTotal`. V8 grows `heapTotal` lazily, so a long-lived process can sit at
+ * ~96% of a small `heapTotal` while using a trivial amount of memory (observed
+ * at 232 MB RSS of 8 GB), producing a permanent false "degraded" alert.
+ */
+const HEAP_WARN_RATIO = 0.85;
 
 let heartbeats = 0;
 let botDownAlerted = false;
@@ -71,9 +78,16 @@ export async function collectHealth(): Promise<HealthSnapshot> {
     }
 
     const memory = process.memoryUsage();
-    const heapRatio = memory.heapTotal > 0 ? memory.heapUsed / memory.heapTotal : 0;
+    // Measure heap pressure against the configured V8 heap limit, not the
+    // lazily-grown heapTotal (see HEAP_WARN_RATIO).
+    const heapLimit = v8.getHeapStatistics().heap_size_limit;
+    const heapRatio = heapLimit > 0 ? memory.heapUsed / heapLimit : 0;
     if (memory.rss > RSS_WARN_BYTES) reasons.push(`RSS high (${(memory.rss / 1024 / 1024).toFixed(0)} MB)`);
-    if (heapRatio > HEAP_WARN_RATIO) reasons.push(`heap usage high (${(heapRatio * 100).toFixed(0)}%)`);
+    if (heapRatio > HEAP_WARN_RATIO) {
+        reasons.push(
+            `heap pressure high (${(heapRatio * 100).toFixed(0)}% of ${(heapLimit / 1024 / 1024).toFixed(0)} MB V8 heap limit)`
+        );
+    }
 
     const botDown = activeConnections.size === 0;
     if (botDown) reasons.push('no active WhatsApp connection');
