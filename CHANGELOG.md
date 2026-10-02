@@ -9,6 +9,48 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P7] - 2026-10-02
+
+### Fixed — `cosmos-mcp` started on stdio instead of HTTP in production
+
+Found during the `G2-F29-P6` container deploy. The process reported `online`
+with a zero restart count and looked completely healthy, while serving nothing.
+
+#### Fixed
+
+- **`--transport=http` was ignored.** `parseTransport` looked for a bare
+  `--transport` argument and read the value from the next argv entry. PM2 passes
+  `args: '--transport=http'` from `docker/ecosystem.config.cjs`, which arrives as
+  a _single_ argv string, so `indexOf('--transport')` returned `-1` and the
+  server silently fell back to stdio. Nothing listened on `127.0.0.1:4100`, and
+  because the fallback is a valid transport rather than an error, nothing logged
+  a problem.
+
+    The parser now accepts both `--transport=http` and `--transport http`, and
+    throws on an unsupported value instead of downgrading. A missing value is also
+    an explicit error rather than a silent stdio fallback.
+
+- **Importing the entrypoint no longer boots a server.** `main()` now runs only
+  when the module is the process entrypoint, so the regression suite can import
+  `parseTransport` without starting a transport.
+
+#### Why this escaped review
+
+Four review rounds passed on this code. The defect is only observable when the
+argument arrives in PM2's specific form, and `tests/smoke/cosmosMcpSmoke.mjs`
+spawned the server directly rather than through PM2, so the equals form was never
+exercised. A green suite here meant "the stdio path works", not "both transports
+are reachable".
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/cosmosMcp.test.ts` 47/47 (new `cosmos_mcp: transport selection` suite
+covering both spellings, the `--http` alias, the default, and three rejection
+cases) · MCP stdio smoke 23/23 · confirmed in-container after redeploy: the log
+reports the HTTP transport and the endpoint answers `401 UNAUTHORIZED_MCP`
+without a key.
+
 ## [G2-F29-P6] - 2026-10-02
 
 ### Fixed — separator variants of the group-list and whitelist-all aliases

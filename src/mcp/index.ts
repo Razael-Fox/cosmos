@@ -18,13 +18,32 @@ import { isOwnerKeyConfigured } from './config.js';
 
 type Transport = 'stdio' | 'http';
 
-function parseTransport(argv: string[]): Transport {
-    const flagIndex = argv.indexOf('--transport');
-    if (flagIndex !== -1 && argv[flagIndex + 1]) {
-        const value = argv[flagIndex + 1];
+/**
+ * Resolves the transport from CLI arguments.
+ *
+ * Both spellings are accepted: `--transport http` (two argv entries) and
+ * `--transport=http` (one). The equals form is what PM2 passes when
+ * `ecosystem.config.cjs` declares `args: '--transport=http'`, and it is a
+ * single argv string, so an `indexOf('--transport')` lookup misses it entirely.
+ * That mistake shipped the server silently running on stdio under PM2 while the
+ * process still reported `online`, serving nothing on its HTTP port.
+ */
+export function parseTransport(argv: string[]): Transport {
+    const inline = argv.find((arg) => arg.startsWith('--transport='));
+    if (inline) {
+        const value = inline.slice('--transport='.length);
         if (value === 'http' || value === 'stdio') return value;
         throw new Error(`Unsupported transport "${value}". Use "stdio" or "http".`);
     }
+
+    const flagIndex = argv.indexOf('--transport');
+    if (flagIndex !== -1) {
+        const value = argv[flagIndex + 1];
+        if (value === 'http' || value === 'stdio') return value;
+        if (value === undefined) throw new Error('Missing value for --transport. Use "stdio" or "http".');
+        throw new Error(`Unsupported transport "${value}". Use "stdio" or "http".`);
+    }
+
     if (argv.includes('--http')) return 'http';
     return 'stdio';
 }
@@ -68,7 +87,11 @@ async function main(): Promise<void> {
     console.log('[MCP] stdio transport ready.');
 }
 
-main().catch((err) => {
-    console.error('[MCP] Fatal start-up error:', err);
-    process.exitCode = 1;
-});
+// Only auto-start when executed as the entrypoint. Importing this module (as the
+// regression suite does, to exercise `parseTransport`) must not boot a server.
+if (process.argv[1] && /mcp[/\\]index\.(js|ts|mjs|cjs)$/.test(process.argv[1])) {
+    main().catch((err) => {
+        console.error('[MCP] Fatal start-up error:', err);
+        process.exitCode = 1;
+    });
+}
