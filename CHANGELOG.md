@@ -9,6 +9,90 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P3] - 2026-10-02
+
+### Fixed — review findings on the command prefix normalization change
+
+Addresses the `Request changes` verdict on PR #56 (see `SUMMARY.md`): three
+high-severity blockers, one medium blocker, and three of the five non-blocking
+findings.
+
+#### Fixed
+
+- **Free-text arguments no longer lose internal whitespace.** The handler rebuilt
+  the argument remainder with `words.slice(n).join(' ')`, which collapsed every
+  whitespace run. Inputs such as `.sara halo     dunia` and
+  `` .contact add `John  Doe` `` reached the tool as single-spaced, silently
+  corrupting all 38 single-parameter commands and violating Rule AC, whose whole
+  purpose is preserving literal monospace text. The remainder is now sliced from
+  the original message body via `sliceArgsAfterWords`, so the bytes survive.
+- **The shared tokenizer no longer strips leading punctuation from free text.**
+  `splitCommandPrefix` treated any leading non-alphanumeric run as a command
+  prefix, and six tools run it over raw captions: `#promo` became `promo`,
+  `- 5 item` lost its hyphen, and an emoji was consumed — shifting every
+  positional index those tools read. Unknown prefixes are now opt-in via
+  `allowUnknownPrefix`; the message handler already passes the active prefix, so
+  sub-bot prefixes are unaffected. The leading dot run is also consumed
+  consistently now, so `...selamat` yields `selamat` rather than `..selamat`.
+- **`ToolContext.commandName` and `argsStr` are now consumed.** They were
+  declared and populated but read by nothing, while every affected tool
+  re-derived its own tokens from raw message text. `brat`, `whitelist`,
+  `autoarchive`, `job`, `loan`, `idcard`, and `help` now read the handler-resolved
+  envelope through `resolveCommandArgs`, falling back to raw tokenization only
+  when invoked outside the message handler. The earlier claim that tools had
+  stopped re-deriving arguments was inaccurate; it is true as of this release.
+- **Cancellation keywords match narrowly again.** `normalizeCommandKey` folds
+  `[-_\s]+` into spaces, which made `-cancel`, `cancel-`, and `_cancel` all
+  cancel a live bank transfer, loan application, job selection, or Sticker.ly
+  session. Cancellation is a destructive control and now uses
+  `normalizeControlKeyword`, which tolerates casing, a detached prefix, and
+  whitespace but keeps hyphens and underscores significant.
+
+#### Changed
+
+- **`getMaxCommandWords()` is cached at registry load.** It previously walked
+  every tool and alias key on every inbound message in the hot parse path.
+- **`MAX_COMMAND_WORDS` no longer truncates the vocabulary.** The clamp was
+  applied to the discovered maximum, so an over-long command would become
+  silently unreachable with no diagnostic. The registry now reports its true
+  maximum and the handler logs a one-time warning when it exceeds the expected
+  ceiling of five words.
+- **`UNKNOWN_FIELD` is now emitted by the mutation planner.** The code was
+  declared in the `McpErrorCode` union and asserted in `AGENTS.md` as the
+  anti-hallucination anchor, but had zero throw sites — hallucinated columns
+  surfaced as a generic `UNSAFE_MUTATION` with prose blockers. Plans now carry a
+  machine-readable `unknownFields` list, and `cosmos_db_apply_mutation` raises
+  `UNKNOWN_FIELD` with those fields when a plan is refused for that reason.
+
+#### Added
+
+- Regression coverage for the surfaces the previous sweep never asserted:
+  `argsStr` byte-fidelity across multi-space, tab, and monospace input;
+  `getCommandWords` behaviour on non-command captions (`#promo`, `- 5 item`,
+  emoji, `...selamat`); cancel-keyword acceptance and rejection; and the
+  `resolveCommandArgs` envelope. The suite's parser mirror now delegates to the
+  same helpers the handler uses, which is why it previously stayed green while
+  the handler was collapsing whitespace.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/spaced_command_prefix.test.ts` 15/15 groups including the 284-command /
+6816-invocation sweep · `multiword_commands`, `menu`, `cancel`, `monospace`,
+`versioning`, `statusNotifier`, `whitelist`, `autoarchive`, `idcard`, `job`,
+`loan`, `i18n`, `commandsKnowledge` all pass · `tests/cosmosMcp.test.ts` 46/46 ·
+MCP stdio smoke 23/23 · live MCP run confirms `UNKNOWN_FIELD` is returned for an
+invented column.
+
+#### Known limitation
+
+`INLINE_COMMAND_KEYS` still covers six spellings; `.add whitelist`, `.del group`,
+and `.remove whitelist` parse to their first word and no-op. This matches
+pre-change behaviour, so it is a coverage gap rather than a regression, and is
+deferred to a follow-up release.
+
+---
+
 ## [G2-F29-P2] - 2026-10-02
 
 ### Fixed
@@ -32,8 +116,9 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
   stripped-separator index retained as a last-resort fallback.
 - **Tools no longer re-derive arguments by fixed text index.** Tools such as `autoarchive`,
   `whitelist`, `job`, `loan`, `brat`, `idcard`, and `help` sliced the raw message text at a fixed
-  offset, which misparsed a detached prefix. They now use prefix-aware tokenization, and the handler
-  passes the already-resolved `commandName` and `argsStr` through `ToolContext`.
+  offset, which misparsed a detached prefix. They now use prefix-aware tokenization. The handler
+  also passes the already-resolved `commandName` and `argsStr` through `ToolContext`; those fields
+  became load-bearing in `G2-F29-P3`, see above.
 - **Deprecated-command notices no longer misfire on canonical forms.** Legacy lookup keeps hyphens
   significant, so `register-id` is still flagged as deprecated while the canonical `register id` is
   not. Detached and mixed-case spellings (`. addbalance`, `.ADDBALANCE`) now correctly resolve.

@@ -16,7 +16,10 @@ import {
     splitCommandPrefix,
     isCommandInvocation,
     normalizeCommandKey,
-    isInlineCommand
+    normalizeControlKeyword,
+    sliceArgsAfterWords,
+    isInlineCommand,
+    MAX_COMMAND_WORDS
 } from '#utils/commandNormalize.js';
 import {
     hasCancellableSession,
@@ -126,6 +129,9 @@ function hasDirectMedia(rawMsg: any): boolean {
 }
 
 let activeInteractions = 0;
+
+/** Guards the one-time warning about an over-long registered command. */
+let warnedAboutCommandWidth = false;
 
 function markPresenceActive(sock: WASocket, jid: string) {
     activeInteractions++;
@@ -483,8 +489,11 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
     const activePrefix = subBotConfig?.prefix || '.';
     const isCommand = isCommandInvocation(trimmedText, activePrefix) || isPlayReply;
 
-    // Normalize first so ". cancel", "CANCEL", and ".batal " are all recognized.
-    const cancelKey = normalizeCommandKey(trimmedText);
+    // Cancellation is a destructive control, so match it narrowly: tolerate
+    // casing, a detached prefix, and surrounding whitespace, but never treat a
+    // hyphenated or underscored spelling (`-cancel`, `cancel-`, `_cancel`) as a
+    // keyword. `normalizeControlKeyword` exists for exactly that distinction.
+    const cancelKey = normalizeControlKeyword(trimmedText);
     const isCancelKeyword = cancelKey === 'cancel' || cancelKey === 'batal' || cancelKey === 'abort';
 
     let isQuotingCommand = false;
@@ -675,7 +684,17 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     argsStr = '';
                 } else {
                     // Greedy longest-prefix matching across the whole registered vocabulary.
-                    const maxWords = Math.min(words.length, toolsHandler.getMaxCommandWords());
+                    // The registry reports its true maximum; `MAX_COMMAND_WORDS`
+                    // is only the expected ceiling, so exceeding it is a
+                    // diagnostic rather than a silent truncation.
+                    const vocabularyMax = toolsHandler.getMaxCommandWords();
+                    if (vocabularyMax > MAX_COMMAND_WORDS && !warnedAboutCommandWidth) {
+                        warnedAboutCommandWidth = true;
+                        console.warn(
+                            `[Commands] Registered vocabulary contains a ${vocabularyMax}-word command, exceeding the expected ceiling of ${MAX_COMMAND_WORDS}. Longest-prefix matching will scan deeper than usual.`
+                        );
+                    }
+                    const maxWords = Math.min(words.length, vocabularyMax);
                     let matchedWords = 1;
                     for (let len = maxWords; len >= 1; len--) {
                         const candidate = words.slice(0, len).join(' ');
@@ -689,7 +708,12 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     // downstream string comparison (legacy map, whitelist, group
                     // shortcuts) sees one stable representation.
                     commandName = `.${words.slice(0, matchedWords).join(' ')}`;
-                    argsStr = words.slice(matchedWords).join(' ');
+                    // Slice the ORIGINAL body instead of re-joining the split
+                    // tokens: `join(' ')` would collapse every internal
+                    // whitespace run and silently corrupt free-text arguments
+                    // for all single-parameter tools (Rule AC monospace payloads
+                    // above all).
+                    argsStr = sliceArgsAfterWords(body, matchedWords);
                 }
             }
 

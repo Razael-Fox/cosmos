@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
-import { getCommandWords } from '#utils/commandNormalize.js';
+import { getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
 import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
 import { requireIdCard } from '#utils/idCard.js';
 import { getBankAccountByUser } from '#services/bankService.js';
@@ -169,11 +169,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const bankAccount = await getBankAccountByUser(senderJid);
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    // Prefix-aware tokenization so ". loan apply" behaves like ".loan apply".
-    const parts = getCommandWords(rawText);
+    // Prefer the handler-resolved envelope over re-parsing the raw message.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const parts = resolved.commandKey
+        ? [...resolved.commandKey.split(' '), ...getCommandWords(resolved.args)]
+        : getCommandWords(rawText);
     // Format: .loan <subcommand> [amount] [collateral...]
     const subCommand = (parts[1] || args.subcommand || '').toLowerCase();
-    const remainingParts = parts.slice(2);
+    const remainingParts = resolved.commandKey ? getCommandWords(resolved.rest) : parts.slice(2);
 
     // Backwards compatibility for direct verification tests or callers executing .loan <amount>
     // If no subcommand is specified (or subcommand is a number), and bankAccount does not exist,

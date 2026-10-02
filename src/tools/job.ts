@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from './types.js';
 import { getSenderJid, cleanId } from '#utils/casino.js';
-import { getCommandWords, normalizeCommandKey } from '#utils/commandNormalize.js';
+import { getCommandWords, normalizeCommandKey, resolveCommandArgs } from '#utils/commandNormalize.js';
 import { getTranslator } from '#utils/i18n.js';
 import { formatRupiah } from '#utils/currency.js';
 import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
@@ -244,10 +244,17 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     };
 
     const rawText = (ctx.msg.message?.conversation || ctx.msg.message?.extendedTextMessage?.text || '').trim();
-    // Prefix-aware tokenization so ". apply job" behaves like ".apply job".
-    const parts = getCommandWords(rawText);
+    // Prefer the handler-resolved envelope: `subcommand` is the first word after
+    // the command and `rest` is the remainder with its original bytes intact, so
+    // a job title containing repeated spaces survives. Falls back to tokenizing
+    // the raw text for direct invocations that bypass the message handler.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const parts = resolved.commandKey
+        ? [...resolved.commandKey.split(' '), ...getCommandWords(resolved.args)]
+        : getCommandWords(rawText);
     const subCommand = (parts[1] || args.action || '').toLowerCase();
-    const query = parts.slice(2).join(' ') || args.target || args.job_name || '';
+    const query =
+        (resolved.commandKey ? resolved.rest : parts.slice(2).join(' ')) || args.target || args.job_name || '';
 
     // Handle job application shortcut commands (.apply job, .apply-job, .applyjob, .lamar kerja, etc.)
     // Triggers are compared as normalized keys so prefix spelling, casing, and

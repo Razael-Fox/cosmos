@@ -4,7 +4,7 @@ import { archiveChat, unarchiveChat } from '../services/chatArchiveService.js';
 import { getSenderJid } from '../utils/casino.js';
 import { isOwnerId } from '../utils/owner.js';
 import { renderCard } from '../utils/uiFormatter.js';
-import { getCommandWords } from '../utils/commandNormalize.js';
+import { getCommandWords, resolveCommandArgs } from '../utils/commandNormalize.js';
 
 export const definition: ToolDefinition = {
     name: 'autoarchive',
@@ -66,9 +66,13 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         unwrapped?.videoMessage?.caption ||
         '';
 
-    // Prefix-aware tokenization: strips the leading dot/prefix first so a
-    // detached prefix (". archive") tokenizes the same as ".archive".
-    const tokens = getCommandWords(rawText);
+    // Prefer the handler-resolved command name and byte-faithful argument
+    // remainder; fall back to tokenizing the raw text only when the tool is
+    // invoked without going through the message handler.
+    const resolved = resolveCommandArgs(ctx.commandName, ctx.argsStr);
+    const tokens = resolved.commandKey
+        ? [...resolved.commandKey.split(' '), ...getCommandWords(resolved.args)]
+        : getCommandWords(rawText);
     const firstToken = (tokens[0] || '').toLowerCase();
     const secondToken = (tokens[1] || '').toLowerCase();
 

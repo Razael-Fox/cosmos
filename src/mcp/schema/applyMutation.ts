@@ -83,6 +83,19 @@ export async function applyMutation(input: ApplyMutationInput, identity: McpIden
 
     const plan = planMutation(input);
     if (!plan.safe) {
+        // An invented column gets its own error code. Agents are explicitly told
+        // to branch on `UNKNOWN_FIELD`, and folding it into the generic
+        // `UNSAFE_MUTATION` made that contract unobservable.
+        if (plan.unknownFields.length > 0) {
+            throw new McpToolError(
+                'UNKNOWN_FIELD',
+                `These fields do not exist in prisma/schema.prisma and were refused: ${plan.unknownFields.join(', ')}. Call cosmos_db_describe for the live catalogue; columns are never guessed.`,
+                {
+                    unknownFields: plan.unknownFields,
+                    blockers: plan.blockers
+                }
+            );
+        }
         throw new McpToolError(
             'UNSAFE_MUTATION',
             `The mutation was refused by the planner: ${plan.blockers.join(' ')}`,

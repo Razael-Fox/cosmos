@@ -63,35 +63,64 @@ export function isCommandInvocation(text: string, activePrefix: string = '.'): b
  * Returns the prefix that was actually matched and the residual text with the
  * prefix removed, so callers can re-attach it uniformly.
  *
- * The active prefix is matched first for exactness. Failing that, any leading
- * run of non-alphanumeric characters is treated as the prefix, so tools that
- * render messages for sub-bots with custom prefixes (for example `!`) can still
- * tokenize correctly without knowing which prefix is in force.
+ * Only two prefix forms are recognised, and both must be *known*:
+ *
+ *  1. the active prefix (Rule M fixes this to `.` for the main bot, sub-bots may
+ *     use another character), and
+ *  2. a leading run of one or more dots.
+ *
+ * An unknown leading punctuation character is **never** treated as a prefix
+ * unless the caller explicitly opts in with `allowUnknownPrefix`. Several tools
+ * feed raw captions and free text through this helper, where `#promo`,
+ * `- 5 item`, or an emoji are ordinary content; stripping those characters
+ * silently shifts every positional index the caller reads. Opting in is
+ * reserved for the sub-bot rendering paths that genuinely cannot know the prefix
+ * in force.
+ *
+ * The whole leading dot run is consumed, so `...selamat` yields `selamat`
+ * rather than the inconsistent `..selamat` produced by consuming one dot.
  */
-export function splitCommandPrefix(text: string, activePrefix: string = '.'): { prefix: string; body: string } {
+export function splitCommandPrefix(
+    text: string,
+    activePrefix: string = '.',
+    options: { allowUnknownPrefix?: boolean } = {}
+): { prefix: string; body: string } {
     const trimmed = (text || '').trim();
     const prefix = activePrefix || '.';
 
     if (prefix !== '.' && trimmed.startsWith(prefix)) {
         return { prefix, body: trimmed.slice(prefix.length).trim() };
     }
-    if (trimmed.startsWith('.')) {
-        return { prefix: '.', body: trimmed.slice(1).trim() };
+
+    const dotRun = trimmed.match(/^\.+/);
+    if (dotRun) {
+        return { prefix: dotRun[0], body: trimmed.slice(dotRun[0].length).trim() };
     }
 
-    // Generic fallback: a leading punctuation run acting as a command prefix.
-    const generic = trimmed.match(/^([^\p{L}\p{N}]+)\s*([\s\S]*)$/u);
-    if (generic) {
-        return { prefix: generic[1], body: (generic[2] || '').trim() };
+    if (options.allowUnknownPrefix) {
+        // Opt-in: a leading run of one repeated non-alphanumeric character
+        // (`!`, `#`, `/`, ...) acting as a prefix. Hyphens and underscores are
+        // excluded because this codebase uses them as word separators inside
+        // command names (`.apply-license`).
+        const generic = trimmed.match(/^([^\p{L}\p{N}\s_-])(?:[^\p{L}\p{N}\s_-]*)\s*([\s\S]*)$/u);
+        if (generic) {
+            return { prefix: generic[1], body: (generic[2] || '').trim() };
+        }
     }
 
-    return { prefix, body: trimmed };
+    return { prefix: '', body: trimmed };
 }
 
 /**
- * The maximum number of whitespace-separated words any registered command name
- * or alias may contain. The message handler uses this to bound its greedy
- * longest-prefix scan instead of hardcoding a small constant.
+ * The expected ceiling on how many whitespace-separated words any registered
+ * command name or alias contains, used to bound the message handler's greedy
+ * longest-prefix scan.
+ *
+ * This is deliberately *not* a clamp on the discovered vocabulary: the registry
+ * reports its true maximum through `ToolsHandler.getMaxCommandWords()`, and the
+ * handler warns when that maximum exceeds this expectation. Truncating the
+ * vocabulary instead would make an over-long command silently unreachable, with
+ * no diagnostic anywhere.
  */
 export const MAX_COMMAND_WORDS = 5;
 
@@ -128,9 +157,118 @@ export function isInlineCommand(raw: string | null | undefined): boolean {
  * (". menu economy" yields `["", "menu", "economy"]` as far as index-based
  * consumers are concerned). This helper strips the prefix first, so the returned
  * words always begin with the actual command name.
+ *
+ * Pass `allowUnknownPrefix` only when the text is known to be a command
+ * invocation; see `splitCommandPrefix` for why unknown punctuation is not
+ * stripped by default.
  */
-export function getCommandWords(rawText: string, activePrefix: string = '.'): string[] {
-    const { body } = splitCommandPrefix(rawText || '', activePrefix);
+export function getCommandWords(
+    rawText: string,
+    activePrefix: string = '.',
+    options: { allowUnknownPrefix?: boolean } = {}
+): string[] {
+    const { body } = splitCommandPrefix(rawText || '', activePrefix, options);
     if (!body) return [];
     return body.split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Returns the argument remainder of a command body after the first
+ * `consumedWords` whitespace-separated words, **preserving the original bytes**
+ * of everything that follows.
+ *
+ * This exists because re-joining split tokens with a single space (`join(' ')`)
+ * destroys every internal whitespace run, which corrupts free-text arguments for
+ * every single-parameter tool — most visibly monospace payloads, whose whole
+ * purpose under Rule AC is to carry user text exactly. Slicing the original
+ * string keeps `halo     dunia` and `` `John  Doe` `` intact.
+ *
+ * Leading and trailing whitespace of the remainder is trimmed, matching the
+ * pre-normalization parser, so callers see the same envelope they always did.
+ */
+export function sliceArgsAfterWords(body: string, consumedWords: number): string {
+    const text = body || '';
+    if (consumedWords <= 0) return text.trim();
+
+    let end = 0;
+    let seen = 0;
+    const wordPattern = /\S+/g;
+    let match: RegExpExecArray | null;
+    while (seen < consumedWords && (match = wordPattern.exec(text)) !== null) {
+        end = match.index + match[0].length;
+        seen += 1;
+    }
+    if (seen < consumedWords) return '';
+    return text.slice(end).trim();
+}
+
+/**
+ * The argument envelope the message handler already resolved for a tool call.
+ *
+ * `commandName` is the canonical command that matched (for example `.bank
+ * deposit`), and `argsStr` is the verbatim remainder of the original message.
+ * Tools MUST prefer these over re-deriving tokens from the raw message text:
+ * the handler performs the prefix split and the greedy longest-prefix match once,
+ * and re-deriving it per tool is what previously let each layer disagree about
+ * where the command ends and the arguments begin.
+ */
+export interface ResolvedCommandArgs {
+    /** Canonical lookup key of the matched command, for example `bank deposit`. */
+    commandKey: string;
+    /** First word of the argument remainder, lowercased. Empty when there are none. */
+    subcommand: string;
+    /** The remainder after `subcommand`, preserving the original bytes. */
+    rest: string;
+    /** The full argument remainder, preserving the original bytes. */
+    args: string;
+}
+
+/**
+ * Derives the command key, subcommand, and byte-faithful remainder from the
+ * fields the handler placed on `ToolContext`.
+ *
+ * When either field is missing — a tool invoked directly from a test or another
+ * code path rather than through the message handler — the caller should fall back
+ * to `getCommandWords` on the raw text. This helper therefore never guesses: it
+ * only reports what it was given.
+ */
+export function resolveCommandArgs(
+    commandName: string | null | undefined,
+    argsStr: string | null | undefined
+): ResolvedCommandArgs {
+    const commandKey = normalizeCommandKey(commandName);
+    const args = typeof argsStr === 'string' ? argsStr.trim() : '';
+    const subcommand = (args.match(/^\S+/)?.[0] ?? '').toLowerCase();
+    return {
+        commandKey,
+        subcommand,
+        rest: subcommand ? sliceArgsAfterWords(args, 1) : args,
+        args
+    };
+}
+
+/**
+ * Produces the lookup key used for destructive control keywords such as
+ * `cancel`, `batal`, and `abort`.
+ *
+ * Cancellation terminates live financial and interactive sessions, so it must be
+ * the narrowest match in the handler rather than the loosest. `normalizeCommandKey`
+ * is deliberately forgiving — it folds `[-_\s]+` into single spaces so
+ * `.apply-license` and `.apply license` resolve alike — which would make
+ * `-cancel`, `cancel-`, and `_cancel` all trigger a cancellation.
+ *
+ * This variant therefore keeps hyphens and underscores significant and only
+ * tolerates leading dots and whitespace runs, mirroring
+ * `normalizeLegacyLookupKey` in `commandFormat.ts`.
+ *
+ * Examples: `. cancel` -> `cancel`, `-cancel` -> `-cancel` (not a keyword),
+ * `CANCEL` -> `cancel`.
+ */
+export function normalizeControlKeyword(raw: string | null | undefined): string {
+    if (!raw) return '';
+    return raw
+        .toLowerCase()
+        .replace(/^[.\s]+/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 }

@@ -5,7 +5,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { ToolModule, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
-import { normalizeCommandKey, stripCommandKey, MAX_COMMAND_WORDS } from '../utils/commandNormalize.js';
+import { normalizeCommandKey, stripCommandKey } from '../utils/commandNormalize.js';
 
 class ToolsHandler {
     /** Registry keyed by canonical command key (see normalizeCommandKey). */
@@ -15,6 +15,9 @@ class ToolsHandler {
     private strippedIndex = new Map<string, ToolModule>();
 
     private isLoaded = false;
+
+    /** Longest registered command name in words; computed once during load. */
+    private maxCommandWords = 1;
 
     async loadTools(): Promise<void> {
         if (this.isLoaded) return;
@@ -63,6 +66,15 @@ class ToolsHandler {
             }
         }
         this.isLoaded = true;
+
+        // Cache the vocabulary maximum now that the registry is final, so the
+        // message handler never has to re-walk every key while parsing a message.
+        let maxWords = 1;
+        for (const key of [...this.tools.keys(), ...this.aliases.keys()]) {
+            const words = key.split(/\s+/).filter(Boolean).length;
+            if (words > maxWords) maxWords = words;
+        }
+        this.maxCommandWords = maxWords;
     }
 
     /**
@@ -100,14 +112,18 @@ class ToolsHandler {
     /**
      * The maximum number of whitespace-separated words used by any registered
      * command name or alias, so parsers can bound their longest-prefix scan.
+     *
+     * Computed once while the registry is populated rather than per message: this
+     * sits in the hot parse path and previously walked every tool and alias key
+     * on each inbound message.
+     *
+     * The value is the true vocabulary maximum. `MAX_COMMAND_WORDS` bounds how
+     * deep a *caller* may usefully scan, but it must never truncate the
+     * discovered maximum — doing so would make an over-long command silently
+     * unreachable with no diagnostic instead of merely expensive to match.
      */
     getMaxCommandWords(): number {
-        let max = 1;
-        for (const key of [...this.tools.keys(), ...this.aliases.keys()]) {
-            const words = key.split(/\s+/).filter(Boolean).length;
-            if (words > max) max = words;
-        }
-        return Math.min(Math.max(max, 1), MAX_COMMAND_WORDS);
+        return Math.max(this.maxCommandWords, 1);
     }
 
     isOwnerOnly(nameOrAlias: string): boolean {

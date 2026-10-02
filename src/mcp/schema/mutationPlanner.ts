@@ -66,6 +66,14 @@ export interface MutationPlan {
     affectedRowCount: number | null;
     /** Blocking problems. Empty when `safe` is true. */
     blockers: string[];
+    /**
+     * Fields the request referenced that `cosmos_db_describe` does not report.
+     *
+     * Machine-readable counterpart to the prose blockers, so a caller can branch
+     * on an invented column instead of pattern-matching prose. This is what makes
+     * the `UNKNOWN_FIELD` error code reachable.
+     */
+    unknownFields: string[];
     /** Non-blocking advisories. */
     warnings: string[];
     /** The Prisma call the agent should make. */
@@ -332,6 +340,7 @@ export function planMutation(request: MutationRequest): MutationPlan {
         destructive,
         affectedRowCount: null,
         blockers,
+        unknownFields: [...absentSetFields, ...absentWhereFields],
         warnings,
         prismaSnippet,
         transactionSnippet,

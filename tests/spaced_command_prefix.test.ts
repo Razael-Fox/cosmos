@@ -5,24 +5,26 @@ import {
     normalizeCommandKey,
     stripCommandKey,
     isCommandInvocation,
-    getCommandWords
+    getCommandWords,
+    splitCommandPrefix,
+    isInlineCommand,
+    normalizeControlKeyword,
+    resolveCommandArgs,
+    sliceArgsAfterWords
 } from '../src/utils/commandNormalize.js';
 import { getLegacyCanonical } from '../src/utils/commandFormat.js';
 
 /**
  * Mirrors the command parser in src/handlers/message.ts.
- * Kept in sync with the handler so the regression suite exercises the real
- * resolution shape rather than only the helper functions.
+ *
+ * It delegates to the very helpers the handler uses (`splitCommandPrefix`,
+ * `isInlineCommand`, `sliceArgsAfterWords`) rather than re-implementing them.
+ * The earlier version of this mirror re-derived arguments with `join(' ')`,
+ * which is precisely why the suite stayed green while the handler was
+ * collapsing internal whitespace in real arguments.
  */
 function parseCommand(trimmedText: string, activePrefix = '.'): { commandName: string; argsStr: string } {
-    const trimmed = trimmedText.trim();
-    const prefix = activePrefix || '.';
-    let body = trimmed;
-    if (prefix !== '.' && trimmed.startsWith(prefix)) {
-        body = trimmed.slice(prefix.length).trim();
-    } else if (trimmed.startsWith('.')) {
-        body = trimmed.slice(1).trim();
-    }
+    const { body } = splitCommandPrefix(trimmedText.trim(), activePrefix);
 
     const words = body.split(/\s+/).filter(Boolean);
     if (words.length === 0) return { commandName: '.', argsStr: '' };
@@ -30,14 +32,15 @@ function parseCommand(trimmedText: string, activePrefix = '.'): { commandName: s
     const maxWords = Math.min(words.length, toolsHandler.getMaxCommandWords());
     let matchedWords = 1;
     for (let len = maxWords; len >= 1; len--) {
-        if (toolsHandler.getTool(words.slice(0, len).join(' '))) {
+        const candidate = words.slice(0, len).join(' ');
+        if (toolsHandler.getTool(candidate) || isInlineCommand(candidate)) {
             matchedWords = len;
             break;
         }
     }
     return {
         commandName: `.${words.slice(0, matchedWords).join(' ')}`,
-        argsStr: words.slice(matchedWords).join(' ')
+        argsStr: sliceArgsAfterWords(body, matchedWords)
     };
 }
 
@@ -78,7 +81,13 @@ async function runSpacedCommandTests() {
     assert.deepStrictEqual(getCommandWords('.menu economy'), ['menu', 'economy']);
     assert.deepStrictEqual(getCommandWords('. menu economy'), ['menu', 'economy']);
     assert.deepStrictEqual(getCommandWords('.  menu   economy'), ['menu', 'economy']);
-    assert.deepStrictEqual(getCommandWords('! menu'), ['menu']);
+    // An unknown prefix is no longer stripped implicitly. Several tools feed raw
+    // captions through this helper where '#', '-', and emoji are content, so a
+    // caller must either name the active prefix or opt in explicitly. The message
+    // handler already passes `activePrefix`, so sub-bot prefixes are unaffected.
+    assert.deepStrictEqual(getCommandWords('! menu'), ['!', 'menu']);
+    assert.deepStrictEqual(getCommandWords('! menu', '!'), ['menu']);
+    assert.deepStrictEqual(getCommandWords('! menu', '.', { allowUnknownPrefix: true }), ['menu']);
     assert.deepStrictEqual(getCommandWords('.'), []);
     console.log('✓ getCommandWords verified.');
 
@@ -254,6 +263,85 @@ async function runSpacedCommandTests() {
     }
     assert.strictEqual(toolsHandler.getTool('.'), null);
     console.log('✓ Unknown commands correctly fail closed.');
+
+    // 13. argsStr byte fidelity: internal whitespace must survive verbatim
+    console.log('[Test 13] Testing argsStr byte-fidelity for free-text arguments...');
+    const fidelity: Array<[string, string]> = [
+        ['.sara halo     dunia', 'halo     dunia'],
+        ['.contact add `John  Doe`', 'add `John  Doe`'],
+        ['.rule34   a  b', 'a  b'],
+        ['.menu   economy  group', 'economy  group'],
+        ['.brat  hallo   dunia  ', 'hallo   dunia'],
+        ['.sara\t\tberita   ini', 'berita   ini']
+    ];
+    for (const [input, expected] of fidelity) {
+        assert.strictEqual(parseCommand(input).argsStr, expected, `argsStr must be byte-faithful for "${input}"`);
+    }
+    // sliceArgsAfterWords unit behaviour.
+    assert.strictEqual(sliceArgsAfterWords('halo     dunia', 0), 'halo     dunia');
+    assert.strictEqual(sliceArgsAfterWords('menu  economy  group', 1), 'economy  group');
+    assert.strictEqual(sliceArgsAfterWords('menu', 1), '');
+    assert.strictEqual(sliceArgsAfterWords('menu', 5), '');
+    assert.strictEqual(sliceArgsAfterWords('', 1), '');
+    // resolveCommandArgs keeps the remainder intact and exposes the subcommand.
+    const resolvedArgs = resolveCommandArgs('.menu economy group', 'economy  sub  group');
+    assert.strictEqual(resolvedArgs.commandKey, 'menu economy group');
+    assert.strictEqual(resolvedArgs.subcommand, 'economy');
+    assert.strictEqual(resolvedArgs.rest, 'sub  group');
+    assert.strictEqual(resolvedArgs.args, 'economy  sub  group');
+    assert.strictEqual(resolveCommandArgs('.menu', '').subcommand, '');
+    assert.strictEqual(resolveCommandArgs('.menu', '').rest, '');
+    assert.strictEqual(resolveCommandArgs(undefined, undefined).commandKey, '');
+    console.log('✓ argsStr byte-fidelity verified.');
+
+    // 14. getCommandWords must not strip leading punctuation from free text
+    console.log('[Test 14] Testing getCommandWords on non-command captions...');
+    assert.deepStrictEqual(getCommandWords('#promo'), ['#promo']);
+    assert.deepStrictEqual(getCommandWords('- 5 item'), ['-', '5', 'item']);
+    assert.deepStrictEqual(getCommandWords('😀 promo'), ['😀', 'promo']);
+    // The dot run is consumed consistently: one dot or three, never "..x".
+    assert.deepStrictEqual(getCommandWords('...selamat pagi'), ['selamat', 'pagi']);
+    assert.deepStrictEqual(getCommandWords('.selamat pagi'), ['selamat', 'pagi']);
+    assert.deepStrictEqual(getCommandWords('. menu economy'), ['menu', 'economy']);
+    // Unknown prefixes are only stripped when a caller explicitly opts in.
+    assert.deepStrictEqual(getCommandWords('!menu'), ['!menu']);
+    assert.deepStrictEqual(getCommandWords('!menu', '.', { allowUnknownPrefix: true }), ['menu']);
+    assert.deepStrictEqual(splitCommandPrefix('#promo').prefix, '');
+    assert.deepStrictEqual(splitCommandPrefix('...x').prefix, '...');
+    console.log('✓ Non-command caption tokenization verified.');
+
+    // 15. Cancellation is a destructive control and must match narrowly
+    console.log('[Test 15] Testing cancel keyword narrowness...');
+    const acceptedKeywords: Array<[string, string]> = [
+        ['.cancel', 'cancel'],
+        ['cancel', 'cancel'],
+        ['. cancel', 'cancel'],
+        ['.  cancel', 'cancel'],
+        ['CANCEL', 'cancel'],
+        ['.batal', 'batal'],
+        ['batal', 'batal'],
+        ['.abort', 'abort'],
+        ['abort', 'abort']
+    ];
+    for (const [input, expected] of acceptedKeywords) {
+        assert.strictEqual(normalizeControlKeyword(input), expected, `"${input}" must stay a keyword`);
+    }
+    // Decorated spellings must NOT be keywords; each of these used to cancel a
+    // live bank, loan, job, or Sticker.ly session.
+    for (const decorated of ['-cancel', '_cancel', '--cancel', 'cancel-', 'cancel_', '_batal', '-abort', 'abort-']) {
+        assert.notStrictEqual(
+            normalizeControlKeyword(decorated),
+            decorated.replace(/^[-_]+/, '').replace(/[-_]+$/, ''),
+            `"${decorated}" must not resolve to a bare keyword`
+        );
+        assert.ok(
+            !['cancel', 'batal', 'abort'].includes(normalizeControlKeyword(decorated)),
+            `"${decorated}" must not be treated as a cancellation keyword`
+        );
+    }
+    // normalizeCommandKey remains forgiving on purpose (used for lookup).
+    assert.strictEqual(normalizeCommandKey('-cancel'), 'cancel');
+    console.log('✓ Cancel keyword narrowness verified.');
 
     console.log('--- ALL SPACED / DETACHED PREFIX COMMAND TESTS COMPLETED SUCCESSFULLY! ---');
 }
