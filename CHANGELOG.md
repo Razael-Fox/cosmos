@@ -9,6 +9,48 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P1] - 2026-10-02
+
+### Completed the engine-side IPC surface for the Cosmos MCP Server
+
+The milestone commit shipped `src/mcp/` and the read-only database surface, but the
+engine half of the bridge — the `/internal/...` handlers the `cosmos_bot_*` tools call —
+was still missing from version control, so the server could only ever answer `BOT_OFFLINE`.
+This patch lands that half.
+
+#### Added
+
+- **`src/utils/runtimeHealth.ts`** — dependency-free runtime probes (uptime, RSS, event-loop
+  lag, last `connection.update`) shared by `connectionManager.ts` and `ipcServer.ts`. Kept
+  in its own module because those two already import each other and a third file is the
+  only way to share state without an import cycle.
+- **`/internal/bot/status`** — connectivity, session count, registration state, uptime,
+  memory, and event-loop lag for `cosmos_bot_status`. An unreachable engine still returns
+  `BOT_OFFLINE`; no value is ever fabricated (Rule Y).
+- **`/internal/bot/reconnect`**, **`/internal/bot/logout`** — operator recovery for a wedged
+  socket. Both require an explicit `confirm` in the request body.
+- **`/internal/messages/send`**, **`/internal/groups/all`**, **`/internal/subbots/list`** —
+  target resolution and single-message delivery, so the MCP server never has to enumerate
+  groups or sub-bot instances itself.
+
+#### Changed
+
+- **`/internal/broadcast`** no longer runs an in-memory `setTimeout` loop that died with the
+  process. It now delegates to `broadcastService.startBroadcast`, so a multi-hour fan-out is
+  persisted in `StatusNotificationOutbox` with a tiered `nextAttemptAt` and survives a restart
+  (Rule J). `/internal/broadcast/preview`, `/internal/broadcast/status`, and
+  `/internal/broadcast/cancel` expose preview, progress, and cancellation.
+- **`startBroadcastWorker()` is started when the IPC server begins listening**, so a restart
+  resumes an interrupted fan-out instead of stranding it in `PENDING`.
+
+#### Verification
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm build`: clean.
+- `tests/cosmosMcp.test.ts`: 46/46 pass (11 suites).
+- `tests/smoke/cosmosMcpSmoke.mjs`: 23/23 pass over the real stdio protocol.
+
+---
+
 ## [G2-F29-P0] - 2026-10-02
 
 ### Feature Milestone 29 — Cosmos MCP Server for AI Coding Agents (Issue #49)

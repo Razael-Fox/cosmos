@@ -8,6 +8,8 @@ import { activeConnections } from '#utils/connectionManager.js';
 import { getUserPresence } from './presenceService.js';
 import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 import { getBinaryNodeChild, type WASocket, type GroupMetadata, type BinaryNode } from '@whiskeysockets/baileys';
+import { startBroadcastWorker } from './broadcastService.js';
+import { getEventLoopLagMs, getLastConnectionUpdateAt, getMemoryMb, getUptimeSeconds } from '#utils/runtimeHealth.js';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
 
@@ -507,6 +509,166 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
         case '/internal/health': {
             return { status: 200, data: { ok: true, connections: activeConnections.size } };
         }
+        case '/internal/bot/status': {
+            const sock = activeConnections.get('default');
+            const sessionKeys = [...activeConnections.keys()];
+            return {
+                status: 200,
+                data: {
+                    ok: true,
+                    online: Boolean(sock),
+                    sessions: sessionKeys.length,
+                    defaultRegistered: Boolean(sock?.authState?.creds?.registered ?? false),
+                    uptimeSeconds: getUptimeSeconds(),
+                    memoryMb: getMemoryMb(),
+                    eventLoopLagMs: getEventLoopLagMs(),
+                    lastConnectionUpdateAt: getLastConnectionUpdateAt()
+                }
+            };
+        }
+        case '/internal/bot/reconnect': {
+            if (!body.confirm) {
+                return { status: 400, data: { error: 'CONFIRMATION_REQUIRED' } };
+            }
+            const sessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'default';
+            const sock = activeConnections.get(sessionId);
+            if (!sock) {
+                return { status: 200, data: { ok: true, reconnected: false, reason: 'SESSION_NOT_CONNECTED' } };
+            }
+            try {
+                await sock.end(undefined);
+            } catch (err) {
+                console.error('[IPC] Forced reconnect failed:', err);
+                return { status: 500, data: { error: 'RECONNECT_FAILED' } };
+            }
+            activeConnections.delete(sessionId);
+            console.log(`[IPC] Operator-requested reconnect for session ${sessionId}.`);
+            return { status: 200, data: { ok: true, reconnected: true, sessionId } };
+        }
+        case '/internal/bot/logout': {
+            if (!body.confirm) {
+                return { status: 400, data: { error: 'CONFIRMATION_REQUIRED' } };
+            }
+            const sessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'default';
+            const sock = activeConnections.get(sessionId);
+            if (!sock) {
+                return { status: 200, data: { ok: true, loggedOut: false, reason: 'SESSION_NOT_CONNECTED' } };
+            }
+            try {
+                await sock.logout();
+            } catch (err) {
+                console.error('[IPC] Forced logout failed:', err);
+                return { status: 500, data: { error: 'LOGOUT_FAILED' } };
+            }
+            activeConnections.delete(sessionId);
+            console.log(`[IPC] Operator-requested logout for session ${sessionId}.`);
+            return { status: 200, data: { ok: true, loggedOut: true, sessionId } };
+        }
+        case '/internal/messages/send': {
+            const jid = String(body.jid || '').trim();
+            const message = String(body.message || '').trim();
+            if (!jid || !message) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+            const sock = activeConnections.get('default');
+            if (!sock) return { status: 503, data: { error: 'BOT_OFFLINE' } };
+            try {
+                await sock.sendMessage(jid, { text: message });
+                console.log(`[IPC] Operator message delivered (${message.length} characters).`);
+                return { status: 200, data: { ok: true, length: message.length } };
+            } catch (err) {
+                console.error('[IPC] Operator message delivery failed:', err);
+                return { status: 502, data: { error: 'MESSAGE_DELIVERY_FAILED' } };
+            }
+        }
+        case '/internal/groups/all': {
+            const sock = activeConnections.get('default');
+            let groupIds: string[] = [];
+            let source = 'whitelist';
+            if (sock) {
+                try {
+                    const participating = await sock.groupFetchAllParticipating();
+                    groupIds = Object.keys(participating).filter((id) => id.endsWith('@g.us'));
+                    source = 'participating';
+                } catch (err) {
+                    console.warn('[IPC] Failed to fetch participating groups:', err);
+                }
+            }
+            if (groupIds.length === 0) {
+                const whitelisted = await prisma.whitelistedGroup.findMany({ select: { jid: true, language: true } });
+                return {
+                    status: 200,
+                    data: {
+                        ok: true,
+                        source,
+                        groups: whitelisted.map((group) => ({ jid: group.jid, language: group.language }))
+                    }
+                };
+            }
+            return { status: 200, data: { ok: true, source, groups: groupIds.map((jid) => ({ jid })) } };
+        }
+        case '/internal/subbots/list': {
+            try {
+                const subBots = await prisma.subBotInstance.findMany({
+                    orderBy: { createdAt: 'desc' },
+                    take: 200
+                });
+                return {
+                    status: 200,
+                    data: {
+                        ok: true,
+                        instances: subBots.map((sub) => ({
+                            id: sub.id,
+                            ownerJid: sub.ownerJid,
+                            status: sub.status,
+                            connected: activeConnections.has(`sub_${sub.id}`),
+                            createdAt: sub.createdAt.toISOString()
+                        }))
+                    }
+                };
+            } catch (err) {
+                console.error('[IPC] Failed to list sub-bot instances:', err);
+                return { status: 500, data: { error: 'SUBBOT_LIST_FAILED' } };
+            }
+        }
+        case '/internal/broadcast/preview': {
+            const message = String(body.message || '').trim();
+            const delayMs = typeof body.delayMs === 'number' ? body.delayMs : 5_000;
+            if (!message) return { status: 400, data: { error: 'MESSAGE_REQUIRED' } };
+            const targets = Array.isArray(body.targetGroups) ? (body.targetGroups as unknown[]).map(String) : undefined;
+            try {
+                const { previewBroadcast } = await import('./broadcastService.js');
+                return { status: 200, data: await previewBroadcast({ message, delayMs, targetGroups: targets }) };
+            } catch (err) {
+                console.error('[IPC] Broadcast preview failed:', err);
+                return { status: 500, data: { error: 'BROADCAST_PREVIEW_FAILED' } };
+            }
+        }
+        case '/internal/broadcast/status': {
+            const jobId = String(body.jobId || '');
+            if (!jobId) return { status: 400, data: { error: 'JOB_ID_REQUIRED' } };
+            try {
+                const { getBroadcastStatus, listBroadcastJobs } = await import('./broadcastService.js');
+                const report = await getBroadcastStatus(jobId);
+                if (!report) {
+                    return { status: 200, data: { ok: true, found: false, recentJobs: await listBroadcastJobs(5) } };
+                }
+                return { status: 200, data: { ok: true, found: true, job: report } };
+            } catch (err) {
+                console.error('[IPC] Broadcast status lookup failed:', err);
+                return { status: 500, data: { error: 'BROADCAST_STATUS_FAILED' } };
+            }
+        }
+        case '/internal/broadcast/cancel': {
+            const jobId = String(body.jobId || '');
+            if (!jobId) return { status: 400, data: { error: 'JOB_ID_REQUIRED' } };
+            try {
+                const { cancelBroadcast } = await import('./broadcastService.js');
+                const cancelled = await cancelBroadcast(jobId);
+                return { status: 200, data: { ok: true, cancelled } };
+            } catch (err) {
+                console.error('[IPC] Broadcast cancellation failed:', err);
+                return { status: 500, data: { error: 'BROADCAST_CANCEL_FAILED' } };
+            }
+        }
         case '/internal/broadcast': {
             const message = String(body.message || '').trim();
             const delayMs = typeof body.delayMs === 'number' ? body.delayMs : 300_000; // default 5 minutes
@@ -515,67 +677,26 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             const sock = activeConnections.get('default');
             if (!sock) return { status: 503, data: { error: 'BOT_OFFLINE' } };
 
-            // Query all participating groups from the default socket
-            let groupIds: string[] = [];
             try {
-                const participating = await sock.groupFetchAllParticipating();
-                groupIds = Object.keys(participating).filter((id) => id.endsWith('@g.us'));
+                const { startBroadcast } = await import('./broadcastService.js');
+                const targets = Array.isArray(body.targetGroups)
+                    ? (body.targetGroups as unknown[]).map(String)
+                    : undefined;
+                const result = await startBroadcast({
+                    message,
+                    delayMs,
+                    targetGroups: targets,
+                    requestedBy: String(body.requestedBy || 'repository-owner')
+                });
+                return { status: 200, data: { ok: true, ...result } };
             } catch (err) {
-                console.warn(
-                    '[IPC Broadcast] Failed to fetch participating groups via socket, falling back to DB:',
-                    err
-                );
-            }
-
-            // Fallback / merge with whitelisted groups in DB
-            if (groupIds.length === 0) {
-                try {
-                    const whitelisted = await prisma.whitelistedGroup.findMany();
-                    groupIds = whitelisted.map((g) => g.jid);
-                } catch (err) {
-                    console.error('[IPC Broadcast] Failed to query DB whitelisted groups:', err);
+                const message_ = err instanceof Error ? err.message : String(err);
+                if (message_ === 'NO_GROUPS_FOUND') {
+                    return { status: 200, data: { ok: true, count: 0, message: 'NO_GROUPS_FOUND' } };
                 }
+                console.error('[IPC Broadcast] Failed to schedule the broadcast:', err);
+                return { status: 500, data: { error: 'BROADCAST_FAILED' } };
             }
-
-            if (groupIds.length === 0) {
-                return { status: 200, data: { ok: true, count: 0, message: 'NO_GROUPS_FOUND' } };
-            }
-
-            // Launch background broadcast loop without blocking the IPC response
-            (async () => {
-                console.log(
-                    `[IPC Broadcast] Starting broadcast to ${groupIds.length} groups with ${delayMs}ms delay...`
-                );
-                for (let i = 0; i < groupIds.length; i++) {
-                    const gid = groupIds[i];
-                    try {
-                        await sock.sendMessage(gid, { text: message });
-                        console.log(`[IPC Broadcast] [${i + 1}/${groupIds.length}] Sent to ${gid}`);
-                    } catch (sendErr: unknown) {
-                        const errMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
-                        console.error(`[IPC Broadcast] Failed to send to ${gid}:`, errMsg);
-                    }
-
-                    // Wait delayMs between groups if not the last group
-                    if (i < groupIds.length - 1 && delayMs > 0) {
-                        console.log(`[IPC Broadcast] Waiting ${delayMs}ms before next group...`);
-                        await new Promise((resolve) => setTimeout(resolve, delayMs));
-                    }
-                }
-                console.log('[IPC Broadcast] Finished broadcasting to all groups.');
-            })().catch((bgErr) => {
-                console.error('[IPC Broadcast] Background task error:', bgErr);
-            });
-
-            return {
-                status: 200,
-                data: {
-                    ok: true,
-                    queued: groupIds.length,
-                    groups: groupIds,
-                    delayMs
-                }
-            };
         }
         default:
             return { status: 404, data: { error: 'UNKNOWN_IPC_PATH' } };
@@ -624,6 +745,9 @@ export function startIpcServer(socketPath: string = getIpcSocketPath()): net.Ser
             console.error('[IPC] Failed to chmod IPC socket:', err);
         }
         console.log(`[IPC] Bot IPC server listening on ${socketPath} (chmod 600)`);
+        // Resume any persisted broadcast fan-out that a restart interrupted
+        // (AGENTS.md Rule J: the schedule lives in the database, not in RAM).
+        startBroadcastWorker();
     });
     server.on('error', (err) => console.error('[IPC] Server error:', err));
     return server;
