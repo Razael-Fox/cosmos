@@ -9,6 +9,62 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P6] - 2026-10-02
+
+### Fixed — separator variants of the group-list and whitelist-all aliases
+
+Reported by the round-4 review (`SUMMARY-v4.md` §5.1) as LOW and pre-existing.
+Verified by execution before fixing: the finding was accurate.
+
+#### Fixed
+
+- **`.list-group` and `.list_group` routed to the dashboard instead of the LIST
+  branch.** The registry's last-resort stripped index matches separator variants
+  by ignoring spaces, hyphens, and underscores, so those spellings reach
+  `whitelist.ts` as `['list', 'group']` — the first word only. The alias mapping
+  compared `tokens[0]`, so `listgroup` never matched, `subArgs[0]` became
+  `group`, and execution fell through to the status dashboard.
+
+    The mapping now compares `stripCommandKey(resolved.commandKey)`, collapsing
+    every spelling onto one key:
+
+    ```
+    .listgroup  .list-group  .list_group       -> listgroup    -> list
+    .grouplist  .group-list  .group_list .group list -> grouplist -> list
+    .groups                                          -> groups     -> list
+    .whitelistall .whitelist-all .whitelist_all .whitelist all -> whitelistall -> all
+    ```
+
+    Two-word aliases that carry their own subcommand now agree with the positional
+    path instead of relying on it.
+
+#### Added
+
+- `tests/whitelist.test.ts` covers all eleven separator variants of the list and
+  all aliases through the handler-resolved envelope, asserting each routes to its
+  own subcommand rather than the dashboard. Verified by reverting the mapping to
+  `tokens[0]`: the new assertions fail on `.list-group`, and pass once fixed.
+
+#### Note on a prior review claim
+
+Round 3 (`SUMMARY-v3.md` §3.2) asserted that `.list_group` resolved to subcommand
+`list`, derived from reasoning about `normalizeCommandKey` rather than from
+observing the token array. It did not: the first word is `list` and the outcome
+was the dashboard. The round-3 verdict was unaffected, but its evidence table was
+overstated by one spelling.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/whitelist.test.ts` passes with both new guards ·
+`tests/spaced_command_prefix.test.ts` 16/16 groups · `autoarchive`,
+`multiword_commands`, `nonspace_commands_and_removed_features`, `menu`, `cancel`,
+`monospace`, `idcard`, `job`, `loan`, `versioning` (30), `statusNotifier` (5),
+`i18n`, `commandsKnowledge` all pass · `tests/cosmosMcp.test.ts` 46/46 · MCP stdio
+smoke 23/23.
+
+---
+
 ## [G2-F29-P5] - 2026-10-02
 
 ### Changed — cosmetic cleanups from the round-3 review

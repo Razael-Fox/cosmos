@@ -316,6 +316,50 @@ async function runTests() {
     }
     console.log('  ✔ Two-word alias envelope resolution passed.');
 
+    // =========================================================================
+    // 9. Separator variants of the list/all aliases
+    // =========================================================================
+    // The registry's last-resort stripped index matches `.list-group` and
+    // `.list_group` by ignoring separators, so those spellings reach the tool as
+    // ['list', 'group'] — first word only. Mapping on tokens[0] therefore missed
+    // the `listgroup` alias and fell through to the dashboard. Mapping on the
+    // stripped command key collapses every separator variant onto one
+    // comparison.
+    console.log('[Test 9] Testing separator variants of the list/all aliases...');
+
+    const separatorCases: Array<{ commandName: string; expect: (text: string) => boolean }> = [
+        { commandName: '.listgroup', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.list-group', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.list_group', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.grouplist', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.group-list', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.group_list', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.groups', expect: (text) => text.includes('Total: 3 groups') },
+        { commandName: '.whitelistall', expect: (text) => text.includes('Batch Whitelist') },
+        { commandName: '.whitelist-all', expect: (text) => text.includes('Batch Whitelist') },
+        { commandName: '.whitelist_all', expect: (text) => text.includes('Batch Whitelist') },
+        { commandName: '.addallgroups', expect: (text) => text.includes('Batch Whitelist') }
+    ];
+
+    for (const testCase of separatorCases) {
+        sentMessages.length = 0;
+        const separatorCtx: ToolContext = {
+            sock: mockSock,
+            msg: makeMsg(ownerNumber, testCase.commandName),
+            jid: '120363111001@g.us',
+            t,
+            commandName: testCase.commandName,
+            argsStr: ''
+        };
+        await executeWhitelist({}, separatorCtx);
+        assert.strictEqual(sentMessages.length, 1, `${testCase.commandName} must reply exactly once`);
+        assert.ok(
+            testCase.expect(sentMessages[0].text),
+            `${testCase.commandName} must route to its own subcommand, not the dashboard. Separator variants reach the tool with the first word only, so the alias must be matched on the stripped command key.`
+        );
+    }
+    console.log('  ✔ Separator variant routing passed.');
+
     // Teardown test groups
     for (const gid of Object.keys(mockGroups)) {
         await removeGroup(gid);
