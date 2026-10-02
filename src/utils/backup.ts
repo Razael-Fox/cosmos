@@ -21,6 +21,18 @@ function getHashFilePath(): string {
 }
 
 /**
+ * Builds a safe, human-readable label for the database actually selected by
+ * the configured path (honouring `DATABASE_URL` overrides). Absolute paths
+ * outside the working directory are reduced to their file name so no server
+ * filesystem layout is leaked into outbound notifications.
+ */
+function describeDatabasePath(): string {
+    const dbPath = getDatabasePath();
+    const relative = path.relative(process.cwd(), dbPath);
+    return relative && !relative.startsWith('..') && !path.isAbsolute(relative) ? relative : path.basename(dbPath);
+}
+
+/**
  * Computes the SHA-256 hex digest of a file using a read stream,
  * so arbitrarily large database files never fully load into memory.
  */
@@ -142,7 +154,7 @@ export async function dispatchBackupStatus(
                     summary: 'SQLite database snapshot persisted successfully.',
                     fields: {
                         Hash: hash ? hash.slice(0, 16) : 'unchanged',
-                        Database: 'storage/database.sqlite',
+                        Database: describeDatabasePath(),
                         Artifacts: artifactDelivery ?? 'n/a'
                     },
                     sessionId: 'default'

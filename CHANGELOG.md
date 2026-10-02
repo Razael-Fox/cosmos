@@ -13,6 +13,19 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F28-P4] - 2026-10-02
+
+### Fixed (CodeRabbit re-review on `f51272d`)
+
+- **Backup alert reports the real database path:** the `Database` field in
+  `DB_BACKUP_SUCCESS` notifications is now derived from the resolved database
+  path (honouring `DATABASE_URL` overrides) instead of a hardcoded
+  `storage/database.sqlite` filename. Absolute paths outside the working
+  directory are reduced to their file name so no server filesystem layout is
+  leaked outbound.
+
+---
+
 ## [G2-F28-P3] - 2026-10-02
 
 ### Fixed (Review follow-up on PR #55)
