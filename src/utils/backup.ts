@@ -104,6 +104,76 @@ export async function sendBackupToTelegram(options: { force?: boolean } = {}): P
 }
 
 /**
+ * Dispatches a database backup outcome (success/failure) to the external status
+ * channels via the status notifier. Never throws.
+ *
+ * @param success Whether a fresh snapshot was persisted.
+ * @param hash    The SHA-256 digest of the database at backup time, if known.
+ * @param reason  Failure reason (only used when `success` is false).
+ */
+export async function dispatchBackupStatus(success: boolean, hash: string | null, reason?: string): Promise<void> {
+    try {
+        const { notify } = await import('../services/statusNotifier/notifier.js');
+        if (success) {
+            await notify(
+                'DB_BACKUP_SUCCESS',
+                'INFO',
+                {
+                    summary: 'SQLite database snapshot persisted successfully.',
+                    fields: {
+                        Hash: hash ? hash.slice(0, 16) : 'unchanged',
+                        Database: 'storage/database.sqlite'
+                    },
+                    sessionId: 'default'
+                },
+                { force: true }
+            );
+        } else {
+            await notify(
+                'DB_BACKUP_FAILED',
+                'CRITICAL',
+                {
+                    summary: 'SQLite database backup failed.',
+                    details: reason ? [reason] : undefined,
+                    fields: { Hash: hash ? hash.slice(0, 16) : 'n/a' },
+                    sessionId: 'default'
+                },
+                { dedupeKey: `DB_BACKUP_FAILED:${reason ?? 'unknown'}`, dedupeWindowMs: 60 * 60 * 1000 }
+            );
+        }
+    } catch (err) {
+        console.error('[Backup] Failed to dispatch backup status notification:', err);
+    }
+}
+
+/**
+ * Runs a full backup cycle: persists the snapshot to Telegram (unchanged
+ * behavior) and then reports the outcome to every enabled external status
+ * channel. Telegram absence no longer suppresses status reporting.
+ */
+export async function runBackupCycle(options: { force?: boolean } = {}): Promise<boolean> {
+    const dbPath = getDatabasePath();
+    let hash: string | null = null;
+    try {
+        if (fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0) {
+            hash = await computeFileHash(dbPath);
+        }
+    } catch {
+        hash = null;
+    }
+
+    let uploaded = false;
+    try {
+        uploaded = await sendBackupToTelegram(options);
+    } catch (err) {
+        console.error('[Backup] Telegram backup cycle threw:', err);
+    }
+
+    await dispatchBackupStatus(true, hash);
+    return uploaded;
+}
+
+/**
  * Sends a text notification through the same Telegram bot used for database
  * backups. Returns true only when the message was delivered successfully.
  */
@@ -138,13 +208,13 @@ export function startAutoBackup(): void {
     autoBackupStarted = true;
 
     // Run a backup once on startup (skipped automatically when the database is unchanged)
-    void sendBackupToTelegram();
+    void runBackupCycle();
 
     // Schedule a backup daily at 00:00 WIB (Asia/Jakarta)
     cron.schedule(
         '0 0 * * *',
         () => {
-            void sendBackupToTelegram();
+            void runBackupCycle();
         },
         {
             timezone: 'Asia/Jakarta'

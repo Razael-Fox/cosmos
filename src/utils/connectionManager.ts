@@ -20,6 +20,31 @@ const logger = pino({ level: 'debug' });
 const MAX_RECONNECT_ATTEMPTS = 15;
 const RECONNECT_BASE_DELAY_MS = 3000;
 
+/**
+ * Fire-and-forget status notification helper. Uses a dynamic import so the
+ * status notifier (which itself imports this module) never introduces a
+ * circular static dependency into the Baileys connection lifecycle.
+ */
+function emitConnectionStatus(
+    event: 'BOT_DOWN' | 'BOT_RECONNECTED' | 'STATUS_DEGRADED',
+    severity: 'INFO' | 'WARN' | 'CRITICAL',
+    payload: { summary: string; details?: string[]; sessionId: string; dedupeWindowMs?: number }
+): void {
+    import('#services/statusNotifier/notifier.js')
+        .then(({ notify }) =>
+            notify(
+                event,
+                severity,
+                { summary: payload.summary, details: payload.details, sessionId: payload.sessionId },
+                {
+                    dedupeKey: `${event}:${payload.sessionId}`,
+                    dedupeWindowMs: payload.dedupeWindowMs
+                }
+            )
+        )
+        .catch((err) => console.error('[Connection] Failed to emit status notification:', err));
+}
+
 function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -140,6 +165,12 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
             console.log(`[Connection] [${sessionId}] Opened`);
             reconnectAttempts = 0;
             connectionOpenTimeSec = Math.floor(Date.now() / 1000);
+            if (sessionId === 'default') {
+                emitConnectionStatus('BOT_RECONNECTED', 'INFO', {
+                    summary: 'The default WhatsApp session is connected.',
+                    sessionId
+                });
+            }
             if (options.isPairingMode) {
                 options.isPairingMode = false;
                 options.isAborted = undefined;
@@ -251,6 +282,13 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                     console.log(
                         `[Connection] [${sessionId}] Default bot logged out. Clearing credentials and exiting...`
                     );
+                    emitConnectionStatus('BOT_DOWN', 'CRITICAL', {
+                        summary:
+                            'The default WhatsApp session logged out; credentials are being cleared and the process will exit for a supervised restart.',
+                        details: [`Reason: ${errorMessage}`],
+                        sessionId,
+                        dedupeWindowMs: 60 * 60 * 1000
+                    });
                     try {
                         await getPrismaClient(sessionId).whatsAppAuth.deleteMany();
                     } catch (e) {
@@ -288,6 +326,14 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                 console.log(
                     `[Connection] [${sessionId}] Reconnecting in ${reconnectDelay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
                 );
+                if (sessionId === 'default') {
+                    emitConnectionStatus('STATUS_DEGRADED', 'WARN', {
+                        summary: `The default WhatsApp session dropped and is reconnecting (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}).`,
+                        details: [`Reason: ${errorMessage}`],
+                        sessionId,
+                        dedupeWindowMs: 30 * 60 * 1000
+                    });
+                }
                 await delay(reconnectDelay);
                 if (!isPairedSuccess && isAborted?.()) {
                     console.log(`[Connection] [${sessionId}] Session aborted during delay. Skipping reconnect.`);
@@ -298,6 +344,14 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                 console.error(
                     `[Connection] [${sessionId}] Max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`
                 );
+                if (sessionId === 'default') {
+                    emitConnectionStatus('BOT_DOWN', 'CRITICAL', {
+                        summary: `The default WhatsApp session exhausted ${MAX_RECONNECT_ATTEMPTS} reconnect attempts and gave up.`,
+                        details: [`Reason: ${errorMessage}`, `Last status code: ${errorCode ?? 'unknown'}`],
+                        sessionId,
+                        dedupeWindowMs: 60 * 60 * 1000
+                    });
+                }
             }
         }
     });

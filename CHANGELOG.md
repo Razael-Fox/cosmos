@@ -13,6 +13,62 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F28-P0] - 2026-10-02
+
+### Feature Milestone 28 — External Status Channel Integration (Issue #47)
+
+A unified `ExternalStatusNotifier` subsystem mirrors operational events from the
+logger, health monitor, database guard, backup pipeline, and audit trail to
+Discord, Slack, and WhatsApp Channels. Every outbound payload is sanitized (no
+raw JIDs, phone numbers, credentials, or message bodies), and the subsystem is
+fail-closed: an unconfigured channel is skipped while local console logging
+continues. A broken status channel can never take down the bot it monitors.
+
+#### Added
+
+- **`src/services/statusNotifier/`** — new module: `types`, `config`,
+  `formatters`, `transports/{discord,slack,whatsappChannel,http}`, `notifier`,
+  `outbox`, `outboxWorker`, `healthMonitor`, `dbGuard`, `auditDigest`,
+  `issueLogger`, and `index`.
+- **Discord transport** — webhook embeds with a 10s timeout, 3-attempt
+  exponential backoff, and explicit HTTP 429 `retry_after` handling.
+- **Slack transport** — incoming webhook Block Kit with the same resilience
+  profile.
+- **WhatsApp Channel transport** — plain-text delivery via the live Baileys
+  socket with a persistent-outbox fallback and owner-DM fallback; never throws
+  into the socket loop.
+- **Health monitor** — 60s heartbeat emitting `STATUS_DEGRADED`, `BOT_DOWN`,
+  and `BOT_RECONNECTED` with a 5-minute startup grace window.
+- **Database guard** — startup + hourly `PRAGMA integrity_check` emitting
+  `DB_MISSING` / `DB_CORRUPT` CRITICAL alerts, followed by an emergency backup.
+- **Audit digest** — daily + on-demand aggregate of `ActivityLog`,
+  `BankTransaction`, `Loan`, `UserIpAccessLog`, and `PaymentTransaction` with
+  Rp-formatted sums and no raw identifiers.
+- **Batched issue-log forwarding** — 5-minute window, deduped and capped at 10
+  distinct signatures, file/line citation, build version.
+- **Persistent outbox** — Prisma-backed retry queue (`StatusNotificationOutbox`)
+  with a cron-driven worker; no in-memory `setTimeout` (Rule J).
+- **Operator commands** — owner-only `.status notify` (channel health + test
+  ping) and `.status report` (health snapshot + audit digest), with `descriptionKey`
+  entries in both `en`/`id` locales.
+- **Global error handlers** — redacted `ISSUE_LOG` (CRITICAL) on
+  `uncaughtException` / `unhandledRejection` before exit.
+- **Documentation** — `docs/STATUS_NOTIFICATIONS.md` runbook and new
+  `.env.example` keys.
+
+#### Changed
+
+- **`src/index.ts`** — boots the status subsystem during startup.
+- **`src/utils/connectionManager.ts`** — emits bot-down/reconnected/degraded
+  events on close, logout, max-reconnect, and open.
+- **`src/utils/backup.ts`** — `runBackupCycle()` reports backup outcome to the
+  external channels; the existing Telegram upload is unchanged.
+- **`prisma/schema.prisma` + `src/db.ts`** — added `StatusNotificationLog` and
+  `StatusNotificationOutbox` models and symmetric 3-phase programmatic DDL
+  (Rule W).
+
+---
+
 ## [G2-F27-P1] - 2026-10-02
 
 ### Fixed

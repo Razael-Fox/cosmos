@@ -371,6 +371,11 @@ Seluruh perintah di bawah ini hanya dapat dipakai **di dalam obrolan grup**, han
 
 - **Fungsi:** Mendaftarkan grup obrolan agar bot diizinkan merespons perintah di grup tersebut.
 
+### `.status notify` / `.status report` (External Status Channels - Owner Only)
+
+- **Fungsi:** Memeriksa kesehatan kanal status eksternal (Discord, Slack, WhatsApp Channel) dan mengirim notifikasi uji, atau menampilkan cuplikan kesehatan sistem (basis data, Prisma, koneksi bot) beserta ringkasan audit 24 jam dengan nilai Rupiah yang terformat. Seluruh keluaran disanitasi (tanpa JID atau nomor telepon mentah).
+- **Penggunaan:** `.status notify`, `.status report`.
+
 ---
 
 ## 10. Panduan Respons Sara AI Berdasarkan Konteks Ini

@@ -13,6 +13,7 @@ import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.j
 import { seedItems } from '#seed_item.js';
 import { seedProperties } from '#seed_property.js';
 import { describeVersion, getVersionInfo } from '#utils/versioning.js';
+import { initStatusNotifier } from '#services/statusNotifier/index.js';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -25,6 +26,10 @@ try {
 } catch (err) {
     console.error('[System] Failed to read version.json metadata:', (err as Error).message);
 }
+
+// Boot the external status notification subsystem (health, DB guard, issue log,
+// outbox retry worker, audit digest, and global error handlers).
+initStatusNotifier();
 
 // Start auto backup (on startup and daily at 00:00 WIB)
 startAutoBackup();
