@@ -9,6 +9,96 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P0] - 2026-10-02
+
+### Feature Milestone 29 — Cosmos MCP Server for AI Coding Agents (Issue #49)
+
+A first-party Model Context Protocol server gives AI coding agents — OpenCode, Claude Code,
+Pi, and Google Antigravity — typed, guarded, audited access to the Cosmos database, feature
+catalogue, and live bot actions. It replaces the recurring pattern where an agent reached for
+`npm`, installed an ad-hoc CLI, and wrote a throwaway script (for example
+`scripts/broadcast.mjs`) that bypassed every guardrail in `AGENTS.md`.
+
+The motivating request — _"broadcast to all groups with a 5-second delay per group that the
+bot will be undergoing maintenance"_ — is now exactly one `cosmos_bot_broadcast` call.
+
+#### Added
+
+- **`src/mcp/`** — the Cosmos MCP server (`@modelcontextprotocol/sdk` with Zod input schemas):
+    - `config.ts` — environment-driven configuration and the Rule V loopback-bind guard.
+    - `auth.ts` — single-owner key authentication with constant-time comparison and fail-closed
+      behaviour; the key never appears in a result, an error, or a log line.
+    - `privacy.ts` — JID/phone masking plus ephemeral `contact_ref_...` aliases (3-minute TTL,
+      10 000-entry LRU, RAM only) mirroring the zero-knowledge policy of Rules AB and AG.
+    - `audit.ts` — sliding-window rate limiter, mutation concurrency ceiling, and `ActivityLog`
+      audit writes that record the acting **holder** rather than the credential.
+    - `errors.ts` — the stable, machine-readable error-code contract.
+    - `sql/guardrails.ts`, `sql/readOnlyDb.ts` — read-only SQLite access on a genuinely
+      `readonly` handle, mandatory `LIMIT`, mandatory explicit projection, credential table and
+      column denylists, and mandatory `WHERE` on high-value ledgers.
+    - `schema/prismaCatalog.ts` — dependency-free parser for `prisma/schema.prisma`; the
+      anti-hallucination anchor that reports the live models, fields, defaults, indexes,
+      composite constraints, enums, and relations.
+    - `schema/mutationPlanner.ts` — the dry-run planner returning `safe`, blockers, the exact
+      `prisma.$transaction` boilerplate, the Rule W 3-phase DDL mirror targets, the ACID and
+      `balanceAfter` requirements, and a per-rule checklist.
+    - `schema/applyMutation.ts` — the executor, gated behind a byte-identical plan fingerprint,
+      `prisma.$transaction`, an `ActivityLog` row, a console log line, and a before/after diff.
+    - `schema/ddlMirror.ts`, `schema/toolingIsolation.ts`, `schema/i18nAudit.ts` — Rule W dual
+      maintenance and 3-phase ordering, Rule X worktree isolation, and Rule O translation parity
+      as machine-checkable reports.
+    - `tools/dbTools.ts`, `tools/featureTools.ts`, `tools/botTools.ts` — the `cosmos_db_*`,
+      `cosmos_*`, and `cosmos_bot_*` namespaces, plus `cosmos_guidance` (the machine-readable
+      agent contract and intent → tool map).
+    - `server.ts`, `http.ts`, `index.ts` — per-identity server assembly, the loopback-only
+      Streamable HTTP transport, and the CLI entrypoint.
+- **`cosmos_bot_broadcast` and the rest of `cosmos_bot_*`** — every live bot action is proxied
+  over the existing authenticated Unix-socket IPC bridge to the engine that owns the Baileys
+  sockets. `BOT_OFFLINE` is returned when the engine is unreachable; nothing is ever
+  fabricated (Rule Y).
+- **`src/services/broadcastService.ts`** — persisted broadcast fan-out. One
+  `StatusNotificationLog` row per job plus one `StatusNotificationOutbox` row per target with a
+  staggered `nextAttemptAt`, so a multi-hour run survives a restart (Rule J). Reusing the
+  existing status-notification tables means no schema change and therefore no additional Rule W
+  dual-maintenance burden. Cancellable through `cosmos_bot_broadcast_cancel` and through
+  `.cancel` via `cancellationManager` (Rule N).
+- **New IPC routes** — `/internal/bot/status`, `/internal/bot/reconnect`,
+  `/internal/bot/logout`, `/internal/messages/send`, `/internal/groups/all`,
+  `/internal/subbots/list`, `/internal/broadcast/preview`, `/internal/broadcast/status`, and
+  `/internal/broadcast/cancel`.
+- **Per-client configuration** — `.mcp.json` (Claude Code) plus `docs/mcp/` examples for
+  OpenCode, Pi, Google Antigravity, and the remote HTTP transport. All four clients reference
+  the same single owner key; none is committed.
+- **`AGENTS.md` §AH**, **`.agents/skills/cosmos-mcp/SKILL.md`**, and **`docs/COSMOS_MCP.md`** —
+  the agent contract (no npm, no ad-hoc CLI packages, no throwaway scripts, no direct SQLite
+  access), the intent → tool selection map, and the operator/deployment guide.
+- **Tests** — `tests/cosmosMcp.test.ts` (46 assertions across authentication, SQL guardrails,
+  the schema catalogue, the mutation planner, privacy, rate limiting, the persisted fan-out,
+  read-only execution, and read-only tool compilation) and
+  `tests/smoke/cosmosMcpSmoke.mjs`, which speaks the real MCP stdio protocol against the real
+  server process.
+
+#### Changed
+
+- **`src/services/ipcServer.ts`** — the `/internal/broadcast` handler no longer runs an
+  in-memory `setTimeout` loop. It now schedules a persisted job and returns per-target
+  receipts, a cancellable job id, and a hard target ceiling. The previous fire-and-forget
+  behaviour could silently lose an in-progress fan-out on restart.
+- **`src/services/statusNotifier/outboxWorker.ts`** — explicitly skips rows belonging to the
+  broadcast scheduler (`event = 'BROADCAST'` or a `broadcast:` channel) so the two schedulers
+  never contend for the same row.
+- **`src/utils/connectionManager.ts`** — records every `connection.update` timestamp so
+  `cosmos_bot_status` can report the last known connection event.
+- **`docker/ecosystem.config.cjs`** — new `cosmos-mcp` PM2 app running the Streamable HTTP
+  transport on `127.0.0.1:4100`, skipped automatically when the bot build was not packaged.
+- **`docker/nginx.conf`** — `/mcp` explicitly returns `404` on the public listener. The MCP
+  surface is deliberately not proxied; it is reachable only from a co-located process or an SSH
+  tunnel.
+- **`.env.example`**, **`README.md`** — documented the new environment variables, the scripts,
+  and the MCP surface.
+
+---
+
 ## [Unreleased]
 
 ### Fixed (health monitor false-positive, found via the improved logging)

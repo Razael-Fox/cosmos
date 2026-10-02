@@ -51,6 +51,34 @@ const apps = [
         time: true
     },
     {
+        name: 'cosmos-mcp',
+        cwd: '/app/bot',
+        script: 'dist/mcp/index.js',
+        args: '--transport=http',
+        node_args: '--max-old-space-size=160',
+        env: {
+            NODE_ENV: 'production',
+            // Owner-scoped developer tooling (issue #49). Bound to loopback only
+            // and never proxied by the public Nginx listener.
+            COSMOS_MCP_TOKEN: process.env.COSMOS_MCP_TOKEN,
+            COSMOS_MCP_HTTP_ENABLED: 'true',
+            COSMOS_MCP_HTTP_BIND: '127.0.0.1',
+            COSMOS_MCP_HTTP_PORT: '4100',
+            COSMOS_MCP_READ_ONLY: process.env.COSMOS_MCP_READ_ONLY || 'false',
+            COSMOS_MCP_AUDIT_USER_JID: process.env.COSMOS_MCP_AUDIT_USER_JID,
+            // Required to reach the bot engine over the Unix-socket IPC bridge.
+            INTERNAL_IPC_SECRET: process.env.INTERNAL_IPC_SECRET,
+            DATABASE_URL: 'file:/app/storage/database.sqlite',
+            BOT_IPC_SOCKET: '/app/storage/ipc.sock'
+        },
+        max_memory_restart: '200M',
+        kill_timeout: 5000,
+        restart_delay: 3000,
+        exp_backoff_restart_delay: 100,
+        merge_logs: true,
+        time: true
+    },
+    {
         name: 'cosmos-web',
         cwd: '/app/website',
         script: 'server.js',
