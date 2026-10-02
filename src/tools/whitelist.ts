@@ -76,14 +76,19 @@ export async function execute(args: Record<string, unknown>, ctx: ToolContext): 
         subArgs[0]?.toLowerCase() || (typeof args.subcommand === 'string' ? args.subcommand.toLowerCase() : '')
     ).trim();
 
-    // Map command aliases to appropriate subcommands.
+    // Map single-word command aliases to appropriate subcommands.
     // Compared on the canonical key rather than the raw token so hyphen and
     // underscore spellings (`group-list`, `list_group`) map the same way the
     // registry already treats them.
+    //
+    // Only single-word aliases appear here. Two-word spellings such as
+    // `whitelist all` and `group list` need no mapping at all: `commandTokens()`
+    // splits the resolved command key, so they arrive positionally as
+    // ['whitelist', 'all'] and `subArgs[0]` already yields the subcommand.
     const invokedKey = normalizeCommandKey(invokedCommand);
     if (invokedKey === 'listgroup' || invokedKey === 'grouplist' || invokedKey === 'groups') {
         subcommand = 'list';
-    } else if (invokedKey === 'whitelistall' || invokedKey === 'addallgroups' || invokedKey === 'whitelist all') {
+    } else if (invokedKey === 'whitelistall' || invokedKey === 'addallgroups') {
         subcommand = 'all';
     }
 

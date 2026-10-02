@@ -303,6 +303,12 @@ export function commandTokens(resolved: ResolvedCommandArgs, rawText: string): s
  * `.allmenu`, `.register id`) without the payload, so `commandTokens` would mix
  * argument words into the comparison. Like `commandTokens` this reads the
  * handler-resolved key first and only tokenizes raw text as a fallback.
+ *
+ * `activePrefix` applies only to that fallback. No current caller passes it:
+ * the message handler always supplies `commandName`, so in practice this
+ * parameter is never consulted, and a tool that genuinely can be reached with
+ * raw text from a sub-bot (non-dot prefix) should pass that prefix rather than
+ * relying on the `.` default.
  */
 export function commandNameWords(resolved: ResolvedCommandArgs, rawText: string, activePrefix: string = '.'): string[] {
     if (!resolved.commandKey) return getCommandWords(rawText, activePrefix);

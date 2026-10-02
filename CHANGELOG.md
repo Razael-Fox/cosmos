@@ -9,6 +9,41 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P5] - 2026-10-02
+
+### Changed — cosmetic cleanups from the round-3 review
+
+Round 3 approved PR #56 with no blockers and two optional cosmetic findings.
+Both are addressed here; neither was a behavioural change.
+
+#### Removed
+
+- **Unreachable alias mapping in `whitelist.ts`.** The `invokedKey ===
+'whitelist all'` comparison added in `G2-F29-P4` can never be true:
+  `commandTokens()` always splits the resolved command key on spaces, so
+  `tokens[0]` is a single word and two-word spellings arrive positionally
+  (`['whitelist', 'all']`) with the subcommand already resolved by
+  `subArgs[0]`. Verified across the multiword alias set — `tokens[0]` contained a
+  space in 0 of 8 cases. The comment now explains why two-word spellings need no
+  mapping, so the omission does not read as an oversight.
+
+#### Documented
+
+- **`commandNameWords`' `activePrefix` parameter.** It is forwarded only on the
+  raw-text fallback, and no caller passes it: the message handler always supplies
+  `commandName`, so the parameter is never consulted in practice. The JSDoc now
+  states this plainly and tells a caller that can genuinely receive raw text from
+  a sub-bot with a non-dot prefix to pass it rather than relying on the default.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check` clean ·
+`tests/whitelist.test.ts` passes including the two-word alias regression guard ·
+`tests/spaced_command_prefix.test.ts` 16/16 groups · full suite sweep and
+`tests/cosmosMcp.test.ts` re-run green.
+
+---
+
 ## [G2-F29-P4] - 2026-10-02
 
 ### Fixed — round-2 review findings on PR #56
