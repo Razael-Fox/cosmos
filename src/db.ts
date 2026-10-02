@@ -247,6 +247,32 @@ export function ensureDatabaseSchema(dbPath: string): void {
                 "success" BOOLEAN NOT NULL DEFAULT true,
                 "error" TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS "StatusNotificationLog" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "event" TEXT NOT NULL,
+                "severity" TEXT NOT NULL,
+                "summary" TEXT NOT NULL,
+                "status" TEXT NOT NULL,
+                "channels" TEXT,
+                "version" TEXT,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS "StatusNotificationOutbox" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "event" TEXT NOT NULL,
+                "severity" TEXT NOT NULL,
+                "channel" TEXT NOT NULL,
+                "payload" TEXT NOT NULL,
+                "status" TEXT NOT NULL DEFAULT 'PENDING',
+                "attempts" INTEGER NOT NULL DEFAULT 0,
+                "maxAttempts" INTEGER NOT NULL DEFAULT 3,
+                "lastError" TEXT,
+                "nextAttemptAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
         `);
 
         ensureColumnExists(db, 'User', 'currentJobId', 'INTEGER');
@@ -283,12 +309,34 @@ export function ensureDatabaseSchema(dbPath: string): void {
             /* ignore index errors */
         }
         try {
-            db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS "GroupBlacklist_groupJid_userJid_key" ON "GroupBlacklist"("groupJid", "userJid")`);
+            db.exec(
+                `CREATE UNIQUE INDEX IF NOT EXISTS "GroupBlacklist_groupJid_userJid_key" ON "GroupBlacklist"("groupJid", "userJid")`
+            );
             db.exec(`CREATE INDEX IF NOT EXISTS "GroupBlacklist_groupJid_idx" ON "GroupBlacklist"("groupJid")`);
             db.exec(`CREATE INDEX IF NOT EXISTS "GroupBlacklist_userJid_idx" ON "GroupBlacklist"("userJid")`);
             db.exec(`CREATE INDEX IF NOT EXISTS "ModerationLog_groupJid_idx" ON "ModerationLog"("groupJid")`);
             db.exec(`CREATE INDEX IF NOT EXISTS "ModerationLog_performedBy_idx" ON "ModerationLog"("performedBy")`);
             db.exec(`CREATE INDEX IF NOT EXISTS "ModerationLog_performedAt_idx" ON "ModerationLog"("performedAt")`);
+        } catch {
+            /* ignore index errors */
+        }
+        try {
+            db.exec(`CREATE INDEX IF NOT EXISTS "StatusNotificationLog_event_idx" ON "StatusNotificationLog"("event")`);
+            db.exec(
+                `CREATE INDEX IF NOT EXISTS "StatusNotificationLog_severity_idx" ON "StatusNotificationLog"("severity")`
+            );
+            db.exec(
+                `CREATE INDEX IF NOT EXISTS "StatusNotificationLog_status_idx" ON "StatusNotificationLog"("status")`
+            );
+            db.exec(
+                `CREATE INDEX IF NOT EXISTS "StatusNotificationLog_createdAt_idx" ON "StatusNotificationLog"("createdAt")`
+            );
+            db.exec(
+                `CREATE INDEX IF NOT EXISTS "StatusNotificationOutbox_status_nextAttemptAt_idx" ON "StatusNotificationOutbox"("status", "nextAttemptAt")`
+            );
+            db.exec(
+                `CREATE INDEX IF NOT EXISTS "StatusNotificationOutbox_channel_idx" ON "StatusNotificationOutbox"("channel")`
+            );
         } catch {
             /* ignore index errors */
         }
