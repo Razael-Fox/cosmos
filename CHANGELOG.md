@@ -13,6 +13,137 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F28-P4] - 2026-10-02
+
+### Fixed (CodeRabbit re-review on `f51272d`)
+
+- **Backup alert reports the real database path:** the `Database` field in
+  `DB_BACKUP_SUCCESS` notifications is now derived from the resolved database
+  path (honouring `DATABASE_URL` overrides) instead of a hardcoded
+  `storage/database.sqlite` filename. Absolute paths outside the working
+  directory are reduced to their file name so no server filesystem layout is
+  leaked outbound.
+
+---
+
+## [G2-F28-P3] - 2026-10-02
+
+### Fixed (Review follow-up on PR #55)
+
+- **Unconfigured backups no longer report success:** `runBackupCycle` dispatches
+  `DB_BACKUP_FAILED` when no destination is configured while the database has
+  changed; success is reserved for real deliveries and genuine
+  unchanged-database skips.
+- **Artifact opt-in enforced at the exfiltration boundary:** `sendDiscordFile`
+  and `sendWhatsAppFile` independently refuse uploads while
+  `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED` is off, so no future call site can
+  bypass the gate.
+
+---
+
+## [G2-F28-P2] - 2026-10-02
+
+### Fixed (Independent re-review on PR #55)
+
+- **Raw database artifacts now explicit opt-in (default off):** `runBackupCycle`
+  uploads the SQLite snapshot to Discord/WhatsApp only when
+  `STATUS_NOTIFY_BACKUP_ARTIFACTS_ENABLED=true`. The snapshot contains session
+  credentials and financial records — hash/metadata-only alerts are always sent
+  regardless.
+- **Owner-DM fallback no longer mangles multi-owner lists:** the transport
+  resolves the primary owner via `getOwnerNumbers()` instead of collapsing the
+  comma-separated `OWNER_PHONE_NUMBER` into one invalid JID.
+- **Outbox rows validated before dispatch:** persisted event/severity/channel
+  discriminators and payload shape are checked against `NOTIFY_EVENTS`,
+  `NOTIFY_SEVERITIES`, and the channel union; invalid rows terminally fail.
+- **Rule AF aliases:** dropped the single-token underscore aliases
+  `status_notify` / `status_report`; spaced multi-word names remain canonical.
+
+---
+
+## [G2-F28-P1] - 2026-10-02
+
+### Fixed (CodeRabbit review on PR #55)
+
+- **Logout outage alert no longer dropped:** the shutdown `BOT_DOWN` notification
+  is awaited with a bounded 5s timeout before `process.exit(1)`.
+- **Truthful backup reporting:** `runBackupCycle` reports `DB_BACKUP_FAILED` when
+  no snapshot was persisted anywhere (missing hash, or Telegram plus all file
+  deliveries failed); unchanged-database skips still report success.
+- **Lightweight heartbeat:** the 60s health check no longer runs
+  `PRAGMA integrity_check` or hashes the whole database; it reuses the hourly
+  guard verdict via a shared database-path resolver.
+- **Dedupe contract:** suppressed duplicates return an empty result list instead
+  of a fabricated Discord entry.
+- **Outbox accounting:** enqueued rows seed `attempts: 1` for the initial failed
+  delivery; 429 `retry_after` values are capped at 30s.
+- **Sanitization:** `sessionId` is redacted in all three channel renderers;
+  WhatsApp file reads are inside the error-handling flow; `unhandledRejection`
+  records only and lets the batching worker flush.
+
+---
+
+## [G2-F28-P0] - 2026-10-02
+
+### Feature Milestone 28 — External Status Channel Integration (Issue #47)
+
+A unified `ExternalStatusNotifier` subsystem mirrors operational events from the
+logger, health monitor, database guard, backup pipeline, and audit trail to
+Discord, Slack, and WhatsApp Channels. Every outbound payload is sanitized (no
+raw JIDs, phone numbers, credentials, or message bodies), and the subsystem is
+fail-closed: an unconfigured channel is skipped while local console logging
+continues. A broken status channel can never take down the bot it monitors.
+
+#### Added
+
+- **`src/services/statusNotifier/`** — new module: `types`, `config`,
+  `formatters`, `transports/{discord,slack,whatsappChannel,http}`, `notifier`,
+  `outbox`, `outboxWorker`, `healthMonitor`, `dbGuard`, `auditDigest`,
+  `issueLogger`, and `index`.
+- **Discord transport** — webhook embeds with a 10s timeout, 3-attempt
+  exponential backoff, and explicit HTTP 429 `retry_after` handling.
+- **Slack transport** — incoming webhook Block Kit with the same resilience
+  profile.
+- **WhatsApp Channel transport** — plain-text delivery via the live Baileys
+  socket with a persistent-outbox fallback and owner-DM fallback; never throws
+  into the socket loop.
+- **Health monitor** — lightweight 60s heartbeat (file existence, Prisma probe,
+  memory, socket state) emitting `STATUS_DEGRADED`, `BOT_DOWN`, and
+  `BOT_RECONNECTED` with a 5-minute startup grace window. The expensive
+  `PRAGMA integrity_check` runs only in the hourly database guard; the
+  heartbeat reuses its cached verdict.
+- **Database guard** — startup + hourly `PRAGMA integrity_check` emitting
+  `DB_MISSING` / `DB_CORRUPT` CRITICAL alerts, followed by an emergency backup.
+- **Audit digest** — daily + on-demand aggregate of `ActivityLog`,
+  `BankTransaction`, `Loan`, `UserIpAccessLog`, and `PaymentTransaction` with
+  Rp-formatted sums and no raw identifiers.
+- **Batched issue-log forwarding** — 5-minute window, deduped and capped at 10
+  distinct signatures, file/line citation, build version.
+- **Persistent outbox** — Prisma-backed retry queue (`StatusNotificationOutbox`)
+  with a cron-driven worker; no in-memory `setTimeout` (Rule J).
+- **Operator commands** — owner-only `.status notify` (channel health + test
+  ping) and `.status report` (health snapshot + audit digest), with `descriptionKey`
+  entries in both `en`/`id` locales.
+- **Global error handlers** — redacted `ISSUE_LOG` (CRITICAL) on
+  `uncaughtException` / `unhandledRejection` before exit.
+- **Documentation** — `docs/STATUS_NOTIFICATIONS.md` runbook and new
+  `.env.example` keys.
+
+#### Changed
+
+- **`src/index.ts`** — boots the status subsystem during startup.
+- **`src/utils/connectionManager.ts`** — emits bot-down/reconnected/degraded
+  events on close, logout, max-reconnect, and open.
+- **`src/utils/backup.ts`** — `runBackupCycle()` reports backup outcome to the
+  external channels and delivers the raw SQLite snapshot to Discord (multipart)
+  and WhatsApp (document) where supported; the existing Telegram upload is
+  unchanged.
+- **`prisma/schema.prisma` + `src/db.ts`** — added `StatusNotificationLog` and
+  `StatusNotificationOutbox` models and symmetric 3-phase programmatic DDL
+  (Rule W).
+
+---
+
 ## [G2-F27-P1] - 2026-10-02
 
 ### Fixed

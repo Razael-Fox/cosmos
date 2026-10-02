@@ -210,6 +210,43 @@
         "cpu_label": "Model CPU",
         "ram_label": "Penggunaan RAM"
     },
+    "status_notify": {
+        "header": "📡 KANAL STATUS EKSTERNAL",
+        "channels_title": "Kesehatan Kanal:",
+        "test_title": "Uji Pengiriman:",
+        "state_enabled": "aktif",
+        "state_disabled": "nonaktif",
+        "state_configured": "terkonfigurasi",
+        "state_unconfigured": "belum terkonfigurasi",
+        "delivery_success": "terkirim",
+        "delivery_skipped": "dilewati",
+        "delivery_failed": "gagal ({{error}})",
+        "no_channels": "• Tidak ada kanal eksternal yang aktif.",
+        "test_summary": "Uji konektivitas kanal status manual.",
+        "footer": "Dispatcher: {{enabled}} · Keparahan minimum: {{minSeverity}}"
+    },
+    "status_report": {
+        "header": "📊 LAPORAN STATUS",
+        "health_title": "Cuplikan Kesehatan:",
+        "health_ok": "Semua sistem yang dipantau sehat.",
+        "health_degraded": "Terganggu: {{reasons}}",
+        "database_label": "Basis Data",
+        "db_present": "tersedia (integritas: {{integrity}})",
+        "db_absent": "hilang",
+        "prisma_label": "Prisma",
+        "bot_label": "Koneksi Bot",
+        "state_ok": "ok",
+        "state_failed": "gagal",
+        "state_online": "daring",
+        "state_offline": "luring",
+        "audit_title": "Ringkasan Audit ({{hours}} jam terakhir):",
+        "activities_label": "Aktivitas",
+        "bank_label": "Transaksi bank",
+        "loans_label": "Pinjaman diterbitkan",
+        "loans_defaulted_label": "Pinjaman gagal bayar",
+        "ip_access_label": "Peristiwa akses IP",
+        "payments_label": "Pembayaran"
+    },
     "transfer": {
         "usage": "Format tidak valid. Gunakan: .transfer <user> <jumlah> (contoh: .transfer @user 50.000)",
         "mention_required": "❌ Silakan sebutkan pengguna untuk mentransfer saldo. Contoh: .transfer @user 50.000",
@@ -902,6 +939,12 @@
         },
         "system_info": {
             "description": "Menampilkan spesifikasi server, status bot, dan latensi jaringan."
+        },
+        "status_notify": {
+            "description": "Khusus pemilik: tampilkan kesehatan kanal status eksternal dan kirim notifikasi uji."
+        },
+        "status_report": {
+            "description": "Khusus pemilik: tampilkan cuplikan kesehatan dan ringkasan audit sesuai permintaan."
         },
         "tiktokdl": {
             "description": "Mengunduh video, musik, foto tunggal, atau album karusel TikTok dengan mode otomatis atau parameter kustom."

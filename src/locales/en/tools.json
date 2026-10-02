@@ -210,6 +210,43 @@
         "cpu_label": "CPU Model",
         "ram_label": "RAM Usage"
     },
+    "status_notify": {
+        "header": "📡 EXTERNAL STATUS CHANNELS",
+        "channels_title": "Channel Health:",
+        "test_title": "Test Delivery:",
+        "state_enabled": "enabled",
+        "state_disabled": "disabled",
+        "state_configured": "configured",
+        "state_unconfigured": "not configured",
+        "delivery_success": "delivered",
+        "delivery_skipped": "skipped",
+        "delivery_failed": "failed ({{error}})",
+        "no_channels": "• No external channels are enabled.",
+        "test_summary": "Manual status channel connectivity test.",
+        "footer": "Dispatcher: {{enabled}} · Minimum severity: {{minSeverity}}"
+    },
+    "status_report": {
+        "header": "📊 STATUS REPORT",
+        "health_title": "Health Snapshot:",
+        "health_ok": "All monitored systems are healthy.",
+        "health_degraded": "Degraded: {{reasons}}",
+        "database_label": "Database",
+        "db_present": "present (integrity: {{integrity}})",
+        "db_absent": "missing",
+        "prisma_label": "Prisma",
+        "bot_label": "Bot Connection",
+        "state_ok": "ok",
+        "state_failed": "failed",
+        "state_online": "online",
+        "state_offline": "offline",
+        "audit_title": "Audit Digest (last {{hours}} hours):",
+        "activities_label": "Activities",
+        "bank_label": "Bank transactions",
+        "loans_label": "Loans issued",
+        "loans_defaulted_label": "Loans defaulted",
+        "ip_access_label": "IP access events",
+        "payments_label": "Payments"
+    },
     "transfer": {
         "usage": "Invalid format. Use: .transfer <user> <amount> (e.g. .transfer @user 50.000)",
         "mention_required": "❌ Please mention a user to transfer balance to. Example: .transfer @user 50.000",
@@ -902,6 +939,12 @@
         },
         "system_info": {
             "description": "Displays server specifications, bot status, and network latency."
+        },
+        "status_notify": {
+            "description": "Owner-only: display external status channel health and send a test notification."
+        },
+        "status_report": {
+            "description": "Owner-only: display an on-demand health snapshot and audit digest."
         },
         "tiktokdl": {
             "description": "Downloads TikTok video, music, a single photo, or a photo carousel album, in automatic mode or with custom parameters."
