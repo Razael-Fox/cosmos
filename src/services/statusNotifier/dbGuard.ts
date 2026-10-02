@@ -7,20 +7,24 @@
  * Prisma itself is unable to open the database.
  */
 import fs from 'fs';
-import path from 'path';
 import cron from 'node-cron';
 import { notify } from './notifier.js';
-import { flushIssues } from './issueLogger.js';
+import { recordIssue, flushIssues } from './issueLogger.js';
+import { resolveStatusDatabasePath } from './dbPath.js';
 
 const CHECK_CRON = '0 * * * *'; // hourly
 let task: ReturnType<typeof cron.schedule> | null = null;
 
-function resolveDatabasePath(): string {
-    const raw = process.env.DATABASE_URL?.replace('file:', '') || './storage/database.sqlite';
-    if (raw.startsWith('/app/storage') && !fs.existsSync('/app')) {
-        return path.resolve(process.cwd(), 'storage', 'database.sqlite');
-    }
-    return path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw);
+/**
+ * Last integrity verdict produced by the hourly guard. The lightweight
+ * 60-second health heartbeat reuses this value instead of re-running
+ * `PRAGMA integrity_check` and hashing the whole database every minute.
+ */
+let lastIntegrity: 'ok' | 'missing' | 'failed' | 'unknown' = 'unknown';
+
+/** Returns the most recent database integrity verdict from the hourly guard. */
+export function getLastDbIntegrity(): 'ok' | 'missing' | 'failed' | 'unknown' {
+    return lastIntegrity;
 }
 
 export type DbGuardStatus = 'ok' | 'missing' | 'zero-byte' | 'corrupt';
@@ -37,7 +41,7 @@ export interface DbGuardResult {
  * so corruption is still detectable when Prisma cannot connect.
  */
 export async function inspectDatabase(): Promise<DbGuardResult> {
-    const dbPath = resolveDatabasePath();
+    const dbPath = resolveStatusDatabasePath();
 
     if (!fs.existsSync(dbPath)) {
         return { status: 'missing', dbPath };
@@ -82,8 +86,16 @@ export async function runDatabaseGuard(options: { startup?: boolean } = {}): Pro
         result = await inspectDatabase();
     } catch (err) {
         console.error('[DbGuard] Failed to inspect database:', err);
-        return { status: 'corrupt', dbPath: resolveDatabasePath(), detail: 'inspection error' };
+        lastIntegrity = 'failed';
+        return { status: 'corrupt', dbPath: resolveStatusDatabasePath(), detail: 'inspection error' };
     }
+
+    lastIntegrity =
+        result.status === 'ok'
+            ? 'ok'
+            : result.status === 'missing' || result.status === 'zero-byte'
+              ? 'missing'
+              : 'failed';
 
     if (result.status === 'ok') {
         if (options.startup) {
@@ -118,10 +130,18 @@ export async function runDatabaseGuard(options: { startup?: boolean } = {}): Pro
     // Attempt an emergency backup so the last-known-good state is preserved
     // (or the failure is surfaced with the reason).
     try {
-        const { sendBackupToTelegram } = await import('#utils/backup.js');
-        await sendBackupToTelegram({ force: true });
+        const { sendBackupToTelegram, dispatchBackupStatus } = await import('#utils/backup.js');
+        const backupOk = await sendBackupToTelegram({ force: true });
+        if (!backupOk) {
+            await dispatchBackupStatus(
+                false,
+                null,
+                'Emergency backup after database integrity failure was not persisted.'
+            );
+        }
     } catch (err) {
         console.error('[DbGuard] Emergency backup attempt failed:', err);
+        recordIssue(err, { sessionId: 'default' });
         await flushIssues(true);
     }
 
@@ -139,6 +159,7 @@ export function startDbGuard(): void {
     console.log('[StatusNotifier] Database guard started (startup + hourly).');
 }
 
+/** Stops the startup + hourly database integrity guard. */
 export function stopDbGuard(): void {
     if (task) {
         task.stop();

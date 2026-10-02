@@ -72,6 +72,10 @@ export function maskSecret(secret: string | null | undefined): string {
 
 let cached: StatusNotifierConfig | null = null;
 
+/**
+ * Resolves the status notifier configuration from environment variables.
+ * Results are memoized; pass `forceReload: true` to re-read the environment.
+ */
 export function getStatusNotifierConfig(forceReload = false): StatusNotifierConfig {
     if (cached && !forceReload) return cached;
 

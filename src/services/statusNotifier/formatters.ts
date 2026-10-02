@@ -64,10 +64,12 @@ export function redactIdentifiers(input: string): string {
         );
 }
 
+/** Returns the payload timestamp, defaulting to the current time. */
 function timestampOf(payload: NotifyPayload): string {
     return payload.timestamp ?? new Date().toISOString();
 }
 
+/** Flattens sanitized details and fields into redacted display lines. */
 function assembleLines(payload: NotifyPayload): string[] {
     const lines: string[] = [];
     if (payload.details && payload.details.length > 0) {
@@ -117,7 +119,7 @@ export function formatDiscordEmbed(
         : undefined;
 
     const footerParts = [`Cosmos ${payload.version ?? 'unknown'}`, `severity ${severity}`];
-    if (payload.sessionId) footerParts.push(`session ${payload.sessionId}`);
+    if (payload.sessionId) footerParts.push(`session ${redactIdentifiers(payload.sessionId)}`);
 
     return {
         username: 'Cosmos Status',
@@ -175,7 +177,7 @@ export function formatSlackBlocks(
     }
 
     const contextParts = [`Cosmos ${payload.version ?? 'unknown'}`, timestampOf(payload)];
-    if (payload.sessionId) contextParts.push(`session ${payload.sessionId}`);
+    if (payload.sessionId) contextParts.push(`session ${redactIdentifiers(payload.sessionId)}`);
     blocks.push({
         type: 'context',
         elements: [{ type: 'mrkdwn', text: contextParts.join(' · ') }]
@@ -206,7 +208,7 @@ export function formatWhatsAppText(event: NotifyEvent, severity: NotifySeverity,
     }
 
     const contextParts = [`Cosmos ${payload.version ?? 'unknown'}`, timestampOf(payload)];
-    if (payload.sessionId) contextParts.push(`session ${payload.sessionId}`);
+    if (payload.sessionId) contextParts.push(`session ${redactIdentifiers(payload.sessionId)}`);
     parts.push('', `_${contextParts.join(' · ')}_`);
 
     const text = parts.join('\n');

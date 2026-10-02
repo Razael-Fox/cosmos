@@ -42,8 +42,9 @@ process.
 
 **Dedupe.** Each event carries a deterministic key. Identical keys inside the
 configuration window are suppressed so one incident produces exactly one alert
-plus one recovery message. `BOT_DOWN` additionally has a 5-minute startup grace
-window so pairing/initial connect does not trigger a false outage.
+plus one recovery message (suppressed duplicates return no channel results at
+all). `BOT_DOWN` additionally has a 5-minute startup grace window so pairing/initial
+connect does not trigger a false outage.
 
 ---
 
@@ -107,8 +108,9 @@ daily at 00:00 WIB:
 2. upload to Telegram (unchanged behavior);
 3. deliver the **raw SQLite snapshot** as a file attachment to file-capable
    channels (Discord via multipart webhook, WhatsApp via Baileys document send);
-4. dispatch `DB_BACKUP_SUCCESS` (or `DB_BACKUP_FAILED`) to every enabled external
-   channel, including the per-channel artifact delivery result.
+4. dispatch a **truthful** outcome alert: `DB_BACKUP_SUCCESS` only when Telegram
+   uploaded, a file delivery succeeded, or the database was unchanged since the
+   last backup; otherwise `DB_BACKUP_FAILED` (CRITICAL) with the hash and reason.
 
 Slack incoming webhooks cannot upload files, so Slack receives the text alert
 with the hash and reason only (file upload is tracked as a Phase 4 upgrade).

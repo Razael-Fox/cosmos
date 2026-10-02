@@ -54,8 +54,9 @@ export function installGlobalErrorHandlers(): void {
 
     process.on('unhandledRejection', (reason) => {
         console.error('[StatusNotifier] unhandledRejection:', reason);
+        // Record only; the 5-minute issue-logger worker flushes the batch.
+        // (Unlike uncaughtException, this path does not exit the process.)
         recordIssue(reason, { sessionId: 'default' });
-        void flushIssues(true);
     });
 }
 

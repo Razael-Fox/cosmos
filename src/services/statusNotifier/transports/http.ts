@@ -17,10 +17,12 @@ export interface HttpPostResult {
     error?: string;
 }
 
+/** Sleeps for the given number of milliseconds. */
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Extracts a millisecond retry delay from 429 `retry_after` / `Retry-After` hints, if present. */
 function parseRetryAfter(headers: Record<string, unknown> | undefined, data: unknown): number | null {
     const headerValue = headers?.['retry-after'];
     if (typeof headerValue === 'string' && headerValue.trim() !== '') {
@@ -70,7 +72,14 @@ export async function postJsonWithRetry(
             lastError = `HTTP ${response.status}`;
             if (response.status === 429) {
                 const retryAfterMs = parseRetryAfter(response.headers as Record<string, unknown>, response.data);
+                // Bound the 429 backoff so a hostile or misconfigured
+                // `retry_after` cannot stall the delivery loop indefinitely.
+                const MAX_RETRY_AFTER_MS = 30_000;
                 if (retryAfterMs !== null && attempt < maxAttempts) {
+                    if (retryAfterMs > MAX_RETRY_AFTER_MS) {
+                        lastError = `HTTP 429 (retry_after ${retryAfterMs}ms exceeds 30s cap)`;
+                        return { success: false, attempts: attempt, status: response.status, error: lastError };
+                    }
                     console.warn(`[StatusNotifier:${options.label}] rate limited, retrying in ${retryAfterMs}ms.`);
                     await sleep(retryAfterMs);
                     continue;

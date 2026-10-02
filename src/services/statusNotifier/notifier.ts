@@ -83,6 +83,7 @@ export function clearDedupeKey(key: string): void {
     dedupeRegistry.delete(key);
 }
 
+/** Persists the delivery outcome of one dispatch to `StatusNotificationLog`. Never throws. */
 async function persistLog(
     event: NotifyEvent,
     severity: NotifySeverity,
@@ -149,7 +150,7 @@ export async function notify(
     const dedupeWindow = options.dedupeWindowMs ?? DEFAULT_DEDUPE_WINDOW_MS;
     if (isDeduped(options.dedupeKey ?? payload.dedupeKey, dedupeWindow)) {
         console.log(`[StatusNotifier] Suppressed duplicate ${event} within dedupe window.`);
-        return [{ channel: 'discord', success: false, skipped: true, error: 'deduped' }];
+        return [];
     }
 
     const enabledChannels = (Object.keys(TRANSPORTS) as NotifyChannel[]).filter((channel) => {

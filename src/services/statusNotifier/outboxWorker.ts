@@ -16,6 +16,7 @@ import type { NotifyChannel, NotifyEvent, NotifyPayload, NotifySeverity } from '
 let task: ReturnType<typeof cron.schedule> | null = null;
 let running = false;
 
+/** Retries a single due outbox entry through its original transport. Never throws. */
 async function processEntry(entry: OutboxEntry): Promise<void> {
     let payload: NotifyPayload;
     try {
@@ -75,6 +76,7 @@ export function startOutboxWorker(): void {
     console.log(`[StatusNotifier] Outbox retry worker started (cron "${config.outboxCronExpression}").`);
 }
 
+/** Stops the cron-driven outbox retry worker. */
 export function stopOutboxWorker(): void {
     if (task) {
         task.stop();

@@ -13,6 +13,28 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F28-P1] - 2026-10-02
+
+### Fixed (CodeRabbit review on PR #55)
+
+- **Logout outage alert no longer dropped:** the shutdown `BOT_DOWN` notification
+  is awaited with a bounded 5s timeout before `process.exit(1)`.
+- **Truthful backup reporting:** `runBackupCycle` reports `DB_BACKUP_FAILED` when
+  no snapshot was persisted anywhere (missing hash, or Telegram plus all file
+  deliveries failed); unchanged-database skips still report success.
+- **Lightweight heartbeat:** the 60s health check no longer runs
+  `PRAGMA integrity_check` or hashes the whole database; it reuses the hourly
+  guard verdict via a shared database-path resolver.
+- **Dedupe contract:** suppressed duplicates return an empty result list instead
+  of a fabricated Discord entry.
+- **Outbox accounting:** enqueued rows seed `attempts: 1` for the initial failed
+  delivery; 429 `retry_after` values are capped at 30s.
+- **Sanitization:** `sessionId` is redacted in all three channel renderers;
+  WhatsApp file reads are inside the error-handling flow; `unhandledRejection`
+  records only and lets the batching worker flush.
+
+---
+
 ## [G2-F28-P0] - 2026-10-02
 
 ### Feature Milestone 28 — External Status Channel Integration (Issue #47)
@@ -37,8 +59,11 @@ continues. A broken status channel can never take down the bot it monitors.
 - **WhatsApp Channel transport** — plain-text delivery via the live Baileys
   socket with a persistent-outbox fallback and owner-DM fallback; never throws
   into the socket loop.
-- **Health monitor** — 60s heartbeat emitting `STATUS_DEGRADED`, `BOT_DOWN`,
-  and `BOT_RECONNECTED` with a 5-minute startup grace window.
+- **Health monitor** — lightweight 60s heartbeat (file existence, Prisma probe,
+  memory, socket state) emitting `STATUS_DEGRADED`, `BOT_DOWN`, and
+  `BOT_RECONNECTED` with a 5-minute startup grace window. The expensive
+  `PRAGMA integrity_check` runs only in the hourly database guard; the
+  heartbeat reuses its cached verdict.
 - **Database guard** — startup + hourly `PRAGMA integrity_check` emitting
   `DB_MISSING` / `DB_CORRUPT` CRITICAL alerts, followed by an emergency backup.
 - **Audit digest** — daily + on-demand aggregate of `ActivityLog`,

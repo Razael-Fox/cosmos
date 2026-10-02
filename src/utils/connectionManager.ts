@@ -24,13 +24,16 @@ const RECONNECT_BASE_DELAY_MS = 3000;
  * Fire-and-forget status notification helper. Uses a dynamic import so the
  * status notifier (which itself imports this module) never introduces a
  * circular static dependency into the Baileys connection lifecycle.
+ *
+ * Returns a promise that settles once delivery has been attempted, so
+ * shutdown paths can await it with a bounded timeout before exiting.
  */
 function emitConnectionStatus(
     event: 'BOT_DOWN' | 'BOT_RECONNECTED' | 'STATUS_DEGRADED',
     severity: 'INFO' | 'WARN' | 'CRITICAL',
     payload: { summary: string; details?: string[]; sessionId: string; dedupeWindowMs?: number }
-): void {
-    import('#services/statusNotifier/notifier.js')
+): Promise<void> {
+    return import('#services/statusNotifier/notifier.js')
         .then(({ notify }) =>
             notify(
                 event,
@@ -42,7 +45,10 @@ function emitConnectionStatus(
                 }
             )
         )
-        .catch((err) => console.error('[Connection] Failed to emit status notification:', err));
+        .then(() => undefined)
+        .catch((err) => {
+            console.error('[Connection] Failed to emit status notification:', err);
+        });
 }
 
 function delay(ms: number): Promise<void> {
@@ -282,18 +288,24 @@ export async function connectToWhatsApp(options: ConnectOptions): Promise<void> 
                     console.log(
                         `[Connection] [${sessionId}] Default bot logged out. Clearing credentials and exiting...`
                     );
-                    emitConnectionStatus('BOT_DOWN', 'CRITICAL', {
-                        summary:
-                            'The default WhatsApp session logged out; credentials are being cleared and the process will exit for a supervised restart.',
-                        details: [`Reason: ${errorMessage}`],
-                        sessionId,
-                        dedupeWindowMs: 60 * 60 * 1000
-                    });
                     try {
                         await getPrismaClient(sessionId).whatsAppAuth.deleteMany();
                     } catch (e) {
                         console.error('Failed to clear credentials', e);
                     }
+                    // Await the shutdown alert with a bounded timeout so the
+                    // most critical outage notification is not dropped by the
+                    // exit below, while a stalled delivery cannot block restart.
+                    await Promise.race([
+                        emitConnectionStatus('BOT_DOWN', 'CRITICAL', {
+                            summary:
+                                'The default WhatsApp session logged out; credentials are being cleared and the process will exit for a supervised restart.',
+                            details: [`Reason: ${errorMessage}`],
+                            sessionId,
+                            dedupeWindowMs: 60 * 60 * 1000
+                        }),
+                        delay(5000)
+                    ]);
                     process.exit(1);
                 } else {
                     console.log(`[Connection] [${sessionId}] Sub-bot logged out. Dereferencing and cleaning up...`);

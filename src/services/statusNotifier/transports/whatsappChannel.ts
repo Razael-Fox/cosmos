@@ -78,8 +78,17 @@ export async function sendWhatsAppFile(filePath: string, fileName: string, capti
         return { channel: 'whatsapp', success: false, error: 'default Baileys socket is not connected', attempts: 1 };
     }
 
+    let fileBuffer: Buffer;
+    try {
+        fileBuffer = fs.readFileSync(filePath);
+    } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        console.error(`[StatusNotifier] WhatsApp backup artifact read failed: ${error}`);
+        return { channel: 'whatsapp', success: false, error, attempts: 1 };
+    }
+
     const document = {
-        document: fs.readFileSync(filePath),
+        document: fileBuffer,
         fileName,
         mimetype: 'application/octet-stream',
         caption

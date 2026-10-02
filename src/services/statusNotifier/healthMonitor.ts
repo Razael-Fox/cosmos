@@ -6,12 +6,13 @@
  * at the notifier layer so a single incident alerts exactly once.
  */
 import os from 'os';
-import path from 'path';
 import fs from 'fs';
 import cron from 'node-cron';
 import { activeConnections } from '#utils/connectionManager.js';
 import { prisma } from '#db.js';
 import { notify } from './notifier.js';
+import { resolveStatusDatabasePath } from './dbPath.js';
+import { getLastDbIntegrity } from './dbGuard.js';
 
 const HEARTBEAT_CRON = '* * * * *'; // every minute
 const RSS_WARN_BYTES = 1.5 * 1024 * 1024 * 1024; // 1.5 GB
@@ -26,26 +27,6 @@ let task: ReturnType<typeof cron.schedule> | null = null;
 const STARTUP_GRACE_MS = 5 * 60 * 1000;
 let startedAt = 0;
 
-function resolveDatabasePath(): string {
-    const raw = process.env.DATABASE_URL?.replace('file:', '') || './storage/database.sqlite';
-    if (raw.startsWith('/app/storage') && !fs.existsSync('/app')) {
-        return path.resolve(process.cwd(), 'storage', 'database.sqlite');
-    }
-    return path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw);
-}
-
-/** Runs `PRAGMA integrity_check` directly through better-sqlite3. */
-async function runIntegrityCheck(dbPath: string): Promise<string> {
-    const Database = (await import('better-sqlite3')).default;
-    const db = new Database(dbPath, { readonly: true, fileMustExist: true });
-    try {
-        const rows = db.pragma('integrity_check') as Array<{ integrity_check?: string }>;
-        return rows?.[0]?.integrity_check ?? 'unknown';
-    } finally {
-        db.close();
-    }
-}
-
 interface HealthSnapshot {
     healthy: boolean;
     degradedReasons: string[];
@@ -56,32 +37,29 @@ interface HealthSnapshot {
     dbHash?: string;
 }
 
-/** Collects a sanitized health snapshot. Never throws. */
+/**
+ * Collects a sanitized health snapshot. Never throws.
+ *
+ * Deliberately lightweight: file existence, Prisma probe, memory, and socket
+ * state only. The expensive `PRAGMA integrity_check` and full-file hash run in
+ * the hourly database guard; this heartbeat reuses its cached verdict.
+ */
 export async function collectHealth(): Promise<HealthSnapshot> {
     const reasons: string[] = [];
-    const dbPath = resolveDatabasePath();
+    const dbPath = resolveStatusDatabasePath();
 
-    const dbExists = fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0;
+    let dbExists: boolean;
+    try {
+        dbExists = fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0;
+    } catch {
+        dbExists = false;
+    }
     if (!dbExists) reasons.push('database file missing or zero-byte');
 
-    let integrity: 'ok' | 'missing' | 'failed' = 'ok';
-    let dbHash: string | undefined;
-    if (dbExists) {
-        try {
-            const result = await runIntegrityCheck(dbPath);
-            if (result.toLowerCase() !== 'ok') {
-                integrity = 'failed';
-                reasons.push(`integrity_check reported: ${result}`);
-            }
-            // Lightweight fingerprint for post-mortem correlation only.
-            const { computeFileHash } = await import('#utils/backup.js');
-            dbHash = (await computeFileHash(dbPath)).slice(0, 12);
-        } catch (err) {
-            integrity = 'failed';
-            reasons.push(`integrity probe failed: ${err instanceof Error ? err.message : String(err)}`);
-        }
-    } else {
-        integrity = 'missing';
+    const cached = getLastDbIntegrity();
+    const integrity: 'ok' | 'missing' | 'failed' = !dbExists ? 'missing' : cached === 'failed' ? 'failed' : 'ok';
+    if (cached === 'failed' && dbExists) {
+        reasons.push('database integrity check failed (see DB_CORRUPT alert)');
     }
 
     let prismaOk = true;
@@ -106,8 +84,7 @@ export async function collectHealth(): Promise<HealthSnapshot> {
         botDown,
         integrity,
         prismaOk,
-        dbExists,
-        dbHash
+        dbExists
     };
 }
 
@@ -191,6 +168,7 @@ export function startHealthMonitor(): void {
     console.log('[StatusNotifier] Health monitor started (60s heartbeat).');
 }
 
+/** Stops the 60-second health heartbeat. */
 export function stopHealthMonitor(): void {
     if (task) {
         task.stop();

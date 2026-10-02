@@ -30,6 +30,7 @@ const MAX_ENTRIES = 10;
 const buffer = new Map<string, IssueEntry>();
 let flushSchedule: ReturnType<typeof cron.schedule> | null = null;
 
+/** Normalizes an error summary into a low-cardinality dedupe signature. */
 function normalizeSignature(text: string): string {
     return text.toLowerCase().replace(/\d+/g, '#').replace(/\s+/g, ' ').trim().slice(0, 200);
 }
@@ -110,6 +111,7 @@ export function startIssueLogger(): void {
     console.log('[StatusNotifier] Issue-log forwarding worker started (every 5 minutes).');
 }
 
+/** Stops the periodic issue-log flush worker. */
 export function stopIssueLogger(): void {
     if (flushSchedule) {
         flushSchedule.stop();

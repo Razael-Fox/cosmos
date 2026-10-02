@@ -36,6 +36,9 @@ export async function enqueueOutbox(
                 severity,
                 channel,
                 payload: JSON.stringify(payload),
+                // The initial fan-out delivery already counts as attempt 1,
+                // so the worker's maxAttempts budget includes it.
+                attempts: 1,
                 maxAttempts: config.maxAttempts,
                 status: 'PENDING',
                 lastError: error ? error.slice(0, 500) : null,

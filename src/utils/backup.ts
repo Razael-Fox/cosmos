@@ -4,14 +4,16 @@ import crypto from 'crypto';
 import axios from 'axios';
 import FormData from 'form-data';
 import cron from 'node-cron';
+import { resolveStatusDatabasePath } from '../services/statusNotifier/dbPath.js';
 
 const BACKUP_HASH_FILENAME = '.telegram-backup-hash';
 
 let backupInFlight = false;
 let autoBackupStarted = false;
 
+/** Returns the absolute path of the SQLite database file under backup. */
 function getDatabasePath(): string {
-    return path.resolve(process.cwd(), 'storage/database.sqlite');
+    return resolveStatusDatabasePath();
 }
 
 function getHashFilePath(): string {
@@ -32,7 +34,8 @@ export function computeFileHash(filePath: string): Promise<string> {
     });
 }
 
-function readLastBackupHash(): string | null {
+/** Reads the SHA-256 digest recorded by the last successful Telegram backup, if any. */
+export function readLastBackupHash(): string | null {
     try {
         const hashPath = getHashFilePath();
         if (!fs.existsSync(hashPath)) return null;
@@ -52,6 +55,17 @@ function writeLastBackupHash(hash: string): void {
     }
 }
 
+/** Returns true when Telegram backup credentials are configured. */
+function isTelegramConfigured(): boolean {
+    return !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
+}
+
+/**
+ * Uploads the SQLite snapshot to Telegram. Returns true only when a fresh
+ * snapshot was delivered; false when Telegram is unconfigured, the database
+ * is unchanged (unless `force`), another upload is in flight, or the upload
+ * failed.
+ */
 export async function sendBackupToTelegram(options: { force?: boolean } = {}): Promise<boolean> {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -110,6 +124,7 @@ export async function sendBackupToTelegram(options: { force?: boolean } = {}): P
  * @param success Whether a fresh snapshot was persisted.
  * @param hash    The SHA-256 digest of the database at backup time, if known.
  * @param reason  Failure reason (only used when `success` is false).
+ * @param artifactDelivery Per-channel file-delivery summary for success reports.
  */
 export async function dispatchBackupStatus(
     success: boolean,
@@ -155,9 +170,9 @@ export async function dispatchBackupStatus(
 /**
  * Runs a full backup cycle: persists the snapshot to Telegram (unchanged
  * behavior), delivers the raw SQLite artifact to channels that support file
- * uploads (Discord, WhatsApp), and then reports the outcome to every enabled
- * external status channel. Telegram absence no longer suppresses status
- * reporting.
+ * uploads (Discord, WhatsApp), and then reports the truthful outcome to every
+ * enabled external status channel. Reports failure when no snapshot was
+ * persisted anywhere; Telegram absence no longer suppresses status reporting.
  */
 export async function runBackupCycle(options: { force?: boolean } = {}): Promise<boolean> {
     const dbPath = getDatabasePath();
@@ -179,6 +194,7 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
 
     // Deliver the raw snapshot to file-capable channels as a best-effort extra.
     const fileResults: string[] = [];
+    let fileDelivered = false;
     if (hash && fs.existsSync(dbPath)) {
         const fileName = `cosmos-database-${new Date().toISOString().slice(0, 10)}.sqlite`;
         const caption = `Cosmos database backup — SHA-256 ${hash.slice(0, 16)}…`;
@@ -187,6 +203,7 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
             const discordResult = await sendDiscordFile(dbPath, fileName, caption);
             if (!discordResult.skipped) {
                 fileResults.push(`discord=${discordResult.success ? 'delivered' : 'failed'}`);
+                if (discordResult.success) fileDelivered = true;
             }
         } catch (err) {
             console.error('[Backup] Discord artifact delivery failed:', err);
@@ -196,13 +213,35 @@ export async function runBackupCycle(options: { force?: boolean } = {}): Promise
             const waResult = await sendWhatsAppFile(dbPath, fileName, caption);
             if (!waResult.skipped) {
                 fileResults.push(`whatsapp=${waResult.success ? 'delivered' : 'failed'}`);
+                if (waResult.success) fileDelivered = true;
             }
         } catch (err) {
             console.error('[Backup] WhatsApp artifact delivery failed:', err);
         }
     }
 
-    await dispatchBackupStatus(true, hash, undefined, fileResults.join(', ') || undefined);
+    // Report success only when a snapshot was actually persisted somewhere:
+    // Telegram upload, a file-channel delivery, or an unchanged-database skip
+    // (hash known, nothing to upload). Anything else is a real failure.
+    const fileAttempted = fileResults.length > 0;
+    if (!hash) {
+        await dispatchBackupStatus(false, hash, 'Database file is missing or unreadable; no backup was persisted.');
+    } else if (uploaded || fileDelivered) {
+        await dispatchBackupStatus(true, hash, undefined, fileResults.join(', ') || undefined);
+    } else if (!fileAttempted && !isTelegramConfigured()) {
+        // No channel is configured or the database is unchanged: nothing was
+        // attempted, so there is no failure to report.
+        await dispatchBackupStatus(true, hash, undefined, 'no delivery attempted (unchanged or unconfigured)');
+    } else if (!fileAttempted && hash === readLastBackupHash() && !options.force) {
+        // Telegram skipped because the database is unchanged since last backup.
+        await dispatchBackupStatus(true, hash, undefined, 'unchanged since last backup');
+    } else {
+        await dispatchBackupStatus(
+            false,
+            hash,
+            `Telegram upload failed and all attempted file deliveries failed (${fileResults.join(', ') || 'telegram only'}).`
+        );
+    }
     return uploaded;
 }
 
@@ -233,6 +272,10 @@ export async function sendTelegramBotNotification(text: string): Promise<boolean
     }
 }
 
+/**
+ * Starts the Telegram auto-backup scheduler (once on startup, then daily at
+ * 00:00 WIB). Safe to call multiple times; subsequent calls are no-ops.
+ */
 export function startAutoBackup(): void {
     if (autoBackupStarted) {
         console.log('[Backup] Auto-backup is already running. Skipping duplicate scheduler registration.');
