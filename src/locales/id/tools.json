@@ -537,28 +537,6 @@
         "not_active": "⚠️ *Peringatan:* Auto-Correction tidak aktif dalam obrolan ini.",
         "deactivated": "🔴 *Auto-Correction DINONAKTIFKAN* untuk obrolan ini."
     },
-    "tgadd": {
-        "specify_link": "Error: Silakan berikan tautan undangan, tautan posting pribadi, atau ID chat numerik.",
-        "already_registered": "Chat tersebut sudah terdaftar di database sebagai \"{{title}}\".",
-        "save_failed": "Error: Chat berhasil diikuti, tetapi tidak dapat disimpan ke database.",
-        "join_success": "Sukses: Akun dummy telah bergabung dan mendaftarkan \"{{title}}\". Postingan privat dari grup tersebut sekarang dapat diunduh.",
-        "join_failed": "Error: Akun dummy tidak dapat bergabung menggunakan undangan tersebut. Undangan mungkin sudah kedaluwarsa, dicabut, atau klien Telegram belum terhubung.",
-        "invalid_format": "Error: Format tidak menyerupai tautan undangan yang valid, tautan posting pribadi, atau ID chat numerik. Tautan posting pribadi berbentuk seperti https://t.me/c/1234567890/15.",
-        "already_registered_id": "Chat tersebut ({{chatId}}) sudah terdaftar di database.",
-        "register_success": "Sukses: Chat {{chatId}}{{title}} telah didaftarkan. Harap pastikan akun dummy adalah anggota grup tersebut."
-    },
-    "tgdel": {
-        "specify_id": "Error: Harap berikan ID chat numerik, contoh .tg del 1234567890. Gunakan .tg list untuk melihat chat yang terdaftar.",
-        "not_found": "Error: Chat {{chatId}} tidak ditemukan dalam registri.",
-        "success": "Sukses: Chat {{chatId}} telah dihapus dari registri dan tidak dapat lagi diproksi."
-    },
-    "tglist": {
-        "empty": "Belum ada chat privat Telegram yang terdaftar. Gunakan .tg add untuk mendaftarkannya.",
-        "title": "*Chat Privat Telegram yang Terdaftar ({{count}}):*\n\n",
-        "untitled": "Obrolan tanpa judul",
-        "chat_id_label": "ID Obrolan:",
-        "invite_label": "Tautan:"
-    },
     "items": {
         "pedang_emas": {
             "name": "Pedang Emas",
@@ -872,7 +850,7 @@
             "description": "Menampilkan menu navigasi bot, daftar perintah per kategori, atau katalog lengkap perintah."
         },
         "pinterestdl": {
-            "description": "Mengunduh video, gambar, atau karosel dari tautan URL Pinterest."
+            "description": "Mengunduh foto, video, GIF, atau album karusel Pinterest secara otomatis dengan opsi ekstraksi audio."
         },
         "play": {
             "description": "Mencari lagu di YouTube dan mengunduhnya sebagai file audio."
@@ -925,17 +903,8 @@
         "system_info": {
             "description": "Menampilkan spesifikasi server, status bot, dan latensi jaringan."
         },
-        "tgadd": {
-            "description": "Mendaftarkan obrolan Telegram privat agar medianya dapat diakses. Menerima tautan undangan, tautan kiriman privat, atau ID obrolan numerik."
-        },
-        "tgdel": {
-            "description": "Menghapus obrolan Telegram privat dari daftar proxy sehingga medianya tidak lagi dapat diakses."
-        },
-        "tglist": {
-            "description": "Menampilkan semua obrolan Telegram privat yang saat ini terdaftar untuk proxy media."
-        },
         "tiktokdl": {
-            "description": "Mengunduh video dari tautan URL TikTok yang ditentukan."
+            "description": "Mengunduh video, musik, foto tunggal, atau album karusel TikTok dengan mode otomatis atau parameter kustom."
         },
         "toggleautocorrection": {
             "description": "Mengaktifkan atau menonaktifkan koreksi pesan otomatis AI via OpenRouter untuk obrolan ini."
@@ -959,7 +928,7 @@
             "description": "Masuk shift kerja untuk mendapatkan gaji yang dipengaruhi inflasi makroekonomi. Memerlukan KTP yang sah dan pekerjaan aktif."
         },
         "ytdl": {
-            "description": "Mengunduh video dari URL yang ditentukan menggunakan yt-dlp."
+            "description": "Mengunduh video YouTube (tanpa audio) dengan kualitas kustom, atau unduh audio MP3 via .youtube dl audio."
         },
         "subbot": {
             "description": "Menghubungkan dan mengelola nomor WhatsApp Anda sendiri sebagai instance sub-bot otonom."
@@ -1567,16 +1536,16 @@
             "footer": "💡 *Tips:* Pastikan video stiker di bawah 10 detik dan 5 MB agar lancar terkirim di WhatsApp."
         },
         "downloader": {
-            "header": "📖 *PANDUAN: PENGUNDUH MEDIA UNIVERSAL*",
-            "summary": "TikTok tanpa watermark, Audio/Video YouTube, Pinterest & Telegram",
-            "prereq": "📌 *Prasyarat:* Tautan Media Publik yang Valid",
-            "step1_title": "1️⃣ MEDIA TIKTOK & PINTEREST",
-            "step1_body": "• TikTok: `{{prefix}}tiktok dl <url>` — mengunduh video kualitas HD tanpa watermark.\n• Pinterest: `{{prefix}}pinterest dl <url>` — mengunduh foto dan video pin resolusi tinggi.\n• Auto Downloader: Aktifkan unduhan otomatis saat kirim tautan via `{{prefix}}auto dl on`.",
-            "step2_title": "2️⃣ VIDEO & AUDIO YOUTUBE",
-            "step2_body": "• YouTube: `{{prefix}}yt dl <url>` (contoh: `{{prefix}}yt dl https://youtu.be/...`).\n• Mendukung pengunduhan video (MP4) serta format audio (MP3).\n• Ukuran file dibatasi maksimal 50 MB sesuai batas transmisi media WhatsApp.",
-            "step3_title": "3️⃣ JEMBATAN KONTEN TERBATAS TELEGRAM",
-            "step3_body": "• Unduh media: `{{prefix}}telegram dl <tautan_pesan>` (contoh: `https://t.me/c/12345/678`).\n• Kelola sesi: Daftarkan string sesi saluran via `{{prefix}}tg add <session_string>`.\n• Cek sesi aktif: Ketik `{{prefix}}tg list` atau hapus sesi lewat `{{prefix}}tg del`.",
-            "footer": "💡 *Tips:* Aktifkan `{{prefix}}auto dl on` di grup agar tautan video otomatis terunduh."
+            "header": "📖 *TUTORIAL: PENGUNDUH UNIVERSAL*",
+            "summary": "TikTok dual-mode, YouTube video-only dengan kualitas kustom, dan album native Pinterest",
+            "prereq": "📌 *Prasyarat:* URL media publik yang valid",
+            "step1_title": "1️⃣ PENGUASAAN TIKTOK DUAL-MODE",
+            "step1_body": "• *Mode otomatis* (tautan polos): `{{prefix}}tiktok dl <url>` — mengirimkan payload alami postingan beserta soundtrack aslinya.\n• Postingan video → video MP4 bersih + audio MP3.\n• Postingan foto tunggal → foto resolusi tinggi + audio MP3.\n• Postingan karusel → semua foto sebagai album WhatsApp native + audio MP3.\n• *Mode kustom*: tambahkan flag untuk memilih secara spesifik.\n• `--audio` — hanya soundtrack.\n• `--video` — hanya berkas video.\n• `--photo` — hanya foto utama dari karusel.\n• `--multi-photo` — seluruh foto dalam karusel.\n• Kombinasi yang diizinkan: `--video --audio`, `--photo --audio`, `--multi-photo --audio`.\n• Flag yang bentrok seperti `--video --photo` ditolak dengan kartu panduan.",
+            "step2_title": "2️⃣ YOUTUBE VIDEO-ONLY & AUDIO KHUSUS",
+            "step2_body": "• Unduhan video bersifat *video-only* secara default: `{{prefix}}youtube dl <url>` mengambil stream video tanpa audio, sehingga berkas tetap dalam batas WhatsApp.\n• Resolusi kustom: `--360`, `--480`, `--720`, `--1k` (1080p), `--2k` (1440p), `--4k` (2160p), `--best`.\n• Contoh: `{{prefix}}youtube dl https://youtu.be/... --1k`.\n• Perintah audio khusus: `{{prefix}}youtube dl audio <url>` — mengekstrak MP3.\n• Bitrate audio: `--128k`, `--192k`, `--320k`, `--best`.\n• Contoh: `{{prefix}}youtube dl audio https://youtu.be/... --320k`.\n• Menggunakan resolusi video pada perintah audio (atau sebaliknya) akan mengembalikan kartu panduan.",
+            "step3_title": "3️⃣ DETEKSI PINTEREST CERDAS, GIF & ALBUM WHATSAPP",
+            "step3_body": "• `{{prefix}}pinterest dl <url>` mendeteksi jenis pin secara otomatis: foto tunggal, video, GIF animasi, atau karusel multi-foto.\n• Foto tunggal dikirimkan pada resolusi tertinggi yang tersedia.\n• Video dikirimkan sebagai MP4 dan pin animasi sebagai GIF.\n• Pin multi-foto dikirimkan berurutan tanpa jeda, sehingga WhatsApp mengelompokkannya menjadi satu kartu album native.\n• Ekstraksi audio bersifat opsional: tambahkan `--audio` untuk juga menerima soundtrack sebagai pesan audio terpisah.\n• Meminta `--audio` pada gambar statis akan mengirimkan foto dan mencatat bahwa tidak ada trek audio.",
+            "footer": "💡 *Tips:* Aktifkan `{{prefix}}auto dl on` di grup Anda untuk mengunduh tautan yang didukung tanpa mengetik perintah."
         },
         "ai": {
             "header": "📖 *PANDUAN: KECERDASAN AI & SPEECH-TO-TEXT*",

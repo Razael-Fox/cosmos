@@ -1,16 +1,16 @@
 import { ToolDefinition, ToolContext } from './types.js';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import os from 'os';
 import path from 'path';
+import os from 'os';
 import fs from 'fs';
 import axios from 'axios';
 import { renderCard } from '../utils/uiFormatter.js';
-
-const execAsync = promisify(exec);
+import { ParsedTikTokArgs, parseTikTokArgs, validateTikTokContentMatch } from '../utils/downloaderArgs.js';
 
 /** Transient directory for TikTok downloads; files are removed after delivery. */
 const TEMP_MEDIA_DIR = path.join(os.tmpdir(), 'waf-tiktok');
+
+/** Maximum number of carousel images delivered in a single album. */
+const MAX_CAROUSEL_IMAGES = 35;
 
 function ensureTempMediaDir(): string {
     if (!fs.existsSync(TEMP_MEDIA_DIR)) {
@@ -36,35 +36,119 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
     '.wav': 'audio/wav'
 };
 
+/** Media classes reported on the info card so users can see what was delivered. */
+type MediaClass = 'video' | 'audio' | 'photo' | 'album';
+
+const MEDIA_CLASS_KEYS: Record<MediaClass, { label: string; value: string }> = {
+    video: { label: 'media.tiktokdl.label_type', value: 'media.tiktokdl.value_video' },
+    audio: { label: 'media.tiktokdl.label_type', value: 'media.tiktokdl.value_audio' },
+    photo: { label: 'media.tiktokdl.label_type', value: 'media.tiktokdl.value_photo' },
+    album: { label: 'media.tiktokdl.label_type', value: 'media.tiktokdl.value_album' }
+};
+
+/**
+ * Streams a remote media asset to disk.
+ * @param ffmpegWriteBufferGuard Buffer-based sources must already be flushed to disk
+ *   before FFmpeg runs; this helper writes the stream straight to a file path.
+ */
+async function downloadFile(url: string, ext: string, filepath: string): Promise<string> {
+    const writer = fs.createWriteStream(filepath);
+    const response = await axios({ url, method: 'GET', responseType: 'stream', timeout: 30000 });
+    response.data.pipe(writer);
+    return new Promise((resolve, reject) => {
+        writer.on('finish', () => resolve(filepath));
+        writer.on('error', reject);
+    });
+}
+
 export const definition: ToolDefinition = {
     name: 'tiktokdl',
     displayNames: { en: 'tiktok dl', id: 'tiktok unduh' },
     title: 'TikTok Downloader',
     category: 'Downloaders',
-    aliases: ['.tiktok', '.tt', '.tiktokdl', '.ttdl', 'tiktok dl', '.tiktok dl'],
-    description: 'Downloads a video from a specified TikTok URL.',
+    aliases: ['.tiktok', '.tt', '.tiktokdl', '.ttdl', 'tiktok dl', 'tt dl', '.tiktok dl', '.tt dl'],
+    description:
+        'Downloads TikTok media. Without flags it delivers the natural payload for the post plus its original soundtrack. Use --audio, --video, --photo, or --multi-photo to select exactly what you need.',
     descriptionKey: 'tools.commands.tiktokdl.description',
     parameters: {
         type: 'object',
         properties: {
             url: {
                 type: 'string',
-                description: 'The URL of the TikTok video to download.'
+                description:
+                    'The TikTok post URL, optionally followed by flags: --audio, --video, --photo, or --multi-photo.'
             }
         },
         required: ['url']
     }
 };
 
-export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
-    let targetUrl = args.url;
-    const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+/** Renders the structured media information card shown on the first delivered asset. */
+function buildMediaCard(
+    ctx: ToolContext,
+    data: { title?: string; author?: string; duration?: number },
+    mediaClass: MediaClass,
+    notes: string[] = []
+): string {
+    const items: Array<{ label: string; value: string }> = [];
 
-    if (!targetUrl || targetUrl.trim() === '') {
+    let title = (data.title || '').trim();
+    if (title.length > 900) title = `${title.substring(0, 900)}...`;
+    if (title) items.push({ label: ctx.t('media.tiktokdl.label_title'), value: title });
+    if (data.author) items.push({ label: ctx.t('media.tiktokdl.label_author'), value: String(data.author) });
+    if (data.duration)
+        items.push({
+            label: ctx.t('media.tiktokdl.label_duration'),
+            value: `${data.duration}s`
+        });
+
+    items.push({
+        label: ctx.t(MEDIA_CLASS_KEYS[mediaClass].label),
+        value: ctx.t(MEDIA_CLASS_KEYS[mediaClass].value)
+    });
+
+    for (const note of notes) {
+        items.push({ label: ctx.t('media.tiktokdl.label_note'), value: note });
+    }
+
+    if (items.length === 0) {
+        items.push({
+            label: ctx.t('media.tiktokdl.label_status'),
+            value: ctx.t('media.tiktokdl.value_ready')
+        });
+    }
+
+    return renderCard({
+        title: ctx.t('media.tiktokdl.card_title'),
+        icon: '🎬',
+        headerStyle: 'light',
+        sections: [{ items }]
+    });
+}
+
+/** Renders a formal rejection card for an unusable parameter combination. */
+function buildRejectionCard(ctx: ToolContext, message: string, hints: string[] = []): string {
+    return renderCard({
+        title: ctx.t('media.downloaders.error_title'),
+        icon: '⚠️',
+        headerStyle: 'light',
+        body: [message, ...hints]
+    });
+}
+
+export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string | void> {
+    const senderJid = ctx.msg.key.participant || ctx.msg.key.remoteJid;
+    const replyOptions = { quoted: ctx.msg };
+
+    // The message handler assigns the entire argument string to the single declared
+    // parameter, so `args.url` still carries any trailing flags. Fall back to the
+    // quoted message when the user replies to a link instead of typing it.
+    let rawInput: string = typeof args.url === 'string' ? args.url : '';
+    if (!rawInput.trim()) {
         const quotedMsg = ctx.msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (quotedMsg) {
             const extText = quotedMsg.extendedTextMessage;
-            targetUrl =
+            rawInput =
                 quotedMsg.conversation ||
                 extText?.text ||
                 extText?.matchedText ||
@@ -74,37 +158,48 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
     }
 
-    if (!targetUrl) {
+    const parsed: ParsedTikTokArgs = parseTikTokArgs(rawInput);
+
+    if (parsed.unknownFlags.length > 0) {
+        console.error(`[TikTokDL Tool] Rejected unknown flags: ${parsed.unknownFlags.join(', ')}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return;
+        return buildRejectionCard(
+            ctx,
+            ctx.t(parsed.unknownFlagsKey!, { flags: parsed.unknownFlags.map((f) => `--${f}`).join(', ') }),
+            [ctx.t('media.downloaders.hint_tiktok_flags')]
+        );
     }
 
-    const urlRegex = /(https?:\/\/[^\s]+)/;
-    const match = targetUrl.match(urlRegex);
-    if (match) {
-        targetUrl = match[1];
-    } else {
+    if (parsed.conflict) {
+        console.error(`[TikTokDL Tool] Rejected conflicting flags: ${parsed.conflict}`);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-        return;
+        return buildRejectionCard(ctx, ctx.t(parsed.conflictKey!), [ctx.t('media.downloaders.hint_tiktok_flags')]);
+    }
+
+    if (!parsed.url) {
+        await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
+        return buildRejectionCard(ctx, ctx.t('media.tiktokdl.invalid_url'), [ctx.t('media.downloaders.usage_tiktok')]);
     }
 
     await ctx.sock.sendMessage(ctx.jid, { react: { text: '⏳', key: ctx.msg.key } });
 
+    let targetUrl = parsed.url;
     if (targetUrl.includes('vt.tiktok.com') || targetUrl.includes('vm.tiktok.com')) {
         try {
-            const res = await fetch(targetUrl, { redirect: 'follow', signal: AbortSignal.timeout(10000) });
+            const res = await fetch(targetUrl, {
+                redirect: 'follow',
+                signal: AbortSignal.timeout(10000)
+            });
             targetUrl = res.url;
         } catch (e) {
             console.error('[TikTokDL Tool] Failed to resolve shortlink:', e);
         }
     }
-
     targetUrl = targetUrl.replace(/\/photo\//g, '/video/');
 
     const tempDir = ensureTempMediaDir();
     const timestamp = Date.now();
-    const downloadedFiles: string[] = [];
-    let slideshowOutput: string | null = null;
+    const createdFiles: string[] = [];
 
     try {
         const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl)}`;
@@ -115,238 +210,210 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         }
 
         const data = res.data.data;
-        let baseCaption = data.title || '';
-        if (baseCaption.length > 900) {
-            baseCaption = baseCaption.substring(0, 900) + '...';
+        const images: string[] = Array.isArray(data.images)
+            ? data.images.filter((img: unknown): img is string => typeof img === 'string' && img.length > 0)
+            : [];
+        const videoUrl: string | null = typeof data.play === 'string' && data.play ? data.play : null;
+        const musicUrl: string | null = typeof data.music === 'string' && data.music ? data.music : null;
+
+        // ── Content validation ────────────────────────────────────────────────
+        const mismatchKey = validateTikTokContentMatch({
+            wantsVideo: parsed.wantsVideo,
+            wantsPhoto: parsed.wantsPhoto,
+            wantsMultiPhoto: parsed.wantsMultiPhoto,
+            hasVideo: Boolean(videoUrl),
+            photoCount: images.length
+        });
+        if (mismatchKey) {
+            console.error(`[TikTokDL Tool] Content mismatch rejected: ${mismatchKey}`);
+            await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
+            return buildRejectionCard(ctx, ctx.t(mismatchKey), [ctx.t('media.downloaders.hint_tiktok_flags')]);
         }
 
-        const items: Array<{ label: string; value: string }> = [];
-        if (baseCaption) items.push({ label: ctx.t('media.tiktokdl.label_title'), value: baseCaption });
-        if (data.author?.nickname)
-            items.push({ label: ctx.t('media.tiktokdl.label_author'), value: String(data.author.nickname) });
-        if (data.duration)
-            items.push({
-                label: ctx.t('media.tiktokdl.label_duration'),
-                value: `${data.duration}s`
-            });
-        if (items.length === 0)
-            items.push({
-                label: ctx.t('media.tiktokdl.label_status'),
-                value: ctx.t('media.tiktokdl.value_ready')
-            });
+        // ── Delivery planning ─────────────────────────────────────────────────
+        // Automatic mode mirrors the post's natural payload; custom mode delivers
+        // strictly what was requested.
+        const notes: string[] = [];
+        let wantVideo = false;
+        let wantPhotos: string[] = [];
+        let wantAudio = false;
 
-        const mediaCaption = renderCard({
-            title: ctx.t('media.tiktokdl.card_title'),
-            icon: '🎬',
-            headerStyle: 'light',
-            sections: [
-                {
-                    items
+        if (parsed.isAutomatic) {
+            if (images.length > 0) {
+                wantPhotos = images.slice(0, MAX_CAROUSEL_IMAGES);
+                if (images.length > MAX_CAROUSEL_IMAGES) {
+                    notes.push(
+                        ctx.t('media.downloaders.note_carousel_truncated', {
+                            count: String(MAX_CAROUSEL_IMAGES)
+                        })
+                    );
                 }
-            ]
-        });
-        const slideshowCaption = mediaCaption;
+            } else if (videoUrl) {
+                wantVideo = true;
+            }
+            wantAudio = true;
+        } else {
+            wantVideo = parsed.wantsVideo;
+            wantAudio = parsed.wantsAudio;
 
-        const downloadFile = async (url: string, ext: string, index: string = ''): Promise<string> => {
-            const filepath = path.join(tempDir, `tiktok_${timestamp}_${index}${ext}`);
-            const writer = fs.createWriteStream(filepath);
-            const response = await axios({
-                url,
-                method: 'GET',
-                responseType: 'stream'
-            });
-            response.data.pipe(writer);
-            return new Promise((resolve, reject) => {
-                writer.on('finish', () => resolve(filepath));
-                writer.on('error', reject);
-            });
+            if (parsed.wantsMultiPhoto) {
+                wantPhotos = images.slice(0, MAX_CAROUSEL_IMAGES);
+                if (images.length > MAX_CAROUSEL_IMAGES) {
+                    notes.push(
+                        ctx.t('media.downloaders.note_carousel_truncated', {
+                            count: String(MAX_CAROUSEL_IMAGES)
+                        })
+                    );
+                }
+            } else if (parsed.wantsPhoto) {
+                // A carousel URL resolves to its primary (first) photo.
+                wantPhotos = images.length > 0 ? [images[0]] : [];
+                if (images.length > 1) {
+                    notes.push(ctx.t('media.downloaders.note_single_photo_from_carousel'));
+                }
+            }
+        }
+
+        if (wantPhotos.length === 1 && parsed.wantsMultiPhoto) {
+            // Graceful degradation: a single-photo post still satisfies --multi-photo.
+            notes.push(ctx.t('media.downloaders.note_single_photo_album'));
+        }
+
+        if (!wantVideo && wantPhotos.length === 0 && !wantAudio) {
+            console.error('[TikTokDL Tool] Nothing to deliver for the resolved parameters.');
+            await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
+            return buildRejectionCard(ctx, ctx.t('media.downloaders.error_no_media'), [
+                ctx.t('media.downloaders.hint_tiktok_flags')
+            ]);
+        }
+
+        const mediaClass: MediaClass = wantVideo
+            ? 'video'
+            : wantPhotos.length > 1
+              ? 'album'
+              : wantPhotos.length === 1
+                ? 'photo'
+                : 'audio';
+
+        const schedule = async (sent: unknown, kind: 'video' | 'image' | 'audio') => {
+            if (!sent) return;
+            const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
+            scheduleMediaAutoDelete(ctx.sock, ctx.jid, sent as never, kind);
         };
 
-        if (data.images && data.images.length > 0) {
-            for (let i = 0; i < data.images.length; i++) {
-                const imgPath = await downloadFile(data.images[i], '.jpg', `img_${i}`);
-                downloadedFiles.push(imgPath);
-            }
-            if (data.music) {
-                const musicPath = await downloadFile(data.music, '.mp3', 'music');
-                downloadedFiles.push(musicPath);
-            }
-        } else {
-            if (data.play) {
-                try {
-                    const vidPath = await downloadFile(data.play, '.mp4', 'vid');
-                    downloadedFiles.push(vidPath);
-                } catch (e) {
-                    console.error('[TikTokDL Tool] Video download failed:', e);
-                }
-            }
-            if (data.music) {
-                try {
-                    const musicPath = await downloadFile(data.music, '.mp3', 'music');
-                    downloadedFiles.push(musicPath);
-                } catch (e) {
-                    console.error('[TikTokDL Tool] Music download failed:', e);
-                }
+        const forwardContext = { isForwarded: true, forwardingScore: 1 };
+
+        // ── Asset acquisition ─────────────────────────────────────────────────
+        const videoPath =
+            wantVideo && videoUrl
+                ? await downloadFile(videoUrl, '.mp4', path.join(tempDir, `tiktok_${timestamp}_vid.mp4`))
+                : null;
+        if (videoPath) createdFiles.push(videoPath);
+
+        const photoPaths: string[] = [];
+        for (let i = 0; i < wantPhotos.length; i++) {
+            const photoPath = await downloadFile(
+                wantPhotos[i],
+                '.jpg',
+                path.join(tempDir, `tiktok_${timestamp}_img_${i}.jpg`)
+            );
+            photoPaths.push(photoPath);
+            createdFiles.push(photoPath);
+        }
+
+        let audioPath: string | null = null;
+        if (wantAudio && musicUrl) {
+            try {
+                audioPath = await downloadFile(musicUrl, '.mp3', path.join(tempDir, `tiktok_${timestamp}_audio.mp3`));
+                createdFiles.push(audioPath);
+            } catch (e) {
+                console.error('[TikTokDL Tool] Music download failed:', e);
             }
         }
 
-        if (downloadedFiles.length > 0) {
-            let images = downloadedFiles.filter((f) =>
-                ['.jpg', '.jpeg', '.png', '.webp'].includes(path.extname(f).toLowerCase())
+        if (wantAudio && !audioPath) {
+            notes.push(ctx.t('media.downloaders.note_no_audio_available'));
+        }
+
+        // The card is built only now, after asset acquisition, so every note
+        // (including "no soundtrack available") actually reaches the caption.
+        const caption = buildMediaCard(
+            ctx,
+            { title: data.title, author: data.author?.nickname, duration: data.duration },
+            mediaClass,
+            notes
+        );
+
+        // ── Dispatch ──────────────────────────────────────────────────────────
+        // Images are dispatched back-to-back with no interleaved text so WhatsApp
+        // groups them into a single native album card.
+        let isFirst = true;
+        const sendWithCaption = (mediaCaption: string | undefined) => (isFirst ? mediaCaption : undefined);
+
+        if (videoPath) {
+            const sent = await ctx.sock.sendMessage(
+                ctx.jid,
+                {
+                    video: { url: videoPath },
+                    mimetype: 'video/mp4',
+                    caption: sendWithCaption(caption),
+                    mentions: senderJid ? [senderJid] : undefined,
+                    contextInfo: forwardContext
+                },
+                replyOptions
             );
-            const audios = downloadedFiles.filter((f) =>
-                ['.mp3', '.m4a', '.aac', '.wav'].includes(path.extname(f).toLowerCase())
+            await schedule(sent, 'video');
+            isFirst = false;
+        }
+
+        for (const photoPath of photoPaths) {
+            const sent = await ctx.sock.sendMessage(
+                ctx.jid,
+                {
+                    image: { url: photoPath },
+                    caption: sendWithCaption(caption),
+                    mentions: senderJid ? [senderJid] : undefined,
+                    contextInfo: forwardContext
+                },
+                replyOptions
             );
-            const videos = downloadedFiles.filter((f) =>
-                ['.mp4', '.webm', '.mkv', '.mov'].includes(path.extname(f).toLowerCase())
+            await schedule(sent, 'image');
+            isFirst = false;
+        }
+
+        if (audioPath) {
+            const sent = await ctx.sock.sendMessage(
+                ctx.jid,
+                {
+                    audio: { url: audioPath },
+                    mimetype: AUDIO_MIME_TYPES[path.extname(audioPath).toLowerCase()] || 'audio/mpeg',
+                    caption: sendWithCaption(caption),
+                    mentions: senderJid ? [senderJid] : undefined,
+                    contextInfo: forwardContext
+                },
+                replyOptions
             );
-            const others = downloadedFiles.filter(
-                (f) => !images.includes(f) && !audios.includes(f) && !videos.includes(f)
-            );
+            await schedule(sent, 'audio');
+            isFirst = false;
+        }
 
-            if (images.length > 0 && audios.length > 0) {
-                const audioFile = audios[0];
-                const outputVideo = path.join(tempDir, `slideshow_${timestamp}.mp4`);
-                slideshowOutput = outputVideo;
-                try {
-                    let filterComplex = '';
-                    let inputs = '';
-                    const targetImages = images.slice(0, 35);
-                    for (let i = 0; i < targetImages.length; i++) {
-                        if (i === targetImages.length - 1) {
-                            inputs += `-loop 1 -i "${targetImages[i]}" `;
-                        } else {
-                            inputs += `-loop 1 -t 3 -i "${targetImages[i]}" `;
-                        }
-                        filterComplex += `[${i}:v]scale=854:480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v${i}];`;
-                    }
-                    inputs += `-i "${audioFile}" `;
-
-                    if (targetImages.length > 1) {
-                        let concatStr = '';
-                        for (let i = 0; i < targetImages.length; i++) {
-                            concatStr += `[v${i}]`;
-                        }
-                        filterComplex += `${concatStr}concat=n=${targetImages.length}:v=1:a=0[outv]`;
-                    } else {
-                        filterComplex = filterComplex.replace('[v0];', '[outv]');
-                    }
-
-                    const audioIdx = targetImages.length;
-                    const ffmpegCommand = `"/usr/bin/ffmpeg" ${inputs} -filter_complex "${filterComplex}" -map "[outv]" -map ${audioIdx}:a -c:v libx264 -profile:v main -preset fast -crf 28 -c:a aac -b:a 128k -shortest -y "${outputVideo}"`;
-                    await execAsync(ffmpegCommand);
-
-                    const sentMsg = await ctx.sock.sendMessage(
-                        ctx.jid,
-                        {
-                            video: { url: outputVideo },
-                            mimetype: 'video/mp4',
-                            caption: slideshowCaption,
-                            mentions: senderJid ? [senderJid] : undefined,
-                            contextInfo: { isForwarded: true, forwardingScore: 1 }
-                        },
-                        { quoted: ctx.msg }
-                    );
-                    if (sentMsg) {
-                        const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                        scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'video');
-                    }
-                    fs.unlinkSync(outputVideo);
-                    images.forEach((img) => fs.existsSync(img) && fs.unlinkSync(img));
-                    // Keep audios to be sent separately!
-
-                    images = [];
-                } catch (ffmpegErr) {
-                    console.error('[TikTokDL Tool] Slideshow combine error:', ffmpegErr);
-                }
-            }
-
-            const remainingFiles = [...videos, ...images, ...audios, ...others];
-            for (const file of remainingFiles) {
-                if (!fs.existsSync(file)) continue;
-                const ext = path.extname(file).toLowerCase();
-
-                let sentMsg;
-                if (['.mp4', '.webm', '.mkv', '.mov'].includes(ext)) {
-                    // Send the original media untouched; re-encoding produced files
-                    // that recipients could not download.
-                    sentMsg = await ctx.sock.sendMessage(
-                        ctx.jid,
-                        {
-                            video: { url: file },
-                            mimetype: 'video/mp4',
-                            caption: mediaCaption,
-                            mentions: senderJid ? [senderJid] : undefined,
-                            contextInfo: { isForwarded: true, forwardingScore: 1 }
-                        },
-                        { quoted: ctx.msg }
-                    );
-                    if (sentMsg) {
-                        const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                        scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'video');
-                    }
-                    fs.unlinkSync(file);
-                } else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
-                    sentMsg = await ctx.sock.sendMessage(
-                        ctx.jid,
-                        {
-                            image: { url: file },
-                            caption: mediaCaption,
-                            mentions: senderJid ? [senderJid] : undefined,
-                            contextInfo: { isForwarded: true, forwardingScore: 1 }
-                        },
-                        { quoted: ctx.msg }
-                    );
-                    if (sentMsg) {
-                        const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                        scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'image');
-                    }
-                    fs.unlinkSync(file);
-                } else if (['.mp3', '.m4a', '.aac', '.wav'].includes(ext)) {
-                    sentMsg = await ctx.sock.sendMessage(
-                        ctx.jid,
-                        {
-                            audio: { url: file },
-                            mimetype: AUDIO_MIME_TYPES[ext] || 'audio/mpeg',
-                            mentions: senderJid ? [senderJid] : undefined,
-                            contextInfo: { isForwarded: true, forwardingScore: 1 }
-                        },
-                        { quoted: ctx.msg }
-                    );
-                    if (sentMsg) {
-                        const { scheduleMediaAutoDelete } = await import('../utils/autoDelete.js');
-                        scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg, 'audio');
-                    }
-                    fs.unlinkSync(file);
-                } else {
-                    await ctx.sock.sendMessage(
-                        ctx.jid,
-                        {
-                            document: { url: file },
-                            mimetype: 'application/octet-stream',
-                            fileName: path.basename(file),
-                            mentions: senderJid ? [senderJid] : undefined,
-                            contextInfo: { isForwarded: true, forwardingScore: 1 }
-                        },
-                        { quoted: ctx.msg }
-                    );
-                    fs.unlinkSync(file);
-                }
-            }
-            await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
-            return;
-        } else {
-            console.error('[TikTokDL Tool] File not found after download.');
+        if (isFirst) {
+            // Every requested asset failed to download.
+            console.error('[TikTokDL Tool] No asset could be delivered.');
             await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-            return;
+            return buildRejectionCard(ctx, ctx.t('media.downloaders.error_no_media'), [
+                ctx.t('media.downloaders.hint_tiktok_flags')
+            ]);
         }
-    } catch (error: any) {
+
+        await ctx.sock.sendMessage(ctx.jid, { react: { text: '✅', key: ctx.msg.key } });
+        return;
+    } catch (error: unknown) {
         console.error('[TikTokDL Tool] Execution error:', error);
         await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
         return;
     } finally {
         // Guarantee no temporary artifacts survive the request, even on failure.
-        safeUnlink(slideshowOutput);
-        for (const file of downloadedFiles) safeUnlink(file);
+        for (const file of createdFiles) safeUnlink(file);
     }
 }

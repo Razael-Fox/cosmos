@@ -46,9 +46,6 @@ async function runNonSpaceAndRemovedFeaturesTest() {
     );
     const transitionedCommands = [
         { legacy: 'setlang', canonical: '.set lang' },
-        { legacy: 'tgadd', canonical: '.tg add' },
-        { legacy: 'tgdel', canonical: '.tg del' },
-        { legacy: 'tglist', canonical: '.tg list' },
         { legacy: 'autodl', canonical: '.auto dl' },
         { legacy: 'tiktokdl', canonical: '.tiktok dl' },
         { legacy: 'ytdl', canonical: '.yt dl' },
@@ -97,7 +94,16 @@ async function runNonSpaceAndRemovedFeaturesTest() {
 
     // 2. Verify Removed Features
     console.log('[Test 2] Verifying removed features are completely detached from runtime...');
-    const removedFeatures = ['stoptogglesticker', 'playlyrics', 'stoplyrics', 'togglesticker'];
+    const removedFeatures = [
+        'stoptogglesticker',
+        'playlyrics',
+        'stoplyrics',
+        'togglesticker',
+        'telegramdl',
+        'tgadd',
+        'tgdel',
+        'tglist'
+    ];
 
     for (const feat of removedFeatures) {
         // Must not resolve in toolsHandler
@@ -143,7 +149,9 @@ async function runNonSpaceAndRemovedFeaturesTest() {
             }
         }
     }
-    console.log('✓ All 4 removed features verified completely absent from runtime, disk, and tutorials.');
+    console.log(
+        `✓ All ${removedFeatures.length} removed features verified completely absent from runtime, disk, and tutorials.`
+    );
 
     console.log('--- ALL NON-SPACE AND REMOVED FEATURES TESTS PASSED! ---');
 }

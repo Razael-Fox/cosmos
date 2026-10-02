@@ -131,8 +131,6 @@ class ToolsHandler {
             transfer: true,
             bank: true,
             loan: true,
-            tgadd: true,
-            tgdel: true,
             tgpair: true,
             setgrouplang: true,
             setlang: true,

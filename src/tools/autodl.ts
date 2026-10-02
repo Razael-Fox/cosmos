@@ -16,7 +16,7 @@ export const definition: ToolDefinition = {
         properties: {
             platform: {
                 type: 'string',
-                description: 'The platform to configure (e.g., tiktok, ig, pin, yt, tg, all, list)'
+                description: 'The platform to configure (e.g., tiktok, ig, pin, yt, all, list)'
             },
             state: {
                 type: 'string',
@@ -43,7 +43,12 @@ const VALID_PLATFORMS = [
     'threads',
     'autodelete',
     'all',
-    'list'
+    'list',
+    // Retained for backwards compatibility with existing AutoDLSetting rows.
+    // Telegram user-facing download commands are decommissioned, but the platform
+    // keys must stay valid so legacy group settings keep passing schema validation.
+    'tg',
+    'telegram'
 ];
 
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string> {
