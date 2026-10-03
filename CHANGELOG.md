@@ -9,6 +9,42 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P8] - 2026-10-03
+
+### Fixed — `cosmos-mcp` restart-looped under PM2 (entrypoint guard missed PM2's argv shape)
+
+The `G2-F29-P7` deploy exposed this: with the HTTP transport now
+honoured, the process still never served. It exited cleanly every few
+seconds and PM2 restart-looped it (13 restarts in 90 seconds), with a
+completely empty error log and zero `[MCP]` lines in the output log.
+
+#### Root cause
+
+The `G2-F29-P7` entrypoint guard tested `process.argv[1]` against the
+module path. Under PM2's fork mode, `argv[1]` is **PM2's own wrapper**
+(`ProcessContainerFork.js`), not the script — PM2 passes the real script
+path via the `pm_exec_path` environment variable instead. The guard never
+matched, `main()` never ran, the event loop drained, Node exited `0`, and
+PM2 restarted it indefinitely. A silent infinite restart loop with a
+healthy-looking status.
+
+#### Fixed
+
+- `isProcessEntrypoint()` now checks both `argv[1]` (direct execution)
+  and `process.env.pm_exec_path` (PM2 fork mode).
+- New `cosmos_mcp: entrypoint` regression test reproducing PM2's exact
+  argv shape (wrapper in `argv[1]`, script in `pm_exec_path`).
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check`
+clean · `tests/cosmosMcp.test.ts` **48/48** · MCP stdio smoke 23/23 ·
+in-container: PM2 `restarts=0`, log reports
+`Streamable HTTP transport listening on http://127.0.0.1:4100/mcp`,
+endpoint answers `401 UNAUTHORIZED_MCP` without a key and serves
+`cosmos_bot_status` with live data through the IPC bridge when
+authenticated.
+
 ## [G2-F29-P7] - 2026-10-02
 
 ### Fixed — `cosmos-mcp` started on stdio instead of HTTP in production

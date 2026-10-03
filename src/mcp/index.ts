@@ -87,9 +87,25 @@ async function main(): Promise<void> {
     console.log('[MCP] stdio transport ready.');
 }
 
+/**
+ * Detects whether this module is the process entrypoint.
+ *
+ * Direct execution puts the module path in `argv[1]`. PM2's fork mode does
+ * not: PM2 runs its own `ProcessContainerFork.js` as `argv[1]` and exposes
+ * the real script path through the `pm_exec_path` environment variable.
+ * Without the second check the server never starts under PM2 — the module
+ * loads, `main()` is skipped, the event loop drains, Node exits cleanly
+ * with code 0, and PM2 restart-loops a process that looks healthy while
+ * serving nothing.
+ */
+export function isProcessEntrypoint(): boolean {
+    const candidates = [process.argv[1], process.env.pm_exec_path];
+    return candidates.some((candidate) => !!candidate && /mcp[/\\]index\.(js|ts|mjs|cjs)$/.test(candidate));
+}
+
 // Only auto-start when executed as the entrypoint. Importing this module (as the
 // regression suite does, to exercise `parseTransport`) must not boot a server.
-if (process.argv[1] && /mcp[/\\]index\.(js|ts|mjs|cjs)$/.test(process.argv[1])) {
+if (isProcessEntrypoint()) {
     main().catch((err) => {
         console.error('[MCP] Fatal start-up error:', err);
         process.exitCode = 1;
