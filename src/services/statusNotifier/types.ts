@@ -22,7 +22,16 @@ export const NOTIFY_EVENTS = [
     'STATUS_DEGRADED',
     'AUDIT_DIGEST',
     'ISSUE_LOG',
-    'TEST'
+    'TEST',
+    // MCP alert notifier — emitted by the MCP server process and
+    // forwarded over the IPC bridge (see src/mcp/alerts.ts).
+    'MCP_SERVER_STARTED',
+    'MCP_AUTH_REJECTED',
+    'MCP_RATE_LIMITED',
+    'MCP_MUTATION_BLOCKED',
+    'MCP_MUTATION_APPLIED',
+    'MCP_TOOL_ERROR',
+    'MCP_ENGINE_UNREACHABLE'
 ] as const;
 
 export type NotifyEvent = (typeof NOTIFY_EVENTS)[number];

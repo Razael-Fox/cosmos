@@ -10,6 +10,8 @@ import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 import { getBinaryNodeChild, type WASocket, type GroupMetadata, type BinaryNode } from '@whiskeysockets/baileys';
 import { startBroadcastWorker } from './broadcastService.js';
 import { getEventLoopLagMs, getLastConnectionUpdateAt, getMemoryMb, getUptimeSeconds } from '#utils/runtimeHealth.js';
+import { notify } from './statusNotifier/index.js';
+import { parseMcpAlertRequest } from './statusNotifier/mcpAlert.js';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
 
@@ -523,6 +525,32 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                     memoryMb: getMemoryMb(),
                     eventLoopLagMs: getEventLoopLagMs(),
                     lastConnectionUpdateAt: getLastConnectionUpdateAt()
+                }
+            };
+        }
+        case '/internal/mcp/alert': {
+            // MCP alert notifier: the MCP server process forwards
+            // sanitized alert requests here so they fan out to the
+            // Discord, Slack, and WhatsApp channels. WhatsApp requires
+            // the bot process (the Baileys socket lives here), which is
+            // why alerts are bridged instead of sent directly.
+            const parsed = parseMcpAlertRequest(body);
+            if (!parsed.ok) {
+                return { status: 400, data: { error: 'INVALID_PAYLOAD', reason: parsed.reason } };
+            }
+            const results = await notify(
+                parsed.request.event,
+                parsed.request.severity,
+                parsed.request.payload,
+                parsed.request.options
+            );
+            return {
+                status: 200,
+                data: {
+                    ok: true,
+                    event: parsed.request.event,
+                    delivered: results.filter((result) => result.success).length,
+                    channels: results.length
                 }
             };
         }
