@@ -75,6 +75,11 @@ async function main(): Promise<void> {
             console.log(`[MCP] Received ${signal}; shutting the HTTP transport down.`);
             const { closeHttpSessions } = await import('./http.js');
             await closeHttpSessions();
+            // Force-close lingering keep-alive connections so the
+            // listener releases the port immediately. Without this,
+            // a PM2 restart races the old process and the fresh
+            // instance crashes with EADDRINUSE before binding.
+            server.closeAllConnections?.();
             server.close(() => process.exit(0));
         };
         process.on('SIGINT', () => void shutdown('SIGINT'));

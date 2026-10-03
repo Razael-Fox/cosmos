@@ -9,6 +9,35 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P2] - 2026-10-03
+
+### Fixed — `pm2 restart cosmos-mcp` crashed once with `EADDRINUSE`
+
+Found while verifying the alert-notifier deploy. Restarting
+the MCP process through PM2 made the fresh instance crash
+once before binding: the old process's keep-alive
+connections held `127.0.0.1:4100` open while the new
+instance tried to listen (observed as 2 restarts and an
+`EADDRINUSE` stack in the error log).
+
+#### Fixed
+
+- The HTTP shutdown path now calls `closeAllConnections()`
+  after closing MCP sessions, so the listener releases the
+  port immediately and the replacement process binds
+  cleanly.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`,
+`pnpm run version:check` clean · `tests/cosmosMcp.test.ts`
+51/51 · in-container after redeploy: `pm2 restart cosmos-mcp`
+produces no `EADDRINUSE`, the endpoint keeps answering
+`401` unauthenticated, and exactly one `MCP_SERVER_STARTED`
+alert is delivered per restart.
+
+---
+
 ## [G2-F30-P1] - 2026-10-03
 
 ### Fixed — `MCP_SERVER_STARTED` alert dropped by the PM2 boot race
