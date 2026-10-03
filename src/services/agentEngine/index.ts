@@ -7,6 +7,7 @@ import { AgentExecutionLoop } from './executionLoop.js';
 import { AgentRateLimiter } from './rateLimiter.js';
 import { AgentLocationStager } from './locationStager.js';
 import { AgentExecutionContext } from './types.js';
+import { OpenRouterDocsClient } from './openRouterDocsClient.js';
 
 export class CosmosAgentEngine {
     /**
@@ -51,6 +52,23 @@ export class CosmosAgentEngine {
 
             // 4. Tier 1: Guidance Planning LLM (openai/gpt-oss-20b)
             const brief = await AgentGuidancePlanner.plan(promptText, promptCtx);
+
+            // 4b. Documentation question fast-path: route through free OpenRouter models
+            // carrying the unbounded knowledge base. Any failure falls through to the
+            // existing Groq Tier 2 path unchanged (fail-open).
+            if (brief.docQuestion === true) {
+                const docsAnswer = await OpenRouterDocsClient.answer(promptText, promptCtx).catch((err: unknown) => {
+                    console.warn('[CosmosAgentEngine] OpenRouter docs route failed, falling back to Groq:', err);
+                    return null;
+                });
+
+                if (docsAnswer && docsAnswer.trim().length > 0) {
+                    const trimmedAnswer = docsAnswer.trim();
+                    await sock.sendMessage(chatJid, { text: trimmedAnswer }, { quoted: msg });
+                    AgentRateLimiter.recordRequest(callerJid);
+                    return trimmedAnswer;
+                }
+            }
 
             // 5. Special Mode B: Interactive Location Forwarding Staging ("shareloc" flow)
             // If the user wants to send a location but no location was quoted or attached:

@@ -9,6 +9,38 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P5] - 2026-10-03
+
+### Added — OpenRouter documentation routing for Sara AI
+
+Sara AI answers command-documentation questions with the full
+`docs/COMMANDS_CONTEXT.md` (~7.5k tokens) embedded in her Groq prompt,
+which alone exceeds Groq's per-minute token ceiling when combined with the
+persona prompt (HTTP 413). Free OpenRouter models offer a ~262k-token context
+window at $0, so this release routes documentation questions through them.
+
+#### Added
+
+- `src/services/agentEngine/openRouterDocsClient.ts` — free OpenRouter docs
+  client with an env-overridable candidate chain
+  (`OPENROUTER_DOCS_MODELS`, default
+  `inclusionai/ling-3.0-flash-sante:free,qwen/qwen3.8-27b:free`), 8-second
+  per-model `AbortController` timeout, key resolution via
+  `apiKeyResolver.resolveApiKey('openrouter')`, caller-input sanitisation via
+  `DecisionClient.sanitizeUntrustedContent()`, Sara-voice system prompt with
+  the unbounded documentation wrapped in `<docs>…</docs>`, and status/model/
+  latency/token-usage-only logging (never the body or key).
+- `docQuestion` boolean on `GuidanceBrief`, populated by the Tier 1 planner
+  JSON schema and prompt directives (true for command how-to/what-is/docs
+  requests; false for web-search lookups and ordinary chat).
+- `processMessage` short-circuit: when `brief.docQuestion` is true, the docs
+  client is consulted first; any failure falls through to the existing Groq
+  Tier 2 path unchanged (fail-open).
+
+#### Changed
+
+- `.env.example` documents `OPENROUTER_DOCS_MODELS`.
+
 ## [G2-F30-P4] - 2026-10-03
 
 ### Added — committed MCP client-configuration reference

@@ -38,7 +38,8 @@ export class AgentGuidancePlanner {
                 intent: 'CONVERSATION',
                 primaryTool: null,
                 confidence: decisionSignal.confidence,
-                guidanceInstructions: 'Respond conversationally and politely in the caller locale.'
+                guidanceInstructions: 'Respond conversationally and politely in the caller locale.',
+                docQuestion: false
             };
         }
 
@@ -129,7 +130,9 @@ export class AgentGuidancePlanner {
                         ? (parsed.extractedParameters as Record<string, unknown>)
                         : {},
                 confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.8,
-                guidanceInstructions: typeof parsed.guidanceInstructions === 'string' ? parsed.guidanceInstructions : ''
+                guidanceInstructions:
+                    typeof parsed.guidanceInstructions === 'string' ? parsed.guidanceInstructions : '',
+                docQuestion: parsed.docQuestion === true
             };
 
             // 1. Verify recipient token validity against EphemeralTokenStore (prevent hallucinated/expired tokens)
