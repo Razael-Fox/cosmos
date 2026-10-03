@@ -40,6 +40,7 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     topglobal: ToolAiPolicy.READ_ONLY,
     help: ToolAiPolicy.READ_ONLY,
     menu: ToolAiPolicy.READ_ONLY,
+    web_search: ToolAiPolicy.READ_ONLY,
 
     // UTILITY: Messaging and media actions
     send_message: ToolAiPolicy.UTILITY,

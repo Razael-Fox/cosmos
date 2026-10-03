@@ -36,5 +36,8 @@
     "ipc_sub_activated": "🎉 *Subscription Activated!*\n\nTier: {{tier}}\nValid Until: {{expiresAt}}\n\nThank you for supporting Cosmos!",
     "whitelist_limit_reached": "⚠️ *Whitelist Limit Reached!*\n\nTier: {{tier}} Plan\n{{reason}}\n\nTo add more groups:\n1. Remove an inactive group using: .group del\n2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing",
     "agent_synthesis_failure": "Your request was successfully processed, but an issue occurred while synthesizing the summary response.",
-    "rate_limited": "⏳ Action throttled. Please wait a few seconds before trying again."
+    "rate_limited": "⏳ Action throttled. Please wait a few seconds before trying again.",
+    "web_search_unconfigured": "Web search is not configured on this bot yet. Please ask the owner to add a Tavily API key.",
+    "web_search_failed": "The web search service could not be reached just now. Please try again in a moment.",
+    "web_search_empty": "No useful results were found for that query. Please try rephrasing it with different or more specific keywords."
 }

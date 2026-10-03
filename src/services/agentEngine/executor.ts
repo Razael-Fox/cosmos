@@ -1,5 +1,5 @@
 import { SaraPromptContext, GuidanceBrief, GroqChatMessage, GroqCompletionResponse } from './types.js';
-import { buildSaraPersonaPrompt } from './prompts/saraPersona.js';
+import { buildSaraPersonaPrompt, shouldIncludeCommandsKnowledge } from './prompts/saraPersona.js';
 import { AgentGroqClient } from './groqClient.js';
 import { AgentToolRegistry } from './tools/registry.js';
 
@@ -20,7 +20,13 @@ export class AgentExecutor {
         ctx: SaraPromptContext,
         brief: GuidanceBrief
     ): Promise<GroqCompletionResponse> {
-        const personaPrompt = buildSaraPersonaPrompt(ctx);
+        // The command knowledge base is ~6,100 tokens. Attaching it to every
+        // request pushed unrelated prompts past the provider's TPM ceiling (413),
+        // and no fallback model could recover because they share that ceiling.
+        // Attach it only when the caller is actually asking about Cosmos itself.
+        const userText = messages.map((m) => m.content ?? '').join('\n');
+        const includeCommandsKnowledge = shouldIncludeCommandsKnowledge(userText, brief.primaryTool);
+        const personaPrompt = buildSaraPersonaPrompt(ctx, includeCommandsKnowledge);
         const scopedTools = AgentToolRegistry.getScopedGroqTools(brief.primaryTool);
         const hasTools = scopedTools.length > 0;
 

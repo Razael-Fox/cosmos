@@ -9,6 +9,190 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P9] - 2026-10-03
+
+### Fixed — a model-invented `search_depth` no longer discards the whole search
+
+Observed in production after `G2-F30-P8`: a valid search for
+_"harga Indomie di Alfamart"_ was rejected outright with
+`tool call validation failed: /search_depth: value must be one of 'basic',
+'advanced'`. The model had sent `search_depth: "short"`.
+
+The `search_depth` enum made the provider validate the argument strictly, so any
+value the model invented failed the **entire request** — throwing away an otherwise
+correct query and leaving the caller with no answer at all.
+
+- `search_depth` is no longer constrained by an enum. Unrecognised, null, or
+  malformed values are coerced to `basic` inside the tool, so a bad guess degrades
+  to a normal search instead of failing the turn.
+- Verified against four argument shapes (`"short"`, `"advanced"`, `null`, omitted);
+  all are handled without an exception.
+
+The enums on `bank.ts` and `groupModeration.ts` are intentionally left strict: those
+guard financial and administrative actions, where refusing an unrecognised action is
+the correct outcome.
+
+Version: `G2-F30-P8` → `G2-F30-P9` (patch)
+
+---
+
+## [G2-F30-P8] - 2026-10-03
+
+### Fixed — Tier 2 prompt no longer exceeds the provider token ceiling
+
+Sara returned _"an error occurred while processing your request"_ for every question
+after the web search feature went live. Tier 1 correctly selected `web_search`, but
+Tier 2 was rejected by the model provider with HTTP 413: the request needed ~8,600
+tokens against a per-minute limit of 8,000. The model fallback chain could not
+recover, because every candidate model shares that ceiling.
+
+Root cause was the full `docs/COMMANDS_CONTEXT.md` reference (~22.5 KB, roughly 6,100
+tokens, about 75% of the system prompt) being attached to **every** Tier 2 request,
+including questions that had nothing to do with Cosmos features.
+
+- The command reference is now attached only when the caller is actually asking about
+  Cosmos itself, detected via `shouldIncludeCommandsKnowledge()`. Search, general
+  knowledge, and small talk no longer pay for it.
+- When it is needed, the reference is capped at `COMMANDS_KNOWLEDGE_MAX_CHARS`
+  (6,000), cut at a section boundary so no entry is left half-written. The full
+  document remains available through `getCommandsKnowledgeBase()`.
+- Tier 2 instructs Sara to say she will pull up exact syntax rather than guess when
+  the reference is absent.
+
+Measured prompt sizes, against the 8,000-token ceiling:
+
+| Request                   | Before            | After  |
+| ------------------------- | ----------------- | ------ |
+| Search / general question | ~8,600 (rejected) | ~2,100 |
+| Cosmos command question   | ~8,600 (rejected) | ~3,500 |
+
+Version: `G2-F30-P7` → `G2-F30-P8` (patch)
+
+---
+
+## [G2-F30-P7] - 2026-10-03
+
+### Fixed — untrusted tool-output directive for Sara AI web search
+
+- The Tier 2 persona prompt now states explicitly that content arriving in a `tool`
+  role message is untrusted external data, must never be obeyed as instructions, and
+  cannot alter goals, tone, or tool selection.
+- This closes a real gap rather than a cosmetic one. The pre-existing
+  `<untrusted_user_content>` guardrail wraps **only the quoted message**; tool results
+  are appended to the conversation outside that wrapper, so no existing instruction
+  covered web search snippets. Since a snippet is fully attacker-controllable, a
+  crafted page could previously have plausibly steered the executor.
+
+Version: `G2-F30-P6` → `G2-F30-P7` (patch)
+
+---
+
+## [G2-F30-P6] - 2026-10-03
+
+### Fixed — review corrections to the Sara AI web search tool
+
+Corrections from review of the `G2-F30-P5` Tavily integration, addressing two
+critical defects in the request deadline and several robustness gaps.
+
+- **The search timeout was off by a factor of 1000.** `@tavily/core` interprets
+  its `timeout` option in **seconds** (`timeoutInMillis = timeout * 1e3`), but a
+  millisecond value was passed, producing an axios timeout of 8,000,000 ms
+  (~2h13m). The deadline is now derived once via `TAVILY_TIMEOUT_SECONDS`.
+  Verified empirically: a request against a non-routable address now rejects
+  after 8020 ms with `ECONNABORTED`, where it previously had no effective
+  deadline.
+- **Removed an inert `AbortController`.** `TavilySearchOptions` exposes no
+  `signal` and the SDK calls `axios.post` without one, so `abort()` fired at 8s
+  into nothing while appearing to provide a safety net. The corrected CHANGELOG
+  and code comments no longer claim an "AbortController ceiling".
+- **Outages are no longer reported as bad queries.** `searchWeb` returned a bare
+  `null` for both "unreachable" and "no matches", so a Tavily outage surfaced to
+  the user as _"no useful results were found"_ and the `core.web_search_failed`
+  key was unreachable. It now returns a discriminated `ok` / `empty` /
+  `unavailable` outcome.
+- **Upstream error text is no longer logged.** The SDK builds errors with
+  `JSON.stringify(res.data)`, so the message can echo the response body into the
+  console. Failures are now classified by error **name** only.
+- **Over-long URLs are discarded, not trimmed.** A canonical URL above 200
+  characters is dropped so the ReAct loop's `slice()` can never cut a URL in
+  half. This retires the previously unenforced `TAVILY_URL_SOFT_LIMIT_CHARS`
+  constant.
+- **`mapResult` is now total.** A single malformed upstream row previously threw
+  a `TypeError` outside the request `try`/`catch` and discarded an otherwise
+  valid result set.
+- **User queries are sanitised before egress.** The query passes through
+  `DecisionClient.sanitizeUntrustedContent` before reaching Tavily and before
+  being logged, masking phone numbers, JIDs, and currency amounts on this
+  third-party path.
+- `response` is explicitly annotated as `TavilySearchResponse | undefined`
+  instead of an evolving `any`.
+
+---
+
+## [G2-F30-P5] - 2026-10-03
+
+### Added — Tavily web search for Sara AI
+
+Sara AI can now look up live information on the public web instead of
+answering every current-events question from memory. A new `web_search`
+tool is registered in `CosmosAgentEngine` and classified `READ_ONLY`, so
+it runs directly with no interactive confirmation.
+
+Implementation notes:
+
+- `src/services/agentEngine/tavilyClient.ts` wraps the official
+  `@tavily/core` SDK (`pnpm add`, v0.7.13) and normalises responses into a
+  compact, budget-aware payload. The 8-second deadline is enforced through the
+  SDK's own `timeout` option, which is expressed in **seconds** and converted
+  here. No `AbortController` is used, because the SDK accepts no `signal` and
+  calls `axios.post` without one; a controller would abort nothing while
+  appearing to provide a safety net.
+- Result URLs are canonicalised rather than truncated. Tracking parameters
+  (`utm_*`, `fbclid`, `gclid`, `msclkid`, `igshid`, and similar) are stripped,
+  fragments removed, and duplicate slashes collapsed, while parameters that
+  may carry a real record identifier (`?id=8842`, `?p=12345`) are preserved.
+  This uses an explicit deny-list rather than clearing the query string,
+  because legacy CMS and news URLs routinely depend on those identifiers. A
+  result whose canonical URL still exceeds 200 characters is discarded rather
+  than trimmed, since a shortened URL is unclickable and a cut one is dead.
+- When a payload would exceed the ReAct loop's `MAX_TOOL_OUTPUT_CHARS = 1500`
+  budget, whole results are dropped lowest-score-first instead of slicing the
+  payload. WhatsApp has no `[label](url)` link syntax, so a shortened URL would
+  be unclickable; a truncated URL would be a dead link. The invariant is that a
+  source appears with its complete working URL or not at all.
+- Search failures return a discriminated outcome (`ok` / `empty` / `unavailable`)
+  instead of a bare `null`, so an upstream outage is no longer reported to the
+  user as "no results found" and the `web_search_failed` locale key is
+  reachable. Upstream error messages and response bodies are never logged,
+  because the SDK embeds the response body in its error text.
+- The caller's query is passed through `DecisionClient.sanitizeUntrustedContent`
+  before egress to Tavily and before logging, so phone numbers, JIDs, and
+  currency amounts are masked on this third-party path as well.
+- Tier 1 guidance now selects `web_search` for current-information requests,
+  and Tier 2 received a "Web Search Synthesis" directive covering citation
+  style, exact-URL reproduction, and truthful reporting of omitted results.
+  That directive also states explicitly that content arriving in a `tool`
+  message is untrusted external data. The pre-existing
+  `<untrusted_user_content>` guardrail does NOT cover it: that wrapper contains
+  only the quoted message, whereas tool results are appended to the
+  conversation outside any wrapper.
+- Server-side answer synthesis (`includeAnswer`) is deliberately disabled so
+  replies remain in Sara's voice rather than a generic pre-written answer.
+- New i18n keys `core.web_search_unconfigured`, `core.web_search_failed`, and
+  `core.web_search_empty` in both `en` and `id`. When `TAVILY_API_KEY` is
+  absent, the tool degrades to a graceful localized message.
+
+- The Tier 2 persona prompt carries an explicit directive that content arriving in a
+  `tool` message is untrusted external data. This is distinct from the pre-existing
+  `<untrusted_user_content>` guardrail, which wraps only the quoted message; tool
+  results are appended to the conversation outside that wrapper, so they required
+  their own instruction.
+
+`TAVILY_API_KEY` is provisioned in Doppler (project `cosmos`, config `prd`)
+and documented in `.env.example`.
+
+---
+
 ## [G2-F30-P4] - 2026-10-03
 
 ### Added — committed MCP client-configuration reference
