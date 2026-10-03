@@ -11,6 +11,7 @@
  */
 import assert from 'node:assert';
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -756,6 +757,49 @@ describe('cosmos_mcp: streamable HTTP transport', () => {
         const body = (await res.json()) as { status?: string; service?: string };
         assert.strictEqual(body.status, 'ok');
         assert.strictEqual(body.service, 'cosmos-mcp');
+    });
+});
+
+describe('cosmos_mcp: port bind retry', () => {
+    it('binds immediately when the port is free', async () => {
+        const { listenWithRetry } = await import('../src/mcp/http.js');
+        const server = http.createServer(() => {});
+        await listenWithRetry(server, 0, '127.0.0.1');
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+    });
+
+    it('retries while the port is held, then binds once it is released', async () => {
+        const { listenWithRetry } = await import('../src/mcp/http.js');
+        const holder = http.createServer(() => {});
+        await new Promise<void>((resolve) => holder.listen(0, '127.0.0.1', resolve));
+        const port = (holder.address() as import('node:net').AddressInfo).port;
+
+        // Release the port shortly after the retrying bind starts.
+        setTimeout(() => {
+            holder.close();
+        }, 150);
+
+        const server = http.createServer(() => {});
+        await listenWithRetry(server, port, '127.0.0.1', {
+            totalMs: 5_000,
+            baseDelayMs: 50
+        });
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+    });
+
+    it('fails loudly after the retry window instead of looping', async () => {
+        const { listenWithRetry } = await import('../src/mcp/http.js');
+        const holder = http.createServer(() => {});
+        await new Promise<void>((resolve) => holder.listen(0, '127.0.0.1', resolve));
+        const port = (holder.address() as import('node:net').AddressInfo).port;
+
+        const server = http.createServer(() => {});
+        await assert.rejects(
+            listenWithRetry(server, port, '127.0.0.1', { totalMs: 250, baseDelayMs: 20 }),
+            (err: NodeJS.ErrnoException) => err.code === 'EADDRINUSE'
+        );
+        await new Promise<void>((resolve) => holder.close(() => resolve()));
+        await new Promise<void>((resolve) => server.close(() => resolve()));
     });
 });
 

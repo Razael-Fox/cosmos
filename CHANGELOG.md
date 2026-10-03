@@ -9,6 +9,50 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P3] - 2026-10-03
+
+### Fixed — `pm2 restart cosmos-mcp` crash loop (EADDRINUSE)
+
+Incident during the `G2-F30-P2` verification: restarting
+the MCP process through PM2 orphaned the outgoing process
+(reparented to PID 1, still holding `127.0.0.1:4100`),
+and every replacement process crashed on bind with
+`EADDRINUSE` — 25 restarts before the orphan was killed
+manually. `G2-F30-P2`'s `closeAllConnections()` change is
+reverted as part of this fix; it correlated with the
+incident and provided no proven benefit.
+
+Two root causes addressed:
+
+#### Fixed
+
+- **The replacement no longer crashes on a busy port.**
+  `startHttpTransport` now binds through `listenWithRetry`:
+  on `EADDRINUSE` it retries with exponential backoff
+  (500ms base, 5s cap) for a bounded 60-second window,
+  then fails loudly with one clear fatal error instead of
+  a crash loop. A restart race now self-heals; a stuck
+  port produces one actionable error.
+- **Shutdown can no longer hang unbounded.** The graceful
+  phase is bounded by a 5-second force-exit timer (unref'd
+  so it never holds the process open). A hung session
+  cleanup previously forced PM2 to SIGKILL, which is what
+  orphaned the process and left the port held.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`,
+`pnpm run version:check` clean · `tests/cosmosMcp.test.ts`
+**54/54** (three new `port bind retry` tests: immediate
+bind on a free port, retry-then-bind after the holder
+releases, and loud failure after the retry window) ·
+in-container after redeploy: `pm2 restart cosmos-mcp`
+binds with no `EADDRINUSE`, no crash loop, the endpoint
+answers `401` unauthenticated, and exactly one
+`MCP_SERVER_STARTED` alert is delivered per restart.
+
+---
+
 ## [G2-F30-P2] - 2026-10-03
 
 ### Fixed — `pm2 restart cosmos-mcp` crashed once with `EADDRINUSE`

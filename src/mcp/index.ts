@@ -74,12 +74,15 @@ async function main(): Promise<void> {
         const shutdown = async (signal: string) => {
             console.log(`[MCP] Received ${signal}; shutting the HTTP transport down.`);
             const { closeHttpSessions } = await import('./http.js');
+            // Bound the graceful phase. If session cleanup hangs, exit
+            // anyway: PM2 escalates to SIGKILL when a process ignores
+            // SIGTERM, and a SIGKILLed process can leave the port
+            // held, crashing the replacement into EADDRINUSE. Exiting
+            // on our own terms releases the port.
+            const forceExit = setTimeout(() => process.exit(0), 5_000);
+            forceExit.unref();
             await closeHttpSessions();
-            // Force-close lingering keep-alive connections so the
-            // listener releases the port immediately. Without this,
-            // a PM2 restart races the old process and the fresh
-            // instance crashes with EADDRINUSE before binding.
-            server.closeAllConnections?.();
+            clearTimeout(forceExit);
             server.close(() => process.exit(0));
         };
         process.on('SIGINT', () => void shutdown('SIGINT'));

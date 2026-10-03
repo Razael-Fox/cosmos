@@ -31,6 +31,56 @@ function sendJson(res: http.ServerResponse, status: number, payload: unknown): v
 }
 
 /**
+ * Binds the listener, retrying while the port is still held
+ * by a previous instance.
+ *
+ * Under PM2 a restart can race the outgoing process: the
+ * replacement tries to bind before the old listener has
+ * released the port. An unhandled `EADDRINUSE` crashes the
+ * fresh process immediately, which PM2 then restarts into
+ * the same race — a crash loop. Waiting with backoff for a
+ * bounded window lets the outgoing process exit on its own;
+ * a port that stays busy past the window fails loudly with
+ * one clear error instead of a loop.
+ */
+export async function listenWithRetry(
+    server: http.Server,
+    port: number,
+    host: string,
+    timing: { totalMs?: number; baseDelayMs?: number } = {}
+): Promise<void> {
+    const totalMs = timing.totalMs ?? 60_000;
+    const baseDelayMs = timing.baseDelayMs ?? 500;
+
+    await new Promise<void>((resolve, reject) => {
+        const deadline = Date.now() + totalMs;
+        let attempt = 0;
+        let lastError: Error | undefined;
+
+        const tryOnce = () => {
+            const onError = (err: NodeJS.ErrnoException) => {
+                lastError = err;
+                if (err.code === 'EADDRINUSE' && Date.now() < deadline) {
+                    const delay = Math.min(5_000, baseDelayMs * 2 ** attempt);
+                    attempt += 1;
+                    console.warn(`[MCP] Port ${port} is still held by a previous instance; retrying in ${delay}ms.`);
+                    setTimeout(tryOnce, delay);
+                    return;
+                }
+                reject(lastError ?? err);
+            };
+            server.once('error', onError);
+            server.listen(port, host, () => {
+                server.off('error', onError);
+                resolve();
+            });
+        };
+
+        tryOnce();
+    });
+}
+
+/**
  * Starts the Streamable HTTP MCP transport.
  *
  * @throws {Error} When HTTP is enabled but the configured bind address is not
@@ -52,11 +102,7 @@ export async function startHttpTransport(): Promise<http.Server> {
         });
     });
 
-    await new Promise<void>((resolve) => {
-        server.listen(config.httpPort, config.httpBindHost, () => {
-            resolve();
-        });
-    });
+    await listenWithRetry(server, config.httpPort, config.httpBindHost);
 
     const address = server.address() as AddressInfo;
     console.log(
