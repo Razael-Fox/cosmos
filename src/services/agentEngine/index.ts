@@ -7,6 +7,9 @@ import { AgentExecutionLoop } from './executionLoop.js';
 import { AgentRateLimiter } from './rateLimiter.js';
 import { AgentLocationStager } from './locationStager.js';
 import { AgentExecutionContext } from './types.js';
+import { OpenRouterDocsClient } from './openRouterDocsClient.js';
+
+const MAX_DOCS_ANSWER_CHARS = 8000;
 
 export class CosmosAgentEngine {
     /**
@@ -51,6 +54,29 @@ export class CosmosAgentEngine {
 
             // 4. Tier 1: Guidance Planning LLM (openai/gpt-oss-20b)
             const brief = await AgentGuidancePlanner.plan(promptText, promptCtx);
+
+            // 4b. Documentation question fast-path: route through free OpenRouter models
+            // carrying the unbounded knowledge base. Any failure falls through to the
+            // existing Groq Tier 2 path unchanged (fail-open).
+            // Only a pure conversational brief with no dispatched tool may take the docs route;
+            // otherwise an inconsistent planner brief could swallow a real tool intent.
+            if (brief.docQuestion === true && brief.primaryTool == null && brief.intent === 'CONVERSATION') {
+                const docsAnswer = await OpenRouterDocsClient.answer(promptText, promptCtx).catch((err: unknown) => {
+                    const errMsg = err instanceof Error ? err.message : String(err);
+                    console.warn('[CosmosAgentEngine] OpenRouter docs route failed, falling back to Groq:', errMsg);
+                    return null;
+                });
+
+                if (docsAnswer && docsAnswer.trim().length > 0) {
+                    let trimmedAnswer = docsAnswer.trim();
+                    if (trimmedAnswer.length > MAX_DOCS_ANSWER_CHARS) {
+                        trimmedAnswer = `${trimmedAnswer.slice(0, MAX_DOCS_ANSWER_CHARS)}\n\n_…(answer truncated for length)_`;
+                    }
+                    await sock.sendMessage(chatJid, { text: trimmedAnswer }, { quoted: msg });
+                    AgentRateLimiter.recordRequest(callerJid);
+                    return trimmedAnswer;
+                }
+            }
 
             // 5. Special Mode B: Interactive Location Forwarding Staging ("shareloc" flow)
             // If the user wants to send a location but no location was quoted or attached:

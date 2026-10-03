@@ -50,6 +50,8 @@ export interface GuidanceBrief {
     extractedParameters?: Record<string, unknown>;
     confidence?: number;
     guidanceInstructions?: string;
+    /** True when the user asks how to use a command, what a command does, or requests command documentation. */
+    docQuestion?: boolean;
 }
 
 export interface AgentExecutionContext {
