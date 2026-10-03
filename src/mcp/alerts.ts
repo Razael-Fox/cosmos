@@ -40,9 +40,11 @@ const IPC_FAILURE_WARN_INTERVAL_MS = 60_000;
 /**
  * Forwards one alert to the bot process.
  *
- * Never throws: an unreachable bridge logs a deduped warning and
- * drops the alert. The MCP server must stay responsive even when
- * the bot engine is down — that condition is itself reported as
+ * Resolves `true` when the request reached the bridge and
+ * `false` when it was dropped. Never throws: an unreachable
+ * bridge logs a deduped warning and drops the alert. The
+ * MCP server must stay responsive even when the bot engine
+ * is down — that condition is itself reported as
  * `MCP_ENGINE_UNREACHABLE` by the bridge hook.
  */
 export async function alertMcp(
@@ -55,7 +57,7 @@ export async function alertMcp(
         dedupeKey?: string;
         dedupeWindowMs?: number;
     } = {}
-): Promise<void> {
+): Promise<boolean> {
     try {
         await sendIpcCommand(ALERT_IPC_PATH, {
             event,
@@ -66,28 +68,46 @@ export async function alertMcp(
             ...(extras.dedupeKey ? { dedupeKey: extras.dedupeKey } : {}),
             ...(extras.dedupeWindowMs !== undefined ? { dedupeWindowMs: extras.dedupeWindowMs } : {})
         });
+        return true;
     } catch {
         const now = Date.now();
         if (now - lastIpcFailureWarnAt >= IPC_FAILURE_WARN_INTERVAL_MS) {
             lastIpcFailureWarnAt = now;
             console.warn('[MCP] Alert notifier: IPC bridge unreachable; alert dropped (%s).', event);
         }
+        return false;
     }
 }
 
+/** Retry schedule for the startup alert, in milliseconds. */
+const STARTUP_ALERT_RETRIES = [20_000, 60_000];
+
 /**
  * Reports that the MCP server finished starting on its transport.
- * Called once at boot, after the transport is ready.
+ *
+ * Under PM2 the bot and MCP processes boot together, so the
+ * first attempt can race the bot's IPC server. A dropped
+ * startup alert is retried on a short, bounded schedule; the
+ * bot-side dedupe key collapses the retries into a single
+ * delivery when the first attempt does get through. Timers
+ * are unref'd so a pending retry never holds the process open.
  */
 export function alertServerStarted(transport: string): void {
-    void alertMcp('MCP_SERVER_STARTED', 'INFO', `Cosmos MCP server is ready on the ${transport} transport.`, {
-        fields: {
-            Transport: transport,
-            Version: formatVersion(getVersionInfo())
-        },
-        dedupeKey: 'MCP_SERVER_STARTED',
-        dedupeWindowMs: DEDUPE_WINDOWS.serverStarted
-    });
+    const emit = (retryIndex: number): void => {
+        void alertMcp('MCP_SERVER_STARTED', 'INFO', `Cosmos MCP server is ready on the ${transport} transport.`, {
+            fields: {
+                Transport: transport,
+                Version: formatVersion(getVersionInfo())
+            },
+            dedupeKey: 'MCP_SERVER_STARTED',
+            dedupeWindowMs: DEDUPE_WINDOWS.serverStarted
+        }).then((delivered) => {
+            if (delivered || retryIndex >= STARTUP_ALERT_RETRIES.length) return;
+            const timer = setTimeout(() => emit(retryIndex + 1), STARTUP_ALERT_RETRIES[retryIndex]);
+            timer.unref();
+        });
+    };
+    emit(0);
 }
 
 /**

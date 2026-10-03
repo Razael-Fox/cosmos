@@ -9,6 +9,40 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P1] - 2026-10-03
+
+### Fixed — `MCP_SERVER_STARTED` alert dropped by the PM2 boot race
+
+The first deploy of the alert notifier showed a "IPC bridge
+unreachable; alert dropped (MCP_SERVER_STARTED)" warning on
+every restart: under PM2 the MCP and bot processes boot
+together, and the MCP process can emit its startup alert a
+second before the bot's IPC server starts listening. The
+alert was permanently lost.
+
+#### Fixed
+
+- `alertServerStarted` now retries a dropped startup alert on
+  a bounded schedule (20s, then 60s) with `unref()`'d timers,
+  so a pending retry never holds the process open. The
+  bot-side dedupe key collapses the attempts into a single
+  delivery whenever the first one does get through.
+- `alertMcp` now resolves with a delivery boolean (`true` =
+  reached the bridge, `false` = dropped) so callers can
+  react; all existing fire-and-forget call sites are
+  unaffected.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`,
+`pnpm run version:check` clean · `tests/mcpAlerts.test.ts`
+17/17 (delivery boolean asserted for both the reachable and
+the dead-bridge paths) · in-container after redeploy: the bot
+log shows the `MCP_SERVER_STARTED` console line after a
+`cosmos-mcp` restart with no dropped-alert warning.
+
+---
+
 ## [G2-F30-P0] - 2026-10-03
 
 ### MCP Alert Notifier — MCP events now push to Discord, Slack, and WhatsApp
