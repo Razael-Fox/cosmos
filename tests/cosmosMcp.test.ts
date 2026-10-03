@@ -617,6 +617,36 @@ describe('cosmos_mcp: transport selection', () => {
         assert.throws(() => parseTransport(['--transport']), /Missing value/);
         assert.throws(() => parseTransport(['--transport', 'grpc']), /Unsupported transport/);
     });
+
+    it('recognises the entrypoint under PM2 fork mode', async () => {
+        const { isProcessEntrypoint } = await import('../src/mcp/index.js');
+        const previousArgv1 = process.argv[1];
+        const previousPmExecPath = process.env.pm_exec_path;
+        try {
+            // PM2 fork mode: argv[1] is PM2's own wrapper; the real script
+            // path arrives via the pm_exec_path environment variable.
+            process.argv[1] = '/usr/local/lib/node_modules/pm2/lib/ProcessContainerFork.js';
+            process.env.pm_exec_path = '/app/bot/dist/mcp/index.js';
+            assert.strictEqual(isProcessEntrypoint(), true);
+
+            // Imported by another module under PM2: neither path is this file.
+            process.env.pm_exec_path = '/app/bot/dist/other/module.js';
+            assert.strictEqual(isProcessEntrypoint(), false);
+
+            // Direct execution: argv[1] carries the module path.
+            delete process.env.pm_exec_path;
+            process.argv[1] = '/app/bot/dist/mcp/index.js';
+            assert.strictEqual(isProcessEntrypoint(), true);
+
+            // Imported directly (the regression suite's own situation).
+            process.argv[1] = '/usr/local/bin/tsx';
+            assert.strictEqual(isProcessEntrypoint(), false);
+        } finally {
+            process.argv[1] = previousArgv1;
+            if (previousPmExecPath === undefined) delete process.env.pm_exec_path;
+            else process.env.pm_exec_path = previousPmExecPath;
+        }
+    });
 });
 
 describe('cosmos_mcp: server assembly', () => {
