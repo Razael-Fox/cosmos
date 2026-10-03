@@ -9,6 +9,14 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P7] - 2026-10-03
+
+### Changed — standard Markdown for documentation answers
+
+#### Changed
+
+- The OpenRouter documentation route now instructs the model to answer command how-to questions in standard Markdown (headings, lists, `**bold**`, `*italic*`, inline code, fenced code blocks) and to never emit WhatsApp-specific markers (`*bold*`, `_italic_`, `~strike~`, triple-backtick wrappers). Command names and parameters render as inline code.
+
 ## [G2-F30-P6] - 2026-10-03
 
 ### Fixed — PR #68 review findings on OpenRouter doc routing
