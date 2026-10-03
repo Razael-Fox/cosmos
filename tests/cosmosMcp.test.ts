@@ -595,6 +595,30 @@ describe('cosmos_mcp: read-only SQL execution', () => {
     });
 });
 
+describe('cosmos_mcp: transport selection', () => {
+    it('accepts both the space-separated and equals forms of --transport', async () => {
+        const { parseTransport } = await import('../src/mcp/index.js');
+
+        // The equals form is what PM2 passes from `args: '--transport=http'` in
+        // docker/ecosystem.config.cjs. It arrives as ONE argv string, so the
+        // original `indexOf('--transport')` lookup missed it and the server fell
+        // back to stdio while still reporting `online`, serving nothing on 4100.
+        assert.strictEqual(parseTransport(['--transport=http']), 'http');
+        assert.strictEqual(parseTransport(['--transport', 'http']), 'http');
+        assert.strictEqual(parseTransport(['--transport=stdio']), 'stdio');
+        assert.strictEqual(parseTransport(['--transport', 'stdio']), 'stdio');
+        assert.strictEqual(parseTransport(['--http']), 'http');
+        assert.strictEqual(parseTransport([]), 'stdio');
+        assert.strictEqual(parseTransport(['--transport=http', '--verbose']), 'http');
+
+        // Unsupported values must still fail loudly rather than silently
+        // downgrading to stdio, which is what hid the original defect.
+        assert.throws(() => parseTransport(['--transport=carrier-pigeon']), /Unsupported transport/);
+        assert.throws(() => parseTransport(['--transport']), /Missing value/);
+        assert.throws(() => parseTransport(['--transport', 'grpc']), /Unsupported transport/);
+    });
+});
+
 describe('cosmos_mcp: server assembly', () => {
     it('registers the documented tool surface', async () => {
         resetAuditUserIdCache();
