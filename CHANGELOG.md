@@ -9,6 +9,46 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P4] - 2026-10-03
+
+### Added — committed MCP client-configuration reference
+
+The MCP client configuration reference for AI coding
+agents lived only as untracked files in the stale
+`~/cosmos-mcp` worktree (`feat/cosmos-mcp-server-isolated`);
+none of it was ever committed to the repository. The
+session's repository identity has also been moved to the
+main `~/cosmos` checkout on `main`.
+
+#### Added
+
+- `src/mcp/README.md` — client configuration reference:
+  single-owner-key model, key export (1Password/Doppler),
+  local (stdio) vs remote (Streamable HTTP) usage, SSH
+  port-forward guidance, and verification commands.
+- `src/mcp/opencode.example.json`, `src/mcp/pi.example.json`,
+  `src/mcp/antigravity.example.json`,
+  `src/mcp/remote-http.example.json` — copy-paste-ready
+  configs for the four supported clients plus the generic
+  remote HTTP form. The Pi example is aligned to the
+  `mcpServers` array form documented in
+  `docs/COSMOS_MCP.md` §8 (the worktree copy used an
+  object form that did not match the documentation).
+- Fixed a broken relative link in the README
+  (`../COSMOS_MCP.md` → `../../docs/COSMOS_MCP.md`).
+- `docs/COSMOS_MCP.md` §8 now points at the committed
+  example files in `src/mcp/`.
+
+#### Notes
+
+The stale worktree and its branch are removed in this
+change; the branch's tracked content was fully superseded
+by the squash merge of PR #56 plus subsequent fixes, and
+its only unique content (the five files above) is now
+committed here.
+
+---
+
 ## [G2-F30-P3] - 2026-10-03
 
 ### Fixed — `pm2 restart cosmos-mcp` crash loop (EADDRINUSE)
