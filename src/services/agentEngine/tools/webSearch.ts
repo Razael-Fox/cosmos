@@ -37,9 +37,8 @@ export const webSearchTool: AgentTool = {
             },
             search_depth: {
                 type: 'string',
-                enum: ['basic', 'advanced'],
                 description:
-                    'Search thoroughness. Use "basic" for straightforward lookups. Use "advanced" only when the question needs multi-source synthesis or the basic pass looks insufficient.'
+                    'Search thoroughness. Send "advanced" only when the question needs multi-source synthesis. Omit this field entirely for ordinary lookups.'
             }
         },
         required: ['query']
@@ -55,7 +54,16 @@ export const webSearchTool: AgentTool = {
         }
 
         const maxResults = typeof args.max_results === 'number' ? args.max_results : undefined;
-        const searchDepth = args.search_depth === 'advanced' ? 'advanced' : 'basic';
+
+        // The schema deliberately omits an enum for `search_depth`: a strict enum
+        // makes Groq reject the ENTIRE request when the model invents a value
+        // (e.g. "short"), which discards an otherwise valid query. Unknown values
+        // are coerced to "basic" here instead, so a guess never costs the user a
+        // search.
+        const searchDepth =
+            typeof args.search_depth === 'string' && args.search_depth.trim().toLowerCase() === 'advanced'
+                ? 'advanced'
+                : 'basic';
 
         // Scrub phone numbers, raw JIDs, and currency values before the query
         // leaves this host. The query is free-form user text, and Tavily is a

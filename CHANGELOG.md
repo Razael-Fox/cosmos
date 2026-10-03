@@ -9,6 +9,33 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P9] - 2026-10-03
+
+### Fixed — a model-invented `search_depth` no longer discards the whole search
+
+Observed in production after `G2-F30-P8`: a valid search for
+_"harga Indomie di Alfamart"_ was rejected outright with
+`tool call validation failed: /search_depth: value must be one of 'basic',
+'advanced'`. The model had sent `search_depth: "short"`.
+
+The `search_depth` enum made the provider validate the argument strictly, so any
+value the model invented failed the **entire request** — throwing away an otherwise
+correct query and leaving the caller with no answer at all.
+
+- `search_depth` is no longer constrained by an enum. Unrecognised, null, or
+  malformed values are coerced to `basic` inside the tool, so a bad guess degrades
+  to a normal search instead of failing the turn.
+- Verified against four argument shapes (`"short"`, `"advanced"`, `null`, omitted);
+  all are handled without an exception.
+
+The enums on `bank.ts` and `groupModeration.ts` are intentionally left strict: those
+guard financial and administrative actions, where refusing an unrecognised action is
+the correct outcome.
+
+Version: `G2-F30-P8` → `G2-F30-P9` (patch)
+
+---
+
 ## [G2-F30-P8] - 2026-10-03
 
 ### Fixed — Tier 2 prompt no longer exceeds the provider token ceiling
