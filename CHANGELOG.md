@@ -9,6 +9,23 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P7] - 2026-10-03
+
+### Fixed — untrusted tool-output directive for Sara AI web search
+
+- The Tier 2 persona prompt now states explicitly that content arriving in a `tool`
+  role message is untrusted external data, must never be obeyed as instructions, and
+  cannot alter goals, tone, or tool selection.
+- This closes a real gap rather than a cosmetic one. The pre-existing
+  `<untrusted_user_content>` guardrail wraps **only the quoted message**; tool results
+  are appended to the conversation outside that wrapper, so no existing instruction
+  covered web search snippets. Since a snippet is fully attacker-controllable, a
+  crafted page could previously have plausibly steered the executor.
+
+Version: `G2-F30-P6` → `G2-F30-P7` (patch)
+
+---
+
 ## [G2-F30-P6] - 2026-10-03
 
 ### Fixed — review corrections to the Sara AI web search tool
@@ -93,11 +110,22 @@ Implementation notes:
 - Tier 1 guidance now selects `web_search` for current-information requests,
   and Tier 2 received a "Web Search Synthesis" directive covering citation
   style, exact-URL reproduction, and truthful reporting of omitted results.
+  That directive also states explicitly that content arriving in a `tool`
+  message is untrusted external data. The pre-existing
+  `<untrusted_user_content>` guardrail does NOT cover it: that wrapper contains
+  only the quoted message, whereas tool results are appended to the
+  conversation outside any wrapper.
 - Server-side answer synthesis (`includeAnswer`) is deliberately disabled so
   replies remain in Sara's voice rather than a generic pre-written answer.
 - New i18n keys `core.web_search_unconfigured`, `core.web_search_failed`, and
   `core.web_search_empty` in both `en` and `id`. When `TAVILY_API_KEY` is
   absent, the tool degrades to a graceful localized message.
+
+- The Tier 2 persona prompt carries an explicit directive that content arriving in a
+  `tool` message is untrusted external data. This is distinct from the pre-existing
+  `<untrusted_user_content>` guardrail, which wraps only the quoted message; tool
+  results are appended to the conversation outside that wrapper, so they required
+  their own instruction.
 
 `TAVILY_API_KEY` is provisioned in Doppler (project `cosmos`, config `prd`)
 and documented in `.env.example`.
