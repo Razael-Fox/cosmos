@@ -9,6 +9,8 @@ import { AgentLocationStager } from './locationStager.js';
 import { AgentExecutionContext } from './types.js';
 import { OpenRouterDocsClient } from './openRouterDocsClient.js';
 
+const MAX_DOCS_ANSWER_CHARS = 8000;
+
 export class CosmosAgentEngine {
     /**
      * Main entry point for processing incoming WhatsApp messages through the CosmosAgentEngine runtime.
@@ -56,14 +58,20 @@ export class CosmosAgentEngine {
             // 4b. Documentation question fast-path: route through free OpenRouter models
             // carrying the unbounded knowledge base. Any failure falls through to the
             // existing Groq Tier 2 path unchanged (fail-open).
-            if (brief.docQuestion === true) {
+            // Only a pure conversational brief with no dispatched tool may take the docs route;
+            // otherwise an inconsistent planner brief could swallow a real tool intent.
+            if (brief.docQuestion === true && brief.primaryTool == null && brief.intent === 'CONVERSATION') {
                 const docsAnswer = await OpenRouterDocsClient.answer(promptText, promptCtx).catch((err: unknown) => {
-                    console.warn('[CosmosAgentEngine] OpenRouter docs route failed, falling back to Groq:', err);
+                    const errMsg = err instanceof Error ? err.message : String(err);
+                    console.warn('[CosmosAgentEngine] OpenRouter docs route failed, falling back to Groq:', errMsg);
                     return null;
                 });
 
                 if (docsAnswer && docsAnswer.trim().length > 0) {
-                    const trimmedAnswer = docsAnswer.trim();
+                    let trimmedAnswer = docsAnswer.trim();
+                    if (trimmedAnswer.length > MAX_DOCS_ANSWER_CHARS) {
+                        trimmedAnswer = `${trimmedAnswer.slice(0, MAX_DOCS_ANSWER_CHARS)}\n\n_…(answer truncated for length)_`;
+                    }
                     await sock.sendMessage(chatJid, { text: trimmedAnswer }, { quoted: msg });
                     AgentRateLimiter.recordRequest(callerJid);
                     return trimmedAnswer;

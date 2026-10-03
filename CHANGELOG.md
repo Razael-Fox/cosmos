@@ -9,6 +9,17 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P6] - 2026-10-03
+
+### Fixed — PR #68 review findings on OpenRouter doc routing
+
+#### Fixed
+
+- Laya conversation fast-path no longer swallows command-documentation questions; a heuristic guard lets them reach the Tier 1 planner so `docQuestion` is set correctly.
+- Abort timeout in `OpenRouterDocsClient` now covers the response body read, not just the headers; added a 20s overall budget across the candidate chain and explicit timeout vs failure log distinction.
+- Docs fast-path guarded to pure conversational briefs with no dispatched tool, so an inconsistent planner brief can no longer swallow a real tool intent.
+- Response body drained on non-200 statuses; `usage.include=true` requested for real cost telemetry; doc answers length-capped before WhatsApp delivery; duplicate Tier 1 prompt rule numbering corrected; fallback briefs explicitly set `docQuestion: false`.
+
 ## [G2-F30-P5] - 2026-10-03
 
 ### Added — OpenRouter documentation routing for Sara AI

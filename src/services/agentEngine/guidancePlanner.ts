@@ -6,6 +6,23 @@ import { ToolAiPolicy } from './types.js';
 import { EphemeralTokenStore } from './tokenStore.js';
 import { AgentEntityResolver } from './entityResolver.js';
 import { DecisionClient } from './decisionClient.js';
+
+/**
+ * Heuristic guard: command-documentation questions often get classified by the
+ * Laya fast-path as pure conversation. Those must still reach the Tier 1 planner
+ * so it can set docQuestion=true and route through the OpenRouter docs path.
+ */
+function looksLikeDocQuestion(prompt: string): boolean {
+    const text = prompt.toLowerCase();
+    const asksHowOrWhat =
+        /\b(how (do|to|can|does)|what (does|is|are)|explain|panduan|cara|apa (itu|fungsi)|kegunaan|fungsi|sintaks|syntax|pakai|menggunakan|help (me )?(use|with|understand)|"\.\w+")/i.test(
+            text
+        );
+    const mentionsCommand =
+        /\.\s*[a-z][a-z0-9-]*/i.test(prompt) || /\b(command|perintah|fitur|feature|docs?|dokumentasi)\b/i.test(text);
+    return asksHowOrWhat && mentionsCommand;
+}
+
 export class AgentGuidancePlanner {
     private static activeModel: string | null = null;
     private static readonly CANDIDATE_MODELS = [
@@ -28,7 +45,8 @@ export class AgentGuidancePlanner {
             decisionSignal.recipientCategory === 'none' &&
             decisionSignal.confidence >= 0.85 &&
             !ctx.referencedMessage?.location &&
-            !ctx.referencedMessage?.text
+            !ctx.referencedMessage?.text &&
+            !looksLikeDocQuestion(userPrompt)
         ) {
             const latency = Date.now() - startTime;
             console.log(
@@ -94,7 +112,8 @@ export class AgentGuidancePlanner {
                 intent: 'CONVERSATION',
                 primaryTool: null,
                 confidence: 0.5,
-                guidanceInstructions: 'Respond helpfully and politely to the user request.'
+                guidanceInstructions: 'Respond helpfully and politely to the user request.',
+                docQuestion: false
             };
         }
 
@@ -237,7 +256,8 @@ export class AgentGuidancePlanner {
                 intent: 'CONVERSATION',
                 primaryTool: null,
                 confidence: 0.5,
-                guidanceInstructions: 'Respond helpfully and politely to the user request.'
+                guidanceInstructions: 'Respond helpfully and politely to the user request.',
+                docQuestion: false
             };
         }
     }

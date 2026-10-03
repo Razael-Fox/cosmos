@@ -5,6 +5,7 @@ import { DecisionClient } from './decisionClient.js';
 
 const DEFAULT_MODEL_CHAIN = ['inclusionai/ling-3.0-flash-sante:free', 'qwen/qwen3.8-27b:free'];
 const REQUEST_TIMEOUT_MS = 8000;
+const OVERALL_BUDGET_MS = 20000;
 
 /**
  * Resolves the ordered OpenRouter free-model candidate chain.
@@ -74,66 +75,84 @@ export class OpenRouterDocsClient {
         }
 
         const systemPrompt = buildDocsSystemPrompt(ctx, knowledgeBase);
+        const overallDeadline = Date.now() + OVERALL_BUDGET_MS;
 
         for (const model of getModelChain()) {
+            const remainingBudget = overallDeadline - Date.now();
+            if (remainingBudget <= 0) {
+                console.warn('[OpenRouterDocsClient] Overall time budget exhausted. Falling back to Groq tier.');
+                break;
+            }
+            const modelTimeout = Math.min(REQUEST_TIMEOUT_MS, remainingBudget);
             const startTime = Date.now();
             try {
                 const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+                const timer = setTimeout(() => controller.abort(), modelTimeout);
 
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model,
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: sanitizedPrompt }
-                        ],
-                        temperature: 0.1
-                    }),
-                    signal: controller.signal
-                }).finally(() => clearTimeout(timer));
+                try {
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model,
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: sanitizedPrompt }
+                            ],
+                            temperature: 0.1,
+                            usage: { include: true }
+                        }),
+                        signal: controller.signal
+                    });
 
-                const latency = Date.now() - startTime;
+                    if (!response.ok) {
+                        // Drain the error body so the connection is cleaned up promptly.
+                        await response.text().catch(() => '');
+                        console.warn(
+                            `[OpenRouterDocsClient] Model ${model} returned status ${response.status} after ${Date.now() - startTime}ms. Trying next candidate...`
+                        );
+                        continue;
+                    }
 
-                if (!response.ok) {
-                    console.warn(
-                        `[OpenRouterDocsClient] Model ${model} returned status ${response.status} after ${latency}ms. Trying next candidate...`
-                    );
-                    continue;
-                }
-
-                const data = (await response.json()) as {
-                    choices?: Array<{ message?: { content?: string } }>;
-                    usage?: {
-                        prompt_tokens?: number;
-                        completion_tokens?: number;
-                        total_tokens?: number;
-                        cost?: number;
+                    const data = (await response.json()) as {
+                        choices?: Array<{ message?: { content?: string } }>;
+                        usage?: {
+                            prompt_tokens?: number;
+                            completion_tokens?: number;
+                            total_tokens?: number;
+                            cost?: number;
+                        };
                     };
-                };
 
-                console.log(
-                    `[OpenRouterDocsClient] Success: model=${model}, latency=${latency}ms, promptTokens=${data.usage?.prompt_tokens ?? 'unknown'}, completionTokens=${data.usage?.completion_tokens ?? 'unknown'}, cost=${data.usage?.cost ?? 0}`
-                );
-
-                const content = data.choices?.[0]?.message?.content?.trim();
-                if (!content) {
-                    console.warn(
-                        `[OpenRouterDocsClient] Model ${model} returned an empty completion after ${latency}ms.`
+                    console.log(
+                        `[OpenRouterDocsClient] Success: model=${model}, latency=${Date.now() - startTime}ms, promptTokens=${data.usage?.prompt_tokens ?? 'unknown'}, completionTokens=${data.usage?.completion_tokens ?? 'unknown'}, cost=${data.usage?.cost ?? 0}`
                     );
-                    continue;
-                }
 
-                return content;
+                    const content = data.choices?.[0]?.message?.content?.trim();
+                    if (!content) {
+                        console.warn(
+                            `[OpenRouterDocsClient] Model ${model} returned an empty completion after ${Date.now() - startTime}ms.`
+                        );
+                        continue;
+                    }
+
+                    return content;
+                } finally {
+                    // The timer must stay armed until the response body has been fully
+                    // consumed; clearing it when headers arrive would leave a trickling
+                    // body unbounded.
+                    clearTimeout(timer);
+                }
             } catch (err: unknown) {
                 const latency = Date.now() - startTime;
+                const isAbort = err instanceof Error && err.name === 'AbortError';
                 const errMsg = err instanceof Error ? err.message : String(err);
-                console.warn(`[OpenRouterDocsClient] Model ${model} failed after ${latency}ms: ${errMsg}`);
+                console.warn(
+                    `[OpenRouterDocsClient] Model ${model} ${isAbort ? 'timed out' : 'failed'} after ${latency}ms: ${errMsg}`
+                );
             }
         }
 
