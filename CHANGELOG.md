@@ -9,6 +9,40 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P8] - 2026-10-03
+
+### Fixed — Tier 2 prompt no longer exceeds the provider token ceiling
+
+Sara returned _"an error occurred while processing your request"_ for every question
+after the web search feature went live. Tier 1 correctly selected `web_search`, but
+Tier 2 was rejected by the model provider with HTTP 413: the request needed ~8,600
+tokens against a per-minute limit of 8,000. The model fallback chain could not
+recover, because every candidate model shares that ceiling.
+
+Root cause was the full `docs/COMMANDS_CONTEXT.md` reference (~22.5 KB, roughly 6,100
+tokens, about 75% of the system prompt) being attached to **every** Tier 2 request,
+including questions that had nothing to do with Cosmos features.
+
+- The command reference is now attached only when the caller is actually asking about
+  Cosmos itself, detected via `shouldIncludeCommandsKnowledge()`. Search, general
+  knowledge, and small talk no longer pay for it.
+- When it is needed, the reference is capped at `COMMANDS_KNOWLEDGE_MAX_CHARS`
+  (6,000), cut at a section boundary so no entry is left half-written. The full
+  document remains available through `getCommandsKnowledgeBase()`.
+- Tier 2 instructs Sara to say she will pull up exact syntax rather than guess when
+  the reference is absent.
+
+Measured prompt sizes, against the 8,000-token ceiling:
+
+| Request                   | Before            | After  |
+| ------------------------- | ----------------- | ------ |
+| Search / general question | ~8,600 (rejected) | ~2,100 |
+| Cosmos command question   | ~8,600 (rejected) | ~3,500 |
+
+Version: `G2-F30-P7` → `G2-F30-P8` (patch)
+
+---
+
 ## [G2-F30-P7] - 2026-10-03
 
 ### Fixed — untrusted tool-output directive for Sara AI web search
