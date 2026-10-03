@@ -63,6 +63,11 @@ async function main(): Promise<void> {
     const version = (await import('#utils/versioning.js')).getVersionInfo().version;
     console.log(`[MCP] Cosmos MCP server ${version} starting on the ${transport} transport.`);
 
+    // Status-channel alert: the server is up and serving. Fire-and-forget;
+    // the bot process may still be starting alongside us under PM2.
+    const { alertServerStarted } = await import('./alerts.js');
+    alertServerStarted(transport);
+
     if (transport === 'http') {
         const { startHttpTransport } = await import('./http.js');
         const server = await startHttpTransport();

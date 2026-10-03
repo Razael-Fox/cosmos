@@ -9,6 +9,73 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P0] - 2026-10-03
+
+### MCP Alert Notifier — MCP events now push to Discord, Slack, and WhatsApp
+
+The MCP surface emits operational and security alerts through the
+existing external status channels. Because the WhatsApp transport
+needs the bot process's Baileys socket, alerts travel over the
+authenticated IPC bridge to a new `/internal/mcp/alert` route in
+the bot process, which dispatches them through the regular
+`notify()` fan-out — one emit path, all three channels, with
+`StatusNotificationLog` persistence and outbox retry.
+
+#### Added
+
+- **Seven new notification events** (registered in the closed
+  `NOTIFY_EVENTS` union, so outbox retries accept them):
+  `MCP_SERVER_STARTED` (INFO), `MCP_AUTH_REJECTED` (CRITICAL),
+  `MCP_RATE_LIMITED` (WARN), `MCP_MUTATION_BLOCKED` (WARN),
+  `MCP_MUTATION_APPLIED` (INFO), `MCP_TOOL_ERROR` (WARN),
+  `MCP_ENGINE_UNREACHABLE` (CRITICAL).
+- **`/internal/mcp/alert` IPC route** — constant-time
+  `INTERNAL_IPC_SECRET` authentication like every `/internal/...`
+  route, strict validation via a pure `parseMcpAlertRequest`
+  (accepts only `MCP_*` events, length-caps every field, rejects
+  non-scalar field values), then `notify()` dispatch.
+- **`src/mcp/alerts.ts`** — the MCP-side emitter. Fire-and-forget
+  by design: alerting never fails a tool call; an unreachable
+  bridge drops the alert with a deduped console warning.
+- **Hook points:** server startup (`MCP_SERVER_STARTED`),
+  authentication rejections with a rolling 5-minute threshold
+  counter (3+ rejections within the window raises
+  `MCP_AUTH_REJECTED`, re-armed after firing), tool-error
+  classification in the central registry catch (rate limits /
+  safety-gate blocks / unexpected errors), mutation execution
+  audit trail, and IPC transport-layer failures
+  (`MCP_ENGINE_UNREACHABLE`).
+
+#### Privacy (Rule AG)
+
+Payloads carry only sanitized, low-cardinality fields — tool
+names, error codes, transport, row counts. No credentials, JIDs,
+phone numbers, or tool arguments. The channel formatters'
+identifier redaction remains the outbound backstop.
+
+#### Delivery semantics
+
+Deduplicated per event class (10-60 minute windows) so a probing
+client cannot flood the channels. With the default
+`STATUS_NOTIFY_MIN_SEVERITY=WARN`, INFO events are filtered from
+the channels but still persisted to `StatusNotificationLog`; set
+the variable to `INFO` to receive startup and mutation-applied
+alerts.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check`
+clean - new `tests/mcpAlerts.test.ts` 17/17 (validator matrix,
+threshold counter with fake clock, end-to-end IPC forwarding against
+a mock Unix-socket server, never-throws-against-dead-socket) -
+`tests/cosmosMcp.test.ts` 51/51 - `tests/statusNotifier.test.ts`
+5/5 - MCP stdio smoke 23/23.
+
+Docs: `docs/COSMOS_MCP.md` section 14 (alert surface reference);
+`docs/VERSIONING.md` milestone registry row F30.
+
+---
+
 ## [G2-F29-P9] - 2026-10-03
 
 ### Fixed — every MCP HTTP request failed with `Parse error: Invalid JSON-RPC message`

@@ -452,3 +452,40 @@ for live bot actions.
 - **The DDL mirror check is static.** `cosmos_schema_check` parses `src/db.ts` and
   `.worktrees/api/src/db.ts` textually. It reports honestly when the sibling worktree is absent
   (as in a fresh clone) rather than assuming symmetry.
+
+## 14. MCP alert notifier
+
+The MCP surface emits operational and security alerts through the
+existing external status channels (Discord, Slack, WhatsApp — see the
+status-notifier subsystem, Issue #47). Because the WhatsApp transport
+requires the bot process's Baileys socket, alerts are forwarded over
+the authenticated IPC bridge to a `/internal/mcp/alert` route, which
+validates and dispatches them through the regular `notify()` fan-out
+with `StatusNotificationLog` persistence and outbox retry.
+
+| Event                    | Severity | Trigger                                                                                                       |
+| :----------------------- | :------- | :------------------------------------------------------------------------------------------------------------ |
+| `MCP_SERVER_STARTED`     | INFO     | Server ready on its transport                                                                                 |
+| `MCP_AUTH_REJECTED`      | CRITICAL | ≥3 rejected requests within a rolling 5-minute window                                                         |
+| `MCP_RATE_LIMITED`       | WARN     | Caller hit a call, mutation, or concurrency limit                                                             |
+| `MCP_MUTATION_BLOCKED`   | WARN     | Safety gate refused a mutation (`UNSAFE_MUTATION`, `UNKNOWN_FIELD`, `PLAN_REQUIRED`, `CONFIRMATION_REQUIRED`) |
+| `MCP_MUTATION_APPLIED`   | INFO     | Mutation executed (audit trail)                                                                               |
+| `MCP_TOOL_ERROR`         | WARN     | Tool failure with any other error code                                                                        |
+| `MCP_ENGINE_UNREACHABLE` | CRITICAL | IPC bridge failed at the transport layer                                                                      |
+
+Notes:
+
+- With the default `STATUS_NOTIFY_MIN_SEVERITY=WARN`, INFO events are
+  filtered from the channels but still persisted to the log. Set the
+  variable to `INFO` to receive startup and mutation-applied alerts.
+- Alerts are deduplicated per event class (10–60 minute windows), so a
+  probing client cannot flood the channels.
+- Payloads carry only sanitized, low-cardinality fields (tool names,
+  error codes, transport, row counts). No credentials, JIDs, phone
+  numbers, or tool arguments; the channel formatters' identifier
+  redaction remains the outbound backstop (Rule AG).
+- The IPC route accepts only `MCP_*` events, is authenticated with the
+  constant-time `INTERNAL_IPC_SECRET` check like every `/internal/...`
+  route, and length-caps every field.
+- Alerting never fails a tool call: if the bridge is unreachable the
+  alert is dropped with a deduped console warning.

@@ -8,6 +8,7 @@
  * plausible-looking success value.
  */
 import { sendIpcCommand } from '#services/ipcServer.js';
+import { alertEngineUnreachable } from '../alerts.js';
 import { McpToolError } from '../errors.js';
 
 export interface IpcEnvelope<T = unknown> {
@@ -25,6 +26,7 @@ export async function sendIpc<T = unknown>(path: string, body: Record<string, un
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         console.error(`[MCP] IPC call ${path} failed at the transport layer: ${message}`);
+        alertEngineUnreachable(path);
         return { status: 503, data: { error: 'BOT_OFFLINE', detail: message } as T };
     }
 }

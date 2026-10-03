@@ -13,6 +13,7 @@
  *    returns the before/after diff (issue #49).
  */
 import { prisma } from '#db.js';
+import { alertMutationApplied } from '../alerts.js';
 import { recordAudit } from '../audit.js';
 import type { McpIdentity } from '../auth.js';
 import { loadMcpConfig } from '../config.js';
@@ -165,6 +166,10 @@ export async function applyMutation(input: ApplyMutationInput, identity: McpIden
         summary: `${plan.operation} on ${plan.model} affecting ${affectedRowCount} row(s).`,
         diff: { where, set: maskDeep(set) }
     });
+
+    // Audit-trail alert (INFO; filtered from channels by the
+    // default WARN minimum severity, but persisted to the log).
+    alertMutationApplied(plan.operation, plan.model, affectedRowCount);
 
     const outcome = await prisma.$transaction(async (tx) => {
         const txDelegate = (tx as unknown as Record<string, Record<string, (args: unknown) => Promise<unknown>>>)[

@@ -30,7 +30,14 @@ const EVENT_TITLES: Record<NotifyEvent, string> = {
     STATUS_DEGRADED: 'Status Degraded',
     AUDIT_DIGEST: 'Daily Audit Digest',
     ISSUE_LOG: 'Operational Issue Log',
-    TEST: 'Status Channel Test'
+    TEST: 'Status Channel Test',
+    MCP_SERVER_STARTED: 'MCP Server Started',
+    MCP_AUTH_REJECTED: 'MCP Authentication Rejections',
+    MCP_RATE_LIMITED: 'MCP Rate Limit Reached',
+    MCP_MUTATION_BLOCKED: 'MCP Mutation Blocked',
+    MCP_MUTATION_APPLIED: 'MCP Mutation Applied',
+    MCP_TOOL_ERROR: 'MCP Tool Error',
+    MCP_ENGINE_UNREACHABLE: 'MCP Bot Engine Unreachable'
 };
 
 export interface NotifyEventInput {

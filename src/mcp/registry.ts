@@ -12,6 +12,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpRateLimiter } from './audit.js';
+import { alertOnToolError } from './alerts.js';
 import type { McpIdentity } from './auth.js';
 import { loadMcpConfig } from './config.js';
 import { toToolError } from './errors.js';
@@ -92,6 +93,10 @@ export function registerTool(
             } catch (err) {
                 const toolError = toToolError(err);
                 console.error(`[MCP] ${name} failed (${toolError.code}): ${toolError.message}`);
+                // Alert notifier: classify the failure so operators can
+                // distinguish probes, rate limits, and safety-gate
+                // rejections from unexpected errors. Fire-and-forget.
+                alertOnToolError(name, toolError.code, toolError.message);
                 return {
                     ...toTextResult({
                         error: toolError.code,

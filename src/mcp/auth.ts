@@ -14,6 +14,7 @@
  */
 import crypto from 'crypto';
 import { timingSafeStringCompare } from '#services/otpService.js';
+import { alertAuthRejected, AUTH_REJECT_THRESHOLD, recordAuthRejection } from './alerts.js';
 import { isOwnerKeyConfigured, loadMcpConfig } from './config.js';
 import { McpToolError } from './errors.js';
 
@@ -62,6 +63,11 @@ export function authenticateOwnerKey(
     if (provided.length === 0 || !timingSafeStringCompare(provided, expected)) {
         // Intentionally logs neither the presented nor the expected value.
         console.warn('[MCP] Rejected an unauthenticated request on the %s transport.', transport);
+        // Alert on sustained bursts (>= 3 rejections within a rolling
+        // 5-minute window); isolated probe failures stay quiet.
+        if (recordAuthRejection()) {
+            alertAuthRejected(transport, AUTH_REJECT_THRESHOLD);
+        }
         throw new McpToolError(
             'UNAUTHORIZED_MCP',
             'A valid Cosmos MCP owner API key is required. Rotate the key in the secret manager if it was lost.'
