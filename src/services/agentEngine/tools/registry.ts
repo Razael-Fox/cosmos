@@ -5,6 +5,7 @@ import { sendLocationTool } from './sendLocation.js';
 import { balanceTool } from './balance.js';
 import { bankTool } from './bank.js';
 import { groupModerationTool } from './groupModeration.js';
+import { webSearchTool } from './webSearch.js';
 
 export class AgentToolRegistry {
     private static tools = new Map<string, AgentTool>();
@@ -17,6 +18,7 @@ export class AgentToolRegistry {
         this.registerTool(balanceTool);
         this.registerTool(bankTool);
         this.registerTool(groupModerationTool);
+        this.registerTool(webSearchTool);
         this.initialized = true;
     }
 

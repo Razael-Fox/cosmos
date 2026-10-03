@@ -9,6 +9,46 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P5] - 2026-10-03
+
+### Added — Tavily web search for Sara AI
+
+Sara AI can now look up live information on the public web instead of
+answering every current-events question from memory. A new `web_search`
+tool is registered in `CosmosAgentEngine` and classified `READ_ONLY`, so
+it runs directly with no interactive confirmation.
+
+Implementation notes:
+
+- `src/services/agentEngine/tavilyClient.ts` wraps the official
+  `@tavily/core` SDK (`pnpm add`, v0.7.13) and normalises responses into a
+  compact, budget-aware payload. An 8s `AbortController` ceiling is enforced
+  around the SDK call, mirroring the existing `decisionClient.ts` pattern.
+- Result URLs are canonicalised rather than truncated. Tracking parameters
+  (`utm_*`, `fbclid`, `gclid`, `msclkid`, `igshid`, and similar) are stripped,
+  fragments removed, and duplicate slashes collapsed, while parameters that
+  may carry a real record identifier (`?id=8842`, `?p=12345`) are preserved.
+  This uses an explicit deny-list rather than clearing the query string,
+  because legacy CMS and news URLs routinely depend on those identifiers.
+- When a payload would exceed the ReAct loop's `MAX_TOOL_OUTPUT_CHARS = 1500`
+  budget, whole results are dropped lowest-score-first instead of slicing the
+  payload. WhatsApp has no `[label](url)` link syntax, so a shortened URL would
+  be unclickable; a truncated URL would be a dead link. The invariant is that a
+  source appears with its complete working URL or not at all.
+- Tier 1 guidance now selects `web_search` for current-information requests,
+  and Tier 2 received a "Web Search Synthesis" directive covering citation
+  style, exact-URL reproduction, and truthful reporting of omitted results.
+- Server-side answer synthesis (`includeAnswer`) is deliberately disabled so
+  replies remain in Sara's voice rather than a generic pre-written answer.
+- New i18n keys `core.web_search_unconfigured`, `core.web_search_failed`, and
+  `core.web_search_empty` in both `en` and `id`. When `TAVILY_API_KEY` is
+  absent, the tool degrades to a graceful localized message.
+
+`TAVILY_API_KEY` is provisioned in Doppler (project `cosmos`, config `prd`)
+and documented in `.env.example`.
+
+---
+
 ## [G2-F30-P4] - 2026-10-03
 
 ### Added — committed MCP client-configuration reference

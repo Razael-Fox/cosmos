@@ -36,5 +36,8 @@
     "ipc_sub_activated": "🎉 *Langganan Diaktifkan!*\n\nPaket: {{tier}}\nBerlaku Hingga: {{expiresAt}}\n\nTerima kasih telah mendukung Cosmos!",
     "whitelist_limit_reached": "⚠️ *Batas Whitelist Tercapai!*\n\nPaket: {{tier}} Plan\n{{reason}}\n\nUntuk menambah grup:\n1. Hapus grup yang tidak aktif dengan: .group del\n2. Tingkatkan ke Partner Tier (hingga 25 grup): https://razael-fox.my.id/pricing",
     "agent_synthesis_failure": "Permintaan Anda telah berhasil diproses, namun terjadi kendala saat merangkum respon akhir.",
-    "rate_limited": "⏳ Tindakan dibatasi. Harap tunggu beberapa detik sebelum mencoba lagi."
+    "rate_limited": "⏳ Tindakan dibatasi. Harap tunggu beberapa detik sebelum mencoba lagi.",
+    "web_search_unconfigured": "Pencarian web belum dikonfigurasi di bot ini. Silakan minta pemilik menambahkan kunci API Tavily.",
+    "web_search_failed": "Layanan pencarian web sedang tidak dapat dihubungi. Silakan coba lagi beberapa saat lagi.",
+    "web_search_empty": "Tidak ditemukan hasil yang relevan untuk kueri tersebut. Silakan coba gunakan kata kunci lain yang lebih spesifik."
 }
