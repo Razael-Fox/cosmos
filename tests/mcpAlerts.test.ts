@@ -225,12 +225,13 @@ describe('mcp alerts: IPC forwarding', () => {
     });
 
     it('forwards a generic alert as a well-formed IPC request', async () => {
-        await alertMcp('MCP_TOOL_ERROR', 'WARN', 'Tool failed.', {
+        const delivered = await alertMcp('MCP_TOOL_ERROR', 'WARN', 'Tool failed.', {
             details: ['Detail line.'],
             fields: { Tool: 'cosmos_db_query' },
             dedupeKey: 'MCP_TOOL_ERROR:INVALID_SQL',
             dedupeWindowMs: 60_000
         });
+        assert.strictEqual(delivered, true, 'a reachable bridge must report delivery');
         await waitForRequests(mock, 1);
         const [request] = mock.requests;
         assert.strictEqual(request.path, '/internal/mcp/alert');
@@ -276,10 +277,11 @@ describe('mcp alerts: IPC forwarding', () => {
         const previousDead = process.env.BOT_IPC_SOCKET;
         process.env.BOT_IPC_SOCKET = deadPath;
         try {
-            await assert.doesNotReject(
-                alertMcp('MCP_TOOL_ERROR', 'WARN', 'Dropped alert.'),
-                'alertMcp must swallow IPC failures'
-            );
+            let delivered: boolean | undefined;
+            await assert.doesNotReject(async () => {
+                delivered = await alertMcp('MCP_TOOL_ERROR', 'WARN', 'Dropped alert.');
+            }, 'alertMcp must swallow IPC failures');
+            assert.strictEqual(delivered, false, 'a dead bridge must report the drop');
         } finally {
             process.env.BOT_IPC_SOCKET = previousDead ?? mock.socketPath;
         }
