@@ -9,6 +9,48 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P6] - 2026-10-03
+
+### Fixed — review corrections to the Sara AI web search tool
+
+Corrections from review of the `G2-F30-P5` Tavily integration, addressing two
+critical defects in the request deadline and several robustness gaps.
+
+- **The search timeout was off by a factor of 1000.** `@tavily/core` interprets
+  its `timeout` option in **seconds** (`timeoutInMillis = timeout * 1e3`), but a
+  millisecond value was passed, producing an axios timeout of 8,000,000 ms
+  (~2h13m). The deadline is now derived once via `TAVILY_TIMEOUT_SECONDS`.
+  Verified empirically: a request against a non-routable address now rejects
+  after 8020 ms with `ECONNABORTED`, where it previously had no effective
+  deadline.
+- **Removed an inert `AbortController`.** `TavilySearchOptions` exposes no
+  `signal` and the SDK calls `axios.post` without one, so `abort()` fired at 8s
+  into nothing while appearing to provide a safety net. The corrected CHANGELOG
+  and code comments no longer claim an "AbortController ceiling".
+- **Outages are no longer reported as bad queries.** `searchWeb` returned a bare
+  `null` for both "unreachable" and "no matches", so a Tavily outage surfaced to
+  the user as _"no useful results were found"_ and the `core.web_search_failed`
+  key was unreachable. It now returns a discriminated `ok` / `empty` /
+  `unavailable` outcome.
+- **Upstream error text is no longer logged.** The SDK builds errors with
+  `JSON.stringify(res.data)`, so the message can echo the response body into the
+  console. Failures are now classified by error **name** only.
+- **Over-long URLs are discarded, not trimmed.** A canonical URL above 200
+  characters is dropped so the ReAct loop's `slice()` can never cut a URL in
+  half. This retires the previously unenforced `TAVILY_URL_SOFT_LIMIT_CHARS`
+  constant.
+- **`mapResult` is now total.** A single malformed upstream row previously threw
+  a `TypeError` outside the request `try`/`catch` and discarded an otherwise
+  valid result set.
+- **User queries are sanitised before egress.** The query passes through
+  `DecisionClient.sanitizeUntrustedContent` before reaching Tavily and before
+  being logged, masking phone numbers, JIDs, and currency amounts on this
+  third-party path.
+- `response` is explicitly annotated as `TavilySearchResponse | undefined`
+  instead of an evolving `any`.
+
+---
+
 ## [G2-F30-P5] - 2026-10-03
 
 ### Added — Tavily web search for Sara AI
@@ -22,19 +64,32 @@ Implementation notes:
 
 - `src/services/agentEngine/tavilyClient.ts` wraps the official
   `@tavily/core` SDK (`pnpm add`, v0.7.13) and normalises responses into a
-  compact, budget-aware payload. An 8s `AbortController` ceiling is enforced
-  around the SDK call, mirroring the existing `decisionClient.ts` pattern.
+  compact, budget-aware payload. The 8-second deadline is enforced through the
+  SDK's own `timeout` option, which is expressed in **seconds** and converted
+  here. No `AbortController` is used, because the SDK accepts no `signal` and
+  calls `axios.post` without one; a controller would abort nothing while
+  appearing to provide a safety net.
 - Result URLs are canonicalised rather than truncated. Tracking parameters
   (`utm_*`, `fbclid`, `gclid`, `msclkid`, `igshid`, and similar) are stripped,
   fragments removed, and duplicate slashes collapsed, while parameters that
   may carry a real record identifier (`?id=8842`, `?p=12345`) are preserved.
   This uses an explicit deny-list rather than clearing the query string,
-  because legacy CMS and news URLs routinely depend on those identifiers.
+  because legacy CMS and news URLs routinely depend on those identifiers. A
+  result whose canonical URL still exceeds 200 characters is discarded rather
+  than trimmed, since a shortened URL is unclickable and a cut one is dead.
 - When a payload would exceed the ReAct loop's `MAX_TOOL_OUTPUT_CHARS = 1500`
   budget, whole results are dropped lowest-score-first instead of slicing the
   payload. WhatsApp has no `[label](url)` link syntax, so a shortened URL would
   be unclickable; a truncated URL would be a dead link. The invariant is that a
   source appears with its complete working URL or not at all.
+- Search failures return a discriminated outcome (`ok` / `empty` / `unavailable`)
+  instead of a bare `null`, so an upstream outage is no longer reported to the
+  user as "no results found" and the `web_search_failed` locale key is
+  reachable. Upstream error messages and response bodies are never logged,
+  because the SDK embeds the response body in its error text.
+- The caller's query is passed through `DecisionClient.sanitizeUntrustedContent`
+  before egress to Tavily and before logging, so phone numbers, JIDs, and
+  currency amounts are masked on this third-party path as well.
 - Tier 1 guidance now selects `web_search` for current-information requests,
   and Tier 2 received a "Web Search Synthesis" directive covering citation
   style, exact-URL reproduction, and truthful reporting of omitted results.

@@ -1,5 +1,6 @@
 import { AgentTool, AgentExecutionContext, ToolExecutionResult, ToolAiPolicy } from '../types.js';
 import { searchWeb, TavilyNotConfiguredError } from '../tavilyClient.js';
+import { DecisionClient } from '../decisionClient.js';
 
 /** Maximum accepted length of a caller-supplied search query. */
 const QUERY_MAX_CHARS = 300;
@@ -56,18 +57,32 @@ export const webSearchTool: AgentTool = {
         const maxResults = typeof args.max_results === 'number' ? args.max_results : undefined;
         const searchDepth = args.search_depth === 'advanced' ? 'advanced' : 'basic';
 
+        // Scrub phone numbers, raw JIDs, and currency values before the query
+        // leaves this host. The query is free-form user text, and Tavily is a
+        // third party; `executionLoop` also logs raw tool arguments, so this
+        // sanitisation is the last point at which PII can be removed (Rule AB/AG).
+        const safeQuery = DecisionClient.sanitizeUntrustedContent(rawQuery);
+        if (!safeQuery) {
+            return { success: false, error: 'The search query contained no searchable content.' };
+        }
+
         try {
-            const output = await searchWeb({
-                query: rawQuery,
+            const outcome = await searchWeb({
+                query: safeQuery,
                 maxResults,
                 searchDepth
             });
 
-            if (!output) {
+            if (outcome.kind === 'unavailable') {
+                console.error(`[WebSearch Tool] Upstream unavailable (reason: ${outcome.reason}).`);
+                return { success: false, error: ctx.t('core.web_search_failed') };
+            }
+
+            if (outcome.kind === 'empty') {
                 return {
                     success: true,
                     data: {
-                        query: rawQuery,
+                        query: safeQuery,
                         resultCount: 0,
                         results: [],
                         notice: ctx.t('core.web_search_empty')
@@ -75,6 +90,7 @@ export const webSearchTool: AgentTool = {
                 };
             }
 
+            const { output } = outcome;
             return {
                 success: true,
                 data: {
@@ -90,7 +106,9 @@ export const webSearchTool: AgentTool = {
                 console.warn('[WebSearch Tool] Tavily is not configured (missing TAVILY_API_KEY).');
                 return { success: false, error: ctx.t('core.web_search_unconfigured') };
             }
-            console.error('[WebSearch Tool] Search failed unexpectedly:', err instanceof Error ? err.message : err);
+            // Classify by NAME only. The SDK embeds the upstream response body in
+            // the error message, so the message must never reach the log.
+            console.error(`[WebSearch Tool] Search failed (${err instanceof Error ? err.name : 'unknown'}).`);
             return { success: false, error: ctx.t('core.web_search_failed') };
         }
     }

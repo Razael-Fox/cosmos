@@ -16,16 +16,32 @@ type TavilyResultRow = TavilySearchResponse['results'][number];
  * Key design rules:
  * - The API key is read from the environment and is NEVER logged, echoed into a
  *   tool result, or included in any thrown error message (Rule Y / Rule AH).
- * - A hard timeout is enforced AROUND the SDK call rather than relying solely on
- *   the SDK's own `timeout` option, so a single measured cutoff governs the whole
- *   operation (Rule AG).
+ * - The deadline is enforced by the SDK's own `timeout` option, which is expressed
+ *   in SECONDS. No `AbortController` is used: the SDK accepts no `signal`, so one
+ *   would abort nothing while appearing to provide a safety net (Rule AG).
  * - URLs are canonicalised, never truncated. A cut URL is a dead link, and
  *   WhatsApp renders plain text with no `[label](url)` syntax, so any mangled
  *   display form silently removes the user's ability to open the source.
  */
 
-/** Hard ceiling for a single Tavily search request. */
+/**
+ * Hard ceiling for a single Tavily search request, expressed in milliseconds.
+ *
+ * NOTE: `@tavily/core` expects its `timeout` option in SECONDS, not milliseconds
+ * (see `index.mjs`: `timeoutInMillis = requestTimeout * 1e3`). Passing a raw
+ * millisecond value here would silently become 8,000,000 ms (~2h13m). Conversion
+ * happens once, in `searchWeb`, and is covered by `SECONDS_PER_TIMEOUT_MS`.
+ */
 export const TAVILY_TIMEOUT_MS = 8000;
+
+/** Conversion factor between our millisecond budget and the SDK's second-based option. */
+const SECONDS_PER_TIMEOUT_MS = 1000;
+
+/**
+ * SDK `timeout` value in seconds. Derived rather than hardcoded so the two can
+ * never drift apart.
+ */
+const TAVILY_TIMEOUT_SECONDS = Math.ceil(TAVILY_TIMEOUT_MS / SECONDS_PER_TIMEOUT_MS);
 
 /** Upper bound on results requested from Tavily, mirroring the tool schema cap. */
 export const TAVILY_MAX_RESULTS = 10;
@@ -40,10 +56,16 @@ export const TAVILY_DEFAULT_RESULTS = 5;
 export const TAVILY_SNIPPET_MAX_CHARS = 180;
 
 /**
- * A single canonical URL longer than this is kept intact rather than trimmed.
- * Correctness beats tidiness; the per-result snippet absorbs the budget instead.
+ * Hard ceiling on a single canonical URL.
+ *
+ * This is enforced, not advisory: a result whose canonical URL exceeds this is
+ * DISCARDED rather than trimmed. Trimming would produce a dead link, and letting
+ * an oversized URL through would let the ReAct loop's blunt
+ * `slice(0, MAX_TOOL_OUTPUT_CHARS)` cut a URL in half — the exact failure this
+ * module exists to prevent. Dropping the source is the only safe option, and the
+ * remaining results still render.
  */
-export const TAVILY_URL_SOFT_LIMIT_CHARS = 200;
+export const TAVILY_URL_MAX_CHARS = 200;
 
 /**
  * Tracking parameters stripped during canonicalisation. Legacy CMS and news URLs
@@ -95,6 +117,22 @@ export interface TavilySearchResultItem {
     snippet: string;
     score: number;
 }
+
+/**
+ * Discriminated outcome of a search.
+ *
+ * A bare `null` previously conflated "Tavily is unreachable" with "nothing
+ * matched", which reported an outage to the user as a bad query and made the
+ * `web_search_failed` locale key unreachable. These cases are now distinct so the
+ * caller can respond honestly and so operators get a usable signal.
+ */
+export type TavilyOutcome =
+    | { kind: 'ok'; output: TavilySearchOutput }
+    | { kind: 'empty' }
+    | { kind: 'unavailable'; reason: TavilyUnavailableReason };
+
+/** Why the upstream search could not be completed. */
+export type TavilyUnavailableReason = 'timeout' | 'auth' | 'rate_limited' | 'network';
 
 export interface TavilySearchOutput {
     query: string;
@@ -194,9 +232,12 @@ function measurePayload(results: TavilySearchResultItem[], query: string): numbe
  * Drops whole results, lowest-scoring first, until the payload fits the budget.
  *
  * Removing an entire result keeps the payload valid, complete JSON and guarantees
- * no URL is ever cut. A single canonical URL longer than
- * `TAVILY_URL_SOFT_LIMIT_CHARS` is always kept intact even if it dominates the
- * payload, because a truncated URL is a dead link.
+ * no URL is ever cut.
+ *
+ * Because `mapResult` already discards any URL longer than
+ * `TAVILY_URL_MAX_CHARS`, and the other two fields are hard-capped, a single
+ * surviving result can never on its own exceed the ReAct loop's
+ * `MAX_TOOL_OUTPUT_CHARS`. That is what makes the `length > 1` floor safe here.
  */
 function reduceToBudget(results: TavilySearchResultItem[], query: string, totalResults: number): TavilySearchOutput {
     // Sort by score descending so "lowest-scoring first" is well defined.
@@ -222,27 +263,60 @@ function reduceToBudget(results: TavilySearchResultItem[], query: string, totalR
     return output;
 }
 
-/** Maps one Tavily result row onto the internal shape, or `null` if unusable. */
-function mapResult(raw: TavilyResultRow): TavilySearchResultItem | null {
-    const url = canonicaliseUrl(raw.url);
-    if (!url) return null;
+/**
+ * Maps one Tavily result row onto the internal shape, or `null` if unusable.
+ *
+ * This function is deliberately TOTAL: upstream rows are not trusted to match the
+ * documented shape, and a single malformed row must never abort an otherwise valid
+ * result set. Every field is therefore individually guarded.
+ */
+function mapResult(raw: TavilyResultRow | null | undefined): TavilySearchResultItem | null {
+    if (!raw || typeof raw !== 'object') return null;
+
+    const rawUrl = typeof raw.url === 'string' ? raw.url : null;
+    if (!rawUrl) return null;
+
+    const url = canonicaliseUrl(rawUrl);
+    // Reject unusable, non-https, and pathologically long URLs. A URL we cannot
+    // guarantee to be complete and working is worse than no URL at all.
+    if (!url || url.length > TAVILY_URL_MAX_CHARS) return null;
+
+    const rawTitle = typeof raw.title === 'string' ? raw.title : '';
+    const rawContent = typeof raw.content === 'string' ? raw.content : '';
 
     return {
-        title: (raw.title ?? '').replace(/\s+/g, ' ').trim().slice(0, 200),
+        title: rawTitle.replace(/\s+/g, ' ').trim().slice(0, 200),
         url,
-        snippet: truncateSnippet(raw.content ?? ''),
+        snippet: truncateSnippet(rawContent),
         score: typeof raw.score === 'number' && Number.isFinite(raw.score) ? raw.score : 0
     };
 }
 
 /**
- * Runs a Tavily search and returns a compact, budget-safe result set.
+ * Classifies an upstream failure from its error NAME only.
  *
- * Returns `null` when the upstream request fails, times out, or yields no usable
- * results, so the calling tool can degrade to a graceful message rather than
- * surfacing a raw upstream error.
+ * The message and response body are deliberately never inspected or logged:
+ * `@tavily/core` builds errors via `JSON.stringify(res.data)`, so the message can
+ * echo arbitrary upstream text — including request context — straight into the
+ * Pterodactyl console.
  */
-export async function searchWeb(params: TavilySearchParams): Promise<TavilySearchOutput | null> {
+function classifyFailure(err: unknown): TavilyUnavailableReason {
+    const name = err instanceof Error ? err.name : '';
+    if (name === 'ECONNABORTED' || name === 'ETIMEDOUT') return 'timeout';
+    if (name === 'ERR_BAD_REQUEST' || name === 'ERR_BAD_RESPONSE') return 'auth';
+    return 'network';
+}
+
+/**
+ * Runs a Tavily search and returns a discriminated, budget-safe outcome.
+ *
+ * The deadline is enforced by `@tavily/core`'s own `timeout` option, which is
+ * expressed in SECONDS and converted here. An `AbortController` is deliberately
+ * NOT used: the SDK exposes no `signal` on `TavilySearchOptions` and calls
+ * `axios.post` without one, so a controller would abort nothing while appearing
+ * to provide a safety net.
+ */
+export async function searchWeb(params: TavilySearchParams): Promise<TavilyOutcome> {
     const apiKey = readApiKey();
     const client = tavily({ apiKey });
 
@@ -256,34 +330,32 @@ export async function searchWeb(params: TavilySearchParams): Promise<TavilySearc
         includeImages: false
     };
 
-    let response;
+    let response: TavilySearchResponse | undefined;
     try {
-        // The SDK's own timeout is set as a first line of defence, and the
-        // AbortController guard enforces the hard ceiling even if the underlying
-        // HTTP layer stalls.
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), TAVILY_TIMEOUT_MS);
-        try {
-            response = await client.search(params.query, {
-                ...options,
-                timeout: TAVILY_TIMEOUT_MS
-            });
-        } finally {
-            clearTimeout(timer);
-        }
+        response = await client.search(params.query, {
+            ...options,
+            // SECONDS, not milliseconds. See TAVILY_TIMEOUT_SECONDS.
+            timeout: TAVILY_TIMEOUT_SECONDS
+        });
     } catch (err: unknown) {
-        // Never interpolate the error into a message that could carry the API key
-        // or upstream response body into logs.
-        const reason = err instanceof Error ? err.name : 'unknown';
-        console.error(`[TavilyClient] Search request failed (${reason}).`);
-        return null;
+        const reason = classifyFailure(err);
+        // Log the classification only. The upstream message/body is never emitted.
+        console.error(`[TavilyClient] Search unavailable (reason: ${reason}).`);
+        return { kind: 'unavailable', reason };
     }
 
-    const rawResults = Array.isArray(response?.results) ? response.results : [];
-    const mapped = rawResults.map(mapResult).filter((item): item is TavilySearchResultItem => item !== null);
+    try {
+        const rawResults = Array.isArray(response?.results) ? response.results : [];
+        const mapped = rawResults.map(mapResult).filter((item): item is TavilySearchResultItem => item !== null);
 
-    if (mapped.length === 0) return null;
+        if (mapped.length === 0) return { kind: 'empty' };
 
-    const resolvedQuery = response?.query ?? params.query;
-    return reduceToBudget(mapped, resolvedQuery, mapped.length);
+        const resolvedQuery = typeof response?.query === 'string' ? response.query : params.query;
+        return { kind: 'ok', output: reduceToBudget(mapped, resolvedQuery, mapped.length) };
+    } catch (err: unknown) {
+        // Defensive only: `mapResult` is already total, so this guards against a
+        // future regression rather than a known path.
+        console.error(`[TavilyClient] Result mapping failed (${err instanceof Error ? err.name : 'unknown'}).`);
+        return { kind: 'unavailable', reason: 'network' };
+    }
 }
