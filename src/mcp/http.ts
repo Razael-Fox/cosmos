@@ -16,20 +16,6 @@ import { authenticateOwnerKey, extractTokenFromHeaders, type McpIdentity } from 
 import { isLoopbackBind, loadMcpConfig } from './config.js';
 import { buildMcpServer } from './server.js';
 
-/** Collects a request body; the MCP HTTP transport consumes it as a stream. */
-function readBody(req: http.IncomingMessage): ReadableStream<Uint8Array> | null {
-    const method = req.method?.toUpperCase();
-    if (!method || method === 'GET' || method === 'DELETE') return null;
-    const body = new ReadableStream<Uint8Array>({
-        start(controller) {
-            req.on('data', (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
-            req.on('end', () => controller.close());
-            req.on('error', (err) => controller.error(err));
-        }
-    });
-    return body;
-}
-
 interface Session {
     transport: StreamableHTTPServerTransport;
     /** The authenticated identity bound to this session. */
@@ -120,7 +106,12 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
             if (transport.sessionId) sessions.delete(transport.sessionId);
         };
         await built.server.connect(transport);
-        await transport.handleRequest(req, res, readBody(req));
+        // No third argument: the Node wrapper converts req/res to web-standard
+        // objects and reads the body itself. Passing a stream here would be
+        // treated as a PRE-PARSED message body (parsedBody) and Zod-validated
+        // as the JSON-RPC message, failing every request with
+        // "Parse error: Invalid JSON-RPC message".
+        await transport.handleRequest(req, res);
         return;
     }
 
@@ -132,7 +123,8 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
         return;
     }
 
-    await session.transport.handleRequest(req, res, readBody(req));
+    // No third argument: see the note above. The wrapper reads the body.
+    await session.transport.handleRequest(req, res);
 }
 
 /** Closes every open HTTP session. Used during shutdown and by tests. */

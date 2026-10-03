@@ -649,6 +649,116 @@ describe('cosmos_mcp: transport selection', () => {
     });
 });
 
+describe('cosmos_mcp: streamable HTTP transport', () => {
+    const HTTP_PORT = 4199;
+    let httpServer: import('node:http').Server | undefined;
+
+    before(async () => {
+        process.env.COSMOS_MCP_HTTP_PORT = String(HTTP_PORT);
+        process.env.COSMOS_MCP_HTTP_ENABLED = 'true';
+        process.env.COSMOS_MCP_HTTP_BIND = '127.0.0.1';
+        resetMcpConfigCache();
+        const { startHttpTransport } = await import('../src/mcp/http.js');
+        httpServer = await startHttpTransport();
+    });
+
+    after(async () => {
+        const { closeHttpSessions } = await import('../src/mcp/http.js');
+        await closeHttpSessions();
+        if (httpServer) {
+            await new Promise<void>((resolve) => httpServer!.close(() => resolve()));
+        }
+        delete process.env.COSMOS_MCP_HTTP_PORT;
+        resetMcpConfigCache();
+    });
+
+    async function post(body: unknown, headers: Record<string, string> = {}) {
+        const res = await fetch(`http://127.0.0.1:${HTTP_PORT}/mcp`, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+                accept: 'application/json, text/event-stream',
+                ...headers
+            },
+            body: JSON.stringify(body)
+        });
+        const sessionId = res.headers.get('mcp-session-id');
+        const text = await res.text();
+        let json: Record<string, unknown> | null = null;
+        try {
+            json = JSON.parse(text);
+        } catch {
+            // SSE framing: the payload is in a `data:` line.
+            const match = text.match(/^data: (.*)$/m);
+            if (match) json = JSON.parse(match[1]);
+        }
+        return { status: res.status, sessionId, json };
+    }
+
+    it('refuses unauthenticated requests with 401 (fail closed)', async () => {
+        const { status, json } = await post({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 't', version: '1' } }
+        });
+        assert.strictEqual(status, 401);
+        assert.strictEqual((json as { error?: string } | null)?.error, 'UNAUTHORIZED_MCP');
+    });
+
+    it('completes the MCP handshake and lists tools over real HTTP', async () => {
+        const auth = { authorization: `Bearer ${process.env.COSMOS_MCP_TOKEN}` };
+
+        // 1. Initialize: must return 200, a session id, and server info.
+        const init = await post(
+            {
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'initialize',
+                params: {
+                    protocolVersion: '2025-03-26',
+                    capabilities: {},
+                    clientInfo: { name: 'cosmos-mcp-test', version: '1.0.0' }
+                }
+            },
+            auth
+        );
+        assert.strictEqual(init.status, 200, JSON.stringify(init.json));
+        assert.ok(init.sessionId, 'server must return an Mcp-Session-Id header');
+        const initResult = (init.json as { result?: { serverInfo?: unknown } } | null)?.result;
+        assert.ok(initResult?.serverInfo, 'initialize result must carry serverInfo');
+
+        // 2. Initialized notification on the same session.
+        await post(
+            { jsonrpc: '2.0', method: 'notifications/initialized' },
+            {
+                ...auth,
+                'mcp-session-id': init.sessionId as string
+            }
+        );
+
+        // 3. tools/list on the established session.
+        const tools = await post(
+            { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} },
+            {
+                ...auth,
+                'mcp-session-id': init.sessionId as string
+            }
+        );
+        assert.strictEqual(tools.status, 200, JSON.stringify(tools.json));
+        const toolList = (tools.json as { result?: { tools?: unknown[] } } | null)?.result?.tools;
+        assert.ok(Array.isArray(toolList) && toolList.length > 0, 'tools/list must return the tool surface');
+    });
+
+    it('serves the health endpoint without authentication', async () => {
+        const res = await fetch(`http://127.0.0.1:${HTTP_PORT}/healthz`);
+        assert.strictEqual(res.status, 200);
+        const body = (await res.json()) as { status?: string; service?: string };
+        assert.strictEqual(body.status, 'ok');
+        assert.strictEqual(body.service, 'cosmos-mcp');
+    });
+});
+
 describe('cosmos_mcp: server assembly', () => {
     it('registers the documented tool surface', async () => {
         resetAuditUserIdCache();
