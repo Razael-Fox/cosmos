@@ -9,6 +9,55 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F29-P9] - 2026-10-03
+
+### Fixed — every MCP HTTP request failed with `Parse error: Invalid JSON-RPC message`
+
+Found by running the deployed `G2-F29-P8` server end-to-end. With the
+entrypoint guard fixed, the HTTP transport finally bound and answered —
+but every JSON-RPC request was rejected with a 400 parse error, even a
+correctly-formed `initialize`.
+
+#### Root cause
+
+`handleRequest` passed a `ReadableStream` as the third argument to
+`StreamableHTTPServerTransport.handleRequest(req, res, body)`. That
+third parameter is `parsedBody` — an optional **pre-parsed message
+object** for body-parser middleware. When it is defined, the SDK uses
+it directly as the JSON-RPC message and never reads the real request
+body. A `ReadableStream` is not a JSON-RPC message, so Zod validation
+rejected every request before it ever reached the tool surface.
+
+The Node wrapper (`streamableHttp.js`) already converts the Node
+`IncomingMessage`/`ServerResponse` pair to web-standard objects via
+`@hono/node-server` and reads the body itself — no manual body
+plumbing is needed or permitted.
+
+#### Fixed
+
+- Removed the `readBody` helper; `handleRequest` is now called with
+  exactly `(req, res)` at both call sites.
+
+#### The test that was missing
+
+No test ever exercised the HTTP transport end-to-end — the smoke suite
+covers stdio only, and the unit tests cover auth, parsing, and schema
+logic. A real HTTP round-trip would have caught this immediately.
+Added a `cosmos_mcp: streamable HTTP transport` suite that starts the
+transport on a loopback port and drives the actual protocol:
+unauthenticated `initialize` → `401 UNAUTHORIZED_MCP`; authenticated
+handshake → `200` with `Mcp-Session-Id`; `tools/list` on the
+established session → `200` with the full tool surface; `/healthz` →
+`200`.
+
+#### Verification
+
+`pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm run version:check`
+clean · `tests/cosmosMcp.test.ts` **51/51** (was 48) · MCP stdio smoke
+23/23 · in-container after redeploy: authenticated `initialize` returns
+`200` with a session id and `cosmos_bot_status` returns live bot data
+through the IPC bridge.
+
 ## [G2-F29-P8] - 2026-10-03
 
 ### Fixed — `cosmos-mcp` restart-looped under PM2 (entrypoint guard missed PM2's argv shape)
