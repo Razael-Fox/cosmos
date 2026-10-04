@@ -49,6 +49,14 @@
         "usage": "🎨 *Brat Sticker Generator*\n\nGenerate Brat text stickers or animated stickers directly on WhatsApp.\n\n*Command Formats:*\n• *.brat <text>* — Static Brat sticker\n• *.brat animated <text>* — Animated Brat sticker\n• *.brat animated -d <ms> <text>* — Animated sticker with custom delay\n• *.brat \"animasi keren\"* — Literal static text (or use ```monospace```)\n\n*Dash Delay Options:*\n• `-d 300` or `-d=300` (50–5000 ms, default 500 ms)\n• `-300ms` or `-300`\n• `--delay 300`\n\n*Examples:*\n• *.brat Hello World*\n• *.brat animated -d 250 Hello World*\n• *.brat animated 300 Hello World*\n• *.brat \"animasi keren\"* (forces static)\n\n_Tip: You can also reply to any message with `.brat` or `.brat animated -d 300`._",
         "failed": "Failed to create Brat sticker: {{error}}"
     },
+    "bgremove": {
+        "no_image": "Please send an image with .remove background or reply to an image message with .remove background.",
+        "too_large": "The image is too large. Maximum size is 10 MB.",
+        "api_failed": "Failed to remove the image background. Please try again in a few moments.",
+        "timeout": "The background removal service timed out. Please try again in a few moments.",
+        "invalid_result": "The background removal service returned an invalid result. Please try again with a different image.",
+        "success": "Background removed successfully."
+    },
     "pinterestdl": {
         "document_version": "Document version",
         "card_title": "PINTEREST MEDIA",

@@ -216,7 +216,8 @@ than reconstructed — a guessed mapping would be worse than an acknowledged gap
 | F28       | External Status Channel Integration (Issue #47)           | Yes — 2026-10-02 |
 | F29       | Cosmos MCP Server for AI Coding Agents (Issue #49)        | Yes — 2026-10-02 |
 | F30       | MCP Alert Notifier (Discord/Slack/WhatsApp)               | Yes — 2026-10-03 |
-| F31       | _(open)_ — next completed feature milestone               | —                |
+| F31       | Command Background Remover (Issue #69)                    | Yes — 2026-10-04 |
+| F32       | _(open)_ — next completed feature milestone               | —                |
 
 When a feature bump advances `F`, replace the open placeholder with the new
 milestone and re-add the placeholder for the following number.

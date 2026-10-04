@@ -47,6 +47,8 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     stt: ToolAiPolicy.UTILITY,
     sticker_maker: ToolAiPolicy.UTILITY,
     stickerly: ToolAiPolicy.UTILITY,
+    remove_background: ToolAiPolicy.UTILITY,
+    'remove background': ToolAiPolicy.UTILITY,
     pinterestdl: ToolAiPolicy.UTILITY,
     tiktokdl: ToolAiPolicy.UTILITY,
     ytdl: ToolAiPolicy.UTILITY,

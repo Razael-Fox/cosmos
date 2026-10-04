@@ -109,6 +109,8 @@ storage/presence.json
 storage/system_config.json
 storage/transaction/*
 !storage/transaction/.gitkeep
+storage/tmp/*
+!storage/tmp/.gitkeep
 storage/sub-bot/*
 !storage/sub-bot/.gitkeep
 storage/backups/*
