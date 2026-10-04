@@ -49,6 +49,14 @@
         "usage": "🎨 *Pembuat Stiker Brat*\n\nBuat stiker teks atau stiker animasi bergaya Brat langsung di WhatsApp.\n\n*Format Perintah:*\n• *.brat <teks>* — Stiker Brat statis\n• *.brat animasi <teks>* — Stiker Brat animasi\n• *.brat animasi -d <ms> <teks>* — Stiker animasi dengan jeda khusus\n• *.brat \"animasi keren\"* — Teks harfiah statis (atau gunakan ```monospace```)\n\n*Opsi Jeda Dash (-):*\n• `-d 300` atau `-d=300` (rentang 50–5000 md, default 500 md)\n• `-300ms` atau `-300`\n• `--delay 300`\n\n*Contoh Penggunaan:*\n• *.brat Halo Dunia*\n• *.brat animasi -d 250 Halo Dunia*\n• *.brat animasi 300 Halo Dunia*\n• *.brat \"animasi keren\"* (memaksa statis)\n\n_Tips: Anda juga dapat membalas pesan apa saja dengan `.brat` atau `.brat animasi -d 300`._",
         "failed": "Gagal membuat stiker Brat: {{error}}"
     },
+    "bgremove": {
+        "no_image": "Silakan kirim gambar dengan .remove background atau balas pesan gambar dengan .remove background.",
+        "too_large": "Gambar terlalu besar. Ukuran maksimum adalah 10 MB.",
+        "api_failed": "Gagal menghapus latar gambar. Silakan coba lagi dalam beberapa saat.",
+        "timeout": "Layanan penghapus latar kedaluwarsa. Silakan coba lagi dalam beberapa saat.",
+        "invalid_result": "Layanan penghapus latar mengembalikan hasil yang tidak valid. Silakan coba dengan gambar lain.",
+        "success": "Latar berhasil dihapus."
+    },
     "pinterestdl": {
         "document_version": "Versi dokumen",
         "card_title": "MEDIA PINTEREST",

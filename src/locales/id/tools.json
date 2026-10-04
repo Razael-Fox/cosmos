@@ -931,6 +931,9 @@
         "stickerly": {
             "description": "Cari paket stiker di Sticker.ly dan ekspor langsung ke WhatsApp."
         },
+        "remove_background": {
+            "description": "Menghapus latar dari gambar yang dilampirkan atau dikutip dan mengembalikan PNG transparan."
+        },
         "stopautocorrection": {
             "description": "Menonaktifkan koreksi pesan otomatis berbasis AI via OpenRouter untuk obrolan ini."
         },

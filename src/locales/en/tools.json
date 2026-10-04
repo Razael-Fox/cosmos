@@ -931,6 +931,9 @@
         "stickerly": {
             "description": "Search for sticker packs on Sticker.ly and export them to WhatsApp."
         },
+        "remove_background": {
+            "description": "Removes the background from an attached or quoted image and returns a transparent PNG."
+        },
         "stopautocorrection": {
             "description": "Disables automated AI message auto-correction via OpenRouter for this chat."
         },

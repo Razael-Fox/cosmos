@@ -9,6 +9,27 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P0] - 2026-10-04
+
+### Added — command background remover (Issue #69)
+
+#### Added
+
+- New `.remove background` command (`src/tools/remove_background.ts`) with aliases
+  `.remove bg`, `.removebg`, `.bg remove`, `.hapus latar`, `.hapus background`, `.rbg`.
+  Send an image with the command or reply to an image to receive a transparent PNG
+  processed remotely via the keyless `bgninja.com` API (20 s timeout, strict image
+  validation, ❌ react on every failure mode).
+- Ephemeral `storage/tmp/bgremove_<uuid>/` file lifecycle: input and output exist only
+  for the request lifetime, deleted in `finally` on every path, stale directories swept
+  on tool load; `storage/tmp/*` is git-ignored (Rule I).
+- Localized `media.bgremove` strings (`no_image`, `too_large`, `api_failed`, `timeout`,
+  `invalid_result`, `success`) and `tools.commands.remove_background.description` in
+  English and Indonesian; `UTILITY` policy entries; `docs/COMMANDS_CONTEXT.md` section
+  so Sara can explain the command.
+
+---
+
 ## [G2-F30-P8] - 2026-10-04
 
 ### Fixed — deploy script no longer clobbers .env on partial Doppler download

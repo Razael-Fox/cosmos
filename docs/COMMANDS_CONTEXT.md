@@ -46,6 +46,16 @@ Dokumen ini berisi panduan lengkap, mendalam, dan terstruktur mengenai seluruh p
     - Tautan Langsung: `.stickerly https://sticker.ly/s/XXXXXX`
 - **Pembatalan:** Ketik `.cancel` saat dalam sesi pemilihan stiker untuk membatalkan antrean.
 
+### `.remove background` (Background Remover)
+
+- **Fungsi:** Menghapus latar belakang dari gambar yang dilampirkan atau dikutip dan mengembalikan PNG transparan ke chat yang sama. Gambar diproses jarak jauh melalui API publik `bgninja.com` (tanpa kunci API).
+- **Aliases:** `.remove background`, `.remove bg`, `.removebg`, `.bg remove`, `.hapus latar`, `.hapus background`, `.rbg`
+- **Penggunaan:**
+    - Kirim gambar dengan caption `.remove background`.
+    - Balas pesan gambar dengan mengetik `.remove background`.
+- **Batasan:** Hanya gambar (tanpa video/GIF), ukuran maksimal 10 MB.
+- **Mode kegagalan:** Tanpa gambar → pesan `no_image`; melebihi 10 MB → `too_large`; timeout upstream (>20 dtk) → `timeout`; respons non-200/kosong → `api_failed`; badan non-gambar → `invalid_result`. Setiap kegagalan bereaksi ❌ tanpa hasil buatan.
+
 ---
 
 ## 2. Personal Contact Book & Zero-Knowledge Messaging (Kontak & Delegasi Pesan)
