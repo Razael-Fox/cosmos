@@ -9,6 +9,18 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P3] - 2026-10-04
+
+### Changed — feature-limit specification is now plan-aware
+
+#### Changed
+
+- `docs/FEATURE_LIMITS.md` now scales per-feature usage limits with the subscriber's plan
+  (`Pulse`/`FREE`, `Nova`/`SUBSIDIZED`, `Zenith`/`PARTNER`): resolution order with owner bypass
+  and automatic expiry fallback, a 60-second cached tier lookup invalidated on plan activation,
+  the proposed limit matrix per tier, and the surfaces where the numbers must appear (`.my quota`,
+  `.my plan`, `/pricing`). Design only — no behaviour change.
+
 ## [G2-F31-P2] - 2026-10-04
 
 ### Added — Tavily web search for Sara AI, and the feature-limit design specification
