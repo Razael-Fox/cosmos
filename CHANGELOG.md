@@ -9,6 +9,19 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P2] - 2026-10-04
+
+### Added — Tavily web search for Sara AI, and the feature-limit design specification
+
+#### Added
+
+- The Sara AI agent engine can now answer time-sensitive questions with the `web_search` tool
+  backed by Tavily (`src/services/agentEngine/tools/webSearch.ts`). Configure `TAVILY_API_KEY`
+  in `.env`; when it is absent the tool disables itself gracefully and Sara replies with a
+  localized notice instead of failing.
+- `docs/FEATURE_LIMITS.md`: design specification for the per-feature usage limit system
+  (sliding-window counters declared on `ToolDefinition`, enforced once in `ToolsHandler.execute()`).
+  Design only — no behaviour change in this release.
 ## [G2-F31-P1] - 2026-10-04
 
 ### Fixed — background remover handles ephemeral messages and stalled downloads
