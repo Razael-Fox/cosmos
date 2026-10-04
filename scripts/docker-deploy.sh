@@ -107,7 +107,17 @@ cleanup_after_deploy() {
 check_env() {
     if command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1; then
         echo "[deploy] Doppler detected and authenticated! Pulling latest 'prd' secrets from project 'cosmos'..."
-        doppler secrets download --project cosmos --config prd --format env --no-file > .env 2>/dev/null || true
+        # Download to a temp file first: a partial/failed download must never
+        # clobber an existing .env (restricted secrets abort the whole download).
+        local tmp_env
+        tmp_env="$(mktemp)"
+        if doppler secrets download --project cosmos --config prd --format env --no-file > "$tmp_env" 2>/dev/null && [ -s "$tmp_env" ]; then
+            mv "$tmp_env" .env
+            echo "[deploy] .env refreshed from Doppler (cosmos:prd)."
+        else
+            rm -f "$tmp_env"
+            echo "[deploy] WARNING: Doppler download failed (restricted secrets?). Keeping existing .env."
+        fi
     fi
 
     if [ ! -f ".env" ] && [ -f ".env.example" ]; then

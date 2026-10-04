@@ -9,6 +9,14 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F30-P8] - 2026-10-04
+
+### Fixed — deploy script no longer clobbers .env on partial Doppler download
+
+#### Fixed
+
+- `scripts/docker-deploy.sh` now downloads Doppler secrets to a temp file and only replaces `.env` on success. Previously a failed download (restricted secrets in `cosmos:prd`) truncated `.env` mid-deploy, stripping `GROQ_API_KEY`/`OPENROUTER_API_KEY`/`STORAGE_ENCRYPTION_KEY` from the container and breaking every `.ai` request with "Groq API key is not configured."
+
 ## [G2-F30-P7] - 2026-10-03
 
 ### Changed — standard Markdown for documentation answers
