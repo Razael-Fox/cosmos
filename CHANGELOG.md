@@ -9,6 +9,18 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P1] - 2026-10-04
+
+### Fixed — background remover handles ephemeral messages and stalled downloads
+
+#### Fixed
+
+- `.remove background` now unwraps `ephemeralMessage` containers when locating the
+  attached or quoted image, and bounds the media download with the 20 s deadline
+  (stalls return the localized timeout message instead of hanging).
+
+---
+
 ## [G2-F31-P0] - 2026-10-04
 
 ### Added — command background remover (Issue #69)

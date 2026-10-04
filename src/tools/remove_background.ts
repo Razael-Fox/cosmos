@@ -43,6 +43,46 @@ function getMediaFileLength(msg: any): number {
     return 0;
 }
 
+const DOWNLOAD_TIMEOUT_CODE = 'BGREMOVE_DOWNLOAD_TIMEOUT';
+
+export function withDeadline<T>(task: Promise<T>, ms: number): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<T>((_, reject) => {
+        timer = setTimeout(
+            () => reject(Object.assign(new Error('Download timed out'), { code: DOWNLOAD_TIMEOUT_CODE })),
+            ms
+        );
+        if (typeof (timer as unknown as { unref?: () => void }).unref === 'function') {
+            (timer as unknown as { unref: () => void }).unref();
+        }
+    });
+    return Promise.race([
+        task.then(
+            (value) => {
+                if (timer) clearTimeout(timer);
+                return value;
+            },
+            (err) => {
+                if (timer) clearTimeout(timer);
+                throw err;
+            }
+        ),
+        deadline
+    ]);
+}
+
+async function downloadImageBytes(imageMessage: any): Promise<Buffer | null> {
+    const stream = await downloadContentFromMessage(imageMessage, 'image');
+    const chunks: Buffer[] = [];
+    let downloadedBytes = 0;
+    for await (const chunk of stream) {
+        downloadedBytes += (chunk as Buffer).length;
+        if (downloadedBytes > MAX_IMAGE_BYTES) return null;
+        chunks.push(chunk as Buffer);
+    }
+    return Buffer.concat(chunks);
+}
+
 function extFromMimetype(mimetype?: string): string {
     if (!mimetype) return 'jpg';
     const sub = mimetype.split('/')[1]?.split(';')[0].trim().toLowerCase();
@@ -97,6 +137,7 @@ export const definition: ToolDefinition = {
 export async function execute(_: Record<string, any>, ctx: ToolContext): Promise<string | null> {
     const getMessage = (m: any): any => {
         if (!m) return null;
+        if (m.ephemeralMessage?.message) return getMessage(m.ephemeralMessage.message);
         if (m.viewOnceMessage?.message) return getMessage(m.viewOnceMessage.message);
         if (m.viewOnceMessageV2?.message) return getMessage(m.viewOnceMessageV2.message);
         if (m.viewOnceMessageV2Extension?.message) return getMessage(m.viewOnceMessageV2Extension.message);
@@ -125,18 +166,21 @@ export async function execute(_: Record<string, any>, ctx: ToolContext): Promise
         const inputPath = path.join(dir, `input.${ext}`);
         const outputPath = path.join(dir, 'output.png');
 
-        const stream = await downloadContentFromMessage(imageMessage, 'image');
-        const chunks: Buffer[] = [];
-        let downloadedBytes = 0;
-        for await (const chunk of stream) {
-            downloadedBytes += (chunk as Buffer).length;
-            if (downloadedBytes > MAX_IMAGE_BYTES) {
+        let inputBuffer: Buffer | null;
+        try {
+            inputBuffer = await withDeadline(downloadImageBytes(imageMessage), REQUEST_TIMEOUT_MS);
+        } catch (dlErr: any) {
+            if (dlErr?.code === DOWNLOAD_TIMEOUT_CODE) {
+                console.error(`[BackgroundRemover] Media download timed out after ${REQUEST_TIMEOUT_MS}ms`);
                 await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
-                return ctx.t('media.bgremove.too_large');
+                return ctx.t('media.bgremove.timeout');
             }
-            chunks.push(chunk as Buffer);
+            throw dlErr;
         }
-        const inputBuffer = Buffer.concat(chunks);
+        if (!inputBuffer) {
+            await ctx.sock.sendMessage(ctx.jid, { react: { text: '❌', key: ctx.msg.key } });
+            return ctx.t('media.bgremove.too_large');
+        }
         await fs.promises.writeFile(inputPath, inputBuffer);
 
         const form = new FormData();
