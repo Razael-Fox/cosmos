@@ -4,6 +4,7 @@ import { AgentToolRegistry } from './tools/registry.js';
 import { AgentSchemaNormalizer } from './normalizer.js';
 import { AgentToolPolicyManager } from './policy.js';
 import { AgentConfirmationManager } from './confirmationManager.js';
+import { toWhatsAppText } from './whatsappText.js';
 import { ToolAiPolicy } from './types.js';
 
 const MAX_REACT_TURNS = 3;
@@ -45,7 +46,10 @@ export class AgentExecutionLoop {
 
             // If assistant responded with pure text and no tool calls, synthesis is complete
             if (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) {
-                finalResponseText = assistantMsg.content?.trim() || '';
+                // Normalise to WhatsApp-supported markup. Prompt rules alone proved
+                // unreliable, so this guarantee is enforced here at the single
+                // choke point every final reply passes through.
+                finalResponseText = toWhatsAppText(assistantMsg.content?.trim() || '');
                 break;
             }
 
