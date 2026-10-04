@@ -9,6 +9,18 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P4] - 2026-10-04
+
+### Added — sample database schema appendix for the feature-limit specification
+
+#### Added
+
+- `docs/FEATURE_LIMITS.md` §10 now gives implementers concrete DDL: the existing
+  `Subscription` table the limiter reads (no migration required), plus optional Phase 2
+  `FeatureLimit` (admin-editable per-tier ceilings, seeded from the §5.4 matrix) and Phase 3
+  `FeatureUsage` (restart-safe fixed-window counters with pruning rules), each as a Prisma model
+  and the matching `ensureDatabaseSchema()` SQLite block, with a Rule W maintenance checklist.
+
 ## [G2-F31-P3] - 2026-10-04
 
 ### Changed — feature-limit specification is now plan-aware

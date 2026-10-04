@@ -77,13 +77,13 @@ Four properties make this the right shape:
 
 ### 3.1 Alternatives considered and rejected
 
-| Alternative                         | Why rejected                                                                                                                                                                   |
-| :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Charge `User.balance` (economy)** | Prices usage instead of capping concurrency, distorts game balance, and forces `$transaction` + confirmation + i18n work under Rule P. Wrong tool.                             |
-| **New Prisma `FeatureUsage` table** | Requires a model in `prisma/schema.prisma` **and** a mirrored `ensureDatabaseSchema` DDL block (Rule W, both drivers) plus one write per command — for a number nobody audits. |
-| **Per-handler bespoke cooldowns**   | This is the existing fragmentation (Section 2). It is what the design replaces.                                                                                                |
-| **Reuse `AgentRateLimiter` class**  | Hard-coded to 3 requests / 60 s for the LLM path. Reuse the _pattern_, not the class.                                                                                          |
-| **Global anti-spam only**           | `antiSpamGuard` caps message rate, not per-feature cost. Ten cheap commands and ten sticker commands look identical to it.                                                     |
+| Alternative                         | Why rejected                                                                                                                                                                                                                                                 |
+| :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Charge `User.balance` (economy)** | Prices usage instead of capping concurrency, distorts game balance, and forces `$transaction` + confirmation + i18n work under Rule P. Wrong tool.                                                                                                           |
+| **New Prisma `FeatureUsage` table** | Requires a model in `prisma/schema.prisma` **and** a mirrored `ensureDatabaseSchema` DDL block (Rule W, both drivers) plus one write per command — for a number nobody audits. Sample DDL is parked in §10.3 for the day a restart-safe budget justifies it. |
+| **Per-handler bespoke cooldowns**   | This is the existing fragmentation (Section 2). It is what the design replaces.                                                                                                                                                                              |
+| **Reuse `AgentRateLimiter` class**  | Hard-coded to 3 requests / 60 s for the LLM path. Reuse the _pattern_, not the class.                                                                                                                                                                        |
+| **Global anti-spam only**           | `antiSpamGuard` caps message rate, not per-feature cost. Ten cheap commands and ten sticker commands look identical to it.                                                                                                                                   |
 
 ---
 
@@ -391,7 +391,8 @@ No handler logic changes. The funnel and the tier table do the rest.
 Deliberately **not** in scope for the first iteration:
 
 - **Persistent counters across restarts.** Add a `FeatureUsage` table only if a quota must
-  survive restarts (for example a daily budget tied to real Groq spend).
+  survive restarts (for example a daily budget tied to real Groq spend) — sample DDL is kept
+  ready in §10.3, and `FeatureLimit` in §10.2 for admin-editable ceilings.
 - **Dollar/Rp pricing of commands.** Economy integration stays with `User.balance`.
 - **Global concurrency caps per feature** (e.g. "at most 3 ffmpeg jobs at once"). The existing
   `src/utils/stickerQueue.ts` single-flight queue already serializes sticker encoding; a global
@@ -409,7 +410,165 @@ Deliberately **not** in scope for the first iteration:
 
 ---
 
-## 10. Related rules
+## 10. Sample database schema (reference for implementers)
+
+The limiter as designed **reads one existing table and writes none** — that is deliberate
+(§3.1). The two optional tables below cover the two extension points a team may want later; each
+is given as a Prisma model plus the `better-sqlite3` DDL block that goes into
+`ensureDatabaseSchema()`, so it can be pasted in as-is.
+
+### 10.1 Read-only today (no migration required)
+
+```
+User (id = JID)
+  │ 1:1
+  ▼
+Subscription ── tier ──► TIER_LIMITS (code, src/services/quotaService.ts:24-31)
+  │                       └─ the numbers in §5.4 live here, not in the database
+  │ 1:N
+  ▼
+PaymentTransaction (manual WhatsApp purchase record)
+```
+
+Existing DDL, quoted from `src/db.ts:98-111` — this is the whole schema phase 1 needs:
+
+```sql
+CREATE TABLE IF NOT EXISTS "Subscription" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "tier" TEXT NOT NULL DEFAULT 'FREE',
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "maxSubBots" INTEGER NOT NULL DEFAULT 2,
+    "maxGroups" INTEGER NOT NULL DEFAULT 5,
+    "customPrefix" BOOLEAN NOT NULL DEFAULT false,
+    "startedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" DATETIME,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "Subscription_userId_key" ON "Subscription"("userId");
+```
+
+The limiter touches it with a single row read
+(`prisma.subscription.findUnique({ where: { userId: jid } })`), cached for 60 s (§5.3).
+
+### 10.2 Phase 2 (optional) — `FeatureLimit`: ceilings editable without a redeploy
+
+Needed only when the team wants to tune a plan's allowance from the website or an admin command
+instead of editing `TIER_LIMITS` and shipping a build. Resolution chain becomes:
+**`FeatureLimit` row → `TIER_LIMITS` → tool `limit` default.**
+
+```prisma
+// prisma/schema.prisma
+model FeatureLimit {
+  id            String           @id @default(cuid())
+  tier          SubscriptionTier
+  featureKey    String // 'sticker' | 'download' | 'ai' | 'stt' | 'webSearch'
+  maxUsage      Int // 0 = unlimited (Zenith AI in §5.4)
+  windowSeconds Int
+  enabled       Boolean          @default(true)
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([tier, featureKey])
+}
+```
+
+```sql
+-- ensureDatabaseSchema(): new table, so every column exists before the index runs (Rule W phase 1 + 3)
+CREATE TABLE IF NOT EXISTS "FeatureLimit" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "tier" TEXT NOT NULL,
+    "featureKey" TEXT NOT NULL,
+    "maxUsage" INTEGER NOT NULL,
+    "windowSeconds" INTEGER NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "FeatureLimit_tier_featureKey_key" ON "FeatureLimit"("tier","featureKey");
+
+-- Seed: idempotent copy of the §5.4 matrix
+INSERT OR IGNORE INTO "FeatureLimit" ("id", "tier", "featureKey", "maxUsage", "windowSeconds") VALUES
+    ('fl_free_sticker',     'FREE',       'sticker',   5,   600),
+    ('fl_free_download',    'FREE',       'download',  3,   600),
+    ('fl_free_ai',          'FREE',       'ai',        10,  300),
+    ('fl_free_stt',         'FREE',       'stt',       5,   600),
+    ('fl_free_websearch',   'FREE',       'webSearch', 10,  600),
+    ('fl_sub_sticker',      'SUBSIDIZED', 'sticker',   15,  600),
+    ('fl_sub_download',     'SUBSIDIZED', 'download',  10,  600),
+    ('fl_sub_ai',           'SUBSIDIZED', 'ai',        40,  300),
+    ('fl_sub_stt',          'SUBSIDIZED', 'stt',       20,  600),
+    ('fl_sub_websearch',    'SUBSIDIZED', 'webSearch', 50,  600),
+    ('fl_partner_sticker',  'PARTNER',    'sticker',   40,  600),
+    ('fl_partner_download', 'PARTNER',    'download',  25,  600),
+    ('fl_partner_ai',       'PARTNER',    'ai',        0,   300),
+    ('fl_partner_stt',      'PARTNER',    'stt',       50,  600),
+    ('fl_partner_websearch','PARTNER',    'webSearch', 150, 600);
+```
+
+There is **no foreign key** on `tier`: `SubscriptionTier` is a Prisma enum, not a table. Read the
+table through the same 60-second cache as the tier lookup (§5.3) so the extra query does not run
+per command.
+
+### 10.3 Phase 3 (optional) — `FeatureUsage`: counters that survive a restart
+
+Needed only for budgets that must not reset when the process does (a daily allowance tied to real
+Groq/Tavily spend). Phase 1 stays in-memory; this table replaces the `Map`, it does not extend it.
+
+```prisma
+// prisma/schema.prisma
+model FeatureUsage {
+  id          String   @id @default(cuid())
+  userJid     String // JID as used by ToolContext.jid
+  featureKey  String
+  windowStart DateTime // start of the current fixed window
+  used        Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userJid, featureKey, windowStart])
+  @@index([windowStart])
+}
+```
+
+```sql
+CREATE TABLE IF NOT EXISTS "FeatureUsage" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userJid" TEXT NOT NULL,
+    "featureKey" TEXT NOT NULL,
+    "windowStart" DATETIME NOT NULL,
+    "used" INTEGER NOT NULL DEFAULT 0,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "FeatureUsage_userJid_featureKey_windowStart_key" ON "FeatureUsage"("userJid","featureKey","windowStart");
+CREATE INDEX IF NOT EXISTS "FeatureUsage_windowStart_idx" ON "FeatureUsage"("windowStart");
+```
+
+Semantics:
+
+- **Fixed window, not sliding.** The window start is computed as
+  `Math.floor(now / windowMs) * windowMs`, then one atomic upsert:
+  `INSERT ... ON CONFLICT("userJid","featureKey","windowStart") DO UPDATE SET "used" = "used" + 1`.
+  A sliding window in SQL would need one row per hit — unacceptable write volume for a
+  hot-path limiter.
+- **Prune, do not leak.** Rows accumulate one per (user, feature, window). Delete everything
+  older than 24 h from the existing daily reconciliation job
+  (`src/services/subscriptionChecker.ts`, scheduled in `src/index.ts:51-60`) — **never**
+  `setTimeout` in memory (Rule J).
+- **No FK on `userJid`.** A JID may hit a tool before its `User` row exists; pruning clears any
+  stray rows.
+
+### 10.4 Maintenance checklist
+
+| Concern     | Requirement                                                                                                                                                                                                                                                 |
+| :---------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dual driver | Any table added here goes into `prisma/schema.prisma` **and** the DDL block in `src/db.ts` (`ensureDatabaseSchema`), in that order of precedence: `CREATE TABLE` → `ensureColumnExists` for later columns → `CREATE INDEX` in its own `try/catch` (Rule W). |
+| API copy    | `.worktrees/api/**` does **not** get these tables: no tool executes there, so it never reads or writes them (same asymmetry as §5.5). Leave a comment recording it.                                                                                         |
+| Index names | Follow Prisma conventions already used in `src/db.ts`: `<Table>_<cols>_key` for unique, `<Table>_<cols>_idx` for regular.                                                                                                                                   |
+| Backfill    | Seeds use `INSERT OR IGNORE` against the unique index, so re-running `ensureDatabaseSchema` on an existing database is safe.                                                                                                                                |
+| Read path   | Both optional tables are read through the 60-second cache in §5.3, never per command.                                                                                                                                                                       |
+
+---
+
+## 11. Related rules
 
 - **Rule H** — Formal English for all output strings.
 - **Rule O** — i18n integration and `i18n.exists()` safe key detection.
