@@ -9,7 +9,7 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
-## [G2-F31-P14] - 2026-10-05
+## [G2-F31-P15] - 2026-10-05
 
 ### Added — Version & Release CI Automation
 

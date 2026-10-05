@@ -27,6 +27,8 @@ push ke main ──► format.yml              (Prettier --write seluruh codebas
 
 `format.yml` dan `version-automation.yml` diserialkan dengan concurrency group `main-automation` agar commit bot tidak saling menabrak. Formatting otomatis ini berarti agent **tidak wajib** menjalankan `pnpm format` secara lokal, tetapi menjalankannya tetap mengurangi commit bot susulan.
 
+> **Batasan concurrency GitHub (diterima secara sadar):** GitHub hanya menyimpan SATU run pending per concurrency group — push yang lebih baru menggantikan run pending lama. Ini tidak menimbulkan kehilangan permanen: setiap push berikutnya mengevaluasi ulang dari state `main` terkini (cek tag-ada → klasifikasi), dan dispatch manual tetap tersedia. Tidak ada kunci `queue:` pada sintaks `concurrency` GitHub Actions; jangan menambahkannya.
+
 Sumber kebenaran versi: **`version.json`**. Tag, judul rilis, dan `package.json` semuanya turunan.
 
 ---

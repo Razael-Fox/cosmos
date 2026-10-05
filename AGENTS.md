@@ -61,7 +61,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     1. `pnpm typecheck`
     2. `pnpm lint`
     3. `pnpm build` (jika diperlukan untuk memastikan kompilasi dist bersih)
-    4. `pnpm format` (wajib dijalankan untuk merapikan kode sebelum di-commit)
+    4. `pnpm format` (**opsional** — CI `format.yml` menjalankan Prettier otomatis di `main` dan meng-push hasilnya; menjalankannya lokal hanya menghindari commit bot susulan. Lihat Rule AI)
     5. `pnpm run version:check` (wajib dijalankan untuk memastikan invarian `version.json` terpenuhi dan sinkron dengan `package.json`)
     6. `pnpm run version:bump <patch|feature|generation>` bila perubahan memerlukan increment versi — **wajib** pada setiap perubahan kode produk (lihat Aturan S.1).
 
@@ -107,7 +107,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 2. **Inspeksi Kode:** Selalu periksa file sumber asli sebelum mengubah logika atau nama fungsi/tipe.
 3. **Eksekusi Perubahan:** Lakukan pengeditan kode secara presisi dan bersih dalam TypeScript.
 4. **Jalankan Verifikasi:** Jalankan `pnpm typecheck` dan `pnpm lint` untuk memastikan tidak ada syntax error atau tipe mismatch.
-5. **Format Kode:** Jalankan `pnpm format` agar format kode seragam dan sesuai standar (jalankan setelah script lainnya).
+5. **Format Kode (Opsional):** `pnpm format` tidak lagi wajib dijalankan secara lokal — CI `format.yml` memformat seluruh codebase di `main` secara otomatis (Rule AI). Menjalankannya lokal tetap dianjurkan agar tidak ada commit formatting susulan dari bot.
 6. **Perbarui Metadata Versi (WAJIB):** Tentukan jenis increment berdasarkan tabel pada Aturan S.1, lalu jalankan `pnpm run version:bump patch|feature|generation` untuk memperbarui `version.json` (dan otomatis menyelaraskan `package.json`), kemudian jalankan `pnpm run version:check`. **Dilarang** melewati langkah ini bila perubahan menyentuh kode produk, konfigurasi, atau dokumentasi yang tercantum pada tabel trigger Aturan S.1.
 7. **Lakukan Git Commit:** Lakukan commit lokal atas semua perubahan yang telah selesai dan terverifikasi beserta hasil formatting **dan seluruh file versi (`version.json`, `package.json`, `CHANGELOG.md`) dalam commit yang sama**. **Kecualikan `ISSUE.md` dan `SUMMARY.md`** — jangan di-stage atau di-commit kecuali pengguna memberi perintah eksplisit (lihat Aturan I).
 8. **Ringkaskan Hasil:** Berikan penjelasan singkat, padat, dan jelas mengenai perubahan yang telah dilakukan, **termasuk versi Cosmos sebelum dan sesudah perubahan** beserta bukti verifikasi.
