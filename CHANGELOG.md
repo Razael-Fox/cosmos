@@ -9,6 +9,43 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P9] - 2026-10-05
+
+### Fixed — `pnpm validate:i18n` no longer reports a bogus missing key
+
+`pnpm run validate:i18n` (Rule O) exited non-zero on two phantom findings:
+
+```
+- src/mcp/schema/i18nAudit.ts:95 -> "..."
+```
+
+`scripts/check-i18n-usage.ts` locates translation keys with a regex applied to raw file text.
+A doc comment on line 95 that documents the very syntax being matched — `any t('...') /
+ctx.t('...') / 'namespace.key'` form`— was read as two real call sites, so the literal`"..."` was treated as a key and reported missing from the catalog. The catalog was fine; the
+scanner was matching comments.
+
+- `maskComments()` blanks line and block comments while preserving every byte offset, so match
+  offsets stay aligned with the original source and reported line numbers remain correct.
+  String and template literals are deliberately preserved, since a legitimate key lives
+  inside one.
+- Line numbers are now computed from the unmasked source, so diagnostics point at the real
+  line even though matching runs against the masked copy.
+
+Verified that this tightens nothing it should not:
+
+- A deliberately broken `descriptionKey` and a `t()` call with a bogus key, both inserted as
+  real code in `src/tools/brat.ts`, were still reported with correct line numbers, while a
+  `t('...')` reference planted in a comment on the adjacent line was ignored.
+- A URL literal (`http://x.com/t('...')`) is not mistaken for a comment, and escaped quotes
+  inside a string do not desynchronise the scanner.
+
+The audit is not wired into `.github/workflows/`, so this did not block CI, but it is the
+documented Rule O command and a permanently red exit makes it impossible to trust.
+
+Version: `G2-F31-P8` → `G2-F31-P9` (patch)
+
+---
+
 ## [G2-F31-P8] - 2026-10-05
 
 ### Fixed — two red test suites on `main`, plus 17 commands with no tutorial

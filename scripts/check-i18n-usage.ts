@@ -266,8 +266,76 @@ interface KeyUsage {
     suppliedVariables: Set<string> | null;
 }
 
+/**
+ * Blanks out comments while preserving every byte offset, so matches stay aligned with
+ * the original source and `content.slice(0, match.index)` still reports the right line.
+ *
+ * Needed because the scanner is regex-based: a doc comment like ``t('...')`` describing
+ * the very syntax being matched reads as a real call and reports a bogus missing key.
+ * String and template literals are preserved, since a key legitimately lives inside one.
+ *
+ * ponytail: a small hand-rolled scanner, not a full tokenizer. It only has to get
+ * comments right; regex literals containing quotes are the known ceiling, and this
+ * script does not parse TypeScript expressions.
+ */
+function maskComments(content: string): string {
+    const out = content.split('');
+    let i = 0;
+    // Tracks the quote delimiter of the string literal we are inside, or null in code.
+    let inString: '"' | "'" | '`' | null = null;
+
+    while (i < content.length) {
+        const ch = content[i] as string;
+        const next = content[i + 1] as string | undefined;
+
+        if (inString) {
+            if (ch === '\\') {
+                i += 2; // Preserve the escape pair verbatim.
+                continue;
+            }
+            if (ch === inString) inString = null;
+            i++;
+            continue;
+        }
+
+        if (ch === '"' || ch === "'" || ch === '`') {
+            inString = ch;
+            i++;
+            continue;
+        }
+
+        if (ch === '/' && next === '/') {
+            while (i < content.length && content[i] !== '\n') {
+                out[i] = ' ';
+                i++;
+            }
+            continue;
+        }
+
+        if (ch === '/' && next === '*') {
+            while (i < content.length && !(content[i] === '*' && content[i + 1] === '/')) {
+                if (content[i] !== '\n') out[i] = ' ';
+                i++;
+            }
+            if (i < content.length) {
+                out[i] = ' '; // '*'
+                out[i + 1] = ' '; // '/'
+                i += 2;
+            }
+            continue;
+        }
+
+        i++;
+    }
+
+    return out.join('');
+}
+
 function extractKeyUsages(filePath: string): KeyUsage[] {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    // Line numbers are computed from `raw` so they point at the real source; matching
+    // runs against the masked copy so comments cannot fabricate key references.
+    const content = maskComments(raw);
     const usages: KeyUsage[] = [];
     const relativePath = path.relative(path.resolve(__dirname, '..'), filePath);
 
@@ -285,7 +353,7 @@ function extractKeyUsages(filePath: string): KeyUsage[] {
 
         usages.push({
             file: relativePath,
-            line: content.slice(0, match.index).split('\n').length,
+            line: raw.slice(0, match.index).split('\n').length,
             key,
             suppliedVariables: extractSuppliedVariables(content, match.index + match[0].length)
         });
