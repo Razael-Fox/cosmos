@@ -17,6 +17,11 @@ on:
 permissions:
     contents: write
 
+# Serialize with format.yml: both may push bot commits to main.
+concurrency:
+    group: main-automation
+    cancel-in-progress: false
+
 jobs:
     auto-version:
         runs-on: ubuntu-latest

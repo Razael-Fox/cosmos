@@ -22,7 +22,14 @@ push to main ──► version-automation.yml
                       ▼
 tag pushed ────► release.yml          (creates the GitHub Release with CHANGELOG notes)
               └► docker-publish.yml   (builds & pushes the GHCR Docker image)
+
+push to main ──► format.yml           (runs Prettier over the whole codebase and pushes
+                                       the result as github-actions[bot] with [skip ci])
 ```
+
+`format.yml` and `version-automation.yml` are serialized through the `main-automation`
+concurrency group so their bot commits cannot race. Local `pnpm format` is now optional —
+CI fixes formatting for you — but running it still avoids a follow-up bot commit.
 
 **The single source of truth for the version is `version.json`** in the repo root.
 Everything else — `package.json`, Git tags, release titles — is derived from it.

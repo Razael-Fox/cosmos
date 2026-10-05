@@ -21,7 +21,11 @@ main         ──► version-automation.yml  (klasifikasi: nothing | tag-only 
                       ▼
 tag G*-F*-P* ──► release.yml             (GitHub Release berisi irisan section CHANGELOG.md)
              └─► docker-publish.yml      (image GHCR cosmos-origin)
+
+push ke main ──► format.yml              (Prettier --write seluruh codebase → commit bot [skip ci])
 ```
+
+`format.yml` dan `version-automation.yml` diserialkan dengan concurrency group `main-automation` agar commit bot tidak saling menabrak. Formatting otomatis ini berarti agent **tidak wajib** menjalankan `pnpm format` secara lokal, tetapi menjalankannya tetap mengurangi commit bot susulan.
 
 Sumber kebenaran versi: **`version.json`**. Tag, judul rilis, dan `package.json` semuanya turunan.
 
