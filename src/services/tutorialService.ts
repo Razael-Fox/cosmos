@@ -171,44 +171,6 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         footerKey: 'tools.tutorials.casino.footer'
     },
     {
-        id: 'roulette',
-        category: 'Casino',
-        titleKey: 'tools.tutorials.roulette.header',
-        prerequisiteKeys: ['tools.tutorials.roulette.prereq'],
-        aliases: [
-            'roulette',
-            'buckshot',
-            'creategame',
-            'joingame',
-            'startgame',
-            'shoot',
-            'use',
-            'bet',
-            'tembak',
-            'russianroulette'
-        ],
-        relatedCommands: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
-        localizedRelatedCommands: {
-            en: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet'],
-            id: ['create game', 'join game', 'start game', 'shoot', 'use', 'bet']
-        },
-        steps: [
-            {
-                titleKey: 'tools.tutorials.roulette.step1_title',
-                bodyKey: 'tools.tutorials.roulette.step1_body'
-            },
-            {
-                titleKey: 'tools.tutorials.roulette.step2_title',
-                bodyKey: 'tools.tutorials.roulette.step2_body'
-            },
-            {
-                titleKey: 'tools.tutorials.roulette.step3_title',
-                bodyKey: 'tools.tutorials.roulette.step3_body'
-            }
-        ],
-        footerKey: 'tools.tutorials.roulette.footer'
-    },
-    {
         id: 'subbot',
         category: 'Tools',
         titleKey: 'tools.tutorials.subbot.header',
@@ -271,7 +233,7 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
         relatedCommands: ['sticker_maker', 'stickerly', 'brat'],
         localizedRelatedCommands: {
             en: ['sticker', 'stickerly', 'brat'],
-            id: ['stiker', 'stickerly', 'brat']
+            id: ['stiker', 'stickerly', 'brat', 'remove background', 'remove bg', 'removebg', 'hapus background']
         },
         steps: [
             {
@@ -494,7 +456,21 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'check online',
             'cek online',
             'moderasi',
-            'pengaturan'
+            'pengaturan',
+            'group approve',
+            'group blacklist add',
+            'group blacklist list',
+            'group blacklist remove',
+            'group close',
+            'group demote',
+            'group description',
+            'group invite',
+            'group kick',
+            'group link',
+            'group open',
+            'group promote',
+            'group reject',
+            'group rename'
         ],
         relatedCommands: [
             'rule34',
@@ -505,7 +481,21 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'rvo',
             'quoted',
             'profile photo',
-            'check online'
+            'check online',
+            'group approve',
+            'group blacklist add',
+            'group blacklist list',
+            'group blacklist remove',
+            'group close',
+            'group demote',
+            'group description',
+            'group invite',
+            'group kick',
+            'group link',
+            'group open',
+            'group promote',
+            'group reject',
+            'group rename'
         ],
         localizedRelatedCommands: {
             en: [
@@ -516,9 +506,46 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
                 'set group lang',
                 'profile photo',
                 'rvo',
-                'check online'
+                'check online',
+                'group approve',
+                'group blacklist add',
+                'group blacklist list',
+                'group blacklist remove',
+                'group close',
+                'group demote',
+                'group description',
+                'group invite',
+                'group kick',
+                'group link',
+                'group open',
+                'group promote',
+                'group reject',
+                'group rename'
             ],
-            id: ['rule34', 'togglensfw', 'auto dl', 'set lang', 'set group lang', 'profile photo', 'rvo', 'cek online']
+            id: [
+                'rule34',
+                'togglensfw',
+                'auto dl',
+                'set lang',
+                'set group lang',
+                'profile photo',
+                'rvo',
+                'cek online',
+                'group approve',
+                'group blacklist add',
+                'group blacklist list',
+                'group blacklist remove',
+                'group close',
+                'group demote',
+                'group description',
+                'group invite',
+                'group kick',
+                'group link',
+                'group open',
+                'group promote',
+                'group reject',
+                'group rename'
+            ]
         },
         steps: [
             {
@@ -561,7 +588,11 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
             'kuota',
             'autoarchive',
             'auto archive',
-            'archive'
+            'archive',
+            'status notify',
+            'status report',
+            'notif status',
+            'laporan status'
         ],
         relatedCommands: ['system info', 'help', 'menu', 'whitelist', 'verify', 'my plan', 'subscription', 'my quota'],
         localizedRelatedCommands: {

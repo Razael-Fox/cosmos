@@ -129,9 +129,15 @@ async function runBratTests() {
 
     // Verify menu normalization extracts usage and example for bot menu
     const normalizedTools = menuService.processTools([toolBrat!], 'en');
-    const normBrat = normalizedTools.find((n) => n.name === 'brat');
+    // processTools() returns the localized display name ("brat sticker"), not the
+    // canonical command name, since PR #50 added displayNames per Rule AF. Match on
+    // the definition the caller passed in rather than a hardcoded string, so this
+    // lookup survives future display-name changes instead of silently finding nothing.
+    const normBrat = normalizedTools.find((n) => n.name === toolBrat!.definition.displayNames?.en);
     assert(normBrat, 'menuService must normalize brat tool');
-    assert(normBrat.usage.includes('.brat'), 'Normalized usage must include command name');
+    // The usage string is rewritten to the display name too, so assert on the
+    // command the user actually types: the alias remains ".brat".
+    assert(normBrat.usage.includes('.brat'), `Normalized usage must include command name, got: ${normBrat.usage}`);
     assert(normBrat.example.includes('Hello'), 'Normalized example must include example text');
 
     const usageEn = tEn('media.brat.usage');

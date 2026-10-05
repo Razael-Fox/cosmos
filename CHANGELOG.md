@@ -9,6 +9,54 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P8] - 2026-10-05
+
+### Fixed — two red test suites on `main`, plus 17 commands with no tutorial
+
+`tests/tutorials.test.ts` and `tests/brat.test.ts` were both failing on `main`. Neither was
+caused by the recent work; both were latent breakage that predates it.
+
+#### Removed — orphaned `roulette` tutorial suite
+
+The Buckshot Roulette feature was decommissioned in #44, and its locale keys were deleted at
+the same time, but the suite definition itself stayed behind in `tutorialService.ts`. The
+`.menu tutorial` hub renders every suite unconditionally, so users were shown a numbered entry
+for a feature that no longer exists, and selecting it produced untranslated fallback text
+because its `tools.tutorials.roulette.*` keys resolve to nothing. All roulette tool modules
+are already gone from `src/tools/`. The suite is removed.
+
+#### Fixed — 17 registered commands had no tutorial mapping
+
+`tests/tutorials.test.ts` asserts 100% tutorial coverage over the tool registry, and the
+assertion had been unreachable behind the earlier suite-count failure. With the count fixed it
+surfaced: 77 tools, 17 unmapped.
+
+- The 14 `.group *` moderation commands (`approve`, `blacklist add`, `blacklist list`,
+  `blacklist remove`, `close`, `demote`, `description`, `invite`, `kick`, `link`, `open`,
+  `promote`, `reject`, `rename`) are now aliases of the `moderation` suite, added to its
+  `relatedCommands` and to both the `en` and `id` localized lists so parity holds.
+- `.remove background` and its aliases are mapped to the `sticker` suite alongside `brat` and
+  `stickerly`, which is where the other Media & Stickers media tools already live.
+- `.status notify` and `.status report` are mapped to the `system` suite.
+
+Coverage is now 77/77.
+
+#### Fixed — `brat` test asserted against a field that changed meaning
+
+`tests/brat.test.ts` looked up its normalized tool with `normalizedTools.find((n) =>
+n.name === 'brat')`, but `processTools()` returns the localized display name, which became
+`brat sticker` when PR #50 added `displayNames` per Rule AF. The find returned `undefined` and
+the suite reported `menuService must normalize brat tool`, pointing at the menu service rather
+than at the stale expectation. The lookup now compares against
+`toolBrat.definition.displayNames?.en`, so it survives future display-name changes instead of
+silently matching nothing. The usage assertion now reports the offending value on failure.
+
+All 12 command/tutorial suites pass, including the 6,984-invocation vocabulary sweep.
+
+Version: `G2-F31-P7` → `G2-F31-P8` (patch)
+
+---
+
 ## [G2-F31-P7] - 2026-10-05
 
 ### Fixed — a broken environment no longer masquerades as a broken command parser
