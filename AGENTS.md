@@ -342,3 +342,15 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 - **Rate Limit & Konkurensi:** Setiap identitas memiliki sliding window untuk total panggilan dan mutasi, plus ceiling konkurensi mutasi. Pelanggaran menghasilkan `RATE_LIMITED`.
 - **Bridge IPC Wajib (Rule Y):** Seluruh aksi bot live wajib diteruskan ke engine melalui `sendIpcCommand` pada handler `/internal/...`. Pairing code dan QR **hanya** dapat diterbitkan oleh engine; MCP hanya mem-proxy nilai riil.
 - **Audit Trail i18n & Formal English:** Seluruh string output tool (deskripsi, pesan error, log, dan `cosmos_guidance`) WAJIB ditulis dalam **Bahasa Inggris Formal** (Rule H). Rujukan lengkap: `docs/COSMOS_MCP.md`.
+
+### AI. Otomatisasi Versi & Rilis CI (Version & Release CI Automation Standards)
+
+> Implementasi: `.github/workflows/version-automation.yml`, `release.yml`, `version-policy.yml`. Panduan agent: `.agents/skills/version-release-automation/SKILL.md`. Panduan tester: `HOW.md`.
+
+- **Rantai Otomatis (Pipeline Chain):** Merge/push ke `main` → `version-automation.yml` mengklasifikasi (nothing | tag-only | bump) → bump + commit `[skip ci]` + push tag → tag memicu `release.yml` (GitHub Release berisi irisan `CHANGELOG.md`) dan `docker-publish.yml` (image GHCR). `version.json` tetap satu-satunya sumber kebenaran.
+- **Klasifikasi Bump Berbasis Commit Message (Smart Classification):** Bila path bervedisi berubah tanpa `version.json` ikut berubah, workflow membaca commit message: `BREAKING CHANGE` / `type!:` → `generation`; subject `feat:`/`feat(scope):` → `feature`; lainnya → `patch`. Prioritas tertinggi menang dalam satu push.
+- **Kejujuran Tipe Commit (WAJIB):** Karena klasifier membaca commit message, AI Agent **WAJIB** menulis tipe commit secara jujur: `feat:` hanya untuk fitur selesai, `!:`/`BREAKING CHANGE` untuk breaking change, dan **DILARANG** menyalahgunakan `feat:` untuk mempercepat kenaikan `F`. Subject commit menjadi bahan baku catatan rilis dan nama milestone — tulis yang layak tampil publik.
+- **Bump Manual di PR Tetap Wajib:** Otomasi tidak menghapus kewajiban Rule S.1; PR tetap menjalankan `version:bump` + entri CHANGELOG tulisan manusia. Setelah merge, workflow hanya menag (mode tag-only). Auto-bump hanyalah jaring pengaman untuk direct push.
+- **Larangan:** Dilarang membuat tag/rilis manual untuk perubahan rutin (tag yang tidak cocok dengan `version.json` gagal fail-closed di `release.yml`), mengedit commit auto-bump `[skip ci]`, atau mengubah workflow tanpa bump `patch`.
+- **Override Manual:** Salah klasifikasi akibat commit salah ketik dikoreksi via `workflow_dispatch` (pilih patch/feature/generation), **bukan** dengan rewrite history `main`.
+- **Tabrakan Versi:** Prosedur rebase-lalu-rebump pada Rule S.1 tetap berlaku; otomasi hanya menag versi yang menang merge.
