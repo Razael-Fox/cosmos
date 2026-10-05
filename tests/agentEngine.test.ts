@@ -257,6 +257,15 @@ async function runTests() {
     assert(personaPrompt.includes('.brat'), 'Commands knowledge base must contain .brat documentation');
     assert(personaPrompt.includes('.contact'), 'Commands knowledge base must contain .contact documentation');
     assert(personaPrompt.includes('.bank'), 'Commands knowledge base must contain .bank documentation');
+    // The doc-routing fast-path is dead code unless Tier 1 is told to emit docQuestion.
+    assert(
+        guidancePrompt.includes('"docQuestion": boolean'),
+        'Guidance prompt schema must declare docQuestion so the planner can emit it'
+    );
+    assert(
+        guidancePrompt.includes('Documentation Routing'),
+        'Guidance prompt must instruct the planner when to set docQuestion'
+    );
     console.log('  ✔ Untrusted context framing and prompt generation passed.');
 
     // =========================================================================

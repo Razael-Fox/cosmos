@@ -9,6 +9,35 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P6] - 2026-10-05
+
+### Fixed — Tier 1 guidance prompt now asks for `docQuestion`, reviving the docs route
+
+The OpenRouter documentation route shipped in #68 was inert on `main`. The whole pipeline was
+present — `OpenRouterDocsClient`, the `docQuestion` field on `GuidanceBrief`, the planner
+assignment in `guidancePlanner.ts`, and the fast-path branch in `index.ts` — but the Tier 1
+guidance prompt never instructed the planner to emit `docQuestion`, and never declared it in the
+expected JSON schema.
+
+`parsed.docQuestion === true` could therefore never be true, so `brief.docQuestion === true`
+never held and the branch was unreachable. Every documentation question fell through to the
+Groq Tier 2 path regardless.
+
+- `saraGuidance.ts` gains directive 7 explaining when to set `docQuestion` (`true` only for
+  "how do I use X" / "what does X do" style questions, `false` for search lookups and chat).
+- `"docQuestion": boolean` is declared in the expected JSON schema so the model has a slot
+  to fill; the schema is the contract the parser reads.
+- The old directive 7 is renumbered to 8 so the prompt's numbering stays sequential.
+- `tests/agentEngine.test.ts` asserts the schema field and the directive are both present, and
+  that the numbering is unbroken.
+
+The Laya fast-path guard in `guidancePlanner.ts` (`looksLikeDocQuestion`) was already present
+and already exempted doc questions, so it now has something to route.
+
+Version: `G2-F31-P5` → `G2-F31-P6` (patch)
+
+---
+
 ## [G2-F31-P5] - 2026-10-05
 
 ### Fixed — Tier 2 prompt no longer exceeds the provider token ceiling
