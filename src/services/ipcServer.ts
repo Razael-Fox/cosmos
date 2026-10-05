@@ -12,6 +12,7 @@ import { startBroadcastWorker } from './broadcastService.js';
 import { getEventLoopLagMs, getLastConnectionUpdateAt, getMemoryMb, getUptimeSeconds } from '#utils/runtimeHealth.js';
 import { notify } from './statusNotifier/index.js';
 import { parseMcpAlertRequest } from './statusNotifier/mcpAlert.js';
+import { invalidateTierCache } from '#utils/featureLimiter.js';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
 
@@ -139,6 +140,9 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
             const userJid = String(body.userJid || '');
             const tier = String(body.tier || 'FREE');
             if (!userJid) return { status: 400, data: { error: 'INVALID_PAYLOAD' } };
+            // Feature limits read the tier through a 60s cache; drop it now so the
+            // upgraded ceilings apply to the very next command.
+            invalidateTierCache(userJid);
             const sock = activeConnections.get('default');
             if (sock) {
                 const lang = await getChatLanguage(userJid);

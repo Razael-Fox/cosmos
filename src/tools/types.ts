@@ -9,6 +9,19 @@ export interface ToolDefinition {
     description: string;
     descriptionKey?: string;
     owner?: boolean;
+    /**
+     * Feature class used to resolve the ceiling from the subscriber's plan
+     * (`TIER_LIMITS[*].featureLimits`). Tools that pass through
+     * `ToolsHandler.execute()` only; agent-engine tools execute inside
+     * `executor.ts` and are bounded by `AgentRateLimiter` instead.
+     */
+    limitKey?: 'sticker' | 'download' | 'stt';
+    /**
+     * Fallback limit when the user's plan does not configure `limitKey`.
+     * Max invocations per `windowMs` per JID. A tool must declare this to be
+     * limited at all; tools that declare nothing are never throttled.
+     */
+    limit?: { max: number; windowMs: number };
     parameters?: {
         type: string;
         properties?: Record<string, any>;

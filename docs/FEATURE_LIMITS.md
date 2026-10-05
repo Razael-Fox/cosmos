@@ -1,6 +1,6 @@
 # Cosmos Feature Limit System — Design Specification
 
-**Status:** Proposed (design only — not yet implemented)
+**Status:** Implemented via Issue #72 — enforcement in PR #73, pricing surface in PR #74, API copy note in PR #75.
 
 A per-feature usage limit system that protects server resources (ffmpeg, sharp, yt-dlp, Groq
 LLM calls) by capping how often each command may be invoked, per user, within a time window.

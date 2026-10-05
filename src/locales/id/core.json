@@ -39,5 +39,16 @@
     "ipc_sub_activated": "🎉 *Langganan Diaktifkan!*\n\nPaket: {{tier}}\nBerlaku Hingga: {{expiresAt}}\n\nTerima kasih telah mendukung Cosmos!",
     "whitelist_limit_reached": "⚠️ *Batas Whitelist Tercapai!*\n\nPaket: {{tier}} Plan\n{{reason}}\n\nUntuk menambah grup:\n1. Hapus grup yang tidak aktif dengan: .group del\n2. Tingkatkan ke Partner Tier (hingga 25 grup): https://razael-fox.my.id/pricing",
     "agent_synthesis_failure": "Permintaan Anda telah berhasil diproses, namun terjadi kendala saat merangkum respon akhir.",
-    "rate_limited": "⏳ Tindakan dibatasi. Harap tunggu beberapa detik sebelum mencoba lagi."
+    "rate_limited": "⏳ Tindakan dibatasi. Harap tunggu beberapa detik sebelum mencoba lagi.",
+    "limits": {
+        "cooldown": "Anda telah mencapai batas sementara untuk perintah ini. Silakan coba lagi dalam {{minutes}} menit.",
+        "cooldown_free": "Anda telah mencapai batas sementara untuk perintah ini pada paket Pulse (Free). Silakan coba lagi dalam {{minutes}} menit, atau gunakan .my plan untuk melihat kuota paket Nova dan Zenith.",
+        "features_label": "Fitur Terbatas",
+        "window_label": "per {{minutes}} menit",
+        "features": {
+            "sticker": "Pembuatan Stiker & Brat",
+            "download": "Unduhan Media",
+            "stt": "Ucapan ke Teks"
+        }
+    }
 }

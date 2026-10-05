@@ -21,13 +21,61 @@ export interface QuotaCheckResult {
     reason?: string;
 }
 
-export const TIER_LIMITS: Record<
-    SubscriptionTierName,
-    { maxGroups: number; maxSubBots: number; customPrefix: boolean; economyMultiplier: number }
-> = {
-    FREE: { maxGroups: 5, maxSubBots: 2, customPrefix: false, economyMultiplier: 1.0 },
-    SUBSIDIZED: { maxGroups: 10, maxSubBots: 5, customPrefix: true, economyMultiplier: 1.05 },
-    PARTNER: { maxGroups: 25, maxSubBots: 12, customPrefix: true, economyMultiplier: 1.15 }
+export interface FeatureLimit {
+    max: number;
+    windowMs: number;
+}
+
+export interface TierLimits {
+    maxGroups: number;
+    maxSubBots: number;
+    customPrefix: boolean;
+    economyMultiplier: number;
+    /**
+     * Ceilings for expensive command classes, resolved in `src/utils/featureLimiter.ts`.
+     * Only classes with an enforcement point are listed: the agent/LLM path executes
+     * inside `executor.ts` and stays bounded by `AgentRateLimiter`, so it has no entry here.
+     *
+     * The API Gateway copy (`.worktrees/api/src/services/quotaService.ts`) intentionally
+     * omits `featureLimits` — no tool executes there, so no limiter reads it.
+     */
+    featureLimits?: Record<string, FeatureLimit>;
+}
+
+export const TIER_LIMITS: Record<SubscriptionTierName, TierLimits> = {
+    FREE: {
+        maxGroups: 5,
+        maxSubBots: 2,
+        customPrefix: false,
+        economyMultiplier: 1.0,
+        featureLimits: {
+            sticker: { max: 5, windowMs: 600_000 },
+            download: { max: 3, windowMs: 600_000 },
+            stt: { max: 5, windowMs: 600_000 }
+        }
+    },
+    SUBSIDIZED: {
+        maxGroups: 10,
+        maxSubBots: 5,
+        customPrefix: true,
+        economyMultiplier: 1.05,
+        featureLimits: {
+            sticker: { max: 15, windowMs: 600_000 },
+            download: { max: 10, windowMs: 600_000 },
+            stt: { max: 20, windowMs: 600_000 }
+        }
+    },
+    PARTNER: {
+        maxGroups: 25,
+        maxSubBots: 12,
+        customPrefix: true,
+        economyMultiplier: 1.15,
+        featureLimits: {
+            sticker: { max: 40, windowMs: 600_000 },
+            download: { max: 25, windowMs: 600_000 },
+            stt: { max: 50, windowMs: 600_000 }
+        }
+    }
 };
 
 // In-flight user lock mutex to prevent concurrent TOCTOU quota race conditions.
