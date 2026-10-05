@@ -52,6 +52,19 @@ async function runSpacedCommandTests() {
 
     await toolsHandler.loadTools();
 
+    // Fail loudly on a broken environment before any registry lookup. Without this,
+    // an unwritable SQLite path made every tool fail to import, getTool() returned
+    // undefined everywhere, and Test 4 reported ". menu is broken" — pointing at the
+    // command parser when the real fault was the environment.
+    const failures = toolsHandler.getLoadFailures();
+    assert.strictEqual(
+        failures.length,
+        0,
+        `${failures.length} tool module(s) failed to import, so registry lookups are unreliable. ` +
+            `First cause: ${failures[0]?.file} — ${failures[0]?.error}. ` +
+            `Set a writable DATABASE_URL, e.g. DATABASE_URL="file:/tmp/cosmos/storage/database.sqlite".`
+    );
+
     // 1. normalizeCommandKey unit behavior
     console.log('[Test 1] Testing normalizeCommandKey and stripCommandKey...');
     assert.strictEqual(normalizeCommandKey('.menu'), 'menu');

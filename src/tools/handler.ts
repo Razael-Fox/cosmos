@@ -16,8 +16,21 @@ class ToolsHandler {
 
     private isLoaded = false;
 
+    /** Per-file import failures from the last loadTools() call, for diagnostics. */
+    private loadFailures: Array<{ file: string; error: string }> = [];
+
     /** Longest registered command name in words; computed once during load. */
     private maxCommandWords = 1;
+
+    /** Number of registered command modules. Zero means the load failed outright. */
+    public getToolCount(): number {
+        return this.tools.size;
+    }
+
+    /** Files that failed to import during the last load, for test diagnostics. */
+    public getLoadFailures(): Array<{ file: string; error: string }> {
+        return [...this.loadFailures];
+    }
 
     async loadTools(): Promise<void> {
         if (this.isLoaded) return;
@@ -62,9 +75,41 @@ class ToolsHandler {
                     }
                 }
             } catch (err) {
+                // A tool that throws on import (missing DB, bad config) must not
+                // take the whole registry down, so this stays non-fatal. It is
+                // recorded so callers can tell "tool absent" apart from
+                // "environment broken" instead of silently probing an empty map.
+                const message = err instanceof Error ? err.message : String(err);
+                this.loadFailures.push({ file, error: message });
                 console.error(`Failed to load tool ${file}:`, err);
             }
         }
+
+        // An empty registry is never legitimate: every deployment has commands.
+        // Failing loudly here stops a broken environment (unwritable SQLite path,
+        // missing locales) from masquerading as "this command does not exist".
+        if (this.tools.size === 0) {
+            const detail = this.loadFailures.map((f) => `${f.file}: ${f.error}`).join('; ');
+            this.loadFailures = [];
+            throw new Error(
+                `Tool registry is empty after loading ${files.length} modules. ` +
+                    `Every module failed to import${detail ? ` — ${detail}` : ''}.`
+            );
+        }
+
+        if (this.loadFailures.length > 0) {
+            // Pterodactyl console visibility (Rule C): one line, not one per file.
+            console.warn(
+                `[ToolsHandler] WARNING: ${this.loadFailures.length}/${files.length} tool modules failed to load. ` +
+                    `Affected: ${this.loadFailures
+                        .slice(0, 10)
+                        .map((f) => f.file)
+                        .join(', ')}` +
+                    `${this.loadFailures.length > 10 ? `, +${this.loadFailures.length - 10} more` : ''}. ` +
+                    `First cause: ${this.loadFailures[0]?.file} — ${this.loadFailures[0]?.error}`
+            );
+        }
+
         this.isLoaded = true;
 
         // Cache the vocabulary maximum now that the registry is final, so the

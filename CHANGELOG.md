@@ -9,6 +9,45 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P7] - 2026-10-05
+
+### Fixed — a broken environment no longer masquerades as a broken command parser
+
+`tests/spaced_command_prefix.test.ts` failed with
+`AssertionError: expected 'menu', got undefined`, which reads as _". menu is broken"_ and
+points at `commandNormalize.ts`. The command parser was fine. `ToolsHandler.loadTools()`
+imports every module under `src/tools/`, and most of them transitively open the SQLite
+database. With an unwritable database path, 68 of 77 modules threw `EACCES` on import, each
+error was swallowed by a bare `catch` that only wrote to the console, and the registry was
+left quietly half-empty. Every `getTool()` lookup then returned `undefined`, so the test
+asserted against an environment failure while blaming the parser.
+
+Three changes, all at the source rather than at each call site:
+
+- `loadTools()` records each import failure instead of discarding it, and reports the count,
+  the first ten affected files, and the first root cause as a single console line (Rule C
+  visibility, without the 68-line flood the per-file logging produced).
+- `loadTools()` now throws when the registry comes back completely empty. Zero registered
+  tools is never a legitimate state, so it is a real fault rather than something to absorb.
+- `getToolCount()` and `getLoadFailures()` expose the outcome, so a test can distinguish
+  _this command does not exist_ from _the environment is broken_.
+
+`tests/spaced_command_prefix.test.ts` asserts zero load failures before its first registry
+lookup, so a bad `DATABASE_URL` now fails with the actual cause and a suggested fix:
+
+```
+68 tool module(s) failed to import, so registry lookups are unreliable.
+First cause: addbalance.ts — EACCES: permission denied, mkdir '/nonexistent-dir-xyz/storage'.
+Set a writable DATABASE_URL, e.g. DATABASE_URL="file:/tmp/cosmos/storage/database.sqlite".
+```
+
+Verified in both directions: the broken path reports the environment fault, and the healthy
+path still passes all 16 tests including the 6,984-invocation vocabulary sweep.
+
+Version: `G2-F31-P6` → `G2-F31-P7` (patch)
+
+---
+
 ## [G2-F31-P6] - 2026-10-05
 
 ### Fixed — Tier 1 guidance prompt now asks for `docQuestion`, reviving the docs route
