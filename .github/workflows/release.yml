@@ -41,6 +41,8 @@ jobs:
                       found && /^## \[/ { exit }
                       found { print }
                   ' CHANGELOG.md | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}' > release-notes.md
+                  # Drop the trailing `---` separator that precedes the next section.
+                  sed -i '${/^---$/d}' release-notes.md
                   if [ -s release-notes.md ]; then
                       echo "Extracted $(wc -l < release-notes.md) lines of notes for $CORE_TAG."
                   else

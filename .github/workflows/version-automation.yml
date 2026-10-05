@@ -68,7 +68,28 @@ jobs:
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                   NEW_VERSION=$(node -p "require('./version.json').version")
-                  git add version.json package.json
+                  RELEASE_DATE=$(node -p "require('./version.json').releaseDate")
+
+                  # Stub CHANGELOG section built from the push's commit subjects
+                  # (deterministic extraction, not authored text), so release.yml
+                  # always finds a `## [<version>]` section to slice out.
+                  {
+                      echo ""
+                      echo "## [$NEW_VERSION] - $RELEASE_DATE"
+                      echo ""
+                      echo "### Changed — Automated patch release"
+                      echo ""
+                      git log --format='- %s' "${{ github.event.before }}..${{ github.sha }}"
+                      echo ""
+                      echo "---"
+                  } > section.md
+                  INSERT_LINE=$(grep -n '^---$' CHANGELOG.md | head -1 | cut -d: -f1)
+                  head -n "$INSERT_LINE" CHANGELOG.md > changelog.new
+                  cat section.md >> changelog.new
+                  tail -n "+$((INSERT_LINE + 1))" CHANGELOG.md >> changelog.new
+                  mv changelog.new CHANGELOG.md
+
+                  git add version.json package.json CHANGELOG.md
                   git commit -m "chore(versioning): auto-bump patch to $NEW_VERSION [skip ci]"
                   git push origin HEAD:main
 
