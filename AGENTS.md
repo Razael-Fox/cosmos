@@ -61,7 +61,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     1. `pnpm typecheck`
     2. `pnpm lint`
     3. `pnpm build` (jika diperlukan untuk memastikan kompilasi dist bersih)
-    4. `pnpm format` (wajib dijalankan untuk merapikan kode sebelum di-commit)
+    4. `pnpm format` (**opsional** — CI `format.yml` menjalankan Prettier otomatis di `main` dan meng-push hasilnya; menjalankannya lokal hanya menghindari commit bot susulan. Lihat Rule AI)
     5. `pnpm run version:check` (wajib dijalankan untuk memastikan invarian `version.json` terpenuhi dan sinkron dengan `package.json`)
     6. `pnpm run version:bump <patch|feature|generation>` bila perubahan memerlukan increment versi — **wajib** pada setiap perubahan kode produk (lihat Aturan S.1).
 
@@ -107,7 +107,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 2. **Inspeksi Kode:** Selalu periksa file sumber asli sebelum mengubah logika atau nama fungsi/tipe.
 3. **Eksekusi Perubahan:** Lakukan pengeditan kode secara presisi dan bersih dalam TypeScript.
 4. **Jalankan Verifikasi:** Jalankan `pnpm typecheck` dan `pnpm lint` untuk memastikan tidak ada syntax error atau tipe mismatch.
-5. **Format Kode:** Jalankan `pnpm format` agar format kode seragam dan sesuai standar (jalankan setelah script lainnya).
+5. **Format Kode (Opsional):** `pnpm format` tidak lagi wajib dijalankan secara lokal — CI `format.yml` memformat seluruh codebase di `main` secara otomatis (Rule AI). Menjalankannya lokal tetap dianjurkan agar tidak ada commit formatting susulan dari bot.
 6. **Perbarui Metadata Versi (WAJIB):** Tentukan jenis increment berdasarkan tabel pada Aturan S.1, lalu jalankan `pnpm run version:bump patch|feature|generation` untuk memperbarui `version.json` (dan otomatis menyelaraskan `package.json`), kemudian jalankan `pnpm run version:check`. **Dilarang** melewati langkah ini bila perubahan menyentuh kode produk, konfigurasi, atau dokumentasi yang tercantum pada tabel trigger Aturan S.1.
 7. **Lakukan Git Commit:** Lakukan commit lokal atas semua perubahan yang telah selesai dan terverifikasi beserta hasil formatting **dan seluruh file versi (`version.json`, `package.json`, `CHANGELOG.md`) dalam commit yang sama**. **Kecualikan `ISSUE.md` dan `SUMMARY.md`** — jangan di-stage atau di-commit kecuali pengguna memberi perintah eksplisit (lihat Aturan I).
 8. **Ringkaskan Hasil:** Berikan penjelasan singkat, padat, dan jelas mengenai perubahan yang telah dilakukan, **termasuk versi Cosmos sebelum dan sesudah perubahan** beserta bukti verifikasi.
@@ -342,3 +342,16 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 - **Rate Limit & Konkurensi:** Setiap identitas memiliki sliding window untuk total panggilan dan mutasi, plus ceiling konkurensi mutasi. Pelanggaran menghasilkan `RATE_LIMITED`.
 - **Bridge IPC Wajib (Rule Y):** Seluruh aksi bot live wajib diteruskan ke engine melalui `sendIpcCommand` pada handler `/internal/...`. Pairing code dan QR **hanya** dapat diterbitkan oleh engine; MCP hanya mem-proxy nilai riil.
 - **Audit Trail i18n & Formal English:** Seluruh string output tool (deskripsi, pesan error, log, dan `cosmos_guidance`) WAJIB ditulis dalam **Bahasa Inggris Formal** (Rule H). Rujukan lengkap: `docs/COSMOS_MCP.md`.
+
+### AI. Otomatisasi Versi & Rilis CI (Version & Release CI Automation Standards)
+
+> Implementasi: `.github/workflows/version-automation.yml`, `release.yml`, `version-policy.yml`. Panduan agent: `.agents/skills/version-release-automation/SKILL.md`. Panduan tester: `HOW.md`.
+
+- **Rantai Otomatis (Pipeline Chain):** Merge/push ke `main` → `version-automation.yml` mengklasifikasi (nothing | tag-only | bump) → bump + commit `[skip ci]` + push tag → tag memicu `release.yml` (GitHub Release berisi irisan `CHANGELOG.md`) dan `docker-publish.yml` (image GHCR). `version.json` tetap satu-satunya sumber kebenaran. Selain itu `format.yml` menjalankan Prettier ke seluruh codebase pada setiap push ke `main` dan meng-push hasilnya sebagai `github-actions[bot]` dengan `[skip ci]`, sehingga formatting tidak lagi wajib dijalankan di sisi development (kedua workflow diserialkan lewat concurrency group `main-automation`).
+- **Klasifikasi Bump Berbasis Commit Message (Smart Classification):** Bila path bervedisi berubah tanpa `version.json` ikut berubah, workflow membaca commit message: `BREAKING CHANGE` / `type!:` → `generation`; subject `feat:`/`feat(scope):` → `feature`; lainnya → `patch`. Prioritas tertinggi menang dalam satu push.
+- **Kejujuran Tipe Commit (WAJIB):** Karena klasifier membaca commit message, AI Agent **WAJIB** menulis tipe commit secara jujur: `feat:` hanya untuk fitur selesai, `!:`/`BREAKING CHANGE` untuk breaking change, dan **DILARANG** menyalahgunakan `feat:` untuk mempercepat kenaikan `F`. Subject commit menjadi bahan baku catatan rilis dan nama milestone — tulis yang layak tampil publik.
+- **Bump Manual di PR Tetap Wajib:** Otomasi tidak menghapus kewajiban Rule S.1; PR tetap menjalankan `version:bump` + entri CHANGELOG tulisan manusia. Setelah merge, workflow hanya menag (mode tag-only). Auto-bump hanyalah jaring pengaman untuk direct push.
+- **Larangan:** Dilarang membuat tag/rilis manual untuk perubahan rutin (tag yang tidak cocok dengan `version.json` gagal fail-closed di `release.yml`), mengedit commit auto-bump `[skip ci]`, atau mengubah workflow tanpa bump `patch`.
+- **Override Manual:** Salah klasifikasi akibat commit salah ketik dikoreksi via `workflow_dispatch` (pilih patch/feature/generation), **bukan** dengan rewrite history `main`.
+- **Tabrakan Versi:** Prosedur rebase-lalu-rebump pada Rule S.1 tetap berlaku; otomasi hanya menag versi yang menang merge.
+- **Recursion Guard & `RELEASE_TOKEN`:** Tag yang di-push dengan `GITHUB_TOKEN` bawaan **tidak** memicu `release.yml`/`docker-publish.yml` (batasan GitHub). Rantai rilis otomatis memerlukan secret PAT `RELEASE_TOKEN`; tanpanya tag tetap dibuat tetapi rilis tidak terbit otomatis.

@@ -1,0 +1,201 @@
+name: Version Automation
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            bump:
+                description: 'Version increment to apply'
+                required: true
+                type: choice
+                options:
+                    - patch
+                    - feature
+                    - generation
+
+permissions:
+    contents: write
+
+# Serialize with format.yml: both may push bot commits to main.
+concurrency:
+    group: main-automation
+    cancel-in-progress: false
+
+jobs:
+    auto-version:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Resolve tag state for the current version
+              # Skipped for manual dispatch: the override use case is precisely
+              # "the classifier already bumped and tagged the wrong kind".
+              if: github.event_name != 'workflow_dispatch'
+              run: |
+                  VERSION=$(node -p "require('./version.json').version")
+                  echo "Current version.json: $VERSION"
+                  if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+                      echo "Tag $VERSION already exists — nothing to do."
+                      echo "DONE=true" >> "$GITHUB_ENV"
+                  fi
+
+            - name: Classify the push and choose the bump kind
+              # Smart bump classification (deterministic, Conventional Commits):
+              #   BREAKING CHANGE footer or `type!:`  -> generation
+              #   any `feat:`/`feat(scope):` subject  -> feature
+              #   anything else on versioned paths    -> patch
+              # ponytail: ceiling — a mis-typed commit mis-classifies the bump;
+              # upgrade path is the workflow_dispatch manual override below.
+              if: env.DONE != 'true'
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                      echo "Manual dispatch — forced bump kind: ${{ inputs.bump }}."
+                      echo "MODE=bump" >> "$GITHUB_ENV"
+                      echo "BUMP=${{ inputs.bump }}" >> "$GITHUB_ENV"
+                      LAST_TAG=$(git tag --list 'G*-F*-P*' --sort=-creatordate | head -1)
+                      echo "RANGE=${LAST_TAG:-HEAD~1}..HEAD" >> "$GITHUB_ENV"
+                      exit 0
+                  fi
+
+                  RANGE="${{ github.event.before }}..${{ github.sha }}"
+                  echo "RANGE=$RANGE" >> "$GITHUB_ENV"
+                  CHANGED=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
+                  if echo "$CHANGED" | grep -qx 'version.json'; then
+                      echo "Push already carried a version bump — tagging HEAD only."
+                      echo "MODE=tag-only" >> "$GITHUB_ENV"
+                      exit 0
+                  fi
+                  if ! echo "$CHANGED" | grep -qE '^(src|prisma|scripts|docker)/|^\.github/workflows/'; then
+                      echo "No versioned paths changed — nothing to do."
+                      echo "DONE=true" >> "$GITHUB_ENV"
+                      exit 0
+                  fi
+
+                  echo "MODE=bump" >> "$GITHUB_ENV"
+                  SUBJECTS=$(git log --format='%s' "$RANGE")
+                  FULL_LOG=$(git log --format='%s%n%b' "$RANGE")
+                  if echo "$FULL_LOG" | grep -qiE '^[a-z]+(\([^)]*\))?!:|^BREAKING[ -]CHANGE'; then
+                      BUMP=generation
+                  elif echo "$SUBJECTS" | grep -qE '^feat(\([^)]*\))?:'; then
+                      BUMP=feature
+                  else
+                      BUMP=patch
+                  fi
+                  echo "Classified bump kind from commit log: $BUMP"
+                  echo "BUMP=$BUMP" >> "$GITHUB_ENV"
+
+            - name: Setup PNPM
+              if: env.MODE == 'bump'
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 12.3.4
+
+            - name: Setup Node.js
+              if: env.MODE == 'bump'
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - name: Install dependencies
+              if: env.MODE == 'bump'
+              run: pnpm install --frozen-lockfile
+
+            - name: Bump version and seed CHANGELOG section
+              if: env.MODE == 'bump'
+              run: |
+                  pnpm run version:bump "$BUMP"
+                  pnpm run version:check
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  NEW_VERSION=$(node -p "require('./version.json').version")
+                  RELEASE_DATE=$(node -p "require('./version.json').releaseDate")
+
+                  # Milestone name: for a feature bump, the first `feat:` subject
+                  # (a push may mix fix:/feat:); for generation, the first bang
+                  # subject; otherwise the first conventional subject.
+                  case "$BUMP" in
+                      feature)    SUBJECT_PATTERN='^feat(\([^)]*\))?!?:' ;;
+                      generation) SUBJECT_PATTERN='^[a-z]+(\([^)]*\))?!:' ;;
+                      *)          SUBJECT_PATTERN='^[a-z]+(\([^)]*\))?:' ;;
+                  esac
+                  MILESTONE_NAME=$(git log --format='%s' "$RANGE" \
+                      | grep -E "$SUBJECT_PATTERN" | head -1 \
+                      | sed -E 's/^[a-z]+(\([^)]*\))?!?: *//')
+
+                  case "$BUMP" in
+                      generation) SECTION_TITLE="Changed — Automated generation release (breaking changes)" ;;
+                      feature)    SECTION_TITLE="Added — ${MILESTONE_NAME:-Automated feature release}" ;;
+                      *)          SECTION_TITLE="Changed — Automated patch release" ;;
+                  esac
+
+                  # Seed a CHANGELOG section so release.yml's notes extraction
+                  # always finds a `## [<version>]` block.
+                  {
+                      echo ""
+                      echo "## [$NEW_VERSION] - $RELEASE_DATE"
+                      echo ""
+                      echo "### $SECTION_TITLE"
+                      echo ""
+                      git log --format='- %s' "$RANGE"
+                      echo ""
+                      echo "---"
+                  } > section.md
+                  INSERT_LINE=$(grep -n '^---$' CHANGELOG.md | head -1 | cut -d: -f1)
+                  head -n "$INSERT_LINE" CHANGELOG.md > changelog.new
+                  cat section.md >> changelog.new
+                  tail -n "+$((INSERT_LINE + 1))" CHANGELOG.md >> changelog.new
+                  mv changelog.new CHANGELOG.md
+
+                  # Rule S: a feature bump must register its milestone row.
+                  # Replaces the `_(open)_` placeholder row inside the Milestone
+                  # registry section (anchored — later example tables also use
+                  # `| F…` rows) and mints the next placeholder.
+                  if [ "$BUMP" = "feature" ]; then
+                      NEW_F=$(node -p "require('./version.json').featureMilestone")
+                      NEXT_F=$((NEW_F + 1))
+                      REG_START=$(grep -n '^### Milestone registry' docs/VERSIONING.md | head -1 | cut -d: -f1)
+                      ROW="| F${NEW_F} | ${MILESTONE_NAME:-Automated feature release} | Yes — ${RELEASE_DATE} |"
+                      PLACEHOLDER="| F${NEXT_F} | _(open)_ — next completed feature milestone | —                |"
+                      OPEN_ROW=$(tail -n "+$REG_START" docs/VERSIONING.md | grep -nF '| _(open)_' | head -1 | cut -d: -f1)
+                      if [ -n "$OPEN_ROW" ]; then
+                          TARGET=$((REG_START + OPEN_ROW - 1))
+                          head -n "$((TARGET - 1))" docs/VERSIONING.md > versioning.new
+                          printf '%s\n%s\n' "$ROW" "$PLACEHOLDER" >> versioning.new
+                          tail -n "+$((TARGET + 1))" docs/VERSIONING.md >> versioning.new
+                      else
+                          LAST_ROW=$(tail -n "+$REG_START" docs/VERSIONING.md | grep -n '^| F' | tail -1 | cut -d: -f1)
+                          TARGET=$((REG_START + LAST_ROW - 1))
+                          head -n "$TARGET" docs/VERSIONING.md > versioning.new
+                          printf '%s\n%s\n' "$ROW" "$PLACEHOLDER" >> versioning.new
+                          tail -n "+$((TARGET + 1))" docs/VERSIONING.md >> versioning.new
+                      fi
+                      mv versioning.new docs/VERSIONING.md
+                  fi
+
+                  git add version.json package.json CHANGELOG.md docs/VERSIONING.md
+                  git commit -m "chore(versioning): auto-bump $BUMP to $NEW_VERSION [skip ci]"
+                  git push origin HEAD:main
+
+            - name: Tag the release
+              if: env.DONE != 'true'
+              run: |
+                  VERSION=$(node -p "require('./version.json').version")
+                  git tag "$VERSION"
+                  # GitHub's recursion guard: tags pushed with the default
+                  # GITHUB_TOKEN do NOT trigger release.yml / docker-publish.yml.
+                  # A PAT (RELEASE_TOKEN secret) is required for the chain to fire.
+                  if [ -n "$RELEASE_PAT" ]; then
+                      git push "https://x-access-token:${RELEASE_PAT}@github.com/${{ github.repository }}.git" "$VERSION"
+                  else
+                      echo "::warning::RELEASE_TOKEN secret is not configured — pushing the tag with GITHUB_TOKEN, which does NOT trigger release.yml/docker-publish.yml. Create the release manually or add a PAT secret named RELEASE_TOKEN."
+                      git push origin "$VERSION"
+                  fi
+                  echo "Tagged and pushed $VERSION."
+              env:
+                  RELEASE_PAT: ${{ secrets.RELEASE_TOKEN }}
