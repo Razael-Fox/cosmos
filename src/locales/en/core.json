@@ -39,5 +39,16 @@
     "ipc_sub_activated": "🎉 *Subscription Activated!*\n\nTier: {{tier}}\nValid Until: {{expiresAt}}\n\nThank you for supporting Cosmos!",
     "whitelist_limit_reached": "⚠️ *Whitelist Limit Reached!*\n\nTier: {{tier}} Plan\n{{reason}}\n\nTo add more groups:\n1. Remove an inactive group using: .group del\n2. Upgrade to the Partner Tier (up to 25 groups): https://razael-fox.my.id/pricing",
     "agent_synthesis_failure": "Your request was successfully processed, but an issue occurred while synthesizing the summary response.",
-    "rate_limited": "⏳ Action throttled. Please wait a few seconds before trying again."
+    "rate_limited": "⏳ Action throttled. Please wait a few seconds before trying again.",
+    "limits": {
+        "cooldown": "You have reached the temporary limit for this command. Please try again in {{minutes}} minute(s).",
+        "cooldown_free": "You have reached the temporary limit for this command on the Pulse (Free) plan. Please try again in {{minutes}} minute(s), or use .my plan to compare the Nova and Zenith allowances.",
+        "features_label": "Limited Features",
+        "window_label": "per {{minutes}} minute(s)",
+        "features": {
+            "sticker": "Sticker & Brat Generation",
+            "download": "Media Downloads",
+            "stt": "Speech to Text"
+        }
+    }
 }

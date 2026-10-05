@@ -57,6 +57,8 @@ export const definition: ToolDefinition = {
     description:
         'Downloads YouTube media. Video downloads deliver the video stream only; use resolutions --360, --480, --720, --1k, --2k, --4k, --best. Append "audio" before the link and a bitrate flag (--128k, --192k, --320k, --best) for an MP3.',
     descriptionKey: 'tools.commands.ytdl.description',
+    limitKey: 'download',
+    limit: { max: 3, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {

@@ -13,6 +13,8 @@ export const definition: ToolDefinition = {
     aliases: ['.stt', '.ptt'],
     description: 'Transcribes a quoted voice note into text using Groq Whisper.',
     descriptionKey: 'tools.commands.stt.description',
+    limitKey: 'stt',
+    limit: { max: 5, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {},

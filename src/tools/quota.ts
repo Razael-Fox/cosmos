@@ -1,7 +1,8 @@
 import { ToolDefinition, ToolContext } from './types.js';
 import { getSenderJid, formatMentions } from '#utils/casino.js';
 import { isOwnerId } from '#utils/owner.js';
-import { QuotaService } from '#services/quotaService.js';
+import { QuotaService, type UserQuotaOverview } from '#services/quotaService.js';
+import { tierFeatureLimits, usageInWindow } from '#utils/featureLimiter.js';
 import { renderUsageBar } from '#services/subscriptionService.js';
 import { formatRupiah } from '#utils/currency.js';
 
@@ -72,12 +73,36 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         `  ${renderUsageBar(quota.groups.current, quota.groups.max)} ${quota.groups.current} / ${groupMaxStr} ${usedSuffix} (${ctx.t('tools.quota.available_label', 'Available')}: ${groupAvailStr})\n\n` +
         `• ${ctx.t('tools.myplan.subbots_label', 'Active Sub-Bots')}:\n` +
         `  ${renderUsageBar(quota.subBots.current, quota.subBots.max)} ${quota.subBots.current} / ${subbotMaxStr} ${usedSuffix} (${ctx.t('tools.quota.available_label', 'Available')}: ${subbotAvailStr})\n\n` +
+        `${featureSection(ctx, senderJid, quota)}` +
         `💡 ${ctx.t('tools.quota.manage_tip', 'Need more capacity? Upgrade your tier or remove inactive instances.')}\n` +
         `${ctx.t('tools.myplan.example_cost', { cost: formatRupiah(10000) })}\n\n` +
         `💡 ${ctx.t('tools.quota.plan_tip', 'Use .my plan or .check plan to view tier perks and billing details.')}`;
 
     await ctx.sock.sendMessage(ctx.jid, { text, mentions }, { quoted: ctx.msg });
     return;
+}
+
+/** One usage bar per limited feature class, showing the live count in the current window. */
+function featureSection(ctx: ToolContext, userJid: string, quota: UserQuotaOverview): string {
+    const usedSuffix = ctx.t('tools.myplan.used_suffix', 'used');
+    const lines: string[] = [];
+
+    if (quota.isOwner) {
+        lines.push(
+            `• ${ctx.t('core.limits.features_label', 'Limited Features')}: ${ctx.t('tools.myplan.unlimited', '∞')}`
+        );
+    } else {
+        for (const [key, limit] of tierFeatureLimits(quota.tier)) {
+            const used = usageInWindow(`${key}:${userJid}`, limit.windowMs);
+            lines.push(
+                `• ${ctx.t(`core.limits.features.${key}`, key)}:\n` +
+                    `  ${renderUsageBar(used, limit.max)} ${used} / ${limit.max} ${usedSuffix} ` +
+                    `(${ctx.t('core.limits.window_label', { minutes: Math.ceil(limit.windowMs / 60_000) })})`
+            );
+        }
+    }
+
+    return `${lines.join('\n')}\n\n`;
 }
 
 export default { definition, execute };

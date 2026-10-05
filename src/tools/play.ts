@@ -16,6 +16,8 @@ export const definition: ToolDefinition = {
     aliases: ['.play', '.ytplay', '.song', '.audio', '.ytm'],
     description: 'Searches for a song on YouTube and downloads it as an audio file.',
     descriptionKey: 'tools.commands.play.description',
+    limitKey: 'download',
+    limit: { max: 3, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {

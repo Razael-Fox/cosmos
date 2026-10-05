@@ -9,6 +9,27 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P10] - 2026-10-05
+
+### Added — Per-Feature Usage Limits (Issue #72)
+
+One shared sliding-window limiter now guards the expensive command classes, replacing the
+hand-rolled per-tool cooldowns that previously had no common abstraction.
+
+- `limitKey` / `limit` on `ToolDefinition`, enforced at the single funnel `ToolsHandler.execute()`
+  — the auto-sticker trigger in `message.ts` is covered without its own call site.
+- `src/utils/featureLimiter.ts`: sliding-window counter plus a 60-second tier cache (one
+  `findUnique` instead of `getUserQuota()`'s three queries), invalidated eagerly by the IPC
+  `/internal/subscriptions/activated` hook so upgrades apply immediately.
+- `TIER_LIMITS` gained `featureLimits` for `sticker`, `download`, and `stt` across all three
+  tiers. `ai` and `webSearch` are deliberately absent: agent tools never reach the funnel and
+  stay bounded by `AgentRateLimiter`.
+- `.my quota` renders one usage bar per limited feature; `.my plan` lists the tier ceilings.
+- The owner JID bypasses every limit; exceeding one returns a localized wait-time reply
+  (`core.limits.cooldown`, with `core.limits.cooldown_free` for Pulse users).
+
+---
+
 ## [G2-F31-P9] - 2026-10-05
 
 ### Fixed — `pnpm validate:i18n` no longer reports a bogus missing key

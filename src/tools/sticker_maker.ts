@@ -188,6 +188,8 @@ export const definition: ToolDefinition = {
     aliases: ['.buat stiker', '.make sticker', '.sticker', '.s', '.stiker'],
     description: 'Creates a sticker from an image, video, or GIF sent by the user.',
     descriptionKey: 'tools.commands.sticker_maker.description',
+    limitKey: 'sticker',
+    limit: { max: 5, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {},

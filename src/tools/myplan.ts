@@ -2,6 +2,7 @@ import { ToolDefinition, ToolContext } from './types.js';
 import { getSenderJid, formatMentions } from '#utils/casino.js';
 import { isOwnerId } from '#utils/owner.js';
 import { QuotaService } from '#services/quotaService.js';
+import { tierFeatureLimits } from '#utils/featureLimiter.js';
 import { formatRupiah } from '#utils/currency.js';
 
 export const definition: ToolDefinition = {
@@ -56,6 +57,14 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     const prefixStatus = quota.customPrefixAllowed
         ? ctx.t('tools.myplan.prefix_enabled')
         : ctx.t('tools.myplan.prefix_locked');
+    const featureLines = quota.isOwner
+        ? [`• ${ctx.t('core.limits.features_label')}: ${ctx.t('tools.myplan.unlimited', '∞')}`]
+        : tierFeatureLimits(quota.tier).map(
+              ([key, limit]) =>
+                  `• ${ctx.t(`core.limits.features.${key}`, key)}: ${limit.max} ${ctx.t('core.limits.window_label', {
+                      minutes: Math.ceil(limit.windowMs / 60_000)
+                  })}`
+          );
 
     const text =
         `${ctx.t('tools.myplan.title')}\n\n` +
@@ -63,7 +72,8 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         `${ctx.t('tools.myplan.plan_label')}: ${planLabel}\n` +
         `${ctx.t('tools.myplan.status_label')}: ${status}\n\n` +
         `• ${ctx.t('tools.myplan.custom_prefix_label')}: ${prefixStatus}\n` +
-        `• ${ctx.t('tools.myplan.economy_bonus_label')}: ${bonus}${ctx.t('tools.myplan.multiplier_suffix')}\n\n` +
+        `• ${ctx.t('tools.myplan.economy_bonus_label')}: ${bonus}${ctx.t('tools.myplan.multiplier_suffix')}\n` +
+        `${featureLines.join('\n')}\n\n` +
         `${ctx.t('tools.myplan.upgrade_cta')}\n` +
         `${ctx.t('tools.myplan.example_cost', { cost: formatRupiah(10000) })}\n\n` +
         `💡 ${ctx.t('tools.myplan.quota_tip', 'Use .my quota or .check quota to view resource limits and usage.')}`;

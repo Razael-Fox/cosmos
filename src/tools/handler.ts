@@ -5,7 +5,10 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { ToolModule, ToolContext } from './types.js';
 import { getTranslator } from '../utils/i18n.js';
+import { getSenderJid } from '../utils/casino.js';
 import { normalizeCommandKey, stripCommandKey } from '../utils/commandNormalize.js';
+import { resolveLimit, tryConsume } from '../utils/featureLimiter.js';
+import { i18n } from '../locales/i18n.config.js';
 
 class ToolsHandler {
     /** Registry keyed by canonical command key (see normalizeCommandKey). */
@@ -267,6 +270,22 @@ class ToolsHandler {
         if (!tool) throw new Error(`Tool not found: ${nameOrAlias}`);
         if (!ctx.t) {
             ctx.t = getTranslator('id');
+        }
+
+        // Plan-aware feature limit (docs/FEATURE_LIMITS.md). Single funnel, so the
+        // auto-sticker trigger in message.ts is covered without its own call site.
+        // A rejected ffmpeg/spawn costs the same CPU as a successful one, so the slot
+        // is consumed on the check, before the tool runs.
+        // Counted per sender, not per chat: ctx.jid is the group JID inside groups.
+        const senderJid = getSenderJid(ctx.msg, ctx.sock) || ctx.jid;
+        const resolved = await resolveLimit(tool.definition, senderJid);
+        if (resolved && !tryConsume(`${resolved.key}:${senderJid}`, resolved.limit.max, resolved.limit.windowMs)) {
+            const minutes = Math.ceil(resolved.limit.windowMs / 60_000);
+            const key =
+                resolved.tier === 'FREE' && i18n.exists('core.limits.cooldown_free', { lng: ctx.lang || 'id' })
+                    ? 'core.limits.cooldown_free'
+                    : 'core.limits.cooldown';
+            return ctx.t(key, { minutes });
         }
 
         // Universal Tutorial & Panduan Interception for all related commands & aliases

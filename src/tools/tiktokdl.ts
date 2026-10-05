@@ -70,6 +70,8 @@ export const definition: ToolDefinition = {
     description:
         'Downloads TikTok media. Without flags it delivers the natural payload for the post plus its original soundtrack. Use --audio, --video, --photo, or --multi-photo to select exactly what you need.',
     descriptionKey: 'tools.commands.tiktokdl.description',
+    limitKey: 'download',
+    limit: { max: 3, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {

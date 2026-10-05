@@ -50,6 +50,8 @@ export const definition: ToolDefinition = {
     description:
         'Downloads a Pinterest pin. Photos, videos, and animated GIFs are detected automatically and multi-photo pins are delivered as a native WhatsApp album. Append --audio to also extract the soundtrack.',
     descriptionKey: 'tools.commands.pinterestdl.description',
+    limitKey: 'download',
+    limit: { max: 3, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {

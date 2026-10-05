@@ -29,6 +29,8 @@ export const definition: ToolDefinition = {
     description:
         'Create Brat text stickers or animated stickers with customizable delay. Usage: .brat <text> or .brat animated <text> [-d <ms>]. Example: .brat Hello World, .brat animated -d 300 Hello, or .brat "animasi keren" for literal static text.',
     descriptionKey: 'tools.commands.brat.description',
+    limitKey: 'sticker',
+    limit: { max: 5, windowMs: 600_000 },
     parameters: {
         type: 'object',
         properties: {
