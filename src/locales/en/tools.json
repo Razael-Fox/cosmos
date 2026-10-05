@@ -123,7 +123,7 @@
         "tutorial_not_found": "Tutorial topic \"{{topic}}\" not found. Please select a valid topic from the directory below:"
     },
     "onboarding": {
-        "welcome": "👋 *Welcome to Cosmos!*\nHere is what most people start with:\n\n• `{{prefix}}daily claim` — collect your daily reward\n• `{{prefix}}menu` — browse the command menu\n• `{{prefix}}my profile` — view your account"
+        "welcome": "👋 *Welcome to Cosmos!* Here is what most people start with:\n• `{{prefix}}daily claim` — collect your daily reward\n• `{{prefix}}menu` — browse the command menu\n• `{{prefix}}my profile` — view your account"
     },
     "hints": {
         "tip": "💡 Tip: try `{{command}}` next."

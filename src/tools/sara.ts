@@ -8,7 +8,7 @@ import { getTranslator } from '../utils/i18n.js';
  * false positives only forward a short message; widen the list if complaints appear.
  */
 const INTENT_VERB_PATTERN =
-    /\b(what|how|tell|explain|who|why|when|where|translate|help|check|show|send|make|find|apa|bagaimana|gimana|siapa|kenapa|mengapa|kapan|dimana|tolong|jelaskan|terjemahkan|cek|lihat|kirim|buat|cari)\b/i;
+    /\b(what|how|tell|explain|who|why|when|where|translate|help|check|show|send|make|find|summarize|list|write|draft|describe|create|apa|bagaimana|gimana|siapa|kenapa|mengapa|kapan|dimana|tolong|jelaskan|terjemahkan|cek|lihat|kirim|buat|cari|ringkas|rangkum|tulis)\b/i;
 
 /**
  * Returns true when a prompt is a short casual fragment (≤ 3 tokens, no

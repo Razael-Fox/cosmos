@@ -41,6 +41,8 @@ async function runTests() {
     assert.strictEqual(isCasualFragment('check balance'), false, 'Verb-led prompt must route');
     assert.strictEqual(isCasualFragment('you there?'), false, 'Question mark must route');
     assert.strictEqual(isCasualFragment('cek saldo'), false, 'Indonesian verb must route');
+    assert.strictEqual(isCasualFragment('summarize this'), false, 'Short EN imperative must route');
+    assert.strictEqual(isCasualFragment('ringkas ini'), false, 'Short ID imperative must route');
     console.log('✓ Sara clarify guard verified.');
 
     // [Test 2] Contextual hint adjacency & suppression (Issue #71, Step 4)
@@ -64,6 +66,16 @@ async function runTests() {
     // 2.5 Usage is per-user
     assert.strictEqual(pickHintCommand('hint_user_2', 'daily claim'), 'bank', 'Hint state must be tracked per user');
     console.log('✓ Contextual hint selection verified.');
+
+    // [Test 3] First-contact onboarding fits one chat bubble (≤ 5 lines, Issue #71)
+    console.log('[Test 3] Testing onboarding message line budget...');
+    for (const lang of ['en', 'id']) {
+        const t = getTranslator(lang);
+        const lines = t('tools.onboarding.welcome', { prefix: '.' }).split('\n');
+        assert(lines.length <= 5, `Onboarding (${lang}) must fit 5 lines, got ${lines.length}`);
+        assert(lines.length >= 3, `Onboarding (${lang}) must keep its starter commands`);
+    }
+    console.log('✓ Onboarding line budget verified.');
 
     console.log('--- ALL PROGRESSIVE DISCLOSURE TESTS PASSED SUCCESSFULLY! ---');
 }

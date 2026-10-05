@@ -31,9 +31,9 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
-## [G2-F31-P11] - 2026-10-05
+## [G2-F32-P0] - 2026-10-05
 
-### Added — Progressive Disclosure UX (Issue #71)
+### Added — Progressive Disclosure UX (Issue #71) — Feature Milestone F32
 
 - **Step 1 — Tiered `.menu`:** the no-arg `.menu` now renders the Layer 1 Core Surface
   (`CORE_COMMANDS`, 6 pinned commands) via `formatCoreCommands`, sized to fit the 1024-char
