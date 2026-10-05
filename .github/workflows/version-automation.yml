@@ -33,6 +33,9 @@ jobs:
                   fetch-depth: 0
 
             - name: Resolve tag state for the current version
+              # Skipped for manual dispatch: the override use case is precisely
+              # "the classifier already bumped and tagged the wrong kind".
+              if: github.event_name != 'workflow_dispatch'
               run: |
                   VERSION=$(node -p "require('./version.json').version")
                   echo "Current version.json: $VERSION"
@@ -113,10 +116,16 @@ jobs:
                   NEW_VERSION=$(node -p "require('./version.json').version")
                   RELEASE_DATE=$(node -p "require('./version.json').releaseDate")
 
-                  # Milestone name: the first feat/breaking subject, prefix stripped
-                  # (deterministic extraction, not authored text).
+                  # Milestone name: for a feature bump, the first `feat:` subject
+                  # (a push may mix fix:/feat:); for generation, the first bang
+                  # subject; otherwise the first conventional subject.
+                  case "$BUMP" in
+                      feature)    SUBJECT_PATTERN='^feat(\([^)]*\))?!?:' ;;
+                      generation) SUBJECT_PATTERN='^[a-z]+(\([^)]*\))?!:' ;;
+                      *)          SUBJECT_PATTERN='^[a-z]+(\([^)]*\))?:' ;;
+                  esac
                   MILESTONE_NAME=$(git log --format='%s' "$RANGE" \
-                      | grep -E '^[a-z]+(\([^)]*\))?!?:' | head -1 \
+                      | grep -E "$SUBJECT_PATTERN" | head -1 \
                       | sed -E 's/^[a-z]+(\([^)]*\))?!?: *//')
 
                   case "$BUMP" in
@@ -177,8 +186,16 @@ jobs:
               if: env.DONE != 'true'
               run: |
                   VERSION=$(node -p "require('./version.json').version")
-                  # The tag push triggers release.yml (GitHub Release) and
-                  # docker-publish.yml (GHCR image) automatically.
                   git tag "$VERSION"
-                  git push origin "$VERSION"
+                  # GitHub's recursion guard: tags pushed with the default
+                  # GITHUB_TOKEN do NOT trigger release.yml / docker-publish.yml.
+                  # A PAT (RELEASE_TOKEN secret) is required for the chain to fire.
+                  if [ -n "$RELEASE_PAT" ]; then
+                      git push "https://x-access-token:${RELEASE_PAT}@github.com/${{ github.repository }}.git" "$VERSION"
+                  else
+                      echo "::warning::RELEASE_TOKEN secret is not configured — pushing the tag with GITHUB_TOKEN, which does NOT trigger release.yml/docker-publish.yml. Create the release manually or add a PAT secret named RELEASE_TOKEN."
+                      git push origin "$VERSION"
+                  fi
                   echo "Tagged and pushed $VERSION."
+              env:
+                  RELEASE_PAT: ${{ secrets.RELEASE_TOKEN }}

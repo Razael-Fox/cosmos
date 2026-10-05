@@ -9,7 +9,7 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
-## [G2-F31-P13] - 2026-10-05
+## [G2-F31-P14] - 2026-10-05
 
 ### Added — Version & Release CI Automation
 
@@ -21,7 +21,9 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
   (`BREAKING CHANGE` / `type!:` → `generation`, `feat:` → `feature`, else `patch`), seeds a
   CHANGELOG stub from commit subjects, registers feature milestones in `docs/VERSIONING.md`,
   and pushes the tag — chaining into the release and Docker workflows. Manual override via
-  `workflow_dispatch`.
+  `workflow_dispatch`. Tag pushes use the `RELEASE_TOKEN` PAT secret (GitHub's recursion guard
+  blocks `GITHUB_TOKEN`-pushed tags from triggering downstream workflows); tags are shape-
+  validated in `release.yml`.
 - `format.yml`: Prettier over the whole codebase on every push to `main`, committed as
   `github-actions[bot]` with `[skip ci]`; serialized with version automation via the
   `main-automation` concurrency group.

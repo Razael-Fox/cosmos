@@ -22,6 +22,12 @@ jobs:
               # match version.json exactly — version.json is the single source
               # of truth (Rule S).
               run: |
+                  # Reject malformed tags outright (prefix extraction alone would
+                  # accept 'G2-F31-P12junk').
+                  if ! echo "$GITHUB_REF_NAME" | grep -qP '^G[0-9]+-F[0-9]+-P[0-9]+(\.\d{4}-\d{2}-\d{2})?(-(alpha|beta|rc[0-9]*|stable))?$'; then
+                      echo "::error::Malformed version tag '$GITHUB_REF_NAME'."
+                      exit 1
+                  fi
                   CORE_TAG=$(echo "$GITHUB_REF_NAME" | grep -oP '^G[0-9]+-F[0-9]+-P[0-9]+')
                   VERSION=$(node -p "require('./version.json').version")
                   if [ "$CORE_TAG" != "$VERSION" ]; then

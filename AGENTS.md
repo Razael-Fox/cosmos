@@ -354,3 +354,4 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 - **Larangan:** Dilarang membuat tag/rilis manual untuk perubahan rutin (tag yang tidak cocok dengan `version.json` gagal fail-closed di `release.yml`), mengedit commit auto-bump `[skip ci]`, atau mengubah workflow tanpa bump `patch`.
 - **Override Manual:** Salah klasifikasi akibat commit salah ketik dikoreksi via `workflow_dispatch` (pilih patch/feature/generation), **bukan** dengan rewrite history `main`.
 - **Tabrakan Versi:** Prosedur rebase-lalu-rebump pada Rule S.1 tetap berlaku; otomasi hanya menag versi yang menang merge.
+- **Recursion Guard & `RELEASE_TOKEN`:** Tag yang di-push dengan `GITHUB_TOKEN` bawaan **tidak** memicu `release.yml`/`docker-publish.yml` (batasan GitHub). Rantai rilis otomatis memerlukan secret PAT `RELEASE_TOKEN`; tanpanya tag tetap dibuat tetapi rilis tidak terbit otomatis.
