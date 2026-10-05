@@ -105,13 +105,21 @@ In bump mode the bot (as `github-actions[bot]`) also:
 
 ---
 
-### Operator requirement: `RELEASE_TOKEN` secret
+### How the chain actually fires (API, not git push)
 
-GitHub never triggers workflows from pushes made with the default `GITHUB_TOKEN`
-(recursion guard). For the tag → release → Docker chain to fire automatically,
-create a Personal Access Token with `contents: write` on this repo and store it as
-the **`RELEASE_TOKEN`** Actions secret. Without it, tags are still created but the
-release chain stays dormant (the job prints a warning).
+Git pushes — even with a PAT — were observed **not** to start downstream
+workflows, so `version-automation.yml` completes the chain itself through the
+Actions API, which the default `GITHUB_TOKEN` may call:
+
+1. `gh release create` with the CHANGELOG-extracted notes (skips if a
+   tag-push already created the release).
+2. `gh workflow run 'Publish Docker Image to GHCR'` — `docker-publish.yml`
+   accepts a `workflow_dispatch` `tag` input, with a per-tag concurrency
+   group so a stray PAT-triggered build and the API dispatch cannot
+   build the same tag at the same time.
+
+The optional `RELEASE_TOKEN` PAT (if configured) is still used for the raw
+`git push` of the tag, but the release and image no longer depend on it.
 
 ## 4. Manual Override (when the bot guesses wrong)
 
@@ -157,12 +165,12 @@ After any push/merge to `main`:
 
 ## 6. Where to Look When Something Is Off
 
-| Symptom                                                 | First place to check                                                                                                                       |
-| :------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| Release has commit-list notes instead of CHANGELOG text | The `## [<version>]` section is missing/misnamed in CHANGELOG.md on the tagged commit                                                      |
-| Auto-bump job failed at "push to main"                  | Branch protection on `main` is blocking the Actions token (needs push rights or a PAT)                                                     |
-| Tag pushed but no Release / Docker build appeared       | Recursion guard: tags pushed with the default `GITHUB_TOKEN` never trigger other workflows — configure the `RELEASE_TOKEN` PAT secret (§4) |
-| No tag after a PR merge                                 | `version-automation` run logs — likely "tag already exists" (fine) or a failed classify step                                               |
-| Version number went backwards / duplicated              | `pnpm run version:verify -- --base <sha>` locally; see `docs/VERSIONING.md` → Parallel Branches                                            |
+| Symptom                                                 | First place to check                                                                                                                                                                  |
+| :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Release has commit-list notes instead of CHANGELOG text | The `## [<version>]` section is missing/misnamed in CHANGELOG.md on the tagged commit                                                                                                 |
+| Auto-bump job failed at "push to main"                  | Branch protection on `main` is blocking the Actions token (needs push rights or a PAT)                                                                                                |
+| Tag pushed but no Release / Docker build appeared       | Inspect the `Version Automation` run log — the "Tag and publish the release" step creates the release and queues the Docker build via the Actions API; an error there names the cause |
+| No tag after a PR merge                                 | `version-automation` run logs — likely "tag already exists" (fine) or a failed classify step                                                                                          |
+| Version number went backwards / duplicated              | `pnpm run version:verify -- --base <sha>` locally; see `docs/VERSIONING.md` → Parallel Branches                                                                                       |
 
 Full format specification: `docs/VERSIONING.md`. Agent-facing rules: `AGENTS.md` Rule S.

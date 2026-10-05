@@ -16,6 +16,8 @@ on:
 
 permissions:
     contents: write
+    # gh workflow run (Actions API dispatch) needs actions: write.
+    actions: write
 
 # Serialize with format.yml: both may push bot commits to main.
 concurrency:
@@ -182,20 +184,44 @@ jobs:
                   git commit -m "chore(versioning): auto-bump $BUMP to $NEW_VERSION [skip ci]"
                   git push origin HEAD:main
 
-            - name: Tag the release
+            - name: Tag and publish the release
+              # Git pushes (even with the configured PAT) were observed
+              # NOT to start release.yml/docker-publish.yml, so the chain
+              # is completed here through the Actions API, which the
+              # default GITHUB_TOKEN is allowed to call.
               if: env.DONE != 'true'
               run: |
                   VERSION=$(node -p "require('./version.json').version")
                   git tag "$VERSION"
-                  # GitHub's recursion guard: tags pushed with the default
-                  # GITHUB_TOKEN do NOT trigger release.yml / docker-publish.yml.
-                  # A PAT (RELEASE_TOKEN secret) is required for the chain to fire.
                   if [ -n "$RELEASE_PAT" ]; then
                       git push "https://x-access-token:${RELEASE_PAT}@github.com/${{ github.repository }}.git" "$VERSION"
                   else
-                      echo "::warning::RELEASE_TOKEN secret is not configured — pushing the tag with GITHUB_TOKEN, which does NOT trigger release.yml/docker-publish.yml. Create the release manually or add a PAT secret named RELEASE_TOKEN."
                       git push origin "$VERSION"
                   fi
                   echo "Tagged and pushed $VERSION."
+
+                  # Same CHANGELOG slice release.yml performs.
+                  awk -v tag="$VERSION" '
+                      $0 ~ "^## \\[" tag "\\]" { found = 1; next }
+                      found && /^## \[/ { exit }
+                      found { print }
+                  ' CHANGELOG.md | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}' > release-notes.md
+                  sed -i '${/^---$/d}' release-notes.md
+
+                  # Create the GitHub Release (skip if a tag-push already
+                  # created it — release.yml is idempotent-safe here).
+                  if gh release view "$VERSION" >/dev/null 2>&1; then
+                      echo "Release $VERSION already exists — skipping creation."
+                  elif [ -s release-notes.md ]; then
+                      gh release create "$VERSION" --title "$VERSION" --notes-file release-notes.md
+                  else
+                      gh release create "$VERSION" --title "$VERSION" --generate-notes
+                  fi
+
+                  # Trigger the Docker build deterministically via the
+                  # Actions API (workflow_dispatch on docker-publish.yml).
+                  gh workflow run 'Publish Docker Image to GHCR' --ref main -f tag="$VERSION"
+                  echo "Release published and Docker build queued for $VERSION."
               env:
                   RELEASE_PAT: ${{ secrets.RELEASE_TOKEN }}
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

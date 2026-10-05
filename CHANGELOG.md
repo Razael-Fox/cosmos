@@ -9,6 +9,21 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P2] - 2026-10-05
+
+### Changed — Release Chain Completes via Actions API
+
+- Git pushes (including with the configured `RELEASE_TOKEN` PAT) were observed
+  not to start downstream workflows, so `version-automation.yml` now completes
+  the chain itself with the default `GITHUB_TOKEN`: `gh release create` with the
+  CHANGELOG-extracted notes (idempotent — skips if the release already exists)
+  and `gh workflow run 'Publish Docker Image to GHCR'`.
+- `docker-publish.yml` gained a `workflow_dispatch` trigger (`tag` input) and a
+  per-tag concurrency group so a PAT-triggered tag push and the API dispatch
+  do not build the same tag at the same time. `RELEASE_TOKEN` is now optional.
+
+---
+
 ## [G2-F31-P15] - 2026-10-05
 
 ### Added — Version & Release CI Automation
