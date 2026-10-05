@@ -5,6 +5,20 @@ on:
         tags:
             # Cosmos version format: G<generation>-F<feature>-P<patch>[.date][-status]
             - 'G[0-9]*-F[0-9]*-P[0-9]*'
+    # version-automation.yml triggers this workflow via the Actions API
+    # (gh workflow run) because git pushes made with GITHUB_TOKEN — and
+    # observed with the configured PAT — do not start downstream runs.
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: 'Version tag to build (e.g. G2-F32-P0)'
+                required: true
+
+# One build per tag: a PAT-triggered tag push and the API dispatch must
+# not build the same tag twice.
+concurrency:
+    group: docker-${{ github.event.inputs.tag || github.ref_name }}
+    cancel-in-progress: true
 
 env:
     REGISTRY: ghcr.io
@@ -21,6 +35,10 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+              with:
+                  # Empty on tag pushes (checks out the triggering tag);
+                  # set by workflow_dispatch.
+                  ref: ${{ inputs.tag }}
 
             - name: Checkout api worktree
               uses: actions/checkout@v4

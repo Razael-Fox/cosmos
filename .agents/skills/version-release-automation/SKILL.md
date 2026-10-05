@@ -99,13 +99,13 @@ Setelah PR agent di-merge atau direct push:
 
 ## 5. Troubleshooting Cepat
 
-| Gejala                                               | Penyebab umum & tindakan                                                                                                              |
-| :--------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
-| Rilis berisi daftar commit (bukan teks CHANGELOG)    | Section `## [<versi>]` hilang/salah nama pada commit yang ditag — periksa CHANGELOG.md pada tag tersebut                              |
-| Job auto-bump gagal saat `git push origin HEAD:main` | Branch protection `main` menolak token Actions — longgarkan ruleset atau sediakan PAT                                                 |
-| Tidak ada tag setelah merge PR                       | Baca log run `version-automation` — biasanya "tag already exists" (normal) atau klasifikasi gagal                                     |
-| Tag ada tapi Release/Docker tidak jalan              | Recursion guard GitHub: tag yang di-push dengan `GITHUB_TOKEN` tidak memicu workflow lain — wajib sediakan secret PAT `RELEASE_TOKEN` |
-| Kind bump salah (fitur jadi patch)                   | Commit message salah tipe — koreksi via workflow_dispatch (§3.4), bukan rewrite history                                               |
-| `release.yml` gagal "does not match version.json"    | Tag tidak cocok dengan `version.json` — hapus tag yang salah, jangan bypass                                                           |
+| Gejala                                               | Penyebab umum & tindakan                                                                                                                                                                  |
+| :--------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rilis berisi daftar commit (bukan teks CHANGELOG)    | Section `## [<versi>]` hilang/salah nama pada commit yang ditag — periksa CHANGELOG.md pada tag tersebut                                                                                  |
+| Job auto-bump gagal saat `git push origin HEAD:main` | Branch protection `main` menolak token Actions — longgarkan ruleset atau sediakan PAT                                                                                                     |
+| Tidak ada tag setelah merge PR                       | Baca log run `version-automation` — biasanya "tag already exists" (normal) atau klasifikasi gagal                                                                                         |
+| Tag ada tapi Release/Docker tidak jalan              | Git push (walau dengan PAT) teramati tidak memicu workflow lain — chain kini diselesaikan via Actions API (`gh release create` + `gh workflow run`) di step "Tag and publish the release" |
+| Kind bump salah (fitur jadi patch)                   | Commit message salah tipe — koreksi via workflow_dispatch (§3.4), bukan rewrite history                                                                                                   |
+| `release.yml` gagal "does not match version.json"    | Tag tidak cocok dengan `version.json` — hapus tag yang salah, jangan bypass                                                                                                               |
 
 Spesifikasi format: `docs/VERSIONING.md`. Aturan utama: `AGENTS.md` Rule S & Rule AI. Panduan tester: `HOW.md`.

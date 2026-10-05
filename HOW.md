@@ -105,13 +105,20 @@ In bump mode the bot (as `github-actions[bot]`) also:
 
 ---
 
-### Operator requirement: `RELEASE_TOKEN` secret
+### How the chain actually fires (API, not git push)
 
-GitHub never triggers workflows from pushes made with the default `GITHUB_TOKEN`
-(recursion guard). For the tag → release → Docker chain to fire automatically,
-create a Personal Access Token with `contents: write` on this repo and store it as
-the **`RELEASE_TOKEN`** Actions secret. Without it, tags are still created but the
-release chain stays dormant (the job prints a warning).
+Git pushes — even with a PAT — were observed **not** to start downstream
+workflows, so `version-automation.yml` completes the chain itself through the
+Actions API, which the default `GITHUB_TOKEN` may call:
+
+1. `gh release create` with the CHANGELOG-extracted notes (skips if a
+   tag-push already created the release).
+2. `gh workflow run 'Publish Docker Image to GHCR'` — `docker-publish.yml`
+   accepts a `workflow_dispatch` `tag` input, with a per-tag concurrency
+   group so a stray PAT-triggered build and the API dispatch can't double-build.
+
+The optional `RELEASE_TOKEN` PAT (if configured) is still used for the raw
+`git push` of the tag, but the release and image no longer depend on it.
 
 ## 4. Manual Override (when the bot guesses wrong)
 
