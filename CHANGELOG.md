@@ -9,6 +9,26 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P13] - 2026-10-05
+
+### Added — Version & Release CI Automation
+
+- `release.yml`: pushing a version tag (`G*-F*-P*`) validates the tag against `version.json`
+  (fail-closed), slices the matching `## [<version>]` section out of `CHANGELOG.md` as the
+  GitHub Release body, and falls back to `--generate-notes` when the section is absent.
+- `version-automation.yml`: on push to `main`, tags the new version when the push carried a
+  `version.json` bump; otherwise auto-bumps using a Conventional Commits classifier
+  (`BREAKING CHANGE` / `type!:` → `generation`, `feat:` → `feature`, else `patch`), seeds a
+  CHANGELOG stub from commit subjects, registers feature milestones in `docs/VERSIONING.md`,
+  and pushes the tag — chaining into the release and Docker workflows. Manual override via
+  `workflow_dispatch`.
+- `format.yml`: Prettier over the whole codebase on every push to `main`, committed as
+  `github-actions[bot]` with `[skip ci]`; serialized with version automation via the
+  `main-automation` concurrency group.
+- Docs: `AGENTS.md` Rule AI, `.agents/skills/version-release-automation/SKILL.md`, `HOW.md`.
+
+---
+
 ## [G2-F31-P10] - 2026-10-05
 
 ### Added — Per-Feature Usage Limits (Issue #72)
