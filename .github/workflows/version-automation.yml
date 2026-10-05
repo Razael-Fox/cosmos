@@ -16,6 +16,8 @@ on:
 
 permissions:
     contents: write
+    # gh workflow run (Actions API dispatch) needs actions: write.
+    actions: write
 
 # Serialize with format.yml: both may push bot commits to main.
 concurrency:

@@ -14,8 +14,8 @@ on:
                 description: 'Version tag to build (e.g. G2-F32-P0)'
                 required: true
 
-# One build per tag: a PAT-triggered tag push and the API dispatch must
-# not build the same tag twice.
+# One build per tag at a time: a PAT-triggered tag push and the
+# API dispatch cannot run concurrently for the same tag.
 concurrency:
     group: docker-${{ github.event.inputs.tag || github.ref_name }}
     cancel-in-progress: true
@@ -69,7 +69,7 @@ jobs:
 
             - name: Validate release tag
               env:
-                  RELEASE_TAG: ${{ github.ref_name }}
+                  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
               run: |
                   canonical_version=$(node -p "JSON.parse(require('fs').readFileSync('version.json', 'utf8')).version")
                   if [[ "$RELEASE_TAG" =~ ^(G[0-9]+-F[0-9]+-P[0-9]+)([.-].*)?$ ]]; then
