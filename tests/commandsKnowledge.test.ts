@@ -1,5 +1,8 @@
 import assert from 'assert';
-import { buildSaraPersonaPrompt } from '../src/services/agentEngine/prompts/saraPersona.js';
+import {
+    buildSaraPersonaPrompt,
+    shouldIncludeCommandsKnowledge
+} from '../src/services/agentEngine/prompts/saraPersona.js';
 import { getCommandsKnowledgeBase } from '../src/services/agentEngine/prompts/commandsKnowledge.js';
 import { SaraPromptContext } from '../src/services/agentEngine/types.js';
 
@@ -41,5 +44,26 @@ assert(
     'Prompt must include knowledge base section header'
 );
 console.log('✓ Sara Persona prompt successfully injected with full commands context.');
+
+// Test 3: shouldIncludeCommandsKnowledge gates the knowledge base by relevance.
+// Guards the 413 TPM regression: attaching the ~6,100-token reference to every
+// Tier 2 request pushed unrelated prompts past the provider's per-minute ceiling.
+console.log('[Test 3] Testing shouldIncludeCommandsKnowledge()...');
+const cosmosQuestion = shouldIncludeCommandsKnowledge('how do I use .bank deposit?', null);
+assert(cosmosQuestion === true, 'A Cosmos command question must include the knowledge base');
+
+const unrelatedQuestion = shouldIncludeCommandsKnowledge('what is the weather in Tokyo tomorrow?', null);
+assert(unrelatedQuestion === false, 'An unrelated question must omit the knowledge base');
+
+const dedicatedTool = shouldIncludeCommandsKnowledge('how do I use .bank deposit?', 'bank_action');
+assert(dedicatedTool === false, 'A dispatched tool already answers authoritatively; docs add nothing');
+
+const omitted = buildSaraPersonaPrompt(dummyCtx, false);
+assert(
+    !omitted.includes('<cosmos_commands_knowledge>'),
+    'Omitted knowledge base must not emit the knowledge-base tags'
+);
+assert(omitted.length < prompt.length, 'Omitting the knowledge base must shrink the prompt');
+console.log('✓ Knowledge base gating works and shrinks the prompt for unrelated turns.');
 
 console.log('--- ALL COMMANDS CONTEXT TESTS PASSED! ---');

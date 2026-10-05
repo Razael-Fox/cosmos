@@ -9,6 +9,37 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P5] - 2026-10-05
+
+### Fixed — Tier 2 prompt no longer exceeds the provider token ceiling
+
+Sara replied _"an error occurred while processing your request"_ to every question once
+web search went live. Tier 1 correctly selected `web_search`, but Tier 2 was rejected with
+HTTP 413: the request needed ~8,600 tokens against an 8,000 per-minute limit. The model
+fallback chain could not recover, because every candidate model shares that ceiling.
+
+`src/services/agentEngine/prompts/saraPersona.ts` already exported
+`shouldIncludeCommandsKnowledge()` and `buildSaraPersonaPrompt()` already accepted the flag,
+but `AgentExecutor.executeTurn()` never passed it — so the ~6,100-token
+`docs/COMMANDS_CONTEXT.md` reference stayed attached to every request.
+
+- `executor.ts` now derives the flag from the caller text and the planned tool, and the
+  knowledge base is attached only when the caller is actually asking about Cosmos itself.
+- Search results, general knowledge, and small talk no longer pay for it.
+- `tests/commandsKnowledge.test.ts` covers the gate: a Cosmos command question includes the
+  reference, an unrelated question omits it, and a dispatched tool short-circuits to omitted.
+
+Measured prompt sizes, against the 8,000-token ceiling:
+
+| Request                   | Before            | After  |
+| ------------------------- | ----------------- | ------ |
+| Search / general question | ~8,600 (rejected) | ~2,100 |
+| Cosmos command question   | ~8,600 (rejected) | ~3,500 |
+
+Version: `G2-F31-P4` → `G2-F31-P5` (patch)
+
+---
+
 ## [G2-F31-P4] - 2026-10-04
 
 ### Added — sample database schema appendix for the feature-limit specification
@@ -46,6 +77,7 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 - `docs/FEATURE_LIMITS.md`: design specification for the per-feature usage limit system
   (sliding-window counters declared on `ToolDefinition`, enforced once in `ToolsHandler.execute()`).
   Design only — no behaviour change in this release.
+
 ## [G2-F31-P1] - 2026-10-04
 
 ### Fixed — background remover handles ephemeral messages and stalled downloads
