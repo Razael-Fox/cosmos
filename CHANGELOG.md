@@ -31,6 +31,29 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F31-P11] - 2026-10-05
+
+### Added — Progressive Disclosure UX (Issue #71)
+
+- **Step 1 — Tiered `.menu`:** the no-arg `.menu` now renders the Layer 1 Core Surface
+  (`CORE_COMMANDS`, 6 pinned commands) via `formatCoreCommands`, sized to fit the 1024-char
+  image caption. `.menu all` keeps the full catalog; the previous category overview moved to
+  `.menu categories`.
+- **Step 2 — First-contact onboarding:** a one-time greeting (`tools.onboarding.welcome`) is
+  sent when the sender's `User` row does not exist at handler entry, then the handler falls
+  through so the first real command still executes. Skipped for owners/`fromMe` and
+  non-whitelisted groups.
+- **Step 3 — Confidence gate:** the parser gained rung 2 (category alias shortcut via
+  `menuService.getCategoryAliasSet()`, rendering `.downloader` / `.economy` / `.game` as
+  `.menu <category>`) and rungs 3–4 (unmatched prefix-led messages drop silently instead of
+  leaking to offline-AI/autodl). `.ai is useless`-style fragments (≤ 3 tokens, no question
+  mark, no request verb) now get a clarification prompt via `isCasualFragment` in `sara.ts`.
+- **Step 4 — Contextual inline hints:** after a successful core command, one unused adjacent
+  command is suggested (`src/utils/commandHints.ts`, in-RAM per-user usage memory; resets on
+  restart by design).
+
+---
+
 ## [G2-F31-P10] - 2026-10-05
 
 ### Added — Per-Feature Usage Limits (Issue #72)

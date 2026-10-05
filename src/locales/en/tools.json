@@ -64,6 +64,8 @@
         "prefix": "Prefix",
         "total_commands": "Commands",
         "categories_header": "COMMAND CATEGORIES",
+        "core_header": "CORE COMMANDS",
+        "core_footer": "[Core Commands] — type `{{prefix}}menu all` to see everything, or `{{prefix}}menu categories` for the category overview.",
         "category_item_count": "— {{count}} commands",
         "category_item_count_one": "— 1 command",
         "category_hint": "`{{prefix}}menu <category>` to view category commands (e.g. `{{prefix}}menu casino`)",
@@ -119,6 +121,15 @@
         "tutorial_hub_prompt": "Select a topic below to view its complete guide:",
         "tutorial_hub_tip": "Type `{{prefix}}menu tutorial <topic>` to inspect a specific guide (e.g. `{{prefix}}menu tutorial bank`).",
         "tutorial_not_found": "Tutorial topic \"{{topic}}\" not found. Please select a valid topic from the directory below:"
+    },
+    "onboarding": {
+        "welcome": "👋 *Welcome to Cosmos!*\nHere is what most people start with:\n\n• `{{prefix}}daily claim` — collect your daily reward\n• `{{prefix}}menu` — browse the command menu\n• `{{prefix}}my profile` — view your account"
+    },
+    "hints": {
+        "tip": "💡 Tip: try `{{command}}` next."
+    },
+    "sara": {
+        "clarify": "Did you mean to ask Sara something? Try: `.sara <your question>`"
     },
     "help": {
         "title": "📜 Cosmos Help Menu",

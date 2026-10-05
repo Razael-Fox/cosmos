@@ -64,6 +64,8 @@
         "prefix": "Prefix",
         "total_commands": "Perintah",
         "categories_header": "KATEGORI PERINTAH",
+        "core_header": "PERINTAH INTI",
+        "core_footer": "[Perintah Inti] — ketik `{{prefix}}menu all` untuk melihat semuanya, atau `{{prefix}}menu categories` untuk ringkasan kategori.",
         "category_item_count": "— {{count}} perintah",
         "category_item_count_one": "— 1 perintah",
         "category_hint": "`{{prefix}}menu <kategori>` untuk melihat perintah dalam kategori tertentu (contoh: `{{prefix}}menu casino`)",
@@ -119,6 +121,15 @@
         "tutorial_hub_prompt": "Pilih topik di bawah ini untuk melihat panduan lengkap:",
         "tutorial_hub_tip": "Ketik `{{prefix}}menu tutorial <topik>` untuk melihat panduan spesifik (contoh: `{{prefix}}menu tutorial bank`).",
         "tutorial_not_found": "Topik panduan \"{{topic}}\" tidak ditemukan. Silakan pilih topik yang valid dari direktori di bawah:"
+    },
+    "onboarding": {
+        "welcome": "👋 *Selamat datang di Cosmos!*\nBerikut perintah yang paling sering dipakai untuk memulai:\n\n• `{{prefix}}daily claim` — klaim hadiah harian Anda\n• `{{prefix}}menu` — jelajahi menu perintah\n• `{{prefix}}my profile` — lihat akun Anda"
+    },
+    "hints": {
+        "tip": "💡 Tips: coba `{{command}}` selanjutnya."
+    },
+    "sara": {
+        "clarify": "Apakah Anda ingin bertanya kepada Sara? Coba: `.sara <pertanyaan Anda>`"
     },
     "help": {
         "title": "📜 Menu Bantuan Cosmos",

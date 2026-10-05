@@ -1,6 +1,10 @@
 {
     "name": "cosmos",
-    "version": "G2-F31-P15",
+<<<<<<< HEAD
+    "version": "G2-F32-P0",
+=======
+    "version": "G2-F31-P11",
+>>>>>>> 7fd6538 (feat(ux): progressive disclosure — tiered menu, onboarding, confidence gate, hints (#71))
     "description": "A modern, enterprise-grade WhatsApp Bot framework",
     "repository": {
         "type": "git",

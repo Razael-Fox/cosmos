@@ -142,6 +142,24 @@ export function formatCategoryOverview(categories: CategoryInfo[], t: Translator
 }
 
 /**
+ * Formats the Layer 1 Core Commands view (no-arg `.menu`, Issue #71 Step 1).
+ * Kept compact so dashboard header + core list + footer fit the 1024-char
+ * WhatsApp image caption limit and ride as a single message.
+ */
+export function formatCoreCommands(commands: NormalizedTool[], t: TranslatorFn, prefix: string = '.'): string {
+    const headerTitle = t('tools.menu.core_header', 'CORE COMMANDS');
+    const lines: string[] = [`*${headerTitle}*`, ``];
+
+    for (const cmd of commands) {
+        const desc = resolveToolDescription(cmd, t);
+        lines.push(`- *${cmd.usage.trim()}* — _${desc}_`);
+    }
+
+    const footer = t('tools.menu.core_footer', { prefix });
+    return `${lines.join('\n')}\n\n> ${footer}`;
+}
+
+/**
  * Formats the Category Command List view (.menu <category>).
  */
 export function formatCategoryCommands(category: CategoryInfo, t: TranslatorFn, prefix: string = '.'): string {
