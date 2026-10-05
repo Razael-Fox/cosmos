@@ -1,0 +1,59 @@
+name: Create GitHub Release
+
+on:
+    push:
+        tags:
+            # Cosmos version format: G<generation>-F<feature>-P<patch>[.date][-status]
+            - 'G[0-9]*-F[0-9]*-P[0-9]*'
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Validate tag against version.json
+              # The tag's core (without optional .date / -status suffixes) must
+              # match version.json exactly — version.json is the single source
+              # of truth (Rule S).
+              run: |
+                  CORE_TAG=$(echo "$GITHUB_REF_NAME" | grep -oP '^G[0-9]+-F[0-9]+-P[0-9]+')
+                  VERSION=$(node -p "require('./version.json').version")
+                  if [ "$CORE_TAG" != "$VERSION" ]; then
+                      echo "::error::Tag '$GITHUB_REF_NAME' (core '$CORE_TAG') does not match version.json '$VERSION'."
+                      exit 1
+                  fi
+                  echo "Validated tag $GITHUB_REF_NAME against version.json $VERSION."
+
+            - name: Extract release notes from CHANGELOG.md
+              # Slice the `## [<core-tag>]` section out of CHANGELOG.md, stopping
+              # at the next release header; fall back to generated notes when
+              # the section is missing.
+              run: |
+                  CORE_TAG=$(echo "$GITHUB_REF_NAME" | grep -oP '^G[0-9]+-F[0-9]+-P[0-9]+')
+                  awk -v tag="$CORE_TAG" '
+                      $0 ~ "^## \\[" tag "\\]" { found = 1; next }
+                      found && /^## \[/ { exit }
+                      found { print }
+                  ' CHANGELOG.md | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}' > release-notes.md
+                  if [ -s release-notes.md ]; then
+                      echo "Extracted $(wc -l < release-notes.md) lines of notes for $CORE_TAG."
+                  else
+                      echo "::warning::No CHANGELOG.md section found for $CORE_TAG; falling back to auto-generated notes."
+                      echo "NOTES_FALLBACK=true" >> "$GITHUB_ENV"
+                  fi
+
+            - name: Create GitHub Release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  if [ "$NOTES_FALLBACK" = "true" ]; then
+                      gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+                  else
+                      gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+                  fi
