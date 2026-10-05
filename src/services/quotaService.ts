@@ -21,6 +21,10 @@ export interface QuotaCheckResult {
     reason?: string;
 }
 
+// The bot copy of this table (`src/services/quotaService.ts`) also carries
+// `featureLimits` for the per-feature sliding-window limiter (Issue #72). This
+// copy intentionally omits it: the API Gateway only reads group/sub-bot quotas,
+// no tool executes here, so no limiter reads those ceilings. Do not "fix" the drift.
 export const TIER_LIMITS: Record<
     SubscriptionTierName,
     { maxGroups: number; maxSubBots: number; customPrefix: boolean; economyMultiplier: number }
