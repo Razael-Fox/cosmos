@@ -2,10 +2,16 @@ import assert from 'assert';
 import path from 'path';
 import fs from 'fs';
 import { getMenuBannerBuffer, resetMenuBannerCache } from '../src/utils/menuAssets.js';
-import menuService, { MenuService, CANONICAL_CATEGORY_ORDER, CATEGORY_ICONS } from '../src/services/menuService.js';
+import menuService, {
+    MenuService,
+    CANONICAL_CATEGORY_ORDER,
+    CATEGORY_ICONS,
+    CORE_COMMANDS
+} from '../src/services/menuService.js';
 import {
     formatDashboardHeader,
     formatCategoryOverview,
+    formatCoreCommands,
     formatCategoryCommands,
     formatAllCommands,
     formatCommandDetail,
@@ -412,6 +418,61 @@ async function runTests() {
     assert(allContent.includes('CASINO'), 'Sent text must contain catalog categories');
 
     console.log('✓ Baileys hero banner attachment and entrypoints verified.');
+
+    // [Test 11] Progressive Disclosure: Tiered Menu (Issue #71, Step 1)
+    console.log('[Test 11] Testing tiered menu default (core surface vs. all vs. categories)...');
+
+    // 11.1 Core command resolution: every CORE_COMMANDS key must resolve
+    const coreCommands = menuService.getCoreCommands('en');
+    assert.strictEqual(coreCommands.length, CORE_COMMANDS.length, 'Every CORE_COMMANDS key must resolve to a tool');
+    assert(coreCommands.length >= 5 && coreCommands.length <= 8, 'Core surface must contain 5–8 commands');
+
+    // 11.2 Core view caption budget: header + core list + footer ≤ 1024 chars
+    const coreHeader = formatDashboardHeader(
+        {
+            pushName: 'Tester',
+            isOwner: false,
+            speedMs: 42,
+            uptimeSeconds: 3600,
+            lang: 'en',
+            prefix: '.',
+            totalCommands: menuService.getCatalogStats(undefined, 'en').totalCommands,
+            date: testDate
+        },
+        tEn
+    );
+    const coreView = `${coreHeader}\n\n${formatCoreCommands(coreCommands, tEn, '.')}`;
+    assert(coreView.length <= 1024, `Core menu caption must fit 1024 chars, got ${coreView.length}`);
+    assert(coreView.includes('CORE COMMANDS'), 'Core view must include the core header');
+    assert(coreView.includes('[Core Commands]'), 'Core view must include the tier footer label');
+    assert(coreView.includes('.daily claim'), 'Core view must include the daily claim command');
+
+    // 11.3 No-arg execution renders the core surface (not the category overview)
+    capturedMessages = [];
+    await helpExecute({}, mockCtx);
+    const coreContent = capturedMessages.map((m) => m.caption || m.text || '').join('\n');
+    assert(coreContent.includes('CORE COMMANDS'), 'No-arg .menu must render the core surface');
+    assert(!coreContent.includes('Navigation Tips:'), 'No-arg .menu must not render the old category overview');
+
+    // 11.4 ".menu categories" preserves the previous overview (Test 10.1 semantics relocated)
+    capturedMessages = [];
+    await helpExecute({ query: 'categories' }, mockCtx);
+    const categoriesContent = capturedMessages.map((m) => m.caption || m.text || '').join('\n');
+    assert(categoriesContent.includes('COMMAND CATEGORIES'), '.menu categories must render the category overview');
+    assert(categoriesContent.includes('Navigation Tips:'), '.menu categories must keep the navigation tips');
+
+    // 11.5 Indonesian core view parity
+    const coreViewId = formatCoreCommands(menuService.getCoreCommands('id'), tId, '.');
+    assert(coreViewId.includes('PERINTAH INTI'), 'Indonesian core view must have localized header');
+    assert(coreViewId.includes('[Perintah Inti]'), 'Indonesian core view must have localized footer');
+
+    // 11.6 Category alias vocabulary (Issue #71, Step 3 rung 2)
+    const aliasSet = menuService.getCategoryAliasSet();
+    for (const alias of ['downloader', 'downloaders', 'economy', 'game', 'ai', 'grup', 'ekonomi']) {
+        assert(aliasSet.has(alias), `Category alias set must contain '${alias}'`);
+    }
+    assert(!aliasSet.has('nonexistent_alias_xyz'), 'Category alias set must not contain unknown aliases');
+    console.log('✓ Tiered menu default, category preservation, and alias vocabulary verified.');
 
     console.log('--- ALL MENU & HELP SYSTEM TESTS PASSED SUCCESSFULLY! ---');
 }

@@ -46,6 +46,8 @@ import {
 import { hasActivePlaySession, getActivePlaySession } from '#utils/playSession.js';
 import { AgentConfirmationManager } from '#services/agentEngine/confirmationManager.js';
 import { AgentLocationStager } from '#services/agentEngine/locationStager.js';
+import menuService from '#services/menuService.js';
+import { recordCommandUse, pickHintCommand } from '#utils/commandHints.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
     const name = toolName.toLowerCase();
@@ -329,12 +331,24 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         }
     }
 
+    let isNewUser = false;
     if (senderJidDb) {
         const canonicalJid = senderJidDb.includes('@')
             ? senderJidDb
             : `${senderJidDb.replace(/\D/g, '')}@s.whatsapp.net`;
         const cleanDigits = canonicalJid.split('@')[0].replace(/\D/g, '');
         const newWaName = msg.pushName?.trim() || null;
+
+        // First-contact signal (Issue #71, Step 2): the User row does not exist
+        // yet when this handler pass starts. Checked synchronously so the
+        // onboarding reply can precede the user's very first command.
+        if (!msg.key.fromMe) {
+            try {
+                isNewUser = !(await prisma.user.findUnique({ where: { id: canonicalJid }, select: { id: true } }));
+            } catch {
+                /* default to not-new on lookup failure */
+            }
+        }
 
         (async () => {
             try {
@@ -668,6 +682,23 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
             if (handledJobSelect) return;
         }
 
+        // Layer 0 first-contact onboarding (Issue #71, Step 2): greet once, then
+        // fall through so the user's first real command still executes.
+        if (isNewUser && !isOwner) {
+            try {
+                const groupAllowed = !jid.endsWith('@g.us') || (await isGroupWhitelisted(jid));
+                if (groupAllowed) {
+                    await sock.sendMessage(
+                        jid,
+                        { text: t('tools.onboarding.welcome', { prefix: activePrefix }) },
+                        { quoted: msg }
+                    );
+                }
+            } catch (err) {
+                console.error('[Onboarding] Failed to send first-contact greeting:', err);
+            }
+        }
+
         if (isCommand) {
             let commandName: string;
             let argsStr: string;
@@ -931,10 +962,25 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                     commandName,
                     argsStr
                 });
+                // Contextual inline hints (Issue #71, Step 4): track usage by the
+                // canonical English display name so aliases resolve identically.
+                const canonicalHintKey = (tool.definition?.displayNames?.en || tool.definition?.name || '')
+                    .toLowerCase()
+                    .trim();
+                if (senderRaw && canonicalHintKey) {
+                    recordCommandUse(senderRaw, canonicalHintKey);
+                }
                 if (result && typeof result === 'string' && result.trim().length > 0) {
-                    const matches = result.match(/@(\d+)/g);
+                    let finalResult = result;
+                    if (senderRaw && canonicalHintKey && !result.startsWith('❌')) {
+                        const hintCommand = pickHintCommand(senderRaw, canonicalHintKey);
+                        if (hintCommand) {
+                            finalResult = `${result}\n${t('tools.hints.tip', { command: `${activePrefix}${hintCommand}` })}`;
+                        }
+                    }
+                    const matches = finalResult.match(/@(\d+)/g);
                     const mentions = matches ? formatMentions(matches.map((m) => m.substring(1))) : [];
-                    await sock.sendMessage(jid, { text: result, mentions }, { quoted: msg });
+                    await sock.sendMessage(jid, { text: finalResult, mentions }, { quoted: msg });
                 }
 
                 const legacyCanonical = getLegacyCanonical(commandName);
@@ -944,6 +990,32 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
                 }
                 return;
             }
+
+            // Confidence gate (Issue #71, Step 3). Rung 1 (longest-prefix match)
+            // missed above, so the token is not a registered command.
+            // Rung 2: the token may be a category alias (`.downloader`, `.economy`,
+            // `.game`) — render that category menu exactly as `.menu <category>`.
+            const { body: gateBody } = splitCommandPrefix(trimmedText, activePrefix);
+            const gateBodyLower = gateBody.trim().toLowerCase();
+            const firstGateToken = gateBodyLower.split(/\s+/)[0] || '';
+            const categoryAliases = menuService.getCategoryAliasSet();
+            const aliasHit = categoryAliases.has(gateBodyLower)
+                ? gateBodyLower
+                : categoryAliases.has(firstGateToken)
+                  ? firstGateToken
+                  : null;
+            if (aliasHit) {
+                if (jid.endsWith('@g.us') && !isOwner && !(await isGroupWhitelisted(jid))) return;
+                await toolsHandler.execute(
+                    'help',
+                    { query: aliasHit },
+                    { sock, msg, jid, t, lang: chatLang, commandName: '.menu', argsStr: aliasHit }
+                );
+            }
+            // Rungs 3–4: a prefix-led message matching no command or category is
+            // natural language or noise (`.my friend is getting married—...`) —
+            // drop it silently instead of leaking it to the AI or autodl paths.
+            return;
         }
 
         // Offline AI Responder

@@ -6,6 +6,7 @@ import { commandNameWords, resolveCommandArgs } from '../utils/commandNormalize.
 import {
     formatDashboardHeader,
     formatCategoryOverview,
+    formatCoreCommands,
     formatCategoryCommands,
     formatAllCommands,
     formatCommandDetail,
@@ -102,7 +103,10 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
         const topic = queryLower.replace(/^(tutorial|panduan)\s*/, '').trim();
         outputText = menuService.getTutorial(topic, lang, t, '.');
     } else if (!rawQuery) {
-        // No argument: Show Category Overview with Dashboard Header
+        // No argument: Layer 1 Core Surface (Progressive Disclosure, Issue #71)
+        outputText = `${dashboardHeader}\n\n${formatCoreCommands(menuService.getCoreCommands(lang), t, '.')}`;
+    } else if (queryLower === 'categories' || queryLower === 'kategori') {
+        // "categories": the previous no-arg overview, preserved under an explicit keyword
         outputText = `${dashboardHeader}\n\n${formatCategoryOverview(menuService.getCategoryList(undefined, lang, t), t, '.')}`;
     } else if (queryLower === 'all') {
         // "all": Full command catalog

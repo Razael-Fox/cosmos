@@ -46,6 +46,12 @@ export const CANONICAL_CATEGORY_ORDER: readonly string[] = [
     'Group',
     'System & Help'
 ];
+/**
+ * Layer 1 "Core Surface" (Progressive Disclosure, Issue #71): the small set of
+ * commands shown by the no-arg `.menu`. Keys must resolve via `findCommand`.
+ */
+export const CORE_COMMANDS: readonly string[] = ['daily claim', 'balance', 'work', 'bank', 'my profile', 'help'];
+
 export const CATEGORY_SLUGS: Record<string, string> = {
     Casino: 'casino',
     Games: 'games',
@@ -129,6 +135,27 @@ const CATEGORY_MAP: Record<string, string> = {
 
 export class MenuService {
     private cachedTools: NormalizedTool[] | null = null;
+    private categoryAliasSet: Set<string> | null = null;
+
+    /**
+     * Resolves the Layer 1 core command surface (Issue #71, Step 1).
+     */
+    public getCoreCommands(lang: string = 'id'): NormalizedTool[] {
+        return CORE_COMMANDS.map((key) => this.findCommand(key, undefined, lang)).filter(
+            (tool): tool is NormalizedTool => tool !== null
+        );
+    }
+
+    /**
+     * Exposes the full category alias vocabulary derived from CATEGORY_MAP
+     * (Issue #71, Step 3 rung 2) for O(1) lookup by the command parser.
+     */
+    public getCategoryAliasSet(): Set<string> {
+        if (!this.categoryAliasSet) {
+            this.categoryAliasSet = new Set(Object.keys(CATEGORY_MAP));
+        }
+        return this.categoryAliasSet;
+    }
 
     /**
      * Clears internal cache of normalized tools.
