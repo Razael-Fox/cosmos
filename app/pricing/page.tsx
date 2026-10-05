@@ -29,6 +29,24 @@ const COMPARISON_CONTENT: Record<'id' | 'en', { title: string; rows: ComparisonR
             },
             { feature: 'Bonus Multiplier Ekonomi', free: '1.0x', subsidized: '1.05x', partner: '1.15x' },
             {
+                feature: 'Batas Stiker & Brat',
+                free: '5 / 10 menit',
+                subsidized: '15 / 10 menit',
+                partner: '40 / 10 menit'
+            },
+            {
+                feature: 'Batas Unduhan Media',
+                free: '3 / 10 menit',
+                subsidized: '10 / 10 menit',
+                partner: '25 / 10 menit'
+            },
+            {
+                feature: 'Batas Ucapan ke Teks',
+                free: '5 / 10 menit',
+                subsidized: '20 / 10 menit',
+                partner: '50 / 10 menit'
+            },
+            {
                 feature: 'Prioritas Antrean Perintah',
                 free: 'Standar',
                 subsidized: 'Tinggi',
@@ -56,6 +74,19 @@ const COMPARISON_CONTENT: Record<'id' | 'en', { title: string; rows: ComparisonR
                 partner: 'Custom per sub-bot'
             },
             { feature: 'Economy Bonus Multiplier', free: '1.0x', subsidized: '1.05x', partner: '1.15x' },
+            { feature: 'Sticker & Brat Limit', free: '5 / 10 min', subsidized: '15 / 10 min', partner: '40 / 10 min' },
+            {
+                feature: 'Media Download Limit',
+                free: '3 / 10 min',
+                subsidized: '10 / 10 min',
+                partner: '25 / 10 min'
+            },
+            {
+                feature: 'Speech-to-Text Limit',
+                free: '5 / 10 min',
+                subsidized: '20 / 10 min',
+                partner: '50 / 10 min'
+            },
             { feature: 'Command Queue Priority', free: 'Standard', subsidized: 'High', partner: 'Top Priority' },
             { feature: 'Early Access to New Features', free: false, subsidized: false, partner: true },
             { feature: 'Direct Partner VIP Support', free: false, subsidized: false, partner: true },
