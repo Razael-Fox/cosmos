@@ -190,7 +190,37 @@ export default function PricingPage() {
                         </h3>
                     </div>
 
-                    <div className="relative rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+                    {/* Mobile: stacked card layout */}
+                    <div className="md:hidden space-y-3">
+                        {comparisonRows.map((row, idx) => (
+                            <div key={idx} className="rounded-xl border border-border bg-card p-4 space-y-2">
+                                <p className="text-xs font-semibold text-foreground">{row.feature}</p>
+                                <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+                                    <div className="rounded-lg bg-muted/50 py-1.5">
+                                        <span className="block text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">{headers.free}</span>
+                                        {typeof row.free === 'boolean' ? (
+                                            row.free ? <Check className="w-3.5 h-3.5 text-emerald-500 mx-auto" weight="bold" /> : <Minus className="w-3.5 h-3.5 text-muted-foreground/60 mx-auto" />
+                                        ) : row.free}
+                                    </div>
+                                    <div className="rounded-lg bg-primary/[0.06] border border-primary/20 py-1.5">
+                                        <span className="block text-[9px] uppercase tracking-wider text-primary font-semibold mb-0.5">{headers.subsidized}</span>
+                                        {typeof row.subsidized === 'boolean' ? (
+                                            row.subsidized ? <Check className="w-3.5 h-3.5 text-emerald-500 mx-auto" weight="bold" /> : <Minus className="w-3.5 h-3.5 text-muted-foreground/60 mx-auto" />
+                                        ) : row.subsidized}
+                                    </div>
+                                    <div className="rounded-lg bg-muted/50 py-1.5">
+                                        <span className="block text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">{headers.partner}</span>
+                                        {typeof row.partner === 'boolean' ? (
+                                            row.partner ? <Check className="w-3.5 h-3.5 text-emerald-500 mx-auto" weight="bold" /> : <Minus className="w-3.5 h-3.5 text-muted-foreground/60 mx-auto" />
+                                        ) : row.partner}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop: full table */}
+                    <div className="hidden md:block relative rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-separate border-spacing-0 text-xs sm:text-sm min-w-[580px]">
                                 <thead>
