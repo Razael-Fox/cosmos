@@ -192,11 +192,11 @@ export default function RegisterPage() {
                         </Field>
 
                         {/* Optional Email (collapsed) */}
-                        <details className="rounded-xl border border-border bg-background px-4 py-2.5">
-                            <summary className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors list-none">
+                        <details className="rounded-xl border border-border bg-background overflow-hidden">
+                            <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold text-muted-foreground [&::-webkit-details-marker]:hidden">
                                 {t.auth.emailOptionalToggle}
                             </summary>
-                            <div className="pt-3">
+                            <div className="px-4 pb-4">
                                 <Field label={t.auth.emailLabel} htmlFor="email">
                                     <div className="relative">
                                         <EnvelopeSimple className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
