@@ -9,6 +9,17 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P4] - 2026-10-07
+
+### Changed — Stop Tracking the yt-dlp Zipapp
+
+- Removed the pinned `bin/yt-dlp` zipapp from version control and gitignored
+  `bin/`. Docker images already install the latest yt-dlp, so use
+  `pnpm docker:dev` for downloader work. A local copy under `bin/` is still
+  picked up as a fallback when present.
+
+---
+
 ## [G2-F32-P3] - 2026-10-07
 
 ### Changed — Codebase Structure Cleanup

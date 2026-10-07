@@ -136,7 +136,7 @@ All commands use a `.` prefix. Run `.menu [category|all]` for the full in-bot br
 ```text
 cosmos/
 ├── assets/                 # Static assets: menu banners, KTP template, fonts
-├── bin/                    # Local yt-dlp fallback binary
+├── bin/                    # Optional local yt-dlp (gitignored; use `pnpm docker:dev` instead)
 ├── docker/                 # Dockerfiles, nginx, PM2 config, entrypoint
 ├── docs/                   # Versioning spec, command reference, MCP operator guide (docs/mcp)
 ├── prisma/schema.prisma    # SQLite schema (User, BankAccount, Loan, Jobs, ...)
