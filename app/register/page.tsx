@@ -60,7 +60,6 @@ export default function RegisterPage() {
     const [directExpiresIn, setDirectExpiresIn] = useState(300);
 
     const cleanPhone = phone.replace(/\D/g, '');
-    const jidPreview = cleanPhone ? `${cleanPhone}@s.whatsapp.net` : null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -148,57 +147,16 @@ export default function RegisterPage() {
                     <p className="text-xs text-muted-foreground">{t.auth.registerSubtitle}</p>
                 </div>
 
-                {/* Mode Selector Segmented Control */}
-                <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-2xl border border-border">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setMode('inverted');
-                            setErrorMsg(null);
-                        }}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                            mode === 'inverted'
-                                ? 'bg-card text-foreground shadow-xs'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                        aria-pressed={mode === 'inverted'}
-                    >
-                        <WhatsappLogo className="w-4 h-4 text-emerald-500" weight="fill" />
-                        <span className="truncate">{t.auth.invertedTab}</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setMode('direct');
-                            setErrorMsg(null);
-                        }}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                            mode === 'direct'
-                                ? 'bg-card text-foreground shadow-xs'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                        aria-pressed={mode === 'direct'}
-                    >
-                        <Lightning className="w-4 h-4 text-amber-500" weight="fill" />
-                        <span className="truncate">{t.auth.directTab}</span>
-                    </button>
-                </div>
-
                 {/* Form Card */}
                 <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-md space-y-5">
-                    {mode === 'inverted' ? (
-                        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs flex items-start gap-2.5">
-                            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" weight="bold" />
-                            <span>
-                                <strong>Zero Ban Risk:</strong> {t.auth.invertedInfo}
-                            </span>
-                        </div>
-                    ) : (
-                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
-                            <Lightning className="w-4 h-4 shrink-0 mt-0.5" weight="fill" />
-                            <span>{t.auth.directInfo}</span>
-                        </div>
-                    )}
+                    <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {mode === 'inverted' ? (
+                            <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-500" weight="bold" />
+                        ) : (
+                            <Lightning className="w-4 h-4 shrink-0 text-amber-500" weight="fill" />
+                        )}
+                        <span>{mode === 'inverted' ? t.auth.invertedHint : t.auth.directHint}</span>
+                    </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Phone */}
@@ -207,7 +165,7 @@ export default function RegisterPage() {
                             htmlFor="phone"
                             required
                             error={phoneError}
-                            hint={jidPreview ? `${t.auth.phonePreviewPrefix} ${jidPreview}` : t.auth.phoneHelp}
+                            hint={t.auth.phoneHelp}
                         >
                             <div className="relative">
                                 <WhatsappLogo className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -227,21 +185,28 @@ export default function RegisterPage() {
                             </div>
                         </Field>
 
-                        {/* Optional Email */}
-                        <Field label={t.auth.emailLabel} htmlFor="email">
-                            <div className="relative">
-                                <EnvelopeSimple className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder={t.auth.emailPlaceholder}
-                                    autoComplete="email"
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
-                                />
+                        {/* Optional Email (collapsed) */}
+                        <details className="rounded-xl border border-border bg-background px-4 py-2.5">
+                            <summary className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors list-none">
+                                {t.auth.emailOptionalToggle}
+                            </summary>
+                            <div className="pt-3">
+                                <Field label={t.auth.emailLabel} htmlFor="email">
+                                    <div className="relative">
+                                        <EnvelopeSimple className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder={t.auth.emailPlaceholder}
+                                            autoComplete="email"
+                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                                        />
+                                    </div>
+                                </Field>
                             </div>
-                        </Field>
+                        </details>
 
                         {/* Password */}
                         <Field label={t.auth.passwordLabel} htmlFor="password" error={passwordError}>
@@ -341,7 +306,30 @@ export default function RegisterPage() {
                         </button>
                     </form>
 
-                    <div className="pt-2 text-center text-xs text-muted-foreground">
+                    <div className="pt-1 flex flex-col items-center gap-2 text-xs text-center">
+                        {mode === 'inverted' ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMode('direct');
+                                    setErrorMsg(null);
+                                }}
+                                className="text-muted-foreground hover:text-primary transition-colors font-medium cursor-pointer"
+                            >
+                                {t.auth.directFallback}
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMode('inverted');
+                                    setErrorMsg(null);
+                                }}
+                                className="text-muted-foreground hover:text-primary transition-colors font-medium cursor-pointer"
+                            >
+                                {t.auth.invertedFallback}
+                            </button>
+                        )}
                         <Link href="/login" className="hover:text-primary transition-colors font-medium">
                             {t.auth.alreadyHaveAccount}
                         </Link>

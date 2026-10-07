@@ -190,7 +190,6 @@ const rawDictionary = {
             phoneLabel: 'Nomor WhatsApp',
             phonePlaceholder: '628123456789',
             phoneHelp: 'Gunakan kode negara tanpa tanda plus atau awalan 0 (misal: 628...)',
-            phonePreviewPrefix: 'Preview JID Akun:',
             usernameLabel: 'Username (Opsional)',
             usernamePlaceholder: 'username_anda',
             emailLabel: 'Email (Opsional)',
@@ -200,8 +199,11 @@ const rawDictionary = {
             confirmPasswordLabel: 'Konfirmasi Kata Sandi',
             identifierLabel: 'Nomor WhatsApp atau Username',
             identifierPlaceholder: '628123456789 atau username',
-            invertedTab: 'Verifikasi WhatsApp (Direkomendasikan)',
-            directTab: 'OTP Langsung (Alternatif)',
+            invertedHint: 'Kirim pesan dari WhatsApp Anda — tanpa risiko banned.',
+            directHint: 'Bot mengirim kode 6-digit ke WhatsApp Anda.',
+            directFallback: 'Kendala verifikasi? Gunakan kode OTP',
+            invertedFallback: 'Kembali ke Verifikasi WhatsApp',
+            emailOptionalToggle: 'Tambahkan email (opsional)',
             turnstileRequired: 'Silakan selesaikan verifikasi Cloudflare Turnstile terlebih dahulu.',
             submitRegister: 'Daftar & Verifikasi WhatsApp',
             submitRegisterDirect: 'Kirim Kode OTP ke WhatsApp',
@@ -213,11 +215,7 @@ const rawDictionary = {
             invalidPhone: 'Masukkan nomor WhatsApp yang valid (minimal 10 digit).',
             passwordMinLength: 'Kata sandi minimal 6 karakter.',
             passwordMismatch: 'Konfirmasi kata sandi tidak cocok.',
-            loginFailed: 'Login gagal. Periksa kembali akun dan kata sandi Anda.',
-            invertedInfo:
-                'Anda mengirim pesan verifikasi ke bot terlebih dahulu, sehingga WhatsApp memvalidasi interaksi sebagai pesan organik.',
-            directInfo: 'Bot akan mengirimkan kode OTP 6-digit ke nomor WhatsApp Anda. Dibatasi 5 kali per 15 menit.',
-            forgotPasswordHint: 'Lupa kata sandi? Hubungi tim Sales/Admin untuk reset akun.'
+            loginFailed: 'Login gagal. Periksa kembali akun dan kata sandi Anda.'
         },
         invertedVerify: {
             title: 'Verifikasi Kepemilikan WhatsApp',
@@ -600,7 +598,6 @@ const rawDictionary = {
             phoneLabel: 'WhatsApp Phone Number',
             phonePlaceholder: '628123456789',
             phoneHelp: 'Use international country code without plus sign or leading zero (e.g. 628...)',
-            phonePreviewPrefix: 'Account JID Preview:',
             usernameLabel: 'Username (Optional)',
             usernamePlaceholder: 'your_username',
             emailLabel: 'Email (Optional)',
@@ -610,8 +607,11 @@ const rawDictionary = {
             confirmPasswordLabel: 'Confirm Password',
             identifierLabel: 'WhatsApp Phone or Username',
             identifierPlaceholder: '628123456789 or username',
-            invertedTab: 'WhatsApp Verify (Recommended)',
-            directTab: 'Direct OTP (Fallback)',
+            invertedHint: 'Send a message from your WhatsApp — zero ban risk.',
+            directHint: 'The bot sends a 6-digit code to your WhatsApp.',
+            directFallback: 'Trouble verifying? Use an OTP code',
+            invertedFallback: 'Back to WhatsApp verification',
+            emailOptionalToggle: 'Add email (optional)',
             turnstileRequired: 'Please complete the Cloudflare Turnstile challenge first.',
             submitRegister: 'Register & Verify via WhatsApp',
             submitRegisterDirect: 'Send OTP Code to WhatsApp',
@@ -623,12 +623,7 @@ const rawDictionary = {
             invalidPhone: 'Please enter a valid WhatsApp number (at least 10 digits).',
             passwordMinLength: 'Password must be at least 6 characters.',
             passwordMismatch: 'Password confirmation does not match.',
-            loginFailed: 'Login failed. Please check your account and password.',
-            invertedInfo:
-                'You send the verification message to the bot first, so WhatsApp validates the interaction as an organic message.',
-            directInfo:
-                'The bot will send a 6-digit OTP code to your WhatsApp number. Limited to 5 requests per 15 minutes.',
-            forgotPasswordHint: 'Forgot password? Contact Sales/Admin to reset your credentials.'
+            loginFailed: 'Login failed. Please check your account and password.'
         },
         invertedVerify: {
             title: 'Verify WhatsApp Ownership',

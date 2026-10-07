@@ -144,7 +144,6 @@ export default function LoginPage() {
                         <Link href="/register" className="hover:text-primary transition-colors font-medium">
                             {t.auth.noAccount}
                         </Link>
-                        <p className="text-[11px] text-muted-foreground/70">{t.auth.forgotPasswordHint}</p>
                     </div>
                 </div>
             </div>
