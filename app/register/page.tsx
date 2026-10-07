@@ -237,6 +237,33 @@ export default function RegisterPage() {
                                     {showPassword ? <EyeSlash className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
+                            {password.length > 0 && (
+                                <ul className="flex flex-wrap gap-x-3 gap-y-1 pt-1" aria-live="polite">
+                                    {[
+                                        { ok: password.length >= 8, label: t.auth.passwordRuleLength },
+                                        { ok: /[A-Z]/.test(password), label: t.auth.passwordRuleUpper },
+                                        { ok: /[a-z]/.test(password), label: t.auth.passwordRuleLower },
+                                        { ok: /\d/.test(password), label: t.auth.passwordRuleDigit },
+                                        { ok: /[^A-Za-z0-9]/.test(password), label: t.auth.passwordRuleSymbol }
+                                    ].map((rule) => (
+                                        <li
+                                            key={rule.label}
+                                            className={`flex items-center gap-1 text-[11px] font-medium ${
+                                                rule.ok
+                                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                                    : 'text-muted-foreground'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`w-1.5 h-1.5 rounded-full ${
+                                                    rule.ok ? 'bg-emerald-500' : 'bg-muted-foreground/40'
+                                                }`}
+                                            />
+                                            {rule.label}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </Field>
 
                         {/* Confirm Password (only if password provided) */}
@@ -266,6 +293,20 @@ export default function RegisterPage() {
                                         )}
                                     </button>
                                 </div>
+                                {confirmPassword.length > 0 && (
+                                    <p
+                                        aria-live="polite"
+                                        className={`text-[11px] font-medium ${
+                                            confirmPassword === password
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-destructive'
+                                        }`}
+                                    >
+                                        {confirmPassword === password
+                                            ? t.auth.passwordMatch
+                                            : t.auth.passwordMismatch}
+                                    </p>
+                                )}
                             </Field>
                         )}
 
