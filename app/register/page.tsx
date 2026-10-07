@@ -23,6 +23,10 @@ import { DirectOtpModal } from '@/components/DirectOtpModal';
 import { AuthShell } from '@/components/AuthShell';
 import { Field } from '@/components/ui/field';
 
+// Mirrors api cryptoService.isStrongPassword (separate deployables, keep in sync).
+const isStrongPassword = (pw: string): boolean =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(pw);
+
 export default function RegisterPage() {
     const { t } = useTranslation();
     const [mode, setMode] = useState<'inverted' | 'direct'>('inverted');
@@ -72,8 +76,8 @@ export default function RegisterPage() {
             return;
         }
 
-        if (password && password.length < 6) {
-            setPasswordError(t.auth.passwordMinLength);
+        if (password && !isStrongPassword(password)) {
+            setPasswordError(t.auth.passwordComplexity);
             return;
         }
 

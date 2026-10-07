@@ -213,7 +213,7 @@ const rawDictionary = {
             loading: 'Memproses...',
             orDivider: 'atau',
             invalidPhone: 'Masukkan nomor WhatsApp yang valid (minimal 10 digit).',
-            passwordMinLength: 'Kata sandi minimal 6 karakter.',
+            passwordComplexity: 'Kata sandi minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol.',
             passwordMismatch: 'Konfirmasi kata sandi tidak cocok.',
             loginFailed: 'Login gagal. Periksa kembali akun dan kata sandi Anda.'
         },
@@ -621,7 +621,7 @@ const rawDictionary = {
             loading: 'Processing...',
             orDivider: 'or',
             invalidPhone: 'Please enter a valid WhatsApp number (at least 10 digits).',
-            passwordMinLength: 'Password must be at least 6 characters.',
+            passwordComplexity: 'Password must be at least 8 characters with uppercase, lowercase, number, and symbol.',
             passwordMismatch: 'Password confirmation does not match.',
             loginFailed: 'Login failed. Please check your account and password.'
         },
