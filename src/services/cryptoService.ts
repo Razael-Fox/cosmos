@@ -58,6 +58,14 @@ export function buildClickToChatUrl(botNumber: string, token: string): { univers
 }
 
 /**
+ * Password complexity gate for registration: minimum 8 characters with at
+ * least one lowercase letter, uppercase letter, digit, and symbol.
+ */
+export function isStrongPassword(password: string): boolean {
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(password);
+}
+
+/**
  * Secure password hashing using scrypt with a random 16-byte salt.
  * Formatted as "salt:hash".
  */

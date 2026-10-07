@@ -11,6 +11,7 @@ import {
     generateInvertedToken,
     buildClickToChatUrl,
     hashPassword,
+    isStrongPassword,
     verifyPassword
 } from '../services/cryptoService.js';
 import { verifyTurnstileToken } from '../services/turnstileService.js';
@@ -78,7 +79,14 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
         }
 
         let passwordHash: string | null = null;
-        if (body.password && typeof body.password === 'string' && body.password.length >= 6) {
+        if (typeof body.password === 'string' && body.password.length > 0) {
+            if (!isStrongPassword(body.password)) {
+                return reply.status(400).send({
+                    error: 'WEAK_PASSWORD',
+                    message:
+                        'Password must be at least 8 characters long and include uppercase, lowercase, number, and symbol.'
+                });
+            }
             passwordHash = hashPassword(body.password);
         }
 
@@ -175,7 +183,14 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
         }
 
         let passwordHash: string | null = null;
-        if (body.password && typeof body.password === 'string' && body.password.length >= 6) {
+        if (typeof body.password === 'string' && body.password.length > 0) {
+            if (!isStrongPassword(body.password)) {
+                return reply.status(400).send({
+                    error: 'WEAK_PASSWORD',
+                    message:
+                        'Password must be at least 8 characters long and include uppercase, lowercase, number, and symbol.'
+                });
+            }
             passwordHash = hashPassword(body.password);
         }
 
