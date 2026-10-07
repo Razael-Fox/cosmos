@@ -13,7 +13,7 @@ import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.j
 import { seedItems } from '#seeds/items.js';
 import { seedProperties } from '#seeds/properties.js';
 import { describeVersion, getVersionInfo } from '#utils/versioning.js';
-import { initStatusNotifier } from '#services/statusNotifier/index.js';
+import { initStatusNotifier, emitBootLifecycle, installLifecycleShutdownHook } from '#services/statusNotifier/index.js';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -30,6 +30,8 @@ try {
 // Boot the external status notification subsystem (health, DB guard, issue log,
 // outbox retry worker, audit digest, and global error handlers).
 initStatusNotifier();
+installLifecycleShutdownHook();
+emitBootLifecycle();
 
 // Start auto backup (on startup and daily at 00:00 WIB)
 startAutoBackup();

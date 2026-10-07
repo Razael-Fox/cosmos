@@ -9,6 +9,22 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P3] - 2026-10-07
+
+### Added — Bot/Server Lifecycle Notifications (Discord, Slack, WhatsApp Channel)
+
+- New `statusNotifier` events with per-channel titles: `BOT_STARTED`,
+  `BOT_RESTARTED`, `BOT_STOPPED`, `SERVER_BOOTED`, `SERVER_REBOOTED`.
+  Bot lifecycle uses process wording (start/restart/stop); server lifecycle
+  uses machine wording (boot/reboot). `SERVER_SHUTDOWN` is deliberately
+  omitted: from inside the container a host shutdown is indistinguishable
+  from a routine stop/redeploy, so it would false-fire on every deploy.
+- Restart detection via a consumed graceful-stop marker; server reboot
+  detection via kernel boot ID. All events are `INFO` severity, so they stay
+  console-only unless `STATUS_NOTIFY_MIN_SEVERITY=INFO` is configured.
+
+---
+
 ## [G2-F33-P2] - 2026-10-07
 
 ### Fixed — `.check chid` Review Findings (PR #82)

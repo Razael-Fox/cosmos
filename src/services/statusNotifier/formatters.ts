@@ -23,6 +23,11 @@ const SEVERITY_ICONS: Record<NotifySeverity, string> = {
 const EVENT_TITLES: Record<NotifyEvent, string> = {
     BOT_DOWN: 'Bot Down',
     BOT_RECONNECTED: 'Bot Reconnected',
+    BOT_STARTED: 'Bot Started',
+    BOT_RESTARTED: 'Bot Restarted',
+    BOT_STOPPED: 'Bot Stopped',
+    SERVER_BOOTED: 'Server Booted',
+    SERVER_REBOOTED: 'Server Rebooted',
     DB_MISSING: 'Database Missing',
     DB_CORRUPT: 'Database Corrupt',
     DB_BACKUP_SUCCESS: 'Database Backup Delivered',

@@ -8,6 +8,7 @@
 import cron from 'node-cron';
 import { getStatusNotifierConfig, logStatusNotifierConfig } from './config.js';
 import { notify, notifyTest, getChannelHealth } from './notifier.js';
+import { emitBootLifecycle, installLifecycleShutdownHook } from './lifecycle.js';
 import { recordIssue, flushIssues, startIssueLogger, stopIssueLogger } from './issueLogger.js';
 import { startHealthMonitor, stopHealthMonitor, collectHealth } from './healthMonitor.js';
 import { startDbGuard, stopDbGuard, inspectDatabase } from './dbGuard.js';
@@ -19,6 +20,8 @@ export {
     notify,
     notifyTest,
     getChannelHealth,
+    emitBootLifecycle,
+    installLifecycleShutdownHook,
     recordIssue,
     flushIssues,
     sendAuditDigest,
