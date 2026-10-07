@@ -12,7 +12,7 @@ export function Footer() {
     const salesNumber = (process.env.NEXT_PUBLIC_SALES_NUMBER || '628123456789').replace(/\D/g, '');
 
     return (
-        <footer className="border-t border-border bg-card/60 backdrop-blur-xs mt-auto">
+        <footer className="border-t border-border bg-card md:bg-card/60 md:backdrop-blur-xs mt-auto">
             <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Brand & Mission */}
@@ -116,10 +116,7 @@ export function Footer() {
                                 href="/status"
                                 className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group"
                             >
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 <span className="font-medium text-foreground group-hover:text-primary transition-colors">
                                     {t.footer.statusText} →
                                 </span>

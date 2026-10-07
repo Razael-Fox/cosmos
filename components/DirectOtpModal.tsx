@@ -105,7 +105,7 @@ export function DirectOtpModal({ phone, initialExpiresIn = 300, onClose }: Direc
             role="dialog"
             aria-modal="true"
             aria-label={t.directOtp.title}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-200"
         >
             <div className="w-full max-w-md rounded-3xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-6 relative">
                 <button

@@ -808,9 +808,6 @@ export default function DashboardPage() {
                                                     >
                                                         <div className="min-w-0 flex items-center gap-2.5">
                                                             <div className="relative flex items-center justify-center shrink-0">
-                                                                {isConnected && (
-                                                                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-                                                                )}
                                                                 <span
                                                                     className={`relative inline-flex rounded-full h-2 w-2 ${
                                                                         isConnected ? 'bg-emerald-500' : 'bg-muted-foreground/60'
@@ -1053,7 +1050,7 @@ export default function DashboardPage() {
                         role="dialog"
                         aria-modal="true"
                         aria-label={t.dashboard.groupsCard.accountGroupsTitle}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-200"
                     >
                         <div className="w-full max-w-xl max-h-[90vh] rounded-3xl bg-card p-6 md:p-8 shadow-2xl border border-border flex flex-col gap-4 overflow-hidden">
                             {/* Modal Header */}

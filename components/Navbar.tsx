@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { SignOut, List, X, User } from '@phosphor-icons/react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from '@/lib/i18n';
 import { clearStoredToken, getUserProfile, getProfilePhoto } from '@/lib/api';
 import type { UserProfile } from '@/lib/types';
@@ -140,7 +139,7 @@ export function Navbar() {
 
     return (
         <>
-            <header className="sticky top-0 z-40 w-full border-b border-border bg-background/85 backdrop-blur-md transition-colors">
+            <header className="sticky top-0 z-40 w-full border-b border-border bg-background md:bg-background/85 md:backdrop-blur-md transition-colors">
                 <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
                     {/* Brand */}
                     <Link href="/" className="flex items-center gap-2.5 group">
@@ -297,62 +296,24 @@ export function Navbar() {
                 </div>
             </header>
 
-            {/* Mobile Backdrop & Drawer with macOS Dock Genie Expansion Animation */}
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <>
-                        {/* Mobile Backdrop Overlay */}
-                        <motion.div
-                            key="mobile-nav-backdrop"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.18, ease: 'easeOut' }}
-                            className="fixed inset-0 z-40 bg-black/50 md:hidden pointer-events-auto"
-                            onClick={closeMenu}
-                            aria-hidden="true"
-                        />
+            {/* Mobile Backdrop & Drawer (CSS-only enter animation; ponytail: no exit tween, unmounts instantly — add data-state exit if users complain) */}
+            {mobileMenuOpen && (
+                <>
+                    {/* Mobile Backdrop Overlay */}
+                    <div
+                        className="fixed inset-0 z-40 bg-black/50 md:hidden pointer-events-auto animate-in fade-in duration-150"
+                        onClick={closeMenu}
+                        aria-hidden="true"
+                    />
 
-                        {/* Mobile Drawer Panel (Hardware-accelerated genie expansion) */}
-                        <motion.div
-                            key="mobile-nav-drawer-panel"
+                        {/* Mobile Drawer Panel */}
+                        <div
                             id="mobile-nav-drawer"
                             role="dialog"
                             aria-modal="true"
                             aria-label="Mobile Navigation"
-                            initial={{
-                                opacity: 0,
-                                scaleY: 0.25,
-                                scaleX: 0.5,
-                                y: 40,
-                            }}
-                            animate={{
-                                opacity: 1,
-                                scaleY: 1,
-                                scaleX: 1,
-                                y: 0,
-                            }}
-                            exit={{
-                                opacity: 0,
-                                scaleY: 0.3,
-                                scaleX: 0.55,
-                                y: 35,
-                                transition: {
-                                    duration: 0.16,
-                                    ease: [0.32, 0, 0.67, 0],
-                                },
-                            }}
-                            transition={{
-                                type: 'spring',
-                                damping: 28,
-                                stiffness: 320,
-                                mass: 0.6,
-                            }}
-                            style={{
-                                transformOrigin: 'bottom center',
-                                willChange: 'transform, opacity',
-                            }}
-                            className="fixed bottom-20 inset-x-4 max-w-sm sm:max-w-md mx-auto z-50 md:hidden pointer-events-auto"
+                            style={{ transformOrigin: 'bottom center' }}
+                            className="fixed bottom-20 inset-x-4 max-w-sm sm:max-w-md mx-auto z-50 md:hidden pointer-events-auto animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-200"
                         >
                             <div className="w-full max-h-[calc(100dvh-7.5rem)] rounded-3xl bg-card border border-border/80 shadow-2xl ring-1 ring-foreground/10 p-5 flex flex-col gap-4 overflow-hidden">
                                 {/* Drawer Header Bar */}
@@ -479,14 +440,13 @@ export function Navbar() {
                                     )}
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
                     </>
                 )}
-            </AnimatePresence>
 
             {/* Mobile Bottom Capsule Floating Component (Dock-anchored at bottom) */}
             <div className="fixed bottom-5 inset-x-0 z-50 flex justify-center items-center pointer-events-none md:hidden px-4">
-                <div className="pointer-events-auto inline-flex items-center gap-1.5 p-1.5 rounded-full border border-border/80 bg-background/95 backdrop-blur-xl shadow-2xl ring-1 ring-foreground/10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="pointer-events-auto inline-flex items-center gap-1.5 p-1.5 rounded-full border border-border/80 bg-background shadow-2xl ring-1 ring-foreground/10 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     {/* Drawer Toggle Button */}
                     <button
                         type="button"

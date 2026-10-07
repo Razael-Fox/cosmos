@@ -86,7 +86,7 @@ export function LanguageDropdown({
                 side={side}
                 align={align}
                 sideOffset={8}
-                className="w-48 p-1.5 shadow-xl border border-border bg-popover/95 backdrop-blur-md rounded-2xl animate-in fade-in-0 zoom-in-95 data-[side=top]:slide-in-from-bottom-2"
+                className="w-48 p-1.5 shadow-xl border border-border bg-popover md:bg-popover/95 md:backdrop-blur-md rounded-2xl animate-in fade-in-0 zoom-in-95 data-[side=top]:slide-in-from-bottom-2"
             >
                 <DropdownMenuLabel className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Language / Bahasa
