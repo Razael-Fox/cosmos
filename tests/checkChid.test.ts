@@ -7,6 +7,18 @@ process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test_groq_api_key';
 
 const CODE = '0029VaAbCdEf12345';
 const NL = '120363312345678901@newsletter';
+// Baileys returns the raw WMex result: details live under thread_metadata.
+const NESTED_META = {
+    id: NL,
+    thread_metadata: {
+        name: { text: 'Cosmos Updates' },
+        subscribers_count: 12345,
+        verification: 'VERIFIED',
+        invite: CODE,
+        creation_time: '1773446400'
+    }
+};
+
 const META = {
     id: NL,
     name: 'Cosmos Updates',
@@ -72,6 +84,9 @@ async function main() {
     // pure helpers
     assert.strictEqual(extractChannelInvite(`see https://whatsapp.com/channel/${CODE}!`), CODE);
     assert.strictEqual(extractChannelInvite('https://example.com'), undefined);
+    assert.strictEqual(extractChannelInvite(`https://evilwhatsapp.com/channel/${CODE}`), undefined);
+    assert.strictEqual(extractChannelInvite(`https://evil-whatsapp.com/channel/${CODE}`), undefined);
+    assert.ok(extractChannelInvite(`join https://whatsapp.com/channel/${CODE} now`));
     assert.deepStrictEqual(findNewsletterRef({ conversation: `whatsapp.com/channel/${CODE}` }), { code: CODE });
     const fwd = { forwardedNewsletterMessageInfo: { newsletterJid: NL, newsletterName: 'N', serverMessageId: 7 } };
     assert.strictEqual(
@@ -100,6 +115,19 @@ async function main() {
     await execute({}, r.ctx);
     assert.deepStrictEqual(r.calls, [['invite', CODE]]);
 
+    // nested thread_metadata payload (production shape) renders like the flat one
+    r = run({ argsStr: `whatsapp.com/channel/${CODE}`, meta: NESTED_META });
+    await execute({}, r.ctx);
+    const nested = r.sent[0];
+    assert.ok(
+        nested.includes('Cosmos Updates') &&
+            nested.includes('12,345') &&
+            nested.includes('Verified') &&
+            nested.includes('2026-03-14') &&
+            nested.includes(CODE),
+        `nested metadata must render, got: ${nested}`
+    );
+
     // optional fields omitted
     r = run({ argsStr: `whatsapp.com/channel/${CODE}`, meta: { id: NL, name: 'Bare' } });
     await execute({}, r.ctx);
@@ -121,6 +149,13 @@ async function main() {
     await execute({}, r.ctx);
     assert.deepStrictEqual(r.calls, [['jid', NL]]);
     assert.ok(r.sent[0].includes(NL) && r.sent[0].includes('forwarded message') && r.sent[0].includes('12,345'));
+
+    // forwarded with nested metadata
+    r = run({ quoted: { extendedTextMessage: { text: 'hi', contextInfo: fwd } }, meta: NESTED_META });
+    await execute({}, r.ctx);
+    assert.ok(
+        r.sent[0].includes('12,345') && r.sent[0].includes('Cosmos Updates') && !r.sent[0].includes('Message ID')
+    );
 
     // forwarded, enrichment fails -> still answers with ID, name, message id
     for (const jidMeta of ['fail', 'null'] as const) {

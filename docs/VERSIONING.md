@@ -218,7 +218,7 @@ than reconstructed — a guessed mapping would be worse than an acknowledged gap
 | F30       | MCP Alert Notifier (Discord/Slack/WhatsApp)               | Yes — 2026-10-03 |
 | F31       | Command Background Remover (Issue #69)                    | Yes — 2026-10-04 |
 | F32       | Progressive Disclosure UX (Issue #71)                     | Yes — 2026-10-05 |
-| F33       | Channel ID Resolver `.check chid` (Issue #80)             | Yes — 2026-10-07 |
+| F33       | Channel ID Resolver `.check chid` (Issue #80)              | Yes — 2026-10-07 |
 | F34       | _(open)_ — next completed feature milestone               | —                |
 
 When a feature bump advances `F`, replace the open placeholder with the new

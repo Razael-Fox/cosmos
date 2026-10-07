@@ -333,7 +333,7 @@ Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah d
 - **Catatan:**
     - Prioritas: tautan pada argumen, lalu info forward pada pesan yang dibalas, lalu tautan pada teks pesan yang dibalas.
     - Dapat dipakai di grup maupun chat pribadi. ID saluran adalah pengenal publik, bukan PII.
-    - Terdapat cooldown 10 detik per pengirim.
+    - Terdapat cooldown 10 detik per pengirim di setiap obrolan.
 
 ---
 

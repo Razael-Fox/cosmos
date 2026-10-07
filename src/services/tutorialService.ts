@@ -535,6 +535,7 @@ export const TUTORIAL_SUITES: TutorialDefinition[] = [
                 'profile photo',
                 'rvo',
                 'cek online',
+                'cek chid',
                 'group approve',
                 'group blacklist add',
                 'group blacklist list',

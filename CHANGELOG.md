@@ -9,6 +9,29 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P7] - 2026-10-07
+
+### Security — Personal Data Scrub
+
+- Replaced real phone numbers, WhatsApp group IDs and LIDs in tests, the
+  `cosmos-agent-engine` skill and this changelog with dummy values.
+
+---
+
+## [G2-F33-P2] - 2026-10-07
+
+### Fixed — `.check chid` Review Findings (PR #82)
+
+- Read channel details from the nested `thread_metadata` shape that Baileys
+  `newsletterMetadata()` actually returns, so the card shows name, followers,
+  verification, invite and creation date in production.
+- Require a left boundary before the `whatsapp.com/channel/` host, so
+  `evilwhatsapp.com` no longer matches.
+- Added `cek chid` to the Indonesian tutorial command list.
+- Ignore `.env.pull.*` temp files left behind by a killed Doppler pull.
+
+---
+
 ## [G2-F33-P1] - 2026-10-07
 
 ### Fixed — Doppler Pull No Longer Truncates `.env`

@@ -7,7 +7,8 @@ import { renderAlert, renderCard, renderSyntaxError, CardField } from '../utils/
 const COOLDOWN_MS = 10 * 1000;
 const lastCheckedAt = new Map<string, number>();
 
-const INVITE_RE = /(?:https?:\/\/)?(?:www\.)?whatsapp\.com\/channel\/([A-Za-z0-9_-]{10,})/i;
+// The lookbehind keeps `evilwhatsapp.com/channel/...` from matching the host.
+const INVITE_RE = /(?<![\w.-])(?:https?:\/\/)?(?:www\.)?whatsapp\.com\/channel\/([A-Za-z0-9_-]{10,})/i;
 
 export interface NewsletterRef {
     jid?: string;
@@ -64,6 +65,25 @@ interface ChannelMeta {
     verification?: string;
     invite?: string;
     creation_time?: number | string;
+    thread_metadata?: Record<string, any>;
+}
+
+/**
+ * Baileys `newsletterMetadata()` hands back the raw WMex result, so a live reply
+ * keeps the details under `thread_metadata` (with a nested `name.text`) instead
+ * of the flat shape. Flatten it, preferring any top-level field already set.
+ */
+function flattenMeta(raw: ChannelMeta | null): ChannelMeta | null {
+    const thread = raw?.thread_metadata;
+    if (!raw || !thread) return raw;
+    return {
+        ...raw,
+        name: raw.name ?? thread.name?.text,
+        subscribers: raw.subscribers ?? thread.subscribers_count,
+        verification: raw.verification ?? thread.verification,
+        invite: raw.invite ?? thread.invite,
+        creation_time: raw.creation_time ?? thread.creation_time
+    };
 }
 
 function buildCard(id: string, meta: ChannelMeta | null, ref: NewsletterRef, source: Source, ctx: ToolContext): string {
@@ -195,7 +215,7 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
             // Forwarded: the ID is already known; metadata is optional enrichment.
             let meta: ChannelMeta | null = null;
             try {
-                meta = (await sock.newsletterMetadata('jid', ref.jid)) as ChannelMeta | null;
+                meta = flattenMeta((await sock.newsletterMetadata('jid', ref.jid)) as ChannelMeta | null);
             } catch (err) {
                 console.error('[Check Chid] Optional metadata enrichment failed:', err);
             }
@@ -203,7 +223,7 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
             return;
         }
 
-        const meta = (await sock.newsletterMetadata('invite', ref.code!)) as ChannelMeta | null;
+        const meta = flattenMeta((await sock.newsletterMetadata('invite', ref.code!)) as ChannelMeta | null);
         if (!meta?.id) return void (await alert('warning', 'not_found'));
         console.log(`[Check Chid] Resolved ${meta.id} for ${jid}`);
         await reply(buildCard(meta.id, meta, ref, source, ctx));
