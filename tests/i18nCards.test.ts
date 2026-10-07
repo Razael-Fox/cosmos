@@ -14,7 +14,7 @@ import {
     formatUptimeDuration
 } from '../src/utils/menuFormatter.js';
 import { getTranslator, LANGUAGE_CONFIG } from '../src/utils/i18n.js';
-import { renderForexBroadcast } from '../src/services/broadcast.js';
+import { renderForexBroadcast } from '../src/services/economyBroadcast.js';
 
 async function runTests() {
     console.log('--- STARTING ISOLATED I18N CARDS & FORMATTERS TESTS ---');

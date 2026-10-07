@@ -14,7 +14,7 @@ import {
     buildWastickersZip,
     buildMmsZip,
     isValidWebP
-} from '../src/utils/stickerPackBuilder.js';
+} from '../src/utils/sticker/packBuilder.js';
 import {
     registerStickerlySession,
     getStickerlySession,
@@ -23,7 +23,7 @@ import {
     deletePreviewMessages,
     processStickerlySelection,
     StickerlySession
-} from '../src/utils/stickerlySession.js';
+} from '../src/utils/sticker/stickerlySession.js';
 import {
     registerCancellableSession,
     hasCancellableSession,
