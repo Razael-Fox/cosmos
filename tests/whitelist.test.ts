@@ -16,7 +16,7 @@ async function runTests() {
     console.log('--- STARTING GROUP WHITELIST SUITE TEST ---');
 
     const t = getTranslator('en');
-    const ownerNumber = '6282225907841@s.whatsapp.net';
+    const ownerNumber = '6281200000101@s.whatsapp.net';
     const nonOwnerNumber = '628111111111@s.whatsapp.net';
 
     // =========================================================================
@@ -99,7 +99,7 @@ async function runTests() {
 
     const sentMessages: Array<{ destJid: string; text: string }> = [];
     const mockSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        user: { id: '6281200000202:1@s.whatsapp.net', name: 'CosmosBot' },
         sendMessage: async (dest: string, payload: { text: string }) => {
             sentMessages.push({ destJid: dest, text: payload.text });
             return { key: { id: `mock_msg_${Date.now()}` } };

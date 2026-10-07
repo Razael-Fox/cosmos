@@ -9,6 +9,15 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P7] - 2026-10-07
+
+### Security — Personal Data Scrub
+
+- Replaced real phone numbers, WhatsApp group IDs and LIDs in tests, the
+  `cosmos-agent-engine` skill and this changelog with dummy values.
+
+---
+
 ## [G2-F32-P6] - 2026-10-07
 
 ### Removed — Obsolete Documentation
@@ -1852,7 +1861,7 @@ Indonesian/English parity, a dedicated tutorial menu, and updated AI agent conte
         - Supported via both single-pass quoted location messages and interactive 2-step flows (`.sara please send this location to Mom` followed by location pin / `shareloc`).
         - Dispatches native WhatsApp `locationMessage` to the target contact with attribution caption: `"${senderName} sent this from a different number — Sara AI"`.
     - **Advanced International Phone Number Sanitization (`src/utils/phone.ts`):**
-        - Multi-token spaced input parsing (`.contact add Friend +94 77 837 0112`).
+        - Multi-token spaced input parsing (`.contact add Friend +94 77 000 0112`).
         - International country code preservation (+ strip), Indonesian local `08` -> `628` conversion, accidental `6208` correction, and international `00` exit code removal.
     - **Groq Self-Healing Interceptor (`tool_use_failed` Recovery):**
         - Intercepts Groq HTTP 400 errors where tool invocations leak into `error.failed_generation`, extracting function arguments and re-validating recovered tools through the TypeScript Policy Gate before execution.
@@ -1868,7 +1877,7 @@ Indonesian/English parity, a dedicated tutorial menu, and updated AI agent conte
 
 - **LID/JID Identity Unification — Balance Loss After `.claim` (`src/utils/casino.ts`, multiple tools & services):**
     - Fixed a critical bug where `.slot` (and other gambling tools) incorrectly reported "Insufficient balance" immediately after a successful `.claim` for users identified via WhatsApp LID.
-    - **Root cause:** `getSenderJid` applied a `length > 14` heuristic to detect LID identifiers, but 14-digit LIDs (e.g. `14392720638086`) failed the check and were incorrectly treated as phone numbers, producing a phantom JID (`14392720638086@s.whatsapp.net`). `.claim` wrote the rewarded balance to the phantom record while subsequent gambling commands resolved the canonical phone-number JID (starterpack 10,000) — triggering a false insufficient-balance error.
+    - **Root cause:** `getSenderJid` applied a `length > 14` heuristic to detect LID identifiers, but 14-digit LIDs (e.g. `14000000000086`) failed the check and were incorrectly treated as phone numbers, producing a phantom JID (`14000000000086@s.whatsapp.net`). `.claim` wrote the rewarded balance to the phantom record while subsequent gambling commands resolved the canonical phone-number JID (starterpack 10,000) — triggering a false insufficient-balance error.
     - Corrected LID detection heuristic from `length > 14` to `length >= 13` in `getSenderJid`, `buildUserOrConditions`, and `getUser`.
     - Added `pnToLidMap` alongside the existing `lidToPnMap` for bidirectional LID ↔ phone-number resolution; both maps are populated on every message that carries `participantAlt`.
     - `buildUserOrConditions` now emits all identifier variants (canonical JID, bare digits, full LID, `@lid`-suffixed LID, and mapped phone number from both directions) so any incoming format unambiguously hits the single canonical database record.

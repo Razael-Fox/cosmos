@@ -54,7 +54,7 @@ async function runTestSuite() {
     // 1b. Execution of addbalance (.add balance @user 50)
     // =========================================================================
     console.log('[Test 1b] Testing execution of addbalance with mention & proper formatting...');
-    const targetUserJid = '6285136533136@s.whatsapp.net';
+    const targetUserJid = '6281200000202@s.whatsapp.net';
     await prisma.user.upsert({
         where: { id: targetUserJid },
         create: { id: targetUserJid, pushName: 'Zhopi', balance: BigInt(0) },
@@ -74,7 +74,7 @@ async function runTestSuite() {
         key: { remoteJid: '120363274823554999@g.us', participant: '628123456789@s.whatsapp.net', fromMe: false },
         message: {
             extendedTextMessage: {
-                text: '.tambah saldo @6285136533136 50',
+                text: '.tambah saldo @6281200000202 50',
                 contextInfo: {
                     mentionedJid: [targetUserJid]
                 }
@@ -93,7 +93,7 @@ async function runTestSuite() {
         usedPrefix: '.'
     };
 
-    await addBalanceTool.execute({ input: '@6285136533136 50' }, addBalanceCtx);
+    await addBalanceTool.execute({ input: '@6281200000202 50' }, addBalanceCtx);
     assert(addBalanceSentMessages.length > 0, 'addbalance must send a confirmation message');
     assert(
         !addBalanceSentMessages[0].content.text.includes('{{user}}'),
@@ -104,13 +104,13 @@ async function runTestSuite() {
         'Message text must NOT contain unrendered {{target}}'
     );
     assert(
-        addBalanceSentMessages[0].content.text.includes('@6285136533136'),
-        'Message text must include @6285136533136'
+        addBalanceSentMessages[0].content.text.includes('@6281200000202'),
+        'Message text must include @6281200000202'
     );
     assert(addBalanceSentMessages[0].content.text.includes('Rp50'), 'Message text must include Rp50');
     assert.deepStrictEqual(
         addBalanceSentMessages[0].content.mentions,
-        ['6285136533136@s.whatsapp.net'],
+        ['6281200000202@s.whatsapp.net'],
         'mentions array must be formatted properly'
     );
     const missingMentionResult = await addBalanceTool.execute(
@@ -185,7 +185,7 @@ async function runTestSuite() {
 
     let sentMessages: Array<{ dest: string; content: any }> = [];
     const mockSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net' },
+        user: { id: '6281200000202:1@s.whatsapp.net' },
         sendMessage: async (dest: string, content: any) => {
             sentMessages.push({ dest, content });
             return { key: { id: 'mock-id' } };
