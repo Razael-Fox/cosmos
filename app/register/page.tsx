@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -21,6 +21,7 @@ import { registerInverted, registerDirect } from '@/lib/api';
 import type { RegisterInvertedResponse } from '@/lib/types';
 import { Turnstile, type TurnstileRef } from '@/components/Turnstile';
 import { parsePhone, COUNTRY_CODES } from '@/lib/phone';
+import { getGeoCountry } from '@/lib/api';
 import type { CountryCode } from 'libphonenumber-js/min';
 import { InvertedVerifyDialog } from '@/components/InvertedVerifyDialog';
 import { DirectOtpModal } from '@/components/DirectOtpModal';
@@ -70,6 +71,20 @@ export default function RegisterPage() {
 
     const parsedPhone = parsePhone(phone, countryIso);
     const cleanPhone = parsedPhone?.digits ?? '';
+
+    // Anonymous country hint from the edge (cf-ipcountry). The client IP is
+    // never sent to or stored by the app — only a 2-letter ISO code comes back.
+    useEffect(() => {
+        let isMounted = true;
+        getGeoCountry()
+            .then((res) => {
+                if (isMounted && res.country) setCountryIso(res.country as CountryCode);
+            })
+            .catch(() => {});
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

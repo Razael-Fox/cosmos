@@ -593,3 +593,14 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
         method: 'GET'
     });
 }
+
+/**
+ * GET /api/v1/system/geo
+ * Anonymous country hint (2-letter ISO) derived from the Cloudflare
+ * cf-ipcountry edge header. The client IP is never exposed to the app.
+ */
+export async function getGeoCountry(): Promise<{ country: string | null }> {
+    return request<{ country: string | null }>('/api/v1/system/geo', {
+        method: 'GET'
+    });
+}
