@@ -16,6 +16,14 @@ function formatHumanUptime(seconds: number): string {
 }
 
 export const systemRoutes: FastifyPluginAsync = async (fastify) => {
+    // GET /api/v1/system/geo — anonymous country hint for the register form.
+    // Cloudflare attaches cf-ipcountry (a 2-letter ISO code); the client IP
+    // is never read, logged, or persisted.
+    fastify.get('/geo', async (req, reply) => {
+        const country = typeof req.headers['cf-ipcountry'] === 'string' ? req.headers['cf-ipcountry'] : null;
+        return reply.send({ country });
+    });
+
     // GET /api/v1/system/status
     fastify.get('/status', async (_req, reply) => {
         const uptimeSeconds = Math.max(1, Math.floor(process.uptime()));
