@@ -9,6 +9,17 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P5] - 2026-10-07
+
+### Changed — Agent Rules Describe the New Layout
+
+- `AGENTS.md` "Struktur Direktori" now documents the reorganized layout
+  (`src/cli`, `src/seeds`, nested `src/tools` families, grouped `scripts/`,
+  `assets/` vs `storage/`, `bin/`) and the procedure for moving files.
+- `i18n-localization-standards` skill: tool glob updated to `src/tools/**/*.ts`.
+
+---
+
 ## [G2-F32-P4] - 2026-10-07
 
 ### Changed — Stop Tracking the yt-dlp Zipapp

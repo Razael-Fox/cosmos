@@ -151,7 +151,7 @@ Pastikan setiap key baru ditambahkan secara simetris di kedua file JSON:
 
 ### 2. Mengakses Translasi di Dalam Tool
 
-Di dalam setiap file tool (`src/tools/*.ts`):
+Di dalam setiap file tool (`src/tools/**/*.ts`):
 
 ```typescript
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string> {

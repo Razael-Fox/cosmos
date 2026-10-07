@@ -23,10 +23,28 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### 📁 Struktur Direktori
 
-- `src/` - Kode sumber utama TypeScript.
+- `src/` - Kode sumber utama TypeScript (bot engine):
+    - `cli/` - CLI pairing (`pair.ts` WhatsApp, `tgpair.ts` Telegram).
+    - `seeds/` - Seeder katalog (`items.ts`, `properties.ts`), dipanggil dari `src/index.ts`.
+    - `handlers/` - Router pesan (`message.ts`).
+    - `tools/` - Satu file per command. Command satu keluarga ditaruh di subfolder (`tools/group/`, `tools/property/`). `handler.ts` memuat tool secara **rekursif**, jadi subfolder baru otomatis terdeteksi; `handler.ts` dan `types.ts` tidak dimuat sebagai tool.
+    - `services/` - Logika domain & infrastruktur (bank, loan, job, agentEngine, statusNotifier, IPC, broadcast).
+    - `utils/` - Helper lintas-fitur (`utils/sticker/` untuk modul stiker, `utils/security/` untuk guard keamanan).
+    - `mcp/` - Cosmos MCP server. Contoh konfigurasi klien ada di `docs/mcp/` (bukan di `src/mcp/`).
+    - `locales/` - Terjemahan `en` dan `id` (5 namespace JSON per bahasa).
+    - `generated/` - Output Prisma Client (gitignored; jangan diedit).
+- `scripts/` - Dikelompokkan per tujuan: `admin/` (alat operator), `docker/` (build/deploy/dev), `i18n/` (copy-locales, validate, check-usage), `infra/` (Cloudflare tunnel, Turnstile, Doppler), `migrations/` (migrasi data sekali jalan), `release/` (`version.ts`, `release.ts`). Skrip shell menghitung `ROOT_DIR` dengan `/../..`; pertahankan itu bila memindahkan skrip.
+- `assets/` - Aset statis yang ikut ke image Docker (banner menu, `ktp_template.jpg`, `fonts/`). Aset statis **dilarang** ditaruh di `storage/`.
+- `storage/` - **Hanya** state runtime (database, sesi, log, backup, `ipc.sock`) yang di-mount sebagai volume.
+- `database/` - Database SQLite per sub-bot (runtime, gitignored).
+- `bin/` - Salinan lokal opsional `yt-dlp` (gitignored). Image Docker memasang yt-dlp sendiri; gunakan `pnpm docker:dev` untuk fitur downloader.
+- `docker/` - Dockerfile, nginx, konfigurasi PM2 kontainer, entrypoint.
+- `docs/` - Dokumentasi (`VERSIONING.md`, `COSMOS_MCP.md`, `COMMANDS_CONTEXT.md`, `mcp/`).
+- `tests/` - Suite uji, nama file camelCase (`<subjek>.test.ts`); smoke test di `tests/smoke/`.
 - `dist/` - Hasil kompilasi JavaScript (output dari `pnpm build`).
 - `.agents/skills/` - Modul panduan & instruksi khusus untuk agent (misal: Baileys LID compatibility, FFmpeg buffer handling, Groq API rules, Cosmos versioning & tabrakan branch paralel, dll).
 - `auth_info_baileys/` - Menyimpan kredensial sesi WhatsApp (Jangan di-commit / diubah secara manual).
+- Menambah/memindah file: gunakan `git mv`, perbarui seluruh import (`#alias` maupun relatif) beserta referensi path di `package.json`, `README.md`, `AGENTS.md`, dan skill terkait, lalu jalankan `pnpm typecheck`, `pnpm lint`, dan `pnpm build`. File di `tests/` dan `scripts/` **tidak** tercakup `tsc`, jadi periksa import-nya dengan menjalankan suite uji.
 
 ### 🛠 Perintah Utama (PNPM Scripts)
 
