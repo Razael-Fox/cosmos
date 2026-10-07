@@ -136,3 +136,6 @@ doppler.json
 doppler.yaml
 .doppler.yaml
 
+
+# Local yt-dlp fallback (Docker images install their own; see docker/Dockerfile*)
+bin/

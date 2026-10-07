@@ -253,7 +253,7 @@ describe('Cosmos versioning utilities', () => {
         });
 
         it('covers every documented trigger path', () => {
-            // Mirrors VERSION_TRIGGER_PATHS in scripts/version.ts.
+            // Mirrors VERSION_TRIGGER_PATHS in scripts/release/version.ts.
             for (const p of ['src', 'prisma', 'scripts', 'docker', '.github/workflows']) {
                 assert.ok(fs.existsSync(path.join(REPO_ROOT, p)), `trigger path '${p}' must exist`);
             }

@@ -186,7 +186,7 @@ pnpm run release:pre -- --dry-run                # validasi penuh tanpa efek sam
 pnpm run release:pre -- --no-push                # commit + tag lokal, skip push
 ```
 
-`scripts/release.ts` melakukan secara berurutan: membaca `version.json` → menyelaraskan `package.json` → memvalidasi header `## [G2-F24-P7]` di `CHANGELOG.md` → commit → push branch → `gh release create` → unggah `CHANGELOG.md`.
+`scripts/release/release.ts` melakukan secara berurutan: membaca `version.json` → menyelaraskan `package.json` → memvalidasi header `## [G2-F24-P7]` di `CHANGELOG.md` → commit → push branch → `gh release create` → unggah `CHANGELOG.md`.
 
 ### Checklist Pra-Rilis (WAJIB)
 

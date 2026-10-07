@@ -272,7 +272,7 @@ All four clients share the **same** single owner key. There is no per-client key
 rotate, or revoke. Source the key from the environment; never commit it.
 
 Copy-paste-ready examples for every client are committed in
-[`src/mcp/`](../src/mcp/) (`README.md` plus `opencode.example.json`,
+[`docs/mcp/`](mcp/) (`README.md` plus `opencode.example.json`,
 `pi.example.json`, `antigravity.example.json`, and `remote-http.example.json`);
 the Claude Code config lives at the repository root as `.mcp.json`.
 

@@ -251,7 +251,7 @@ Mencari lagu di YouTube Music dan mengunduh format audio langsung ke obrolan.
 
 ### Catatan dekomisi Telegram
 
-Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah dihapus**. Infrastruktur Telegram (`src/utils/telegramClient.ts`, `src/tgpair.ts`, `src/utils/backup.ts`, model `TelegramPrivateChat`, serta kunci `TELEGRAM_*` di `.env`) tetap dipertahankan untuk pipeline backup dan notifikasi admin.
+Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah dihapus**. Infrastruktur Telegram (`src/utils/telegramClient.ts`, `src/cli/tgpair.ts`, `src/utils/backup.ts`, model `TelegramPrivateChat`, serta kunci `TELEGRAM_*` di `.env`) tetap dipertahankan untuk pipeline backup dan notifikasi admin.
 
 ---
 

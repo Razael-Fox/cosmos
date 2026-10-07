@@ -23,10 +23,28 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### 📁 Struktur Direktori
 
-- `src/` - Kode sumber utama TypeScript.
+- `src/` - Kode sumber utama TypeScript (bot engine):
+    - `cli/` - CLI pairing (`pair.ts` WhatsApp, `tgpair.ts` Telegram).
+    - `seeds/` - Seeder katalog (`items.ts`, `properties.ts`), dipanggil dari `src/index.ts`.
+    - `handlers/` - Router pesan (`message.ts`).
+    - `tools/` - Satu file per command. Command satu keluarga ditaruh di subfolder (`tools/group/`, `tools/property/`). `handler.ts` memuat tool secara **rekursif**, jadi subfolder baru otomatis terdeteksi; `handler.ts` dan `types.ts` tidak dimuat sebagai tool.
+    - `services/` - Logika domain & infrastruktur (bank, loan, job, agentEngine, statusNotifier, IPC, broadcast).
+    - `utils/` - Helper lintas-fitur (`utils/sticker/` untuk modul stiker, `utils/security/` untuk guard keamanan).
+    - `mcp/` - Cosmos MCP server. Contoh konfigurasi klien ada di `docs/mcp/` (bukan di `src/mcp/`).
+    - `locales/` - Terjemahan `en` dan `id` (5 namespace JSON per bahasa).
+    - `generated/` - Output Prisma Client (gitignored; jangan diedit).
+- `scripts/` - Dikelompokkan per tujuan: `admin/` (alat operator), `docker/` (build/deploy/dev), `i18n/` (copy-locales, validate, check-usage), `infra/` (Cloudflare tunnel, Turnstile, Doppler), `migrations/` (migrasi data sekali jalan), `release/` (`version.ts`, `release.ts`). Skrip shell menghitung `ROOT_DIR` dengan `/../..`; pertahankan itu bila memindahkan skrip.
+- `assets/` - Aset statis yang ikut ke image Docker (banner menu, `ktp_template.jpg`, `fonts/`). Aset statis **dilarang** ditaruh di `storage/`.
+- `storage/` - **Hanya** state runtime (database, sesi, log, backup, `ipc.sock`) yang di-mount sebagai volume.
+- `database/` - Database SQLite per sub-bot (runtime, gitignored).
+- `bin/` - Salinan lokal opsional `yt-dlp` (gitignored). Image Docker memasang yt-dlp sendiri; gunakan `pnpm docker:dev` untuk fitur downloader.
+- `docker/` - Dockerfile, nginx, konfigurasi PM2 kontainer, entrypoint.
+- `docs/` - Dokumentasi (`VERSIONING.md`, `COSMOS_MCP.md`, `COMMANDS_CONTEXT.md`, `mcp/`).
+- `tests/` - Suite uji, nama file camelCase (`<subjek>.test.ts`); smoke test di `tests/smoke/`.
 - `dist/` - Hasil kompilasi JavaScript (output dari `pnpm build`).
 - `.agents/skills/` - Modul panduan & instruksi khusus untuk agent (misal: Baileys LID compatibility, FFmpeg buffer handling, Groq API rules, Cosmos versioning & tabrakan branch paralel, dll).
 - `auth_info_baileys/` - Menyimpan kredensial sesi WhatsApp (Jangan di-commit / diubah secara manual).
+- Menambah/memindah file: gunakan `git mv`, perbarui seluruh import (`#alias` maupun relatif) beserta referensi path di `package.json`, `README.md`, `AGENTS.md`, dan skill terkait, lalu jalankan `pnpm typecheck`, `pnpm lint`, dan `pnpm build`. File di `tests/` dan `scripts/` **tidak** tercakup `tsc`, jadi periksa import-nya dengan menjalankan suite uji.
 
 ### 🛠 Perintah Utama (PNPM Scripts)
 
@@ -138,7 +156,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 ### O. Sistem Internasionalisasi & Multibahasa (i18n Localization Standards)
 
 - **i18n Integration:** Seluruh tool dan modul wajib mendukung sistem multibahasa dengan menggunakan `ctx.t` dan `ctx.lang` dari `src/locales/i18n.config.ts`. Dilarang menggabungkan string terjemahan dengan teks statis bahasa Inggris manual (_mixed-language_).
-- **Safe Key Detection & Build Sync:** Deteksi kunci terjemahan WAJIB menggunakan `i18n.exists()`. File terjemahan JSON di `src/locales/` wajib disinkronkan ke `dist/locales/` saat proses build melalui `scripts/copy-locales.ts`. Rujuk panduan lengkap di `.agents/skills/i18n-localization-standards/SKILL.md`.
+- **Safe Key Detection & Build Sync:** Deteksi kunci terjemahan WAJIB menggunakan `i18n.exists()`. File terjemahan JSON di `src/locales/` wajib disinkronkan ke `dist/locales/` saat proses build melalui `scripts/i18n/copy-locales.ts`. Rujuk panduan lengkap di `.agents/skills/i18n-localization-standards/SKILL.md`.
 
 ### P. Subsistem Perbankan Cosmos (Cosmos Central Bank Standards)
 
@@ -228,7 +246,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     ```
     Aturan merge: **merge terakhir menang memakai nomor tertinggi**; nomor yang telah dialokasikan sebelum merge tidak dijamin bertahan. Rujukan lengkap ada di `.agents/skills/parallel-branch-versioning/SKILL.md` dan `docs/VERSIONING.md` bagian "Parallel Branches & Version Collisions".
 - **Semantik Feature Milestone (`F`):** `F` adalah **penghitung milestone**, bukan daftar fitur. `G2-F24-P10` berarti "Generasi 2, 24 milestone fitur selesai, 10 patch sejak milestone 24" — angka ini **tidak** menyatakan bahwa kodebase berisi 24 fitur. Karena angka `F` tidak bersifat self-describing, setiap bump **`feature`** (yang menaikkan `F`) **wajib**: (a) menambahkan section `## [G<n>-F<m>-P0]` di `CHANGELOG.md` yang menyebut milestone tersebut, dan (b) menambahkan baris ke tabel registry milestone di `docs/VERSIONING.md`. Bump **`patch`** tidak menaikkan `F` sehingga tidak memerlukan entri registry baru. Rujukan lengkap ada di `.agents/skills/parallel-branch-versioning/SKILL.md`.
-- **Otomasi Rilis:** Pembuatan tag dan penerbitan GitHub Release didelegasikan melalui `scripts/release.ts` (`pnpm run release:pre`). Script ini membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, lalu membuat tag dan GitHub Release. Flag penting: `--bump patch|feature|generation` untuk menaikkan versi sebelum publikasi, `--stable` untuk terbit tanpa flag `--prerelease`, `--dry-run` untuk validasi tanpa efek samping, dan `--no-push` untuk melewati push remote. Manajemen metadata harian (read/validate/bump) dilakukan `scripts/version.ts` melalui `pnpm run version:show`, `version:check`, dan `version:bump <patch|feature|generation>`.
+- **Otomasi Rilis:** Pembuatan tag dan penerbitan GitHub Release didelegasikan melalui `scripts/release/release.ts` (`pnpm run release:pre`). Script ini membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, lalu membuat tag dan GitHub Release. Flag penting: `--bump patch|feature|generation` untuk menaikkan versi sebelum publikasi, `--stable` untuk terbit tanpa flag `--prerelease`, `--dry-run` untuk validasi tanpa efek samping, dan `--no-push` untuk melewati push remote. Manajemen metadata harian (read/validate/bump) dilakukan `scripts/release/version.ts` melalui `pnpm run version:show`, `version:check`, dan `version:bump <patch|feature|generation>`.
 - **Transisi & Riwayat:** Saat migrasi ke format `G-F-P`, riwayat header `RF-*` yang sudah terbit di `CHANGELOG.md` **tetap dipertahankan apa adanya** sebagai catatan siklus pra-rilis dan **tidak boleh diubah**. Rujukan lengkap ada di `.agents/skills/cosmos-versioning/SKILL.md`.
 
 ### T. Standar Menu Bot & Kompatibilitas Deskripsi Perintah i18n (Menu & Command Description i18n Standards)
@@ -345,7 +363,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### AI. Otomatisasi Versi & Rilis CI (Version & Release CI Automation Standards)
 
-> Implementasi: `.github/workflows/version-automation.yml`, `release.yml`, `version-policy.yml`. Panduan agent: `.agents/skills/version-release-automation/SKILL.md`. Panduan tester: `HOW.md`.
+> Implementasi: `.github/workflows/version-automation.yml`, `release.yml`, `version-policy.yml`. Panduan agent: `.agents/skills/version-release-automation/SKILL.md`.
 
 - **Rantai Otomatis (Pipeline Chain):** Merge/push ke `main` → `version-automation.yml` mengklasifikasi (nothing | tag-only | bump) → bump + commit `[skip ci]` + push tag → tag memicu `release.yml` (GitHub Release berisi irisan `CHANGELOG.md`) dan `docker-publish.yml` (image GHCR). `version.json` tetap satu-satunya sumber kebenaran. Selain itu `format.yml` menjalankan Prettier ke seluruh codebase pada setiap push ke `main` dan meng-push hasilnya sebagai `github-actions[bot]` dengan `[skip ci]`, sehingga formatting tidak lagi wajib dijalankan di sisi development (kedua workflow diserialkan lewat concurrency group `main-automation`).
 - **Klasifikasi Bump Berbasis Commit Message (Smart Classification):** Bila path bervedisi berubah tanpa `version.json` ikut berubah, workflow membaca commit message: `BREAKING CHANGE` / `type!:` → `generation`; subject `feat:`/`feat(scope):` → `feature`; lainnya → `patch`. Prioritas tertinggi menang dalam satu push.

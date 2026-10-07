@@ -35,7 +35,7 @@ Cosmos menggunakan **`i18next`** sebagai mesin translasi utama dengan struktur m
 
 `tsc` hanya mengompilasi file TypeScript (`.ts` -> `.js`) dan mengabaikan file `.json`. Oleh karena itu:
 
-- **Build Synchronization**: Script `pnpm build` dikonfigurasi menjalankan `tsc && tsx scripts/copy-locales.ts` untuk menyalin `src/locales` ke `dist/locales`.
+- **Build Synchronization**: Script `pnpm build` dikonfigurasi menjalankan `tsc && tsx scripts/i18n/copy-locales.ts` untuk menyalin `src/locales` ke `dist/locales`.
 - **Development Priority Rule**: Pada fungsi `getLocalesDir()` di `src/locales/i18n.config.ts`, sistem **WAJIB** memeriksa keberadaan direktori `src/locales` terlebih dahulu sebelum `dist/locales`. Hal ini mencegah bug terjemahan hilang (_missing translation keys_) saat menjalankan perintah pengembangan atau test suite (`pnpm dev`, `tsx tests/...`) di mana file JSON di `dist/locales` mungkin belum diperbarui dari kompilasi sebelumnya.
 - **Production Fallback**: Jika `src/locales` tidak ditemukan (misal pada distribusi produksi mandiri), sistem otomatis fallback membaca direktori `dist/locales`.
 
@@ -151,7 +151,7 @@ Pastikan setiap key baru ditambahkan secara simetris di kedua file JSON:
 
 ### 2. Mengakses Translasi di Dalam Tool
 
-Di dalam setiap file tool (`src/tools/*.ts`):
+Di dalam setiap file tool (`src/tools/**/*.ts`):
 
 ```typescript
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string> {

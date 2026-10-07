@@ -48,7 +48,7 @@ class ToolsHandler {
                   : srcToolsPath;
 
         const files = fs
-            .readdirSync(toolsPath)
+            .readdirSync(toolsPath, { recursive: true, encoding: 'utf8' })
             .filter(
                 (f) =>
                     (f.endsWith('.js') || f.endsWith('.ts')) &&
@@ -272,7 +272,7 @@ class ToolsHandler {
             ctx.t = getTranslator('id');
         }
 
-        // Plan-aware feature limit (docs/FEATURE_LIMITS.md). Single funnel, so the
+        // Plan-aware feature limit. Single funnel, so the
         // auto-sticker trigger in message.ts is covered without its own call site.
         // A rejected ffmpeg/spawn costs the same CPU as a successful one, so the slot
         // is consumed on the check, before the tool runs.

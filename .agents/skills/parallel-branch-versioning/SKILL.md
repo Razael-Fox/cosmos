@@ -20,7 +20,7 @@ Aturan utama di `AGENTS.md` Rule S dan S.1. Spesifikasi kanonik di `docs/VERSION
 `pnpm run version:bump` menghitung versi berikutnya dari **`version.json` di working copy lokal**, bukan dari base branch:
 
 ```typescript
-// scripts/version.ts
+// scripts/release/version.ts
 const current = getVersionInfo(); // <-- membaca disk, bukan origin/main
 const next = bumpVersion(current, kind);
 ```
@@ -57,7 +57,7 @@ Artinya bug baru terdeteksi ketika damage sudah masuk branch utama dan harus dib
 
 ### Perbaikan: `--against`
 
-`scripts/version.ts` kini menerima flag `--against <ref>` yang membandingkan versi branch dengan **tip base branch saat ini**, bukan hanya merge base:
+`scripts/release/version.ts` kini menerima flag `--against <ref>` yang membandingkan versi branch dengan **tip base branch saat ini**, bukan hanya merge base:
 
 ```bash
 pnpm run version:verify -- --base <base-sha> --against origin/main

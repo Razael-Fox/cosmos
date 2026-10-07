@@ -9,7 +9,7 @@ import { registerCancellableSession, unregisterCancellableSession } from '#utils
 import { loadConfig, clearConfigCache, isFeatureEnabled } from '#services/subBotConfigService.js';
 import { renderCard } from '#utils/uiFormatter.js';
 import { getPrimaryOwnerNumber } from '#utils/owner.js';
-import { renderForexBroadcast } from '#services/broadcast.js';
+import { renderForexBroadcast } from '#services/economyBroadcast.js';
 import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 
 export const MAX_SUB_BOTS = 50;

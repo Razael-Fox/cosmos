@@ -106,7 +106,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
     }
 
     const isUrl = query.startsWith('http');
-    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'yt-dlp')];
+    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'bin', 'yt-dlp')];
     let ytdlpPath = 'yt-dlp';
     for (const candidate of candidates) {
         if (fs.existsSync(candidate)) {

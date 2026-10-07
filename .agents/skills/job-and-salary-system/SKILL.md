@@ -18,7 +18,7 @@ Fitur utama meliputi:
 4. **Persyaratan Inventaris & Lisensi**: Validasi kepemilikan alat pendukung (Pickaxe, MacBook, iPhone, SIM / Driver's License) sebelum lamaran diterima atau shift dieksekusi.
 5. **Pelacakan Cooldown Shift Atomik**: Menggunakan field `lastWorkedAt` dan `cooldownMinutes` untuk mencegah spam perintah `.work`.
 6. **Pencatatan Audit Ledger**: Setiap pendapatan gaji dicatat ke model `ActivityLog` (`type: 'JOB_SALARY'`).
-7. **Standar Penomoran Versi & Rilis `G-F-P`**: Format penomoran versi framework memakai skema `G<generation>-F<feature>-P<patch>` dengan metadata terpusat pada `version.json`, dikelola melalui `scripts/version.ts` dan dipublikasikan melalui `scripts/release.ts`.
+7. **Standar Penomoran Versi & Rilis `G-F-P`**: Format penomoran versi framework memakai skema `G<generation>-F<feature>-P<patch>` dengan metadata terpusat pada `version.json`, dikelola melalui `scripts/release/version.ts` dan dipublikasikan melalui `scripts/release/release.ts`.
 
 ---
 
@@ -125,8 +125,8 @@ Invarian: `version` wajib identik dengan `G${generation}-F${featureMilestone}-P$
 
 ### 6.4 Otomasi Rilis
 
-- **Manajemen metadata** — `scripts/version.ts`: `pnpm run version:show`, `pnpm run version:check`, `pnpm run version:bump patch|feature|generation`.
-- **Publish** — `scripts/release.ts` (`pnpm run release:pre`): membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, membuat tag versi tanpa prefiks, dan memublikasi GitHub Release. Flag: `--bump <kind>`, `--stable`, `--dry-run`, `--no-push`.
+- **Manajemen metadata** — `scripts/release/version.ts`: `pnpm run version:show`, `pnpm run version:check`, `pnpm run version:bump patch|feature|generation`.
+- **Publish** — `scripts/release/release.ts` (`pnpm run release:pre`): membaca `version.json`, menyelaraskan `package.json`, memvalidasi header `CHANGELOG.md`, membuat tag versi tanpa prefiks, dan memublikasi GitHub Release. Flag: `--bump <kind>`, `--stable`, `--dry-run`, `--no-push`.
 - **CI** — `.github/workflows/docker-publish.yml` memicu build pada tag `G[0-9]*-F[0-9]*-P[0-9]*` dan memvalidasi `version.json`.
 - Riwayat header `RF-*` di `CHANGELOG.md` tetap dipertahankan sebagai catatan siklus pra-rilis dan tidak boleh diubah.
 

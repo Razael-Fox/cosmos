@@ -6,7 +6,7 @@ import os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import crypto from 'crypto';
-import { stickerQueue } from '#utils/stickerQueue.js';
+import { stickerQueue } from '#utils/sticker/queue.js';
 import { ToolDefinition, ToolContext } from './types.js';
 
 const execPromise = promisify(exec);

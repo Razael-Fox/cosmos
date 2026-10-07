@@ -45,11 +45,11 @@ function loadFonts(): { fontBold: opentype.Font; fontMedium: opentype.Font } {
         return { fontBold: cachedFontBold, fontMedium: cachedFontMedium };
     }
 
-    const boldPath = path.resolve(process.cwd(), 'storage', 'fonts', 'static', 'Roboto-Bold.ttf');
-    const mediumPath = path.resolve(process.cwd(), 'storage', 'fonts', 'static', 'Roboto-Medium.ttf');
+    const boldPath = path.resolve(process.cwd(), 'assets', 'fonts', 'static', 'Roboto-Bold.ttf');
+    const mediumPath = path.resolve(process.cwd(), 'assets', 'fonts', 'static', 'Roboto-Medium.ttf');
 
     if (!fs.existsSync(boldPath) || !fs.existsSync(mediumPath)) {
-        throw new Error(`Roboto fonts not found in ${path.resolve(process.cwd(), 'storage', 'fonts', 'static')}`);
+        throw new Error(`Roboto fonts not found in ${path.resolve(process.cwd(), 'assets', 'fonts', 'static')}`);
     }
 
     const bufBold = fs.readFileSync(boldPath);
@@ -400,7 +400,7 @@ export async function generateIdCardImageRestApi(
  * and their photo onto ktp_template.jpg using sharp locally.
  */
 export async function generateIdCardImageLocal(data: IdCardData, profilePicBuffer?: Buffer | null): Promise<Buffer> {
-    const templatePath = path.resolve(process.cwd(), 'storage', 'ktp_template.jpg');
+    const templatePath = path.resolve(process.cwd(), 'assets', 'ktp_template.jpg');
     if (!fs.existsSync(templatePath)) {
         throw new Error(`KTP template image not found at ${templatePath}`);
     }

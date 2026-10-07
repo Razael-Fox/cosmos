@@ -10,8 +10,8 @@ import { startLoanSchedulerCron } from '#services/loanService.js';
 import { connectToWhatsApp, activeConnections } from '#utils/connectionManager.js';
 import { isDefaultSessionRegistered, promptBotPhoneNumber, promptPairingMethod } from '#utils/startupPrompt.js';
 import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.js';
-import { seedItems } from '#seed_item.js';
-import { seedProperties } from '#seed_property.js';
+import { seedItems } from '#seeds/items.js';
+import { seedProperties } from '#seeds/properties.js';
 import { describeVersion, getVersionInfo } from '#utils/versioning.js';
 import { initStatusNotifier } from '#services/statusNotifier/index.js';
 

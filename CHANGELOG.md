@@ -9,6 +9,59 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P6] - 2026-10-07
+
+### Removed — Obsolete Documentation
+
+- Deleted `HOW.md`, `docs/FEATURE_LIMITS.md` and `docs/STATUS_NOTIFICATIONS.md`,
+  and removed the remaining references to them (`AGENTS.md`, the
+  `version-release-automation` skill and a comment in `src/tools/handler.ts`).
+
+---
+
+## [G2-F32-P5] - 2026-10-07
+
+### Changed — Agent Rules Describe the New Layout
+
+- `AGENTS.md` "Struktur Direktori" now documents the reorganized layout
+  (`src/cli`, `src/seeds`, nested `src/tools` families, grouped `scripts/`,
+  `assets/` vs `storage/`, `bin/`) and the procedure for moving files.
+- `i18n-localization-standards` skill: tool glob updated to `src/tools/**/*.ts`.
+
+---
+
+## [G2-F32-P4] - 2026-10-07
+
+### Changed — Stop Tracking the yt-dlp Zipapp
+
+- Removed the pinned `bin/yt-dlp` zipapp from version control and gitignored
+  `bin/`. Docker images already install the latest yt-dlp, so use
+  `pnpm docker:dev` for downloader work. A local copy under `bin/` is still
+  picked up as a fallback when present.
+
+---
+
+## [G2-F32-P3] - 2026-10-07
+
+### Changed — Codebase Structure Cleanup
+
+- `src/`: pairing CLIs moved to `src/cli/`, catalog seeders to `src/seeds/`
+  (`items.ts`, `properties.ts`), sticker helpers to `src/utils/sticker/`, and
+  `services/broadcast.ts` renamed to `services/economyBroadcast.ts` so it no
+  longer reads like `broadcastService.ts`.
+- `src/tools/`: `group_*` and `property_*` commands now live in `group/` and
+  `property/`; the tool registry scans the directory recursively.
+- `scripts/` regrouped into `admin/`, `docker/`, `i18n/`, `infra/`,
+  `migrations/` and `release/`; `package.json` scripts updated accordingly.
+- Static assets (`ktp_template.jpg`, `fonts/`) moved from the runtime
+  `storage/` volume to `assets/`, so they ship inside the Docker image. The
+  `yt-dlp` fallback binary moved to `bin/`.
+- Removed duplicated MCP client examples and README from `src/mcp/`
+  (`docs/mcp/` is the canonical copy).
+- Test files renamed to camelCase for consistency.
+
+---
+
 ## [G2-F32-P2] - 2026-10-05
 
 ### Changed — Release Chain Completes via Actions API
