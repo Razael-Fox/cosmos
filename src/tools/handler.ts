@@ -48,7 +48,7 @@ class ToolsHandler {
                   : srcToolsPath;
 
         const files = fs
-            .readdirSync(toolsPath)
+            .readdirSync(toolsPath, { recursive: true, encoding: 'utf8' })
             .filter(
                 (f) =>
                     (f.endsWith('.js') || f.endsWith('.ts')) &&

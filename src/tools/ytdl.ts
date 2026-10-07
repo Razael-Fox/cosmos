@@ -74,7 +74,7 @@ export const definition: ToolDefinition = {
 
 /** Resolves the `yt-dlp` executable, preferring the pinned local installations. */
 function resolveYtDlpPath(): string {
-    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'yt-dlp')];
+    const candidates = ['/usr/local/bin/yt-dlp', path.resolve(process.cwd(), 'bin', 'yt-dlp')];
     for (const candidate of candidates) {
         if (fs.existsSync(candidate)) return candidate;
     }

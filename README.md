@@ -135,20 +135,31 @@ All commands use a `.` prefix. Run `.menu [category|all]` for the full in-bot br
 
 ```text
 cosmos/
-├── assets/                 # Menu banners, placeholders, fonts
+├── assets/                 # Static assets: menu banners, KTP template, fonts
+├── bin/                    # Local yt-dlp fallback binary
+├── docker/                 # Dockerfiles, nginx, PM2 config, entrypoint
+├── docs/                   # Versioning spec, command reference, MCP operator guide (docs/mcp)
 ├── prisma/schema.prisma    # SQLite schema (User, BankAccount, Loan, Jobs, ...)
-├── scripts/                # Locale sync, release/version automation, i18n validation
+├── scripts/
+│   ├── admin/              # Operator tools (set balance, merge accounts, subscription check)
+│   ├── docker/             # Docker build / deploy / dev helpers
+│   ├── i18n/               # Locale sync and validation
+│   ├── infra/              # Cloudflare tunnel, Turnstile, Doppler
+│   ├── migrations/         # One-off data migrations
+│   └── release/            # Version and release automation
 ├── src/
+│   ├── cli/                # Pairing CLIs (WhatsApp, Telegram)
 │   ├── db.ts               # Prisma client and better-sqlite3 adapter
-│   ├── index.ts            # Entrypoint and cron scheduler
 │   ├── handlers/           # Message router and command dispatcher
+│   ├── index.ts            # Entrypoint and cron scheduler
 │   ├── locales/            # Translation dictionaries (en, id)
 │   ├── mcp/                # Cosmos MCP server for AI coding agents
+│   ├── seeds/              # Item and property catalog seeders
 │   ├── services/           # AI, bank, loans, jobs, shop, menu, broadcast, inflation
-│   ├── tools/              # Command handlers
-│   └── utils/              # Auto-delete, cancellation, currency, UI, caching, versioning
-├── tests/                  # Vitest test suites
-├── docs/                   # Versioning spec, command reference, and the MCP operator guide
+│   ├── tools/              # Command handlers (group/ and property/ hold command families)
+│   └── utils/              # Auto-delete, cancellation, currency, UI, caching, versioning (sticker/ for stickers)
+├── storage/                # Runtime state only (databases, sessions, logs, backups)
+├── tests/                  # Node test suites
 ├── version.json            # Canonical version metadata (G-F-P)
 ├── CHANGELOG.md
 └── package.json

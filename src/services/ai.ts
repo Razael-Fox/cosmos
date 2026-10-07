@@ -1,6 +1,6 @@
 import Groq from 'groq-sdk';
 import { prisma } from '../db.js';
-import { broadcastEconomicUpdate } from './broadcast.js';
+import { broadcastEconomicUpdate } from './economyBroadcast.js';
 import dotenv from 'dotenv';
 dotenv.config();
 

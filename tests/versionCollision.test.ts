@@ -19,7 +19,7 @@ const REPO_ROOT = path.resolve(process.cwd());
 // `version.ts` resolves VERSION_FILE_PATH relative to its own module location, so the
 // scratch clone MUST run its own copy of the script. Pointing at the original repo's
 // file would read the original repo's version.json instead of the clone's.
-const SOURCE_SCRIPT = path.join(REPO_ROOT, 'scripts', 'version.ts');
+const SOURCE_SCRIPT = path.join(REPO_ROOT, 'scripts', 'release', 'version.ts');
 
 interface RunResult {
     status: number;
@@ -28,10 +28,11 @@ interface RunResult {
 }
 
 function runIn(cwd: string, args: string[]): RunResult {
-    const script = path.join(cwd, 'scripts', 'version.ts');
+    const script = path.join(cwd, 'scripts', 'release', 'version.ts');
     // `git checkout -B <branch>` restores tracked files, which would silently revert
     // this script back to the committed copy. Re-sync it before every invocation so
     // the test always exercises the working-tree version of the CLI.
+    fs.mkdirSync(path.join(clonePath, 'scripts', 'release'), { recursive: true });
     fs.copyFileSync(SOURCE_SCRIPT, script);
     const result = spawnSync('pnpm', ['exec', 'tsx', script, ...args], {
         cwd,
@@ -58,7 +59,8 @@ const realVersionBefore = fs.readFileSync(realVersionFile, 'utf-8');
 try {
     console.log('[Test 1] Cloning the repository into a scratch workspace...');
     execFileSync('git', ['clone', '--quiet', '--no-hardlinks', REPO_ROOT, clonePath], { encoding: 'utf-8' });
-    fs.copyFileSync(SOURCE_SCRIPT, path.join(clonePath, 'scripts', 'version.ts'));
+    fs.mkdirSync(path.join(clonePath, 'scripts', 'release'), { recursive: true });
+    fs.copyFileSync(SOURCE_SCRIPT, path.join(clonePath, 'scripts', 'release', 'version.ts'));
     fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(clonePath, 'node_modules'));
 
     // Build a minimal history: a base commit carrying an older version.json, then

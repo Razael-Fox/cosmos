@@ -17,7 +17,7 @@ import {
     scheduleMessageDeletion,
     removeScheduledDeletions,
     processStickerPackMaker
-} from '#utils/stickerlySession.js';
+} from '#utils/sticker/stickerlySession.js';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

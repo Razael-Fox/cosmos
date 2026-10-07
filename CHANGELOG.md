@@ -9,6 +9,27 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P3] - 2026-10-07
+
+### Changed — Codebase Structure Cleanup
+
+- `src/`: pairing CLIs moved to `src/cli/`, catalog seeders to `src/seeds/`
+  (`items.ts`, `properties.ts`), sticker helpers to `src/utils/sticker/`, and
+  `services/broadcast.ts` renamed to `services/economyBroadcast.ts` so it no
+  longer reads like `broadcastService.ts`.
+- `src/tools/`: `group_*` and `property_*` commands now live in `group/` and
+  `property/`; the tool registry scans the directory recursively.
+- `scripts/` regrouped into `admin/`, `docker/`, `i18n/`, `infra/`,
+  `migrations/` and `release/`; `package.json` scripts updated accordingly.
+- Static assets (`ktp_template.jpg`, `fonts/`) moved from the runtime
+  `storage/` volume to `assets/`, so they ship inside the Docker image. The
+  `yt-dlp` fallback binary moved to `bin/`.
+- Removed duplicated MCP client examples and README from `src/mcp/`
+  (`docs/mcp/` is the canonical copy).
+- Test files renamed to camelCase for consistency.
+
+---
+
 ## [G2-F32-P2] - 2026-10-05
 
 ### Changed — Release Chain Completes via Actions API

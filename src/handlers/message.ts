@@ -1,7 +1,7 @@
 import { jidNormalizedUser, WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { addGroup, isGroupWhitelisted, prisma, dbContext } from '#db.js';
 import toolsHandler from '#tools/handler.js';
-import { isAutoStickerEnabled } from '#utils/autoSticker.js';
+import { isAutoStickerEnabled } from '#utils/sticker/autoSticker.js';
 import { isAutoCorrectionEnabled, analyzeAndCorrectText } from '#utils/autoCorrection.js';
 import { isMessageProcessed, markMessageProcessed } from '#utils/messageCache.js';
 import { processAutoDl } from '#utils/autodl.js';
@@ -42,7 +42,7 @@ import {
     deletePreviewMessages,
     removeScheduledDeletions,
     processStickerlySelection
-} from '#utils/stickerlySession.js';
+} from '#utils/sticker/stickerlySession.js';
 import { hasActivePlaySession, getActivePlaySession } from '#utils/playSession.js';
 import { AgentConfirmationManager } from '#services/agentEngine/confirmationManager.js';
 import { AgentLocationStager } from '#services/agentEngine/locationStager.js';

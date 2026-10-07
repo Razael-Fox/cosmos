@@ -150,7 +150,7 @@ Pada level penanganan pesan (`src/handlers/message.ts`), bahasa obrolan diselesa
 
 ### G. Supresi Broadcast Ekonomi (FOREX)
 
-Saat parent bot mendistribusikan pengumuman harian FOREX dan pembaruan makroekonomi (`broadcastDailyForex` di `src/services/broadcast.ts`):
+Saat parent bot mendistribusikan pengumuman harian FOREX dan pembaruan makroekonomi (`broadcastDailyForex` di `src/services/economyBroadcast.ts`):
 
 - Panggil `broadcastSubBotForex(multiplier, reasoning, rate)`.
 - Loop setiap sub-bot yang aktif di `activeConnections`.
