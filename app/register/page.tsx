@@ -78,7 +78,7 @@ export default function RegisterPage() {
             return;
         }
 
-        if (password && !isStrongPassword(password)) {
+        if (!isStrongPassword(password)) {
             setPasswordError(t.auth.passwordComplexity);
             return;
         }
@@ -215,7 +215,7 @@ export default function RegisterPage() {
                         </details>
 
                         {/* Password */}
-                        <Field label={t.auth.passwordLabel} htmlFor="password" error={passwordError}>
+                        <Field label={t.auth.passwordLabel} htmlFor="password" required error={passwordError}>
                             <div className="relative">
                                 <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
