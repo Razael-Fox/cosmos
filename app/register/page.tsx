@@ -20,6 +20,8 @@ import { useTranslation } from '@/lib/i18n';
 import { registerInverted, registerDirect } from '@/lib/api';
 import type { RegisterInvertedResponse } from '@/lib/types';
 import { Turnstile, type TurnstileRef } from '@/components/Turnstile';
+import { parsePhone, COUNTRY_CODES } from '@/lib/phone';
+import type { CountryCode } from 'libphonenumber-js/min';
 import { InvertedVerifyDialog } from '@/components/InvertedVerifyDialog';
 import { DirectOtpModal } from '@/components/DirectOtpModal';
 import { AuthShell } from '@/components/AuthShell';
@@ -32,6 +34,7 @@ const isStrongPassword = (pw: string): boolean =>
 export default function RegisterPage() {
     const { t } = useTranslation();
     const [mode, setMode] = useState<'inverted' | 'direct'>('inverted');
+    const [countryIso, setCountryIso] = useState<CountryCode>('ID');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -65,7 +68,8 @@ export default function RegisterPage() {
     const [showDirectModal, setShowDirectModal] = useState(false);
     const [directExpiresIn, setDirectExpiresIn] = useState(300);
 
-    const cleanPhone = phone.replace(/\D/g, '');
+    const parsedPhone = parsePhone(phone, countryIso);
+    const cleanPhone = parsedPhone?.digits ?? '';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,7 +77,7 @@ export default function RegisterPage() {
         setPhoneError(null);
         setPasswordError(null);
 
-        if (!cleanPhone || cleanPhone.length < 10) {
+        if (!parsedPhone) {
             setPhoneError(t.auth.invalidPhone);
             return;
         }
@@ -171,23 +175,37 @@ export default function RegisterPage() {
                             htmlFor="phone"
                             required
                             error={phoneError}
-                            hint={t.auth.phoneHelp}
+                            hint={parsedPhone ? parsedPhone.international : t.auth.phoneHelp}
                         >
-                            <div className="relative">
-                                <WhatsappLogo className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                                <input
-                                    id="phone"
-                                    type="tel"
-                                    required
-                                    value={phone}
-                                    onChange={(e) => {
-                                        setPhone(e.target.value);
-                                        if (phoneError) setPhoneError(null);
-                                    }}
-                                    placeholder={t.auth.phonePlaceholder}
-                                    autoComplete="tel"
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
-                                />
+                            <div className="flex gap-2">
+                                <select
+                                    aria-label={t.auth.countryCodeLabel}
+                                    value={countryIso}
+                                    onChange={(e) => setCountryIso(e.target.value as CountryCode)}
+                                    className="px-2.5 py-2.5 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 shrink-0 cursor-pointer"
+                                >
+                                    {COUNTRY_CODES.map((item) => (
+                                        <option key={item.iso} value={item.iso}>
+                                            {item.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="relative flex-1">
+                                    <WhatsappLogo className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                    <input
+                                        id="phone"
+                                        type="tel"
+                                        required
+                                        value={phone}
+                                        onChange={(e) => {
+                                            setPhone(e.target.value);
+                                            if (phoneError) setPhoneError(null);
+                                        }}
+                                        placeholder={t.auth.phonePlaceholder}
+                                        autoComplete="tel"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                                    />
+                                </div>
                             </div>
                         </Field>
 
