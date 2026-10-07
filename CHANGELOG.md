@@ -9,6 +9,43 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P2] - 2026-10-07
+
+### Fixed — `.check chid` Review Findings (PR #82)
+
+- Read channel details from the nested `thread_metadata` shape that Baileys
+  `newsletterMetadata()` actually returns, so the card shows name, followers,
+  verification, invite and creation date in production.
+- Require a left boundary before the `whatsapp.com/channel/` host, so
+  `evilwhatsapp.com` no longer matches.
+- Added `cek chid` to the Indonesian tutorial command list.
+- Ignore `.env.pull.*` temp files left behind by a killed Doppler pull.
+
+---
+
+## [G2-F33-P1] - 2026-10-07
+
+### Fixed — Doppler Pull No Longer Truncates `.env`
+
+- `scripts/infra/sync-doppler.sh pull` now downloads to a temp file and replaces
+  `.env` only when the download succeeds and is non-empty. Previously the
+  `> .env` redirect emptied the file before a failed download (for example
+  restricted secrets) could report an error.
+
+---
+
+## [G2-F33-P0] - 2026-10-07
+
+### Added — `.check chid` Channel ID Resolver (Issue #80)
+
+- New command `.check chid` (alias `.cek chid`) resolves a WhatsApp channel ID
+  (`...@newsletter`) from a channel link, a replied message containing a link,
+  or a replied message forwarded from a channel. Works in groups and private chats.
+- Output is a `uiFormatter` card localized in `en` and `id`; 10 s per-sender, per-chat cooldown.
+- Registered as read-only in the agent policy, tutorials, and `docs/COMMANDS_CONTEXT.md`.
+
+---
+
 ## [G2-F32-P7] - 2026-10-07
 
 ### Security — Personal Data Scrub

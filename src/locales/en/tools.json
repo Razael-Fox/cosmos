@@ -169,6 +169,36 @@
         "success": "Active session has been cancelled.",
         "sender_identity_error": "Could not determine your sender identity."
     },
+    "check_chid": {
+        "title": "CHANNEL ID",
+        "subtitle_link": "Resolved from invite link",
+        "subtitle_reply_link": "Resolved from the replied message link",
+        "subtitle_forward": "Read from the forwarded message",
+        "label_name": "Name",
+        "label_followers": "Followers",
+        "label_verified": "Verified",
+        "label_invite": "Invite",
+        "label_created": "Created",
+        "label_message_id": "Message ID",
+        "yes": "Yes",
+        "no": "No",
+        "tip_copy": "Tap and hold the ID to copy it.",
+        "partial_note": "ℹ️ Showing details from the forwarded message. Channel stats were not available.",
+        "syntax_issue": "Provide a WhatsApp channel link or reply to a message that contains one.",
+        "syntax_examples": "- `.check chid https://whatsapp.com/channel/<code>`\n- Reply to a message with a channel link: `.check chid`\n- Reply to a message forwarded from a channel: `.check chid`",
+        "invalid_link_title": "INVALID CHANNEL LINK",
+        "invalid_link_message": "That is not a WhatsApp channel link.",
+        "invalid_link_suggestion": "Use the format https://whatsapp.com/channel/<code>",
+        "no_channel_title": "NO CHANNEL FOUND",
+        "no_channel_message": "The replied message has no channel link and was not forwarded from a channel.",
+        "not_found_title": "CHANNEL NOT FOUND",
+        "not_found_message": "The link may be wrong, or the channel was deleted or is unavailable.",
+        "not_found_suggestion": "Double-check the link and try again.",
+        "lookup_failed_title": "LOOKUP FAILED",
+        "lookup_failed_message": "Could not reach WhatsApp.",
+        "lookup_failed_suggestion": "Please try again shortly.",
+        "cooldown": "Please wait {{seconds}} seconds before checking another channel."
+    },
     "check_online": {
         "group_only": "> ❌ *GROUP-ONLY COMMAND*\n> `.check online` can only be used in a group chat to show which members are currently online.",
         "title": "ONLINE MEMBERS",
@@ -825,6 +855,9 @@
         "days_suffix": "{{days}} days"
     },
     "commands": {
+        "check_chid": {
+            "description": "Resolve a WhatsApp channel ID from a channel link, a replied link, or a forwarded channel message."
+        },
         "check_online": {
             "description": "List group members who are currently online with real-time presence."
         },

@@ -323,6 +323,18 @@ Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah d
     - Identitas bot sendiri (JID dan LID) otomatis dikecualikan dari hasil.
     - Terdapat cooldown 30 detik per pengirim untuk mencegah spam.
 
+### `.check chid` / `.cek chid` (Resolve ID Saluran WhatsApp)
+
+- **Fungsi:** Mengambil ID saluran WhatsApp (`120363...@newsletter`) yang tidak ditampilkan di UI WhatsApp, misalnya untuk konfigurasi transport `whatsappChannel` pada status notifier.
+- **Penggunaan:**
+    - `.check chid https://whatsapp.com/channel/<kode>` — dari tautan saluran.
+    - Balas pesan yang memuat tautan saluran dengan `.check chid`.
+    - Balas pesan yang diteruskan dari saluran dengan `.check chid`.
+- **Catatan:**
+    - Prioritas: tautan pada argumen, lalu info forward pada pesan yang dibalas, lalu tautan pada teks pesan yang dibalas.
+    - Dapat dipakai di grup maupun chat pribadi. ID saluran adalah pengenal publik, bukan PII.
+    - Terdapat cooldown 10 detik per pengirim di setiap obrolan.
+
 ---
 
 ## 9.1 Moderasi Grup (Group Moderation — Admin Only)

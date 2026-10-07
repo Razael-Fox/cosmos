@@ -35,6 +35,8 @@ const POLICY_MAP: Record<string, ToolAiPolicy> = {
     myplan: ToolAiPolicy.READ_ONLY,
     'check online': ToolAiPolicy.READ_ONLY,
     check_online: ToolAiPolicy.READ_ONLY,
+    'check chid': ToolAiPolicy.READ_ONLY,
+    check_chid: ToolAiPolicy.READ_ONLY,
     vault: ToolAiPolicy.READ_ONLY,
     top: ToolAiPolicy.READ_ONLY,
     topglobal: ToolAiPolicy.READ_ONLY,

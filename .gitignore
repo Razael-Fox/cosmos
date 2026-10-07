@@ -56,6 +56,8 @@ typings/
 
 # dotenv environment variables file
 .env
+# temp file written by scripts/infra/sync-doppler.sh pull
+.env.pull.*
 
 # Baileys session folder
 auth_info_baileys/
