@@ -29,11 +29,15 @@ import type { ToolContext } from '../src/tools/types.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { getTranslator } from '../src/utils/i18n.js';
 
+// Owner authorization reads OWNER_PHONE_NUMBER from the environment, so pin it
+// to the fixture below instead of depending on the local .env.
+process.env.OWNER_PHONE_NUMBER = '6281200000101';
+
 async function runTests() {
     console.log('--- STARTING AUTO-ARCHIVE SYSTEM TEST SUITE ---');
 
     const t = getTranslator('en');
-    const ownerNumber = '6282225907841@s.whatsapp.net';
+    const ownerNumber = '6281200000101@s.whatsapp.net';
     const nonOwnerNumber = '628111111111@s.whatsapp.net';
 
     // =========================================================================

@@ -13,7 +13,7 @@ async function runTests() {
     ensureDatabaseSchema(testDbPath);
 
     const testPhone = '6282114329219';
-    const testLid = '14392720638086';
+    const testLid = '14000000000086';
     const canonicalJid = `${testPhone}@s.whatsapp.net`;
     const fullLid = `${testLid}@lid`;
     const groupJid = '120363274823554999@g.us';

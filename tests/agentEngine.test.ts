@@ -26,6 +26,10 @@ import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/to
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import type { AgentExecutionContext } from '../src/services/agentEngine/types.js';
 
+// Owner authorization reads OWNER_PHONE_NUMBER from the environment, so pin it
+// to the fixtures below instead of depending on the local .env.
+process.env.OWNER_PHONE_NUMBER = '6281200000101';
+
 async function runTests() {
     console.log('--- STARTING COSMOS AGENT ENGINE TEST SUITE ---');
 
@@ -36,9 +40,9 @@ async function runTests() {
     assert.strictEqual(cleanPhoneNumber('081234567890'), '6281234567890');
     assert.strictEqual(cleanPhoneNumber('+62 812-3456-7890'), '6281234567890');
     assert.strictEqual(cleanPhoneNumber('+62 0812-3456-7890'), '6281234567890');
-    assert.strictEqual(cleanPhoneNumber('+94 77 837 0112'), '94778370112');
-    assert.strictEqual(cleanPhoneNumber('0094 77 837 0112'), '94778370112');
-    assert.strictEqual(toCanonicalJid('+94 77 837 0112'), '94778370112@s.whatsapp.net');
+    assert.strictEqual(cleanPhoneNumber('+94 77 000 0112'), '94770000112');
+    assert.strictEqual(cleanPhoneNumber('0094 77 000 0112'), '94770000112');
+    assert.strictEqual(toCanonicalJid('+94 77 000 0112'), '94770000112@s.whatsapp.net');
     assert.strictEqual(toCanonicalJid('081234567890'), '6281234567890@s.whatsapp.net');
 
     // Masking check: 62812****7890
@@ -127,7 +131,7 @@ async function runTests() {
 
     // Test sendMessageTool execution with attribution
     console.log('[Test 3b] Testing sendMessageTool execution with attribution...');
-    const targetOwnerJid = '6282225907841@s.whatsapp.net';
+    const targetOwnerJid = '6281200000101@s.whatsapp.net';
     const msgToken = EphemeralTokenStore.mintToken(targetOwnerJid, userA, new Set(['send_message']));
     let dispatchedText = '';
     let dispatchedDest = '';
@@ -577,7 +581,7 @@ async function runTests() {
 
     let lastSentMessage = '';
     const e2eSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        user: { id: '6281200000202:1@s.whatsapp.net', name: 'CosmosBot' },
         sendMessage: async (_jid: string, content: { text: string }) => {
             lastSentMessage = content.text;
             return { key: { id: 'mock_msg_e2e' } };
@@ -611,7 +615,7 @@ async function runTests() {
 
     const dispatchedMessages: Array<{ destJid: string; text: string }> = [];
     const ownerMsgSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        user: { id: '6281200000202:1@s.whatsapp.net', name: 'CosmosBot' },
         sendMessage: async (jid: string, content: { text: string }) => {
             dispatchedMessages.push({ destJid: jid, text: content.text });
             return { key: { id: `mock_msg_${Date.now()}` } };
@@ -635,7 +639,7 @@ async function runTests() {
 
     assert(ownerMsgResponse, 'CosmosAgentEngine must return a response for messaging Razael');
     // Ensure that a message was dispatched to the owner JID
-    const targetOwnerCanonical = toCanonicalJid('6282225907841');
+    const targetOwnerCanonical = toCanonicalJid('6281200000101');
     const msgToOwner = dispatchedMessages.find((m) => m.destJid === targetOwnerCanonical);
     assert(msgToOwner, 'Message must be dispatched to Razael (Owner JID)');
     assert(msgToOwner.text.includes('update the sistem'), 'Message to owner must include requested text');
@@ -648,7 +652,7 @@ async function runTests() {
     // =========================================================================
     console.log('[Test 13] Testing group target resolution & participant security gate...');
     const groupMockSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        user: { id: '6281200000202:1@s.whatsapp.net', name: 'CosmosBot' },
         groupFetchAllParticipating: async () => ({
             '120363001@g.us': {
                 id: '120363001@g.us',
@@ -660,8 +664,8 @@ async function runTests() {
                 subject: 'Secret Admins',
                 participants: [{ id: '628999999999@s.whatsapp.net', admin: 'admin' }]
             },
-            '120363400831325507@g.us': {
-                id: '120363400831325507@g.us',
+            '120363000000000001@g.us': {
+                id: '120363000000000001@g.us',
                 subject: 'Party ML(MaLas)',
                 participants: [{ id: userA, admin: null }]
             }
@@ -687,7 +691,7 @@ async function runTests() {
         false
     );
     assert(partyTarget1 !== null, 'Party ML (MaLas) with space before parenthesis must resolve');
-    assert.strictEqual(partyTarget1.resolvedJid, '120363400831325507@g.us');
+    assert.strictEqual(partyTarget1.resolvedJid, '120363000000000001@g.us');
     assert.strictEqual(partyTarget1.aliasMatch, 'Party ML(MaLas)');
 
     const partyTarget2 = await AgentEntityResolver.resolveRecipientToken(
@@ -697,7 +701,7 @@ async function runTests() {
         false
     );
     assert(partyTarget2 !== null, 'Party\\u202fML (MaLas) with narrow no-break space must resolve');
-    assert.strictEqual(partyTarget2.resolvedJid, '120363400831325507@g.us');
+    assert.strictEqual(partyTarget2.resolvedJid, '120363000000000001@g.us');
 
     const partyTarget3 = await AgentEntityResolver.resolveRecipientToken(
         'ke group Party ML (MaLas)',
@@ -706,7 +710,7 @@ async function runTests() {
         false
     );
     assert(partyTarget3 !== null, 'ke group Party ML (MaLas) must resolve');
-    assert.strictEqual(partyTarget3.resolvedJid, '120363400831325507@g.us');
+    assert.strictEqual(partyTarget3.resolvedJid, '120363000000000001@g.us');
 
     // Member userA should resolve 'Dev Team'
     const devTarget = await AgentEntityResolver.resolveRecipientToken(
@@ -752,7 +756,7 @@ async function runTests() {
 
     const groupDispatchedMessages: Array<{ destJid: string; text: string }> = [];
     const e2eGroupSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net', name: 'CosmosBot' },
+        user: { id: '6281200000202:1@s.whatsapp.net', name: 'CosmosBot' },
         sendMessage: async (jid: string, content: { text: string }) => {
             groupDispatchedMessages.push({ destJid: jid, text: content.text });
             return { key: { id: `mock_group_msg_${Date.now()}` } };
@@ -765,8 +769,8 @@ async function runTests() {
                 subject: 'Dev Team',
                 participants: [{ id: userA, admin: null }]
             },
-            '120363400831325507@g.us': {
-                id: '120363400831325507@g.us',
+            '120363000000000001@g.us': {
+                id: '120363000000000001@g.us',
                 subject: 'Party ML(MaLas)',
                 participants: [{ id: userA, admin: null }]
             }
@@ -854,8 +858,8 @@ async function runTests() {
     );
 
     assert(partyResponse, 'CosmosAgentEngine must respond to Party ML group send command');
-    const msgToParty = groupDispatchedMessages.find((m) => m.destJid === '120363400831325507@g.us');
-    assert(msgToParty, 'Message must be dispatched to group 120363400831325507@g.us');
+    const msgToParty = groupDispatchedMessages.find((m) => m.destJid === '120363000000000001@g.us');
+    assert(msgToParty, 'Message must be dispatched to group 120363000000000001@g.us');
     assert(
         msgToParty.text.includes('tips: command .spack mencari sticker pack di sticker.ly'),
         'Dispatched text must contain the tips message'
@@ -900,7 +904,7 @@ async function runTests() {
 
     let lastContactSentText = '';
     const contactMockSock = {
-        user: { id: '6285136533136:1@s.whatsapp.net' },
+        user: { id: '6281200000202:1@s.whatsapp.net' },
         sendMessage: async (_dest: string, content: { text: string }) => {
             lastContactSentText = content.text;
             return { key: { id: 'mock-msg-id' } };
