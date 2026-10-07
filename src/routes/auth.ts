@@ -1,4 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import type { CountryCode } from 'libphonenumber-js';
 import crypto from 'crypto';
 import { prisma } from '../db.js';
 import { config } from '../config.js';
@@ -29,6 +31,17 @@ import { serializeUser } from '../utils/userSerializer.js';
 import { emitAuthStatus } from '../services/authEventBus.js';
 
 export const authRoutes: FastPluginAsync = async (fastify) => {
+    /**
+     * Validate a phone number and return E.164 digits, or null when invalid.
+     * Accepts local (0812...), IDD (0062...), and E.164 (+62...) formats.
+     */
+    const normalizePhoneNumber = (input: string, defaultCountry: CountryCode = 'ID'): string | null => {
+        // libphonenumber misreads a leading IDD '00' as national digits, so
+        // normalize it to '+' first (0062... -> +62...).
+        const sanitized = input.trim().replace(/^00/, '+');
+        const parsed = parsePhoneNumberFromString(sanitized, defaultCountry);
+        return parsed && parsed.isValid() ? parsed.number.replace(/\D/g, '') : null;
+    };
     // POST /api/v1/auth/register-inverted
     fastify.post('/register-inverted', async (req, reply) => {
         const body = req.body as {
@@ -43,9 +56,12 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             return reply.status(400).send({ error: 'INVALID_PHONE', message: 'Phone number is required.' });
         }
 
-        const cleanPhone = body.phone.replace(/\D/g, '');
-        if (cleanPhone.length < 8) {
-            return reply.status(400).send({ error: 'INVALID_PHONE', message: 'Phone number is too short.' });
+        const cleanPhone = normalizePhoneNumber(body.phone);
+        if (!cleanPhone) {
+            return reply.status(400).send({
+                error: 'INVALID_PHONE',
+                message: 'Phone number is not valid. Please include the country code (e.g. +62...).'
+            });
         }
 
         const clientIp = getRestoredClientIp(req);
@@ -147,9 +163,12 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
             return reply.status(400).send({ error: 'INVALID_PHONE', message: 'Phone number is required.' });
         }
 
-        const cleanPhone = body.phone.replace(/\D/g, '');
-        if (cleanPhone.length < 8) {
-            return reply.status(400).send({ error: 'INVALID_PHONE', message: 'Phone number is too short.' });
+        const cleanPhone = normalizePhoneNumber(body.phone);
+        if (!cleanPhone) {
+            return reply.status(400).send({
+                error: 'INVALID_PHONE',
+                message: 'Phone number is not valid. Please include the country code (e.g. +62...).'
+            });
         }
 
         const clientIp = getRestoredClientIp(req);
@@ -477,12 +496,17 @@ export const authRoutes: FastPluginAsync = async (fastify) => {
         }
 
         const trimmedIdentifier = body.identifier.trim();
+        // Normalized E.164 JID for new accounts plus the raw-digits JID so
+        // accounts registered before validation still resolve.
+        const normalizedDigits = normalizePhoneNumber(trimmedIdentifier);
         const cleanDigits = trimmedIdentifier.replace(/\D/g, '');
-        const phoneJid = cleanDigits.length >= 8 ? `${cleanDigits}@s.whatsapp.net` : '';
+        const phoneJids = new Set<string>();
+        if (normalizedDigits) phoneJids.add(`${normalizedDigits}@s.whatsapp.net`);
+        if (cleanDigits.length >= 8) phoneJids.add(`${cleanDigits}@s.whatsapp.net`);
 
         let user = await prisma.user.findFirst({
             where: {
-                OR: [{ username: trimmedIdentifier }, ...(phoneJid ? [{ id: phoneJid }] : [])]
+                OR: [{ username: trimmedIdentifier }, ...[...phoneJids].map((id) => ({ id }))]
             }
         });
 
