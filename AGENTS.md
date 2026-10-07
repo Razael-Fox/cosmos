@@ -363,7 +363,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### AI. Otomatisasi Versi & Rilis CI (Version & Release CI Automation Standards)
 
-> Implementasi: `.github/workflows/version-automation.yml`, `release.yml`, `version-policy.yml`. Panduan agent: `.agents/skills/version-release-automation/SKILL.md`. Panduan tester: `HOW.md`.
+> Implementasi: `.github/workflows/version-automation.yml`, `release.yml`, `version-policy.yml`. Panduan agent: `.agents/skills/version-release-automation/SKILL.md`.
 
 - **Rantai Otomatis (Pipeline Chain):** Merge/push ke `main` → `version-automation.yml` mengklasifikasi (nothing | tag-only | bump) → bump + commit `[skip ci]` + push tag → tag memicu `release.yml` (GitHub Release berisi irisan `CHANGELOG.md`) dan `docker-publish.yml` (image GHCR). `version.json` tetap satu-satunya sumber kebenaran. Selain itu `format.yml` menjalankan Prettier ke seluruh codebase pada setiap push ke `main` dan meng-push hasilnya sebagai `github-actions[bot]` dengan `[skip ci]`, sehingga formatting tidak lagi wajib dijalankan di sisi development (kedua workflow diserialkan lewat concurrency group `main-automation`).
 - **Klasifikasi Bump Berbasis Commit Message (Smart Classification):** Bila path bervedisi berubah tanpa `version.json` ikut berubah, workflow membaca commit message: `BREAKING CHANGE` / `type!:` → `generation`; subject `feat:`/`feat(scope):` → `feature`; lainnya → `patch`. Prioritas tertinggi menang dalam satu push.

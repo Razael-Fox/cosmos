@@ -3,7 +3,7 @@ name: version-release-automation
 description: Panduan baku sistem otomasi versi & rilis Cosmos di GitHub Actions (version-automation.yml, release.yml, version-policy.yml), klasifikasi bump otomatis berbasis Conventional Commits (feat: → feature, type!: / BREAKING CHANGE → generation, lainnya → patch), kewajiban penulisan commit message yang jujur, override manual via workflow_dispatch, dan prosedur verifikasi pasca-merge. Gunakan panduan ini setiap kali AI Agent menulis commit message, menaikkan versi, membuat tag/rilis, atau memeriksa hasil otomasi rilis.
 ---
 
-> **Lihat juga `cosmos-versioning`** (format `G-F-P` dan `version.json`) dan **`parallel-branch-versioning`** (tabrakan versi antar branch & registry milestone). Panduan untuk tim testing: `HOW.md`.
+> **Lihat juga `cosmos-versioning`** (format `G-F-P` dan `version.json`) dan **`parallel-branch-versioning`** (tabrakan versi antar branch & registry milestone).
 
 # Version & Release CI Automation Standards
 
@@ -108,4 +108,4 @@ Setelah PR agent di-merge atau direct push:
 | Kind bump salah (fitur jadi patch)                   | Commit message salah tipe — koreksi via workflow_dispatch (§3.4), bukan rewrite history                                                                                                   |
 | `release.yml` gagal "does not match version.json"    | Tag tidak cocok dengan `version.json` — hapus tag yang salah, jangan bypass                                                                                                               |
 
-Spesifikasi format: `docs/VERSIONING.md`. Aturan utama: `AGENTS.md` Rule S & Rule AI. Panduan tester: `HOW.md`.
+Spesifikasi format: `docs/VERSIONING.md`. Aturan utama: `AGENTS.md` Rule S & Rule AI.

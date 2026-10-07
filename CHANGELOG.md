@@ -9,6 +9,16 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F32-P6] - 2026-10-07
+
+### Removed — Obsolete Documentation
+
+- Deleted `HOW.md`, `docs/FEATURE_LIMITS.md` and `docs/STATUS_NOTIFICATIONS.md`,
+  and removed the remaining references to them (`AGENTS.md`, the
+  `version-release-automation` skill and a comment in `src/tools/handler.ts`).
+
+---
+
 ## [G2-F32-P5] - 2026-10-07
 
 ### Changed — Agent Rules Describe the New Layout
