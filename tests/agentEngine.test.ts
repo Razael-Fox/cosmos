@@ -26,6 +26,10 @@ import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/to
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import type { AgentExecutionContext } from '../src/services/agentEngine/types.js';
 
+// Owner authorization reads OWNER_PHONE_NUMBER from the environment, so pin it
+// to the fixtures below instead of depending on the local .env.
+process.env.OWNER_PHONE_NUMBER = '6281200000101';
+
 async function runTests() {
     console.log('--- STARTING COSMOS AGENT ENGINE TEST SUITE ---');
 
