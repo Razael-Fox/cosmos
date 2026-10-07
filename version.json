@@ -1,7 +1,7 @@
 {
-    "version": "G2-F32-P7",
+    "version": "G2-F33-P0",
     "generation": 2,
-    "featureMilestone": 32,
-    "patch": 7,
+    "featureMilestone": 33,
+    "patch": 0,
     "releaseDate": "2026-10-07"
 }

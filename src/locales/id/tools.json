@@ -169,6 +169,36 @@
         "success": "Sesi aktif berhasil dibatalkan.",
         "sender_identity_error": "Tidak dapat menentukan identitas pengirim Anda."
     },
+    "check_chid": {
+        "title": "ID SALURAN",
+        "subtitle_link": "Diambil dari tautan undangan",
+        "subtitle_reply_link": "Diambil dari tautan pada pesan yang dibalas",
+        "subtitle_forward": "Dibaca dari pesan yang diteruskan",
+        "label_name": "Nama",
+        "label_followers": "Pengikut",
+        "label_verified": "Terverifikasi",
+        "label_invite": "Undangan",
+        "label_created": "Dibuat",
+        "label_message_id": "ID Pesan",
+        "yes": "Ya",
+        "no": "Tidak",
+        "tip_copy": "Tekan dan tahan ID untuk menyalinnya.",
+        "partial_note": "ℹ️ Menampilkan detail dari pesan yang diteruskan. Statistik saluran tidak tersedia.",
+        "syntax_issue": "Berikan tautan saluran WhatsApp atau balas pesan yang memuatnya.",
+        "syntax_examples": "- `.cek chid https://whatsapp.com/channel/<kode>`\n- Balas pesan berisi tautan saluran: `.cek chid`\n- Balas pesan yang diteruskan dari saluran: `.cek chid`",
+        "invalid_link_title": "TAUTAN SALURAN TIDAK VALID",
+        "invalid_link_message": "Itu bukan tautan saluran WhatsApp.",
+        "invalid_link_suggestion": "Gunakan format https://whatsapp.com/channel/<kode>",
+        "no_channel_title": "SALURAN TIDAK DITEMUKAN",
+        "no_channel_message": "Pesan yang dibalas tidak memiliki tautan saluran dan tidak diteruskan dari saluran.",
+        "not_found_title": "SALURAN TIDAK DITEMUKAN",
+        "not_found_message": "Tautan mungkin salah, atau saluran telah dihapus atau tidak tersedia.",
+        "not_found_suggestion": "Periksa kembali tautan lalu coba lagi.",
+        "lookup_failed_title": "PENCARIAN GAGAL",
+        "lookup_failed_message": "Tidak dapat menghubungi WhatsApp.",
+        "lookup_failed_suggestion": "Silakan coba lagi sesaat lagi.",
+        "cooldown": "Harap tunggu {{seconds}} detik sebelum memeriksa saluran lain."
+    },
     "check_online": {
         "group_only": "> ❌ *PERINTAH KHUSUS GRUP*\n> `.check online` hanya dapat digunakan dalam obrolan grup untuk menampilkan anggota yang sedang online.",
         "title": "ANGGOTA ONLINE",
@@ -825,6 +855,9 @@
         "days_suffix": "{{days}} hari"
     },
     "commands": {
+        "check_chid": {
+            "description": "Ambil ID saluran WhatsApp dari tautan saluran, tautan pada pesan yang dibalas, atau pesan yang diteruskan dari saluran."
+        },
         "check_online": {
             "description": "Menampilkan daftar anggota grup yang sedang online secara real-time."
         },

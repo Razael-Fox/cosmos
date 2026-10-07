@@ -9,12 +9,15 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
-## [G2-F32-P7] - 2026-10-07
+## [G2-F33-P0] - 2026-10-07
 
-### Security — Personal Data Scrub
+### Added — `.check chid` Channel ID Resolver (Issue #80)
 
-- Replaced real phone numbers, WhatsApp group IDs and LIDs in tests, the
-  `cosmos-agent-engine` skill and this changelog with dummy values.
+- New command `.check chid` (alias `.cek chid`) resolves a WhatsApp channel ID
+  (`...@newsletter`) from a channel link, a replied message containing a link,
+  or a replied message forwarded from a channel. Works in groups and private chats.
+- Output is a `uiFormatter` card localized in `en` and `id`; 10 s per-sender cooldown.
+- Registered as read-only in the agent policy, tutorials, and `docs/COMMANDS_CONTEXT.md`.
 
 ---
 
