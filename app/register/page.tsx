@@ -12,7 +12,9 @@ import {
     Lightning,
     Eye,
     EyeSlash,
-    ArrowRight
+    ArrowRight,
+    Check,
+    X
 } from '@phosphor-icons/react';
 import { useTranslation } from '@/lib/i18n';
 import { registerInverted, registerDirect } from '@/lib/api';
@@ -238,7 +240,7 @@ export default function RegisterPage() {
                                 </button>
                             </div>
                             {password.length > 0 && (
-                                <ul className="flex flex-wrap gap-x-3 gap-y-1 pt-1" aria-live="polite">
+                                <ul className="space-y-1 pt-1" aria-live="polite">
                                     {[
                                         { ok: password.length >= 8, label: t.auth.passwordRuleLength },
                                         { ok: /[A-Z]/.test(password), label: t.auth.passwordRuleUpper },
@@ -248,17 +250,20 @@ export default function RegisterPage() {
                                     ].map((rule) => (
                                         <li
                                             key={rule.label}
-                                            className={`flex items-center gap-1 text-[11px] font-medium ${
+                                            className={`flex items-center gap-1.5 text-[11px] font-medium ${
                                                 rule.ok
                                                     ? 'text-emerald-600 dark:text-emerald-400'
                                                     : 'text-muted-foreground'
                                             }`}
                                         >
-                                            <span
-                                                className={`w-1.5 h-1.5 rounded-full ${
-                                                    rule.ok ? 'bg-emerald-500' : 'bg-muted-foreground/40'
-                                                }`}
-                                            />
+                                            {rule.ok ? (
+                                                <Check
+                                                    className="w-3.5 h-3.5 shrink-0 text-emerald-500"
+                                                    weight="bold"
+                                                />
+                                            ) : (
+                                                <X className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
+                                            )}
                                             {rule.label}
                                         </li>
                                     ))}
