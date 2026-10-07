@@ -9,6 +9,17 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P1] - 2026-10-07
+
+### Fixed — Doppler Pull No Longer Truncates `.env`
+
+- `scripts/infra/sync-doppler.sh pull` now downloads to a temp file and replaces
+  `.env` only when the download succeeds and is non-empty. Previously the
+  `> .env` redirect emptied the file before a failed download (for example
+  restricted secrets) could report an error.
+
+---
+
 ## [G2-F33-P0] - 2026-10-07
 
 ### Added — `.check chid` Channel ID Resolver (Issue #80)

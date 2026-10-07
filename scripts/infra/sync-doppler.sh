@@ -25,7 +25,17 @@ fi
 case "${COMMAND}" in
     pull)
         echo "[doppler] Pulling secrets from project '${PROJECT}' [${CONFIG}] into .env..."
-        doppler secrets download --project "${PROJECT}" --config "${CONFIG}" --format env --no-file > .env
+        # Download to a temp file and swap it in only on success, so a failed
+        # pull (e.g. restricted secrets) can never truncate the existing .env.
+        TMP_ENV="$(mktemp .env.pull.XXXXXX)"
+        trap 'rm -f "${TMP_ENV}"' EXIT
+        if ! doppler secrets download --project "${PROJECT}" --config "${CONFIG}" --format env --no-file > "${TMP_ENV}" \
+            || [ ! -s "${TMP_ENV}" ]; then
+            echo "[doppler] ERROR: Download failed or returned no secrets. Existing .env left untouched." >&2
+            exit 1
+        fi
+        chmod 600 "${TMP_ENV}"
+        mv "${TMP_ENV}" .env
         echo "[doppler] SUCCESS: .env has been populated with secrets from Doppler (${PROJECT}:${CONFIG})."
         ;;
     push)
