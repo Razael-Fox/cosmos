@@ -3,8 +3,10 @@ import { formatRupiah } from '#utils/currency.js';
 import { getChatLanguage, getTranslator } from '#utils/i18n.js';
 import { getBankAccountByUser } from '#services/bankService.js';
 import cron from 'node-cron';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { getGroqClient } from '#utils/apiKeyResolver.js';
+
+dotenv.config();
 import { DecisionClient } from './agentEngine/decisionClient.js';
 
 export interface CreditProfile {

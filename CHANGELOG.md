@@ -9,6 +9,26 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P6] - 2026-10-08
+
+### Changed — Dependency Updates (dotenv 18, better-sqlite3 13)
+
+- `dotenv` 17.4.2 -> 18.0.6. v18 removed preloading, so
+  `src/services/loanService.ts` now calls `dotenv.config()` explicitly
+  instead of `import 'dotenv/config'`. Environment injection notices are now
+  written to stderr, which keeps them visible in the Pterodactyl console.
+- `better-sqlite3` 12.11.1 -> 13.0.3 (N-API port, no API removals).
+- `@types/better-sqlite3` 7.6.13 -> 9.6.0, aligned with the v13 runtime.
+- `@tavily/core` 0.7.13 -> 0.7.14.
+
+### Deferred
+
+- `typescript` 7.0.2, `@types/node` 26.x (runtime is Node 22), and
+  `prisma` 8.0.0-rc are intentionally held back until the respective
+  runtimes/stability warrant them.
+
+---
+
 ## [G2-F33-P3] - 2026-10-07
 
 ### Added — Bot/Server Lifecycle Notifications (Discord, Slack, WhatsApp Channel)

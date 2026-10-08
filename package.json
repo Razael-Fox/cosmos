@@ -1,6 +1,6 @@
 {
     "name": "cosmos",
-    "version": "G2-F33-P5",
+    "version": "G2-F33-P6",
     "description": "A modern, enterprise-grade WhatsApp Bot framework",
     "repository": {
         "type": "git",
@@ -64,12 +64,12 @@
     "dependencies": {
         "@prisma/adapter-better-sqlite3": "^7.10.0",
         "@prisma/client": "^7.10.0",
-        "@tavily/core": "^0.7.13",
+        "@tavily/core": "^0.7.14",
         "@whiskeysockets/baileys": "7.0.0-rc14",
         "axios": "^1.20.0",
-        "better-sqlite3": "^12.11.1",
+        "better-sqlite3": "^13.0.3",
         "chance": "^1.1.13",
-        "dotenv": "^17.4.2",
+        "dotenv": "^18.0.6",
         "fflate": "^0.8.3",
         "form-data": "^4.0.6",
         "groq-sdk": "^1.6.0",
@@ -86,7 +86,7 @@
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@modelcontextprotocol/sdk": "^1.32.1",
-        "@types/better-sqlite3": "^7.6.13",
+        "@types/better-sqlite3": "^9.6.0",
         "@types/chance": "^1.1.8",
         "@types/node": "^22.13.4",
         "@types/node-cron": "^3.0.11",
