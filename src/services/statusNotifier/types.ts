@@ -15,6 +15,11 @@ export type NotifySeverity = (typeof NOTIFY_SEVERITIES)[number];
 export const NOTIFY_EVENTS = [
     'BOT_DOWN',
     'BOT_RECONNECTED',
+    'BOT_STARTED',
+    'BOT_RESTARTED',
+    'BOT_STOPPED',
+    'SERVER_BOOTED',
+    'SERVER_REBOOTED',
     'DB_MISSING',
     'DB_CORRUPT',
     'DB_BACKUP_SUCCESS',

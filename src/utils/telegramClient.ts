@@ -1,8 +1,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { Api, TelegramClient } from 'telegram';
-import { StringSession } from 'telegram/sessions/index.js';
+import { Api, TelegramClient } from 'teleproto';
+import { StringSession } from 'teleproto/sessions';
 
 const SESSION_FILE = path.resolve(process.cwd(), 'storage', 'telegram_session.txt');
 
@@ -226,7 +226,7 @@ export interface JoinedChatInfo {
  */
 export async function joinChatViaInvite(inviteHash: string): Promise<JoinedChatInfo> {
     const client = await getTelegramClient();
-    const result = await client.invoke(new Api.messages.ImportChatInvite({ hash: inviteHash }));
+    const result = (await client.invoke(new Api.messages.ImportChatInvite({ hash: inviteHash }))) as unknown;
 
     // The response is an updates collection; only these variants carry the chat list.
     const chats =

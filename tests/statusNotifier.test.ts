@@ -4,6 +4,7 @@ import {
     formatDiscordEmbed,
     formatSlackBlocks,
     formatWhatsAppText,
+    getEventTitle,
     redactIdentifiers
 } from '../src/services/statusNotifier/formatters.js';
 import {
@@ -45,6 +46,18 @@ describe('Status notifier formatters', () => {
         const wa = formatWhatsAppText('DB_BACKUP_SUCCESS', 'INFO', payload);
         assert.ok(wa.length <= 4096);
         assert.ok(wa.includes('Database Backup Delivered'));
+    });
+
+    it('has display titles for bot/server lifecycle events', () => {
+        for (const event of [
+            'BOT_STARTED',
+            'BOT_RESTARTED',
+            'BOT_STOPPED',
+            'SERVER_BOOTED',
+            'SERVER_REBOOTED'
+        ] as const) {
+            assert.notStrictEqual(getEventTitle(event), event, `${event} has no title`);
+        }
     });
 });
 
