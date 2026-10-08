@@ -7,8 +7,8 @@ import {
     clearSystemConfigCache
 } from '../src/services/systemConfigService.js';
 import { isGroupWhitelisted, addGroup, removeGroup, getAllWhitelistedGroups } from '../src/db.js';
-import { execute as executeWhitelist } from '../src/tools/whitelist.js';
-import type { ToolContext } from '../src/tools/types.js';
+import { execute as executeWhitelist } from '../src/commands/system-help/whitelist.js';
+import type { ToolContext } from '../src/commands/types.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { getTranslator } from '../src/utils/i18n.js';
 

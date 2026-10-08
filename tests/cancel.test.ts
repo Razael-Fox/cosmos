@@ -8,7 +8,7 @@ import {
     cancelActiveSession,
     clearAllCancellableSessions
 } from '../src/utils/cancellationManager.js';
-import cancelTool from '../src/tools/cancel.js';
+import cancelTool from '../src/commands/system-help/cancel.js';
 import { startRegistrationSession, isUserRegistering, cancelRegistrationSession } from '../src/utils/idCard.js';
 import {
     registerPlaySession,

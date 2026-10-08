@@ -10,9 +10,9 @@ import {
     executeWork,
     ENTREPRENEUR_INITIAL_INVESTMENT
 } from '../src/services/jobs.js';
-import jobTool from '../src/tools/job.js';
-import workTool from '../src/tools/work.js';
-import applyLicenseTool from '../src/tools/apply_license.js';
+import jobTool from '../src/commands/employment/job.js';
+import workTool from '../src/commands/employment/work.js';
+import applyLicenseTool from '../src/commands/employment/applyLicense.js';
 import { getTranslator } from '../src/utils/i18n.js';
 
 async function runJobTests() {

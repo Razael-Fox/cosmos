@@ -2,7 +2,7 @@ import dns from 'dns';
 import dotenv from 'dotenv';
 import { loadAutoDlSettings } from '#utils/autodl.js';
 import { loadNsfwSettings } from '#utils/nsfwConfig.js';
-import toolsHandler from '#tools/handler.js';
+import commandsHandler from '#handlers/commandHandler.js';
 
 import { startAutoBackup } from '#utils/backup.js';
 import { startBankInterestCron } from '#services/bankService.js';
@@ -63,7 +63,7 @@ try {
 }
 
 async function startSystem(): Promise<void> {
-    await toolsHandler.loadTools();
+    await commandsHandler.loadCommands();
     await loadAutoDlSettings();
     await loadNsfwSettings();
 

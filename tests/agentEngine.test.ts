@@ -22,7 +22,7 @@ import { groupModerationTool } from '../src/services/agentEngine/tools/groupMode
 import { AgentExecutionLoop } from '../src/services/agentEngine/executionLoop.js';
 import { AgentExecutor } from '../src/services/agentEngine/executor.js';
 import { prisma } from '../src/db.js';
-import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/tools/contact.js';
+import contactTool, { parseContactAddArgs, parseContactDelArgs } from '../src/commands/tools-utilities/contact.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import type { AgentExecutionContext } from '../src/services/agentEngine/types.js';
 

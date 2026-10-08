@@ -11,7 +11,7 @@ import {
     disburseLoan,
     repayLoan
 } from '../src/services/loanService.js';
-import loanTool, { processLoanConfirmation, getPendingLoan } from '../src/tools/loan.js';
+import loanTool, { processLoanConfirmation, getPendingLoan } from '../src/commands/economy-banking/loan.js';
 import { cancelActiveSession } from '../src/utils/cancellationManager.js';
 import { getTranslator } from '../src/utils/i18n.js';
 import { formatRupiah } from '../src/utils/currency.js';

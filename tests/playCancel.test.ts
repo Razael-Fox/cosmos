@@ -7,7 +7,7 @@ import {
     clearAllPlaySessions
 } from '../src/utils/playSession.js';
 import { hasCancellableSession, cancelActiveSession } from '../src/utils/cancellationManager.js';
-import cancelTool from '../src/tools/cancel.js';
+import cancelTool from '../src/commands/system-help/cancel.js';
 import { getTranslator } from '../src/utils/i18n.js';
 
 async function runPlayCancelTests() {

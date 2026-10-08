@@ -1,8 +1,8 @@
 import assert from 'node:assert';
 import { prisma, ensureDatabaseSchema } from '../src/db.js';
 import { getSenderJid, getUser, buildUserOrConditions, lidToPnMap } from '../src/utils/casino.js';
-import dailyTool from '../src/tools/daily.js';
-import slotTool from '../src/tools/slot.js';
+import dailyTool from '../src/commands/casino/daily.js';
+import slotTool from '../src/commands/casino/slot.js';
 import { getTranslator } from '../src/utils/i18n.js';
 
 async function runTests() {

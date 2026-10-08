@@ -2,7 +2,7 @@ import { WASocket, WAMessage, downloadContentFromMessage } from '@whiskeysockets
 import dotenv from 'dotenv';
 import { isGroupWhitelisted } from '#db.js';
 import { addMessageToHistory, getConversationContext } from '#utils/aiHistory.js';
-import toolsHandler from '#tools/handler.js';
+import { toolsHandler } from '#handlers/commandHandler.js';
 import { getTranslator } from '#utils/i18n.js';
 import { getGroqClient } from '#utils/apiKeyResolver.js';
 import { isOwnerId } from '#utils/owner.js';

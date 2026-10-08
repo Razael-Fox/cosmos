@@ -18,8 +18,8 @@ import {
     cancelActiveSession,
     clearAllCancellableSessions
 } from '../src/utils/cancellationManager.js';
-import * as subbotTool from '../src/tools/subbot.js';
-import * as configTool from '../src/tools/config.js';
+import * as subbotTool from '../src/commands/system-help/subbot.js';
+import * as configTool from '../src/commands/system-help/config.js';
 import { getTranslator } from '../src/utils/i18n.js';
 import { activeConnections } from '../src/utils/connectionManager.js';
 

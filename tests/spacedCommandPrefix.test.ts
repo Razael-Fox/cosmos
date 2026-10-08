@@ -1,5 +1,5 @@
 import assert from 'assert';
-import toolsHandler from '../src/tools/handler.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
 import menuService from '../src/services/menuService.js';
 import {
     normalizeCommandKey,

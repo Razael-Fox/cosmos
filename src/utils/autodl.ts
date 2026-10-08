@@ -1,6 +1,6 @@
 import { prisma } from '#db.js';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import toolsHandler from '#tools/handler.js';
+import { toolsHandler } from '#handlers/commandHandler.js';
 import { getTranslator, getChatLanguage } from '#utils/i18n.js';
 
 const autoDlCache = new Map<string, Map<string, boolean>>();

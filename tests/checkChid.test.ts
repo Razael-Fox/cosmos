@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { definition, execute, extractChannelInvite, findNewsletterRef } from '../src/tools/check_chid.js';
+import { definition, execute, extractChannelInvite, findNewsletterRef } from '../src/commands/tools-utilities/checkChid.js';
 import { getTranslator } from '../src/utils/i18n.js';
 import { cacheMessage } from '../src/utils/messageCache.js';
 

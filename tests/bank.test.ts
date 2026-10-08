@@ -14,7 +14,7 @@ import {
     BANK_TRANSFER_FEE,
     BANK_DAILY_TRANSFER_LIMIT
 } from '../src/services/bankService.js';
-import bankTool, { processBankTransferConfirmation, getPendingTransfer } from '../src/tools/bank.js';
+import bankTool, { processBankTransferConfirmation, getPendingTransfer } from '../src/commands/economy-banking/bank.js';
 import { cancelActiveSession } from '../src/utils/cancellationManager.js';
 import { getTranslator } from '../src/utils/i18n.js';
 

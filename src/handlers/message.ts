@@ -1,15 +1,16 @@
 import { jidNormalizedUser, WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { addGroup, isGroupWhitelisted, prisma, dbContext } from '#db.js';
-import toolsHandler from '#tools/handler.js';
+import commandsHandler from './commandHandler.js';
+const toolsHandler = commandsHandler;
 import { isAutoStickerEnabled } from '#utils/sticker/autoSticker.js';
 import { isAutoCorrectionEnabled, analyzeAndCorrectText } from '#utils/autoCorrection.js';
 import { isMessageProcessed, markMessageProcessed } from '#utils/messageCache.js';
 import { processAutoDl } from '#utils/autodl.js';
 import { handleOfflineAiResponder } from '#utils/offlineAi.js';
 import { isUserRegistering, processRegistrationStep } from '#utils/idCard.js';
-import { processBankTransferConfirmation } from '#tools/bank.js';
-import { processLoanConfirmation } from '#tools/loan.js';
-import { processJobSelection } from '#tools/job.js';
+import { processBankTransferConfirmation } from '#commands/economy-banking/bank.js';
+import { processLoanConfirmation } from '#commands/economy-banking/loan.js';
+import { processJobSelection } from '#commands/employment/job.js';
 import { formatMentions } from '#utils/casino.js';
 import { getLegacyCanonical } from '#utils/commandFormat.js';
 import {

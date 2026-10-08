@@ -2,7 +2,7 @@ import assert from 'assert';
 import { GroupMetadata, WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { ModerationService, resolveTargetJid } from '../src/services/moderationService.js';
 import { BlacklistEnforcer } from '../src/services/blacklistEnforcer.js';
-import toolsHandler from '../src/tools/handler.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
 import { prisma, disconnectPrismaClient } from '../src/db.js';
 import { getTranslator } from '../src/utils/i18n.js';
 import fs from 'fs';

@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
-import toolsHandler from '../src/tools/handler.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
 import tutorialService from '../src/services/tutorialService.js';
 import menuService from '../src/services/menuService.js';
 import { getTranslator } from '../src/utils/i18n.js';
@@ -422,7 +422,7 @@ async function runDownloaderSuiteTests() {
     // Telegram platform keys remain valid for legacy AutoDLSetting rows. The autodl
     // tool module cannot be imported in every environment (it pulls in the SQLite
     // client), so the platform registry is verified from source instead.
-    const autodlSource = fs.readFileSync(path.resolve(process.cwd(), 'src', 'tools', 'autodl.ts'), 'utf-8');
+    const autodlSource = fs.readFileSync(path.resolve(process.cwd(), 'src', 'commands', 'settings', 'autodl.ts'), 'utf-8');
     assert(
         autodlSource.includes("'tg'") && autodlSource.includes("'telegram'"),
         'autodl VALID_PLATFORMS must retain the tg and telegram keys for legacy settings rows'

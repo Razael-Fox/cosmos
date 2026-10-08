@@ -1,5 +1,5 @@
 import assert from 'assert';
-import saraTool, { isCasualFragment } from '../src/tools/sara.js';
+import saraTool, { isCasualFragment } from '../src/commands/tools-utilities/sara.js';
 import { recordCommandUse, pickHintCommand } from '../src/utils/commandHints.js';
 import { getTranslator } from '../src/utils/i18n.js';
 

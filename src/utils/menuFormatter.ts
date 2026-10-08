@@ -1,6 +1,6 @@
 import tutorialService, { TutorialDefinition } from '../services/tutorialService.js';
 import { NormalizedTool, CategoryInfo } from '../services/menuService.js';
-import { resolveToolDescription } from '../tools/types.js';
+import { resolveToolDescription } from '../commands/types.js';
 import { getDisplayName } from './commandFormat.js';
 import { normalizeLanguage, LANGUAGE_CONFIG } from './i18n.js';
 

@@ -1,6 +1,6 @@
 import assert from 'assert';
 import fs from 'fs';
-import toolsHandler from '../src/tools/handler.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
 import { prisma } from '../src/db.js';
 import { getLegacyCanonical } from '../src/utils/commandFormat.js';
 import {
@@ -9,11 +9,11 @@ import {
     createEncryptedContactBackup,
     restoreEncryptedContactBackup
 } from '../src/services/contactService.js';
-import { execute as executeMyPlan } from '../src/tools/myplan.js';
-import { execute as executeQuota } from '../src/tools/quota.js';
-import { execute as executeProfile } from '../src/tools/profile.js';
-import contactTool from '../src/tools/contact.js';
-import type { ToolContext } from '../src/tools/types.js';
+import { execute as executeMyPlan } from '../src/commands/system-help/myplan.js';
+import { execute as executeQuota } from '../src/commands/system-help/quota.js';
+import { execute as executeProfile } from '../src/commands/tools-utilities/profile.js';
+import contactTool from '../src/commands/tools-utilities/contact.js';
+import type { ToolContext } from '../src/commands/types.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 
 async function runTestSuite() {

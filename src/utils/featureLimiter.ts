@@ -1,7 +1,7 @@
 import { prisma } from '#db.js';
 import { isOwnerId } from './owner.js';
 import { TIER_LIMITS, type SubscriptionTierName, type FeatureLimit } from '../services/quotaService.js';
-import type { ToolDefinition } from '../tools/types.js';
+import type { ToolDefinition } from '../commands/types.js';
 
 export type { FeatureLimit };
 
