@@ -1,7 +1,7 @@
 import { ToolModule, ToolContext } from '../types.js';
-import { casinoState } from '#utils/casino.js';
+import { casinoState } from '#lib/casino.js';
 import { getAllWhitelistedGroups } from '#db.js';
-import { renderCard } from '#utils/uiFormatter.js';
+import { renderCard } from '#lib/uiFormatter.js';
 
 const feverTimeTool: ToolModule = {
     definition: {

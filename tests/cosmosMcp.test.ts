@@ -544,7 +544,7 @@ describe('cosmos_mcp: persisted broadcast fan-out (Rule J)', () => {
 
         // The notifier worker validates `channel` against its own channel list and
         // would terminally fail this row; the explicit skip must prevent that.
-        const { processOutboxBatch } = await import('../src/services/statusNotifier/outboxWorker.js');
+        const { processOutboxBatch } = await import('../src/services/notifier/outboxWorker.js');
         await processOutboxBatch();
 
         const survivor = await prisma.statusNotificationOutbox.findUnique({ where: { id: created.id } });

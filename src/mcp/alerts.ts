@@ -16,9 +16,9 @@
  *     (Rule AG — zero-knowledge outbound).
  */
 import { sendIpcCommand } from '#services/ipcServer.js';
-import { formatVersion, getVersionInfo } from '#utils/versioning.js';
-import type { McpNotifyEvent } from '#services/statusNotifier/mcpAlert.js';
-import type { NotifySeverity } from '#services/statusNotifier/types.js';
+import { formatVersion, getVersionInfo } from '#lib/versioning.js';
+import type { McpNotifyEvent } from '#services/notifier/mcpAlert.js';
+import type { NotifySeverity } from '#services/notifier/types.js';
 
 /** Path of the IPC route that dispatches MCP alerts in the bot process. */
 const ALERT_IPC_PATH = '/internal/mcp/alert';

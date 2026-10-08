@@ -14,8 +14,8 @@ import {
     normalizeControlKeyword,
     resolveCommandArgs,
     sliceArgsAfterWords
-} from '../src/utils/commandNormalize.js';
-import { getLegacyCanonical } from '../src/utils/commandFormat.js';
+} from '../src/lib/commandNormalize.js';
+import { getLegacyCanonical } from '../src/lib/commandFormat.js';
 
 /**
  * Mirrors the command parser in src/handlers/message.ts.

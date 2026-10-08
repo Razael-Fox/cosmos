@@ -14,7 +14,7 @@ import {
     buildWastickersZip,
     buildMmsZip,
     isValidWebP
-} from '../src/utils/sticker/packBuilder.js';
+} from '../src/lib/sticker/packBuilder.js';
 import {
     registerStickerlySession,
     getStickerlySession,
@@ -23,12 +23,12 @@ import {
     deletePreviewMessages,
     processStickerlySelection,
     StickerlySession
-} from '../src/utils/sticker/stickerlySession.js';
+} from '../src/lib/sticker/stickerlySession.js';
 import {
     registerCancellableSession,
     hasCancellableSession,
     cancelActiveSession
-} from '../src/utils/cancellationManager.js';
+} from '../src/lib/cancellationManager.js';
 import crypto from 'crypto';
 import { hkdf } from '@whiskeysockets/baileys';
 import axios from 'axios';

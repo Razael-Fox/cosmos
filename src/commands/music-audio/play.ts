@@ -4,9 +4,9 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
-import { cleanId } from '#utils/casino.js';
-import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
-import { registerPlaySession, getActivePlaySession, clearPlaySession, PlaySearchResult } from '#utils/playSession.js';
+import { cleanId } from '#lib/casino.js';
+import { registerCancellableSession, unregisterCancellableSession } from '#lib/cancellationManager.js';
+import { registerPlaySession, getActivePlaySession, clearPlaySession, PlaySearchResult } from '#lib/playSession.js';
 const execAsync = promisify(exec);
 
 export const definition: ToolDefinition = {

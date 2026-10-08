@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
 import { prisma } from '#db.js';
-import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, getTranslator } from '#utils/i18n.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, getTranslator } from '#lib/i18n.js';
+import { getOwnerNumbers } from '#lib/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'setgrouplang',

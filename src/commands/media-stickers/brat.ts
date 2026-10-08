@@ -2,9 +2,9 @@ import sharp from 'sharp';
 import axios from 'axios';
 import { ToolDefinition, ToolContext } from '../types.js';
 import { sendStickerFromBuffer } from './stickerMaker.js';
-import { cleanId } from '#utils/casino.js';
-import { unwrapMonospace } from '#utils/monospace.js';
-import { commandNameWords, getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { cleanId } from '#lib/casino.js';
+import { unwrapMonospace } from '#lib/monospace.js';
+import { commandNameWords, getCommandWords, resolveCommandArgs } from '#lib/commandNormalize.js';
 
 const BRAT_BASE_URL = 'https://api.siputzx.my.id/api/m/brat';
 const DEFAULT_DELAY = 500;

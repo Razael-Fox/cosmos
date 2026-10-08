@@ -4,7 +4,7 @@ process.env.DATABASE_URL = `file:${testDbPath}`;
 import assert from 'assert';
 import { parseBratInput, definition, convertBratToSticker, execute } from '../src/commands/media-stickers/brat.js';
 import toolsHandler from '../src/handlers/commandHandler.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import { getTranslator } from '../src/lib/i18n.js';
 import menuService from '../src/services/menuService.js';
 import sharp from 'sharp';
 

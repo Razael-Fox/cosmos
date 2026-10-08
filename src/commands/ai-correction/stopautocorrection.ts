@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { disableAutoCorrection, isAutoCorrectionEnabled } from '#utils/autoCorrection.js';
+import { disableAutoCorrection, isAutoCorrectionEnabled } from '#lib/autoCorrection.js';
 
 export const definition: ToolDefinition = {
     name: 'stopautocorrection',

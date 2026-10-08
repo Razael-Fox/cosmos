@@ -4,10 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import type { CommandModule, CommandContext } from '../commands/types.js';
-import { getTranslator } from '../utils/i18n.js';
-import { getSenderJid } from '../utils/casino.js';
-import { normalizeCommandKey, stripCommandKey } from '../utils/commandNormalize.js';
-import { resolveLimit, tryConsume } from '../utils/featureLimiter.js';
+import { getTranslator } from '../lib/i18n.js';
+import { getSenderJid } from '../lib/casino.js';
+import { normalizeCommandKey, stripCommandKey } from '../lib/commandNormalize.js';
+import { resolveLimit, tryConsume } from '../lib/featureLimiter.js';
 import { i18n } from '../locales/i18n.config.js';
 
 class CommandsHandler {

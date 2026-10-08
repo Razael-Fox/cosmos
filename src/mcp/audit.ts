@@ -10,7 +10,7 @@
  * owner-side key rotation intact (issue #49, "Audit the holder, not the key").
  */
 import { prisma } from '#db.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+import { getOwnerNumbers } from '#lib/owner.js';
 import type { McpIdentity } from './auth.js';
 import { loadMcpConfig } from './config.js';
 import { McpToolError } from './errors.js';

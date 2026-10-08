@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { prisma } from '#db.js';
 import { TIER_LIMITS, type SubscriptionTierName } from './quotaService.js';
-import { formatRupiah } from '#utils/currency.js';
+import { formatRupiah } from '#lib/currency.js';
 
 export const TIER_PRICES: Record<SubscriptionTierName, bigint> = {
     FREE: BigInt(0),

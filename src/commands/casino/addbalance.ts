@@ -1,7 +1,7 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { resolveId, getUser, formatMentions, cleanId } from '#utils/casino.js';
-import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
+import { resolveId, getUser, formatMentions, cleanId } from '#lib/casino.js';
+import { formatRupiah, parseCurrencyAmount } from '#lib/currency.js';
 
 const addBalanceTool: ToolModule = {
     definition: {

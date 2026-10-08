@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { cleanId } from '#utils/casino.js';
-import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
+import { cleanId } from '#lib/casino.js';
+import { registerCancellableSession, unregisterCancellableSessionByUser } from '#lib/cancellationManager.js';
 import {
     searchStickerly,
     extractStickerlyPackId,
@@ -17,7 +17,7 @@ import {
     scheduleMessageDeletion,
     removeScheduledDeletions,
     processStickerPackMaker
-} from '#utils/sticker/stickerlySession.js';
+} from '#lib/sticker/stickerlySession.js';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

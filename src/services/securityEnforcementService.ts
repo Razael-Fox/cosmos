@@ -1,7 +1,7 @@
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { prisma } from '../db.js';
-import { isOwnerId, getPrimaryOwnerNumber } from '../utils/owner.js';
-import { MaliciousDetectionResult } from '../utils/security/bugDetector.js';
+import { isOwnerId, getPrimaryOwnerNumber } from '../lib/owner.js';
+import { MaliciousDetectionResult } from '../lib/security/bugDetector.js';
 
 interface BlacklistEntry {
     severity: 'WARNING' | 'BLOCKED';

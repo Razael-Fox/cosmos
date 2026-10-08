@@ -11,17 +11,17 @@ import {
     isFeatureEnabled,
     clearConfigCache
 } from '../src/services/subBotConfigService.js';
-import { resolveApiKey, maskApiKey } from '../src/utils/apiKeyResolver.js';
+import { resolveApiKey, maskApiKey } from '../src/lib/apiKeyResolver.js';
 import { requestPairing, broadcastSubBotForex, deleteSubBot } from '../src/services/subBotService.js';
 import {
     hasCancellableSession,
     cancelActiveSession,
     clearAllCancellableSessions
-} from '../src/utils/cancellationManager.js';
+} from '../src/lib/cancellationManager.js';
 import * as subbotTool from '../src/commands/system-help/subbot.js';
 import * as configTool from '../src/commands/system-help/config.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { activeConnections } from '../src/utils/connectionManager.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { activeConnections } from '../src/lib/connectionManager.js';
 
 const TEST_SUBBOT_NUM = '628999900001';
 const TEST_SUBBOT_NUM_2 = '628999900002';

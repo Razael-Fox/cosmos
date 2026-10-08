@@ -1,7 +1,7 @@
 import assert from 'assert';
 import saraTool, { isCasualFragment } from '../src/commands/tools-utilities/sara.js';
-import { recordCommandUse, pickHintCommand } from '../src/utils/commandHints.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import { recordCommandUse, pickHintCommand } from '../src/lib/commandHints.js';
+import { getTranslator } from '../src/lib/i18n.js';
 
 process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test_groq_api_key';
 

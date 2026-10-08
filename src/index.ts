@@ -1,19 +1,19 @@
 import dns from 'dns';
 import dotenv from 'dotenv';
-import { loadAutoDlSettings } from '#utils/autodl.js';
-import { loadNsfwSettings } from '#utils/nsfwConfig.js';
+import { loadAutoDlSettings } from '#lib/autodl.js';
+import { loadNsfwSettings } from '#lib/nsfwConfig.js';
 import commandsHandler from '#handlers/commandHandler.js';
 
-import { startAutoBackup } from '#utils/backup.js';
+import { startAutoBackup } from '#lib/backup.js';
 import { startBankInterestCron } from '#services/bankService.js';
 import { startLoanSchedulerCron } from '#services/loanService.js';
-import { connectToWhatsApp, activeConnections } from '#utils/connectionManager.js';
-import { isDefaultSessionRegistered, promptBotPhoneNumber, promptPairingMethod } from '#utils/startupPrompt.js';
-import { getTelegramClient, isTelegramConfigured } from '#utils/telegramClient.js';
+import { connectToWhatsApp, activeConnections } from '#lib/connectionManager.js';
+import { isDefaultSessionRegistered, promptBotPhoneNumber, promptPairingMethod } from '#lib/startupPrompt.js';
+import { getTelegramClient, isTelegramConfigured } from '#lib/telegramClient.js';
 import { seedItems } from '#seeds/items.js';
 import { seedProperties } from '#seeds/properties.js';
-import { describeVersion, getVersionInfo } from '#utils/versioning.js';
-import { initStatusNotifier, emitBootLifecycle, installLifecycleShutdownHook } from '#services/statusNotifier/index.js';
+import { describeVersion, getVersionInfo } from '#lib/versioning.js';
+import { initStatusNotifier, emitBootLifecycle, installLifecycleShutdownHook } from '#services/notifier/index.js';
 
 dns.setDefaultResultOrder('ipv4first');
 

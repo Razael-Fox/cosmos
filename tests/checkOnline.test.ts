@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { definition, execute } from '../src/commands/group/checkOnline.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import { getTranslator } from '../src/lib/i18n.js';
 import { getAllOnlineIds, updateUserPresence } from '../src/services/presenceService.js';
 import menuService, { CATEGORY_ICONS, CATEGORY_SLUGS, CANONICAL_CATEGORY_ORDER } from '../src/services/menuService.js';
 

@@ -1,16 +1,16 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
 import { prisma, addGroup, removeGroup, isGroupWhitelisted, getAllWhitelistedGroups } from '#db.js';
-import { getSenderJid } from '#utils/casino.js';
-import { isOwnerId } from '#utils/owner.js';
-import { renderCard, renderCatalogCard, renderBadge, CatalogItem } from '#utils/uiFormatter.js';
-import { commandTokens, resolveCommandArgs, stripCommandKey } from '#utils/commandNormalize.js';
+import { getSenderJid } from '#lib/casino.js';
+import { isOwnerId } from '#lib/owner.js';
+import { renderCard, renderCatalogCard, renderBadge, CatalogItem } from '#lib/uiFormatter.js';
+import { commandTokens, resolveCommandArgs, stripCommandKey } from '#lib/commandNormalize.js';
 import {
     isAutoWhitelistEnabled,
     setAutoWhitelist,
     isAutoArchiveEnabled,
     setAutoArchive
 } from '#services/systemConfigService.js';
-import { getCachedParticipatingGroups } from '#services/agentEngine/prompts/contextResolver.js';
+import { getCachedParticipatingGroups } from '#services/agent/prompts/contextResolver.js';
 
 export const definition: ToolDefinition = {
     name: 'whitelist',

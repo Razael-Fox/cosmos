@@ -2,9 +2,9 @@ import assert from 'assert';
 import {
     buildSaraPersonaPrompt,
     shouldIncludeCommandsKnowledge
-} from '../src/services/agentEngine/prompts/saraPersona.js';
-import { getCommandsKnowledgeBase } from '../src/services/agentEngine/prompts/commandsKnowledge.js';
-import { SaraPromptContext } from '../src/services/agentEngine/types.js';
+} from '../src/services/agent/prompts/saraPersona.js';
+import { getCommandsKnowledgeBase } from '../src/services/agent/prompts/commandsKnowledge.js';
+import { SaraPromptContext } from '../src/services/agent/types.js';
 
 console.log('--- STARTING COMMANDS KNOWLEDGE BASE INTEGRATION TEST ---');
 

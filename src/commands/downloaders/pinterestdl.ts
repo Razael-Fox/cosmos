@@ -6,8 +6,8 @@ import axios from 'axios';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import ffmpeg from 'ffmpeg-static';
-import { renderCard } from '#utils/uiFormatter.js';
-import { parsePinterestArgs } from '#utils/downloaderArgs.js';
+import { renderCard } from '#lib/uiFormatter.js';
+import { parsePinterestArgs } from '#lib/downloaderArgs.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -397,7 +397,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             if (sentMsg) {
-                const { scheduleMediaAutoDelete } = await import('#utils/autoDelete.js');
+                const { scheduleMediaAutoDelete } = await import('#lib/autoDelete.js');
                 scheduleMediaAutoDelete(
                     ctx.sock,
                     ctx.jid,
@@ -441,7 +441,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
                     replyOptions
                 );
                 if (sentMsg) {
-                    const { scheduleMediaAutoDelete } = await import('#utils/autoDelete.js');
+                    const { scheduleMediaAutoDelete } = await import('#lib/autoDelete.js');
                     scheduleMediaAutoDelete(ctx.sock, ctx.jid, sentMsg as never, 'audio');
                 }
             } catch (e) {

@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid } from '#utils/casino.js';
-import { cancelActiveSession } from '#utils/cancellationManager.js';
-import { getTranslator } from '#utils/i18n.js';
+import { getSenderJid } from '#lib/casino.js';
+import { cancelActiveSession } from '#lib/cancellationManager.js';
+import { getTranslator } from '#lib/i18n.js';
 
 export const definition: ToolDefinition = {
     name: 'cancel',

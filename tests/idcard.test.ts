@@ -11,14 +11,14 @@ import {
     processRegistrationStep,
     parseBirthPlaceAndDate,
     calculateAge
-} from '../src/utils/idCard.js';
+} from '../src/lib/idCard.js';
 import {
     generateIdCardImage,
     generateIdCardImageLocal,
     createPlaceholderPhotoBuffer
-} from '../src/utils/imageProcessing.js';
-import { formatMentions, cleanId } from '../src/utils/casino.js';
-import { getTranslator } from '../src/utils/i18n.js';
+} from '../src/lib/imageProcessing.js';
+import { formatMentions, cleanId } from '../src/lib/casino.js';
+import { getTranslator } from '../src/lib/i18n.js';
 import idCardTool from '../src/commands/system-help/idcard.js';
 import loanTool from '../src/commands/economy-banking/loan.js';
 import applyLicenseTool from '../src/commands/employment/applyLicense.js';

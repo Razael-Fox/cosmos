@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from '../types.js';
-import { CosmosAgentEngine } from '#services/agentEngine/index.js';
-import { getTranslator } from '#utils/i18n.js';
+import { CosmosAgentEngine } from '#services/agent/index.js';
+import { getTranslator } from '#lib/i18n.js';
 
 /**
  * Interrogative/request verbs that signal a genuine prompt (Issue #71, Step 3).

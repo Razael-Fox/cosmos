@@ -1,7 +1,7 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
-import { renderCatalogCard, renderAlert } from '#utils/uiFormatter.js';
+import { formatRupiah } from '#lib/currency.js';
+import { renderCatalogCard, renderAlert } from '#lib/uiFormatter.js';
 
 const propertyCatalogTool: ToolModule = {
     definition: {

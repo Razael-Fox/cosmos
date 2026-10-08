@@ -1,8 +1,8 @@
 import { type ToolModule, resolveToolDescription } from '../commands/types.js';
 import { toolsHandler } from '../handlers/commandHandler.js';
-import { toDisplayCommand, getDisplayName } from '../utils/commandFormat.js';
-import { normalizeCommandKey } from '../utils/commandNormalize.js';
-import { formatTutorialHub, formatGenericTutorial } from '../utils/menuFormatter.js';
+import { toDisplayCommand, getDisplayName } from '../lib/commandFormat.js';
+import { normalizeCommandKey } from '../lib/commandNormalize.js';
+import { formatTutorialHub, formatGenericTutorial } from '../lib/menuFormatter.js';
 import tutorialService from './tutorialService.js';
 
 export interface NormalizedTool {

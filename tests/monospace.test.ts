@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { extractLeadingMonospace, unwrapMonospace, isMonospaceWrapped } from '../src/utils/monospace.js';
+import { extractLeadingMonospace, unwrapMonospace, isMonospaceWrapped } from '../src/lib/monospace.js';
 import { parseContactAddArgs, parseContactDelArgs } from '../src/commands/tools-utilities/contact.js';
 import { parseBratInput } from '../src/commands/media-stickers/brat.js';
 

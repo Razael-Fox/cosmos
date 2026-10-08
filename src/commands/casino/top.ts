@@ -1,8 +1,8 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
-import { formatMentions } from '#utils/casino.js';
-import { renderCard, renderCatalogCard, CatalogItem } from '#utils/uiFormatter.js';
+import { formatRupiah } from '#lib/currency.js';
+import { formatMentions } from '#lib/casino.js';
+import { renderCard, renderCatalogCard, CatalogItem } from '#lib/uiFormatter.js';
 
 const topTool: ToolModule = {
     definition: {
@@ -47,7 +47,7 @@ const topTool: ToolModule = {
                         idToJidMap.set(cleanedLid, `${cleanedLid}@lid`);
 
                         // Fire background merge so the database stays in sync with top's aggregation
-                        import('#utils/casino.js').then(({ autoMergeAccounts }) => {
+                        import('#lib/casino.js').then(({ autoMergeAccounts }) => {
                             autoMergeAccounts(cleanedLid, cleaned).catch(() => {});
                         });
                     }

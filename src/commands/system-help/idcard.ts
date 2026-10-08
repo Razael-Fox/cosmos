@@ -1,16 +1,16 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid } from '#utils/casino.js';
-import { commandNameWords, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { getSenderJid } from '#lib/casino.js';
+import { commandNameWords, resolveCommandArgs } from '#lib/commandNormalize.js';
 import {
     getIdCardByUser,
     startRegistrationSession,
     isUserRegistering,
     cancelRegistrationSession
-} from '#utils/idCard.js';
-import { generateIdCardImage } from '#utils/imageProcessing.js';
-import { getAvatarPlaceholderUrl } from '#utils/avatarSeed.js';
-import { getTranslator } from '#utils/i18n.js';
-import { renderAlert } from '#utils/uiFormatter.js';
+} from '#lib/idCard.js';
+import { generateIdCardImage } from '#lib/imageProcessing.js';
+import { getAvatarPlaceholderUrl } from '#lib/avatarSeed.js';
+import { getTranslator } from '#lib/i18n.js';
+import { renderAlert } from '#lib/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'idcard',

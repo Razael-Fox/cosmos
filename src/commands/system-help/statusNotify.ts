@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getTranslator } from '#utils/i18n.js';
-import { getChannelHealth, getStatusNotifierConfig, notifyTest } from '#services/statusNotifier/index.js';
+import { getTranslator } from '#lib/i18n.js';
+import { getChannelHealth, getStatusNotifierConfig, notifyTest } from '#services/notifier/index.js';
 
 export const definition: ToolDefinition = {
     name: 'status notify',

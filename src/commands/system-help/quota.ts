@@ -1,10 +1,10 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getSenderJid, formatMentions } from '#utils/casino.js';
-import { isOwnerId } from '#utils/owner.js';
+import { getSenderJid, formatMentions } from '#lib/casino.js';
+import { isOwnerId } from '#lib/owner.js';
 import { QuotaService, type UserQuotaOverview } from '#services/quotaService.js';
-import { tierFeatureLimits, usageInWindow } from '#utils/featureLimiter.js';
+import { tierFeatureLimits, usageInWindow } from '#lib/featureLimiter.js';
 import { renderUsageBar } from '#services/subscriptionService.js';
-import { formatRupiah } from '#utils/currency.js';
+import { formatRupiah } from '#lib/currency.js';
 
 export const definition: ToolDefinition = {
     name: 'quota',

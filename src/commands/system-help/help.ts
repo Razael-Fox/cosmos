@@ -1,8 +1,8 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getTranslator } from '#utils/i18n.js';
-import { getMenuBannerBuffer } from '#utils/menuAssets.js';
+import { getTranslator } from '#lib/i18n.js';
+import { getMenuBannerBuffer } from '#lib/menuAssets.js';
 import menuService from '#services/menuService.js';
-import { commandNameWords, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { commandNameWords, resolveCommandArgs } from '#lib/commandNormalize.js';
 import {
     formatDashboardHeader,
     formatCategoryOverview,
@@ -11,9 +11,9 @@ import {
     formatAllCommands,
     formatCommandDetail,
     formatNotFound
-} from '#utils/menuFormatter.js';
-import { cleanId, formatMentions } from '#utils/casino.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+} from '#lib/menuFormatter.js';
+import { cleanId, formatMentions } from '#lib/casino.js';
+import { getOwnerNumbers } from '#lib/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'help',

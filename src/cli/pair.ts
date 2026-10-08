@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
-import { connectToWhatsApp } from '#utils/connectionManager.js';
-import { promptBotPhoneNumber, promptPairingMethod } from '#utils/startupPrompt.js';
+import { connectToWhatsApp } from '#lib/connectionManager.js';
+import { promptBotPhoneNumber, promptPairingMethod } from '#lib/startupPrompt.js';
 
 dotenv.config();
 

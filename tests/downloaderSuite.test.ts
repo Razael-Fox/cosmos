@@ -5,9 +5,9 @@ import { execFile } from 'child_process';
 import toolsHandler from '../src/handlers/commandHandler.js';
 import tutorialService from '../src/services/tutorialService.js';
 import menuService from '../src/services/menuService.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import { getTranslator } from '../src/lib/i18n.js';
 import { initI18n } from '../src/locales/i18n.config.js';
-import { getLegacyCanonical } from '../src/utils/commandFormat.js';
+import { getLegacyCanonical } from '../src/lib/commandFormat.js';
 import {
     buildYouTubeAudioArgv,
     buildYouTubeVideoFormat,
@@ -20,7 +20,7 @@ import {
     parseYouTubeArgs,
     sanitizeUrl,
     validateTikTokContentMatch
-} from '../src/utils/downloaderArgs.js';
+} from '../src/lib/downloaderArgs.js';
 
 process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test_groq_api_key';
 
@@ -414,7 +414,7 @@ async function runDownloaderSuiteTests() {
     }
 
     // Preserved infrastructure still exists on disk.
-    for (const preserved of ['src/utils/telegramClient.ts', 'src/cli/tgpair.ts', 'src/utils/backup.ts']) {
+    for (const preserved of ['src/lib/telegramClient.ts', 'src/cli/tgpair.ts', 'src/lib/backup.ts']) {
         const filePath = path.resolve(process.cwd(), preserved);
         assert.strictEqual(fs.existsSync(filePath), true, `Preserved file ${preserved} must still exist`);
     }

@@ -1,9 +1,9 @@
 import { ToolDefinition, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid, getUser, formatMentions, cleanId } from '#utils/casino.js';
-import { formatRupiah } from '#utils/currency.js';
-import { renderCard } from '#utils/uiFormatter.js';
-import { isOwnerId } from '#utils/owner.js';
+import { getSenderJid, getUser, formatMentions, cleanId } from '#lib/casino.js';
+import { formatRupiah } from '#lib/currency.js';
+import { renderCard } from '#lib/uiFormatter.js';
+import { isOwnerId } from '#lib/owner.js';
 import { QuotaService } from '#services/quotaService.js';
 
 export const definition: ToolDefinition = {

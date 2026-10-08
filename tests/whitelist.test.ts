@@ -10,7 +10,7 @@ import { isGroupWhitelisted, addGroup, removeGroup, getAllWhitelistedGroups } fr
 import { execute as executeWhitelist } from '../src/commands/system-help/whitelist.js';
 import type { ToolContext } from '../src/commands/types.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import { getTranslator } from '../src/utils/i18n.js';
+import { getTranslator } from '../src/lib/i18n.js';
 
 // Owner authorization reads OWNER_PHONE_NUMBER from the environment, so pin it
 // to the fixture below instead of depending on the local .env.

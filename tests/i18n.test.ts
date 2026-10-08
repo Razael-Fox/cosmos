@@ -6,8 +6,8 @@ import {
     isRTL,
     normalizeLanguage,
     getItemWithTranslation
-} from '../src/utils/i18n.js';
-import { formatCurrency, formatNumber, formatDate } from '../src/utils/format.js';
+} from '../src/lib/i18n.js';
+import { formatCurrency, formatNumber, formatDate } from '../src/lib/format.js';
 
 async function runTests() {
     console.log('--- STARTING I18N SYSTEM TESTS ---');

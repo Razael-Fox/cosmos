@@ -1,8 +1,8 @@
 import { ToolDefinition, ToolContext } from '../types.js';
 import { fetchRule34Video, Rule34VideoResult } from '#services/rule34Service.js';
-import { isNsfwEnabled } from '#utils/nsfwConfig.js';
+import { isNsfwEnabled } from '#lib/nsfwConfig.js';
 import menuService from '#services/menuService.js';
-import { unwrapMonospace } from '#utils/monospace.js';
+import { unwrapMonospace } from '#lib/monospace.js';
 
 export const definition: ToolDefinition = {
     name: 'rule34',

@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getSenderJid } from '#utils/casino.js';
-import { isOwnerId } from '#utils/owner.js';
+import { getSenderJid } from '#lib/casino.js';
+import { isOwnerId } from '#lib/owner.js';
 import { executeWithUserLock } from '#services/quotaService.js';
 import { activateSubscription, canonicalJidForPhone, normalizeTier } from '#services/subscriptionService.js';
 import { sendIpcCommand } from '#services/ipcServer.js';

@@ -12,13 +12,13 @@ import { findModel, loadSchemaCatalogue, type SchemaModel } from '../schema/pris
 import { runSchemaChecks } from '../schema/ddlMirror.js';
 import { fingerprintMutation, planMutation, type MutationOperation } from '../schema/mutationPlanner.js';
 import { applyMutation } from '../schema/applyMutation.js';
-import { computeFileHash, readLastBackupHash, runBackupCycle } from '#utils/backup.js';
-import { resolveStatusDatabasePath } from '#services/statusNotifier/dbPath.js';
+import { computeFileHash, readLastBackupHash, runBackupCycle } from '#lib/backup.js';
+import { resolveStatusDatabasePath } from '#services/notifier/dbPath.js';
 import fs from 'fs';
 import { McpToolError } from '../errors.js';
 import { loadMcpConfig } from '../config.js';
 import { registerTool, zod, type ToolRegistrar } from '../registry.js';
-import { getVersionInfo } from '#utils/versioning.js';
+import { getVersionInfo } from '#lib/versioning.js';
 
 function summariseModel(model: SchemaModel): Record<string, unknown> {
     return {
@@ -276,7 +276,7 @@ export const registerDbTools: ToolRegistrar = (server, deps, summary) => {
         'cosmos_db_backup',
         {
             description:
-                'Trigger the existing Cosmos database snapshot pipeline (src/utils/backup.ts) and report the snapshot hash and destination summary. Reports the truthful outcome; it never claims a snapshot exists when none was persisted.',
+                'Trigger the existing Cosmos database snapshot pipeline (src/lib/backup.ts) and report the snapshot hash and destination summary. Reports the truthful outcome; it never claims a snapshot exists when none was persisted.',
             mutating: true,
             inputSchema: {
                 force: zod.optionalBoolean(

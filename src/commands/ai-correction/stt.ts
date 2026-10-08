@@ -2,7 +2,7 @@ import { downloadContentFromMessage, WAMessage } from '@whiskeysockets/baileys';
 import { toFile } from 'groq-sdk';
 import dotenv from 'dotenv';
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getGroqClient } from '#utils/apiKeyResolver.js';
+import { getGroqClient } from '#lib/apiKeyResolver.js';
 
 dotenv.config();
 

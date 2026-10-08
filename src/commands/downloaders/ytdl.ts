@@ -4,7 +4,7 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'ffmpeg-static';
-import { renderCard } from '#utils/uiFormatter.js';
+import { renderCard } from '#lib/uiFormatter.js';
 import {
     ParsedYouTubeArgs,
     YouTubeVideoQuality,
@@ -13,7 +13,7 @@ import {
     describeAudioBitrate,
     describeVideoQuality,
     parseYouTubeArgs
-} from '#utils/downloaderArgs.js';
+} from '#lib/downloaderArgs.js';
 
 /**
  * Runs yt-dlp with a discrete argv array.
@@ -333,7 +333,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
             }
 
             if (sentMsg) {
-                const { scheduleMediaAutoDelete } = await import('#utils/autoDelete.js');
+                const { scheduleMediaAutoDelete } = await import('#lib/autoDelete.js');
                 const mediaType = ['.mp4', '.webm', '.mkv', '.m4v'].includes(ext)
                     ? 'video'
                     : ['.mp3', '.m4a', '.opus', '.ogg', '.wav', '.aac'].includes(ext)

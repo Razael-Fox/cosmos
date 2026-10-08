@@ -6,7 +6,7 @@ import os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import crypto from 'crypto';
-import { stickerQueue } from '#utils/sticker/queue.js';
+import { stickerQueue } from '#lib/sticker/queue.js';
 import { ToolDefinition, ToolContext } from '../types.js';
 
 const execPromise = promisify(exec);
@@ -172,7 +172,7 @@ export async function sendStickerFromBuffer(
 
     // Cache for getMessage retry callback
     if (sentMsg?.key?.id && sentMsg?.message) {
-        const { cacheMessage } = await import('#utils/messageCache.js');
+        const { cacheMessage } = await import('#lib/messageCache.js');
         cacheMessage(sentMsg);
         console.log('[Sticker] Sent message cached for retry decryption, id:', sentMsg.key.id);
     }

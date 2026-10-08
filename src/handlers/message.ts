@@ -2,17 +2,17 @@ import { jidNormalizedUser, WASocket, WAMessage } from '@whiskeysockets/baileys'
 import { addGroup, isGroupWhitelisted, prisma, dbContext } from '#db.js';
 import commandsHandler from './commandHandler.js';
 const toolsHandler = commandsHandler;
-import { isAutoStickerEnabled } from '#utils/sticker/autoSticker.js';
-import { isAutoCorrectionEnabled, analyzeAndCorrectText } from '#utils/autoCorrection.js';
-import { isMessageProcessed, markMessageProcessed } from '#utils/messageCache.js';
-import { processAutoDl } from '#utils/autodl.js';
-import { handleOfflineAiResponder } from '#utils/offlineAi.js';
-import { isUserRegistering, processRegistrationStep } from '#utils/idCard.js';
+import { isAutoStickerEnabled } from '#lib/sticker/autoSticker.js';
+import { isAutoCorrectionEnabled, analyzeAndCorrectText } from '#lib/autoCorrection.js';
+import { isMessageProcessed, markMessageProcessed } from '#lib/messageCache.js';
+import { processAutoDl } from '#lib/autodl.js';
+import { handleOfflineAiResponder } from '#lib/offlineAi.js';
+import { isUserRegistering, processRegistrationStep } from '#lib/idCard.js';
 import { processBankTransferConfirmation } from '#commands/economy-banking/bank.js';
 import { processLoanConfirmation } from '#commands/economy-banking/loan.js';
 import { processJobSelection } from '#commands/employment/job.js';
-import { formatMentions } from '#utils/casino.js';
-import { getLegacyCanonical } from '#utils/commandFormat.js';
+import { formatMentions } from '#lib/casino.js';
+import { getLegacyCanonical } from '#lib/commandFormat.js';
 import {
     splitCommandPrefix,
     isCommandInvocation,
@@ -23,16 +23,16 @@ import {
     INLINE_ADD_COMMAND_KEYS,
     INLINE_REMOVE_COMMAND_KEYS,
     MAX_COMMAND_WORDS
-} from '#utils/commandNormalize.js';
+} from '#lib/commandNormalize.js';
 import {
     hasCancellableSession,
     cancelActiveSession,
     unregisterCancellableSessionByUser
-} from '#utils/cancellationManager.js';
-import { getTranslator } from '#utils/i18n.js';
-import { getOwnerNumbers, isOwnerId } from '#utils/owner.js';
-import { inspectMessageForMalice } from '#utils/security/bugDetector.js';
-import { antiSpamGuard } from '#utils/security/antiSpamGuard.js';
+} from '#lib/cancellationManager.js';
+import { getTranslator } from '#lib/i18n.js';
+import { getOwnerNumbers, isOwnerId } from '#lib/owner.js';
+import { inspectMessageForMalice } from '#lib/security/bugDetector.js';
+import { antiSpamGuard } from '#lib/security/antiSpamGuard.js';
 import { securityEnforcementService } from '#services/securityEnforcementService.js';
 import { loadConfig, isFeatureEnabled, SubBotFeatures } from '#services/subBotConfigService.js';
 import { updateUserPresence, linkPresenceIds } from '#services/presenceService.js';
@@ -43,12 +43,12 @@ import {
     deletePreviewMessages,
     removeScheduledDeletions,
     processStickerlySelection
-} from '#utils/sticker/stickerlySession.js';
-import { hasActivePlaySession, getActivePlaySession } from '#utils/playSession.js';
-import { AgentConfirmationManager } from '#services/agentEngine/confirmationManager.js';
-import { AgentLocationStager } from '#services/agentEngine/locationStager.js';
+} from '#lib/sticker/stickerlySession.js';
+import { hasActivePlaySession, getActivePlaySession } from '#lib/playSession.js';
+import { AgentConfirmationManager } from '#services/agent/confirmationManager.js';
+import { AgentLocationStager } from '#services/agent/locationStager.js';
 import menuService from '#services/menuService.js';
-import { recordCommandUse, pickHintCommand } from '#utils/commandHints.js';
+import { recordCommandUse, pickHintCommand } from '#lib/commandHints.js';
 
 function getRequiredFeatureForTool(toolName: string): keyof SubBotFeatures | null {
     const name = toolName.toLowerCase();

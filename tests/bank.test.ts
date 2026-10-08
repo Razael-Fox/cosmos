@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { prisma } from '../src/db.js';
-import { saveIdCard } from '../src/utils/idCard.js';
+import { saveIdCard } from '../src/lib/idCard.js';
 import {
     registerBankAccount,
     depositToBank,
@@ -15,8 +15,8 @@ import {
     BANK_DAILY_TRANSFER_LIMIT
 } from '../src/services/bankService.js';
 import bankTool, { processBankTransferConfirmation, getPendingTransfer } from '../src/commands/economy-banking/bank.js';
-import { cancelActiveSession } from '../src/utils/cancellationManager.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import { cancelActiveSession } from '../src/lib/cancellationManager.js';
+import { getTranslator } from '../src/lib/i18n.js';
 
 async function runBankTests() {
     console.log('--- STARTING BANKING SYSTEM TESTS ---');

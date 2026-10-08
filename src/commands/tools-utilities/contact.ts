@@ -1,9 +1,9 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid, getUser, cleanId } from '#utils/casino.js';
+import { getSenderJid, getUser, cleanId } from '#lib/casino.js';
 import { encryptString, decryptString } from '#services/storageEncryption.js';
-import { maskPhoneNumber } from '#utils/phone.js';
-import { extractLeadingMonospace, unwrapMonospace } from '#utils/monospace.js';
+import { maskPhoneNumber } from '#lib/phone.js';
+import { extractLeadingMonospace, unwrapMonospace } from '#lib/monospace.js';
 import {
     validateContactNameWithAI,
     validatePhoneNumber,

@@ -1,8 +1,8 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
-import { formatMentions } from '#utils/casino.js';
-import { renderCard, renderCatalogCard, CatalogItem } from '#utils/uiFormatter.js';
+import { formatRupiah } from '#lib/currency.js';
+import { formatMentions } from '#lib/casino.js';
+import { renderCard, renderCatalogCard, CatalogItem } from '#lib/uiFormatter.js';
 
 let topGlobalCache: any = null;
 let topGlobalCacheExpiry: number = 0;

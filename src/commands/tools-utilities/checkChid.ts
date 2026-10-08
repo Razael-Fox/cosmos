@@ -1,8 +1,8 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { cleanId, getSenderJid } from '#utils/casino.js';
-import { unwrapMonospace } from '#utils/monospace.js';
-import { getCachedMessage } from '#utils/messageCache.js';
-import { renderAlert, renderCard, renderSyntaxError, CardField } from '#utils/uiFormatter.js';
+import { cleanId, getSenderJid } from '#lib/casino.js';
+import { unwrapMonospace } from '#lib/monospace.js';
+import { getCachedMessage } from '#lib/messageCache.js';
+import { renderAlert, renderCard, renderSyntaxError, CardField } from '#lib/uiFormatter.js';
 
 const COOLDOWN_MS = 10 * 1000;
 const lastCheckedAt = new Map<string, number>();

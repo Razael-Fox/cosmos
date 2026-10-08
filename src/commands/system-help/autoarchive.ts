@@ -1,10 +1,10 @@
 import { ToolDefinition, ToolContext } from '../types.js';
 import { isAutoArchiveEnabled, setAutoArchive } from '#services/systemConfigService.js';
 import { archiveChat, unarchiveChat } from '#services/chatArchiveService.js';
-import { getSenderJid } from '#utils/casino.js';
-import { isOwnerId } from '#utils/owner.js';
-import { renderCard } from '#utils/uiFormatter.js';
-import { commandTokens, resolveCommandArgs } from '#utils/commandNormalize.js';
+import { getSenderJid } from '#lib/casino.js';
+import { isOwnerId } from '#lib/owner.js';
+import { renderCard } from '#lib/uiFormatter.js';
+import { commandTokens, resolveCommandArgs } from '#lib/commandNormalize.js';
 
 export const definition: ToolDefinition = {
     name: 'autoarchive',

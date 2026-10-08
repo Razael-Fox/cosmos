@@ -1,8 +1,8 @@
 import { prisma } from '../db.js';
-import { requireIdCard } from '../utils/idCard.js';
-import { formatRupiah } from '../utils/currency.js';
+import { requireIdCard } from '../lib/idCard.js';
+import { formatRupiah } from '../lib/currency.js';
 import { JobCatalog } from '../generated/prisma/client.js';
-import { buildUserOrConditions, getUser } from '../utils/casino.js';
+import { buildUserOrConditions, getUser } from '../lib/casino.js';
 
 export const ENTREPRENEUR_INITIAL_INVESTMENT = 250000;
 

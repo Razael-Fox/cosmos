@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
 import { ModerationService, resolveTargetJid } from '#services/moderationService.js';
-import { cleanId } from '#utils/casino.js';
+import { cleanId } from '#lib/casino.js';
 
 export const definition: ToolDefinition = {
     name: 'group blacklist remove',

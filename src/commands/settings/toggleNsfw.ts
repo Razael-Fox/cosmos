@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { isNsfwEnabled, setNsfwEnabled } from '#utils/nsfwConfig.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+import { isNsfwEnabled, setNsfwEnabled } from '#lib/nsfwConfig.js';
+import { getOwnerNumbers } from '#lib/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'togglensfw',

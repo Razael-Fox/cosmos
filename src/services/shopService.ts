@@ -1,5 +1,5 @@
 import { prisma } from '../db.js';
-import { getUser } from '../utils/casino.js';
+import { getUser } from '../lib/casino.js';
 
 export type PurchaseErrorCode =
     'SUCCESS' | 'INSUFFICIENT_BALANCE' | 'NOT_FOUND' | 'UNAVAILABLE' | 'INVALID_QUANTITY' | 'DATABASE_ERROR';

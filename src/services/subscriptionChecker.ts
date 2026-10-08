@@ -1,7 +1,7 @@
 import { prisma, getPrismaClient } from '#db.js';
 import { stopSubBot } from '#services/subBotService.js';
 import { TIER_LIMITS } from '#services/quotaService.js';
-import { getChatLanguage, getTranslator } from '#utils/i18n.js';
+import { getChatLanguage, getTranslator } from '#lib/i18n.js';
 
 /**
  * Daily subscription expiry reconciliation (00:00 UTC).
@@ -47,7 +47,7 @@ export async function reconcileSubscriptions(): Promise<void> {
 
         // T-0 receipt notice is delivered opportunistically via the default socket.
         try {
-            const { activeConnections } = await import('#utils/connectionManager.js');
+            const { activeConnections } = await import('#lib/connectionManager.js');
             const sock = activeConnections.get('default');
             if (sock) {
                 const lang = await getChatLanguage(sub.userId);

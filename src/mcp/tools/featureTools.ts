@@ -8,7 +8,7 @@
  */
 import { toolsHandler } from '#handlers/commandHandler.js';
 import { resolveToolDescription, type ToolDefinition } from '#commands/types.js';
-import { getTranslator } from '#utils/i18n.js';
+import { getTranslator } from '#lib/i18n.js';
 import { runI18nCheck } from '../schema/i18nAudit.js';
 import { runSchemaChecks } from '../schema/ddlMirror.js';
 import { runToolingIsolationCheck } from '../schema/toolingIsolation.js';

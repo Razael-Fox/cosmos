@@ -7,7 +7,7 @@ import {
     renderCatalogCard,
     renderHealthGauge,
     renderBadge
-} from '../src/utils/uiFormatter.js';
+} from '../src/lib/uiFormatter.js';
 
 const BOX_CHARS = ['╭', '┃', '│', '╰', '┌', '└', '─', '━'];
 

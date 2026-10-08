@@ -1,10 +1,10 @@
 import assert from 'assert';
 import toolsHandler from '../src/handlers/commandHandler.js';
 import menuService from '../src/services/menuService.js';
-import { toDisplayCommand, getDisplayName, getLegacyCanonical } from '../src/utils/commandFormat.js';
-import { formatAllCommands, formatCommandDetail } from '../src/utils/menuFormatter.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { hasCancellableSession, cancelActiveSession } from '../src/utils/cancellationManager.js';
+import { toDisplayCommand, getDisplayName, getLegacyCanonical } from '../src/lib/commandFormat.js';
+import { formatAllCommands, formatCommandDetail } from '../src/lib/menuFormatter.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { hasCancellableSession, cancelActiveSession } from '../src/lib/cancellationManager.js';
 import { definition as applyLicenseDef } from '../src/commands/employment/applyLicense.js';
 import { definition as idCardDef } from '../src/commands/system-help/idcard.js';
 import { definition as jobDef, execute as executeJob } from '../src/commands/employment/job.js';

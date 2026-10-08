@@ -4,7 +4,7 @@ import { ModerationService, resolveTargetJid } from '../src/services/moderationS
 import { BlacklistEnforcer } from '../src/services/blacklistEnforcer.js';
 import toolsHandler from '../src/handlers/commandHandler.js';
 import { prisma, disconnectPrismaClient } from '../src/db.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import { getTranslator } from '../src/lib/i18n.js';
 import fs from 'fs';
 import path from 'path';
 

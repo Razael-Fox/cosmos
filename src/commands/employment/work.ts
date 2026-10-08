@@ -1,9 +1,9 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid } from '#utils/casino.js';
-import { getTranslator } from '#utils/i18n.js';
-import { formatRupiah } from '#utils/currency.js';
+import { getSenderJid } from '#lib/casino.js';
+import { getTranslator } from '#lib/i18n.js';
+import { formatRupiah } from '#lib/currency.js';
 import { executeWork } from '#services/jobs.js';
-import { renderCard, CardField } from '#utils/uiFormatter.js';
+import { renderCard, CardField } from '#lib/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'work',

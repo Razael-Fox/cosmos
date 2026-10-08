@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid, cleanId, getUser } from '#utils/casino.js';
-import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
-import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
+import { getSenderJid, cleanId, getUser } from '#lib/casino.js';
+import { formatRupiah, parseCurrencyAmount } from '#lib/currency.js';
+import { registerCancellableSession, unregisterCancellableSessionByUser } from '#lib/cancellationManager.js';
 import { prisma } from '#db.js';
 import {
     registerBankAccount,
@@ -12,7 +12,7 @@ import {
     getBankStatement,
     BANK_TRANSFER_FEE
 } from '#services/bankService.js';
-import { getTranslator, getChatLanguage } from '#utils/i18n.js';
+import { getTranslator, getChatLanguage } from '#lib/i18n.js';
 import {
     renderCard,
     renderAlert,
@@ -20,7 +20,7 @@ import {
     renderCatalogCard,
     renderBadge,
     CatalogItem
-} from '#utils/uiFormatter.js';
+} from '#lib/uiFormatter.js';
 
 export interface PendingTransfer {
     senderAccountNumber: string;

@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getSenderJid, cleanId } from '#utils/casino.js';
+import { getSenderJid, cleanId } from '#lib/casino.js';
 import { prisma } from '#db.js';
 import { verifyInvertedToken, registerInvertedMismatch } from '#services/otpService.js';
 

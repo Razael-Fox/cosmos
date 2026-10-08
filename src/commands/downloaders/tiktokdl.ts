@@ -3,8 +3,8 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import axios from 'axios';
-import { renderCard } from '#utils/uiFormatter.js';
-import { ParsedTikTokArgs, parseTikTokArgs, validateTikTokContentMatch } from '#utils/downloaderArgs.js';
+import { renderCard } from '#lib/uiFormatter.js';
+import { ParsedTikTokArgs, parseTikTokArgs, validateTikTokContentMatch } from '#lib/downloaderArgs.js';
 
 /** Transient directory for TikTok downloads; files are removed after delivery. */
 const TEMP_MEDIA_DIR = path.join(os.tmpdir(), 'waf-tiktok');
@@ -299,7 +299,7 @@ export async function execute(args: Record<string, any>, ctx: ToolContext): Prom
 
         const schedule = async (sent: unknown, kind: 'video' | 'image' | 'audio') => {
             if (!sent) return;
-            const { scheduleMediaAutoDelete } = await import('#utils/autoDelete.js');
+            const { scheduleMediaAutoDelete } = await import('#lib/autoDelete.js');
             scheduleMediaAutoDelete(ctx.sock, ctx.jid, sent as never, kind);
         };
 

@@ -1,10 +1,10 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid, resolveId, getUser, formatMentions, cleanId } from '#utils/casino.js';
-import { formatRupiah } from '#utils/currency.js';
-import { getTranslator } from '#utils/i18n.js';
-import { renderCard } from '#utils/uiFormatter.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+import { getSenderJid, resolveId, getUser, formatMentions, cleanId } from '#lib/casino.js';
+import { formatRupiah } from '#lib/currency.js';
+import { getTranslator } from '#lib/i18n.js';
+import { renderCard } from '#lib/uiFormatter.js';
+import { getOwnerNumbers } from '#lib/owner.js';
 
 function getWealthTier(netWorth: number, t: (key: string, def?: string) => string): string {
     if (netWorth >= 100000000) return t('tools.ui.tier_sovereign', '👑 Sovereign Member');

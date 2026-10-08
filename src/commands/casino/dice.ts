@@ -1,10 +1,10 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid } from '#utils/casino.js';
-import { getUser, parseBet, executeGamble, MIN_BET } from '#utils/casino.js';
-import { formatRupiah } from '#utils/currency.js';
-import { chance } from '#utils/casino.js';
-import { renderCard, renderSyntaxError, renderAlert } from '#utils/uiFormatter.js';
+import { getSenderJid } from '#lib/casino.js';
+import { getUser, parseBet, executeGamble, MIN_BET } from '#lib/casino.js';
+import { formatRupiah } from '#lib/currency.js';
+import { chance } from '#lib/casino.js';
+import { renderCard, renderSyntaxError, renderAlert } from '#lib/uiFormatter.js';
 
 const DICE_EMOJIS = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 

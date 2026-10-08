@@ -1,5 +1,5 @@
-import { activeConnections } from '#utils/connectionManager.js';
-import { getChatLanguage, getTranslator } from '#utils/i18n.js';
+import { activeConnections } from '#lib/connectionManager.js';
+import { getChatLanguage, getTranslator } from '#lib/i18n.js';
 export interface LoginAlertPayload {
     userJid: string;
     ipAddress: string;

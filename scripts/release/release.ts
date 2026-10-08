@@ -31,7 +31,7 @@ import {
     today,
     type VersionBumpKind,
     type VersionInfo
-} from '../../src/utils/versioning.js';
+} from '../../src/lib/versioning.js';
 
 const BUMP_KINDS: VersionBumpKind[] = ['patch', 'feature', 'generation'];
 

@@ -1,6 +1,6 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
+import { formatRupiah } from '#lib/currency.js';
 
 const marketTool: ToolModule = {
     definition: {

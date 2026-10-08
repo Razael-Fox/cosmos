@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { setAutoDl, isAutoDlEnabled } from '#utils/autodl.js';
-import { getTranslator } from '#utils/i18n.js';
-import { getOwnerNumbers } from '#utils/owner.js';
+import { setAutoDl, isAutoDlEnabled } from '#lib/autodl.js';
+import { getTranslator } from '#lib/i18n.js';
+import { getOwnerNumbers } from '#lib/owner.js';
 
 export const definition: ToolDefinition = {
     name: 'autodl',

@@ -1,8 +1,8 @@
 import { WASocket, GroupMetadata } from '@whiskeysockets/baileys';
 import { ModerationService, getParticipantLid } from './moderationService.js';
-import { cleanId, formatMentions } from '../utils/casino.js';
+import { cleanId, formatMentions } from '../lib/casino.js';
 import { prisma, dbContext, getPrismaClient } from '../db.js';
-import { getTranslator } from '../utils/i18n.js';
+import { getTranslator } from '../lib/i18n.js';
 
 export class BlacklistEnforcer {
     private isListening = false;

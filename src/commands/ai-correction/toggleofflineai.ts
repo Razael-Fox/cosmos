@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { toggleOfflineAi } from '#utils/offlineAi.js';
+import { toggleOfflineAi } from '#lib/offlineAi.js';
 
 export const definition: ToolDefinition = {
     name: 'toggleofflineai',

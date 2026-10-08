@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DecisionClient } from '../src/services/agentEngine/decisionClient.js';
-import { SaraPromptContext } from '../src/services/agentEngine/types.js';
+import { DecisionClient } from '../src/services/agent/decisionClient.js';
+import { SaraPromptContext } from '../src/services/agent/types.js';
 
 test('Decision Client Sanitization and Schema Contract Suite', async (t) => {
     await t.test('sanitizeUntrustedContent strips raw JIDs, phone numbers, and balances', () => {

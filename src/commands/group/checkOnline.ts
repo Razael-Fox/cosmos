@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { buildUserOrConditions, cleanId, formatMentions, getSenderJid, resolveId } from '#utils/casino.js';
+import { buildUserOrConditions, cleanId, formatMentions, getSenderJid, resolveId } from '#lib/casino.js';
 import { prisma } from '#db.js';
 import { getAllOnlineIds } from '#services/presenceService.js';
 

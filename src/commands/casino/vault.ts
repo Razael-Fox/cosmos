@@ -1,8 +1,8 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getHouseVault } from '#utils/casino.js';
-import { formatRupiah } from '#utils/currency.js';
-import { renderCard } from '#utils/uiFormatter.js';
+import { getHouseVault } from '#lib/casino.js';
+import { formatRupiah } from '#lib/currency.js';
+import { renderCard } from '#lib/uiFormatter.js';
 
 const vaultTool: ToolModule = {
     definition: {

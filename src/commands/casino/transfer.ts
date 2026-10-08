@@ -1,9 +1,9 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid, resolveId, getUser, cleanId, formatMentions } from '#utils/casino.js';
-import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
-import { logTransaction } from '#utils/transactionLogger.js';
-import { getTranslator } from '#utils/i18n.js';
+import { getSenderJid, resolveId, getUser, cleanId, formatMentions } from '#lib/casino.js';
+import { formatRupiah, parseCurrencyAmount } from '#lib/currency.js';
+import { logTransaction } from '#lib/transactionLogger.js';
+import { getTranslator } from '#lib/i18n.js';
 
 const transferTool: ToolModule = {
     definition: {

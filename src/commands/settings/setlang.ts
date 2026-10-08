@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid } from '#utils/casino.js';
-import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, getTranslator } from '#utils/i18n.js';
+import { getSenderJid } from '#lib/casino.js';
+import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, getTranslator } from '#lib/i18n.js';
 
 export const definition: ToolDefinition = {
     name: 'setlang',

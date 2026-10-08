@@ -60,7 +60,7 @@ async function main(): Promise<void> {
         return;
     }
 
-    const version = (await import('#utils/versioning.js')).getVersionInfo().version;
+    const version = (await import('#lib/versioning.js')).getVersionInfo().version;
     console.log(`[MCP] Cosmos MCP server ${version} starting on the ${transport} transport.`);
 
     // Status-channel alert: the server is up and serving. Fire-and-forget;

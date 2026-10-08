@@ -5,15 +5,15 @@ import {
     renderCatalogCard,
     renderHealthGauge,
     renderBadge
-} from '../src/utils/uiFormatter.js';
+} from '../src/lib/uiFormatter.js';
 import {
     formatDashboardHeader,
     formatCategoryOverview,
     formatCategoryCommands,
     formatNotFound,
     formatUptimeDuration
-} from '../src/utils/menuFormatter.js';
-import { getTranslator, LANGUAGE_CONFIG } from '../src/utils/i18n.js';
+} from '../src/lib/menuFormatter.js';
+import { getTranslator, LANGUAGE_CONFIG } from '../src/lib/i18n.js';
 import { renderForexBroadcast } from '../src/services/economyBroadcast.js';
 
 async function runTests() {

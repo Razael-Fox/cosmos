@@ -1,8 +1,8 @@
 import os from 'os';
 import { ToolDefinition, ToolContext } from '../types.js';
-import { renderCard, renderProgressBar } from '#utils/uiFormatter.js';
-import { formatUptimeDuration } from '#utils/menuFormatter.js';
-import { getVersionInfo } from '#utils/versioning.js';
+import { renderCard, renderProgressBar } from '#lib/uiFormatter.js';
+import { formatUptimeDuration } from '#lib/menuFormatter.js';
+import { getVersionInfo } from '#lib/versioning.js';
 
 export const definition: ToolDefinition = {
     name: 'system_info',

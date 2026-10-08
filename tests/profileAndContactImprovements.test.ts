@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import toolsHandler from '../src/handlers/commandHandler.js';
 import { prisma } from '../src/db.js';
-import { getLegacyCanonical } from '../src/utils/commandFormat.js';
+import { getLegacyCanonical } from '../src/lib/commandFormat.js';
 import {
     validateContactNameWithAI,
     validatePhoneNumber,
@@ -82,7 +82,7 @@ async function runTestSuite() {
         }
     };
 
-    const { getTranslator } = await import('../src/utils/i18n.js');
+    const { getTranslator } = await import('../src/lib/i18n.js');
     const tId = getTranslator('id');
     const addBalanceCtx: ToolContext = {
         msg: addBalanceMsg as any,

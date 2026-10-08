@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { toggleAutoCorrection } from '#utils/autoCorrection.js';
+import { toggleAutoCorrection } from '#lib/autoCorrection.js';
 
 export const definition: ToolDefinition = {
     name: 'toggleautocorrection',

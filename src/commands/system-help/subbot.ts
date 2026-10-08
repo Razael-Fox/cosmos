@@ -1,6 +1,6 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getSenderJid, cleanId } from '#utils/casino.js';
-import { getPrimaryOwnerNumber } from '#utils/owner.js';
+import { getSenderJid, cleanId } from '#lib/casino.js';
+import { getPrimaryOwnerNumber } from '#lib/owner.js';
 import {
     requestPairing,
     stopSubBot,
@@ -12,7 +12,7 @@ import {
 } from '#services/subBotService.js';
 import { loadConfig } from '#services/subBotConfigService.js';
 import { dbContext } from '#db.js';
-import { renderCard } from '#utils/uiFormatter.js';
+import { renderCard } from '#lib/uiFormatter.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

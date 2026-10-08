@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid } from '#utils/casino.js';
-import { requireIdCard, calculateAge } from '#utils/idCard.js';
-import { getTranslator } from '#utils/i18n.js';
+import { getSenderJid } from '#lib/casino.js';
+import { requireIdCard, calculateAge } from '#lib/idCard.js';
+import { getTranslator } from '#lib/i18n.js';
 import { prisma } from '#db.js';
 
 export const definition: ToolDefinition = {

@@ -42,7 +42,7 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
         return ctx.t('tools.quoted.reply_required');
     }
 
-    const { getCachedMessage } = await import('#utils/messageCache.js');
+    const { getCachedMessage } = await import('#lib/messageCache.js');
 
     // Attempt to get the unstripped Message A from the cache
     const fullMessageA = getCachedMessage(messageAId) || quotedMsgRaw;

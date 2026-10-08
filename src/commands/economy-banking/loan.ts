@@ -1,8 +1,8 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid, cleanId } from '#utils/casino.js';
-import { commandTokens, getCommandWords, resolveCommandArgs } from '#utils/commandNormalize.js';
-import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
-import { requireIdCard } from '#utils/idCard.js';
+import { getSenderJid, cleanId } from '#lib/casino.js';
+import { commandTokens, getCommandWords, resolveCommandArgs } from '#lib/commandNormalize.js';
+import { formatRupiah, parseCurrencyAmount } from '#lib/currency.js';
+import { requireIdCard } from '#lib/idCard.js';
 import { getBankAccountByUser } from '#services/bankService.js';
 import {
     getCreditProfile,
@@ -11,10 +11,10 @@ import {
     repayLoan,
     calculateLoanPayable
 } from '#services/loanService.js';
-import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
-import { getTranslator } from '#utils/i18n.js';
+import { registerCancellableSession, unregisterCancellableSessionByUser } from '#lib/cancellationManager.js';
+import { getTranslator } from '#lib/i18n.js';
 import { prisma } from '#db.js';
-import { renderCard, renderProgressBar, renderAlert, renderBadge, type TranslatorFn } from '#utils/uiFormatter.js';
+import { renderCard, renderProgressBar, renderAlert, renderBadge, type TranslatorFn } from '#lib/uiFormatter.js';
 
 export interface PendingLoanApplication {
     userId: string;

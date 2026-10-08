@@ -4,15 +4,15 @@ import path from 'path';
 import { prisma } from '#db.js';
 import { timingSafeStringCompare } from './otpService.js';
 import { dispatchLoginSecurityAlert } from './securityAlertService.js';
-import { activeConnections } from '#utils/connectionManager.js';
+import { activeConnections } from '#lib/connectionManager.js';
 import { getUserPresence } from './presenceService.js';
-import { getChatLanguage, getTranslator } from '#utils/i18n.js';
+import { getChatLanguage, getTranslator } from '#lib/i18n.js';
 import { getBinaryNodeChild, type WASocket, type GroupMetadata, type BinaryNode } from '@whiskeysockets/baileys';
 import { startBroadcastWorker } from './broadcastService.js';
-import { getEventLoopLagMs, getLastConnectionUpdateAt, getMemoryMb, getUptimeSeconds } from '#utils/runtimeHealth.js';
-import { notify } from './statusNotifier/index.js';
-import { parseMcpAlertRequest } from './statusNotifier/mcpAlert.js';
-import { invalidateTierCache } from '#utils/featureLimiter.js';
+import { getEventLoopLagMs, getLastConnectionUpdateAt, getMemoryMb, getUptimeSeconds } from '#lib/runtimeHealth.js';
+import { notify } from './notifier/index.js';
+import { parseMcpAlertRequest } from './notifier/mcpAlert.js';
+import { invalidateTierCache } from '#lib/featureLimiter.js';
 
 export const DEFAULT_IPC_SOCKET = '/app/storage/ipc.sock';
 
@@ -553,7 +553,7 @@ async function handleCommand(req: IpcRequest): Promise<{ status: number; data: u
                 data: {
                     ok: true,
                     event: parsed.request.event,
-                    delivered: results.filter((result) => result.success).length,
+                    delivered: results.filter((result: { success: boolean }) => result.success).length,
                     channels: results.length
                 }
             };

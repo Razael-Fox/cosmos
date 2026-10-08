@@ -11,7 +11,7 @@ fs.mkdirSync('/tmp/opencode', { recursive: true });
 process.env.DATABASE_URL = `file:${testDb}`;
 process.env.OWNER_PHONE_NUMBER = OWNER;
 
-const { tryConsume, usageInWindow, resolveLimit, invalidateTierCache } = await import('../src/utils/featureLimiter.js');
+const { tryConsume, usageInWindow, resolveLimit, invalidateTierCache } = await import('../src/lib/featureLimiter.js');
 
 invalidateTierCache();
 

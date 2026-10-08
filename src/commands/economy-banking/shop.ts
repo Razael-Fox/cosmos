@@ -1,8 +1,8 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
+import { formatRupiah } from '#lib/currency.js';
 import { getShopItems } from '#services/shopService.js';
-import { renderCard, renderCatalogCard, renderAlert } from '#utils/uiFormatter.js';
+import { renderCard, renderCatalogCard, renderAlert } from '#lib/uiFormatter.js';
 
 const shopTool: ToolModule = {
     definition: {

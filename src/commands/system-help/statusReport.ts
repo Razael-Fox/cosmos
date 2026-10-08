@@ -1,7 +1,7 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getTranslator } from '#utils/i18n.js';
-import { formatRupiah } from '#utils/currency.js';
-import { collectAuditDigest, collectHealth } from '#services/statusNotifier/index.js';
+import { getTranslator } from '#lib/i18n.js';
+import { formatRupiah } from '#lib/currency.js';
+import { collectAuditDigest, collectHealth } from '#services/notifier/index.js';
 
 export const definition: ToolDefinition = {
     name: 'status report',

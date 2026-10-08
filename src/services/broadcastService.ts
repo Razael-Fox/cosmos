@@ -21,8 +21,8 @@
 import crypto from 'crypto';
 import cron from 'node-cron';
 import { prisma } from '#db.js';
-import { activeConnections } from '#utils/connectionManager.js';
-import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
+import { activeConnections } from '#lib/connectionManager.js';
+import { registerCancellableSession, unregisterCancellableSession } from '#lib/cancellationManager.js';
 import type { WASocket } from '@whiskeysockets/baileys';
 
 /** `StatusNotificationLog.event` / `StatusNotificationOutbox.event` discriminator. */

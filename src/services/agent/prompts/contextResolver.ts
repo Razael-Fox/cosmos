@@ -1,0 +1,343 @@
+import { WASocket, WAMessage } from '@whiskeysockets/baileys';
+import { SaraPromptContext } from '../types.js';
+import { prisma, dbContext } from '../../../db.js';
+import { getSenderJid, cleanId } from '../../../lib/casino.js';
+import { isOwnerId, getPrimaryOwnerNumber } from '../../../lib/owner.js';
+import { decryptString } from '../../storageEncryption.js';
+import { EphemeralTokenStore } from '../tokenStore.js';
+import { toCanonicalJid } from '../../../lib/phone.js';
+import { loadConfig } from '../../subBotConfigService.js';
+
+interface GroupCacheEntry {
+    timestamp: number;
+    groups: Record<string, any>;
+}
+const groupCache = new Map<string, GroupCacheEntry>();
+const GROUP_CACHE_TTL_MS = 60_000;
+
+export async function getCachedParticipatingGroups(sock: WASocket): Promise<Record<string, any>> {
+    const cacheKey = sock.user?.id || 'default_socket';
+    const cached = groupCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < GROUP_CACHE_TTL_MS) {
+        return cached.groups;
+    }
+
+    try {
+        if (typeof sock.groupFetchAllParticipating === 'function') {
+            const fetched = await sock.groupFetchAllParticipating();
+            if (fetched && typeof fetched === 'object') {
+                groupCache.set(cacheKey, { timestamp: now, groups: fetched });
+                return fetched;
+            }
+        }
+    } catch (err) {
+        console.warn('[SaraPromptContextResolver] Failed to fetch participating groups:', err);
+    }
+
+    return cached?.groups || {};
+}
+
+export class SaraPromptContextResolver {
+    public static async resolveContext(
+        sock: WASocket,
+        msg: WAMessage,
+        chatJid: string,
+        locale: string = 'en'
+    ): Promise<SaraPromptContext> {
+        const callerJid = getSenderJid(msg, sock);
+        const callerLid = msg.key.participant?.includes('@lid')
+            ? msg.key.participant
+            : ((msg as unknown as Record<string, unknown>).participantLid as string | undefined);
+
+        const isFromMe = Boolean(msg.key.fromMe);
+        const isOwner = isFromMe || isOwnerId(callerJid) || (Boolean(callerLid) && isOwnerId(callerLid));
+
+        // Resolve sub-bot session details
+        const sessionStore = dbContext.getStore();
+        const currentSessionId = sessionStore?.sessionId || 'default';
+        const isSubBot = currentSessionId !== 'default';
+        const subBotNumber = isSubBot ? currentSessionId.replace(/^sub_/, '') : undefined;
+
+        let subBotOwnerName: string | undefined;
+        let isSubBotOwnerSession = false;
+        let effectiveContactOwnerJid = callerJid;
+
+        if (subBotNumber) {
+            try {
+                const subBotConfig = loadConfig(subBotNumber);
+                if (subBotConfig?.ownerJid) {
+                    const ownerRaw = cleanId(subBotConfig.ownerJid);
+                    const callerRaw = cleanId(callerJid);
+                    if (ownerRaw && callerRaw && ownerRaw === callerRaw) {
+                        isSubBotOwnerSession = true;
+                    }
+                    // Fetch owner display name
+                    const ownerUser = await prisma.user.findUnique({
+                        where: { id: subBotConfig.ownerJid }
+                    });
+                    subBotOwnerName = ownerUser?.pushName || ownerUser?.username || 'Owner';
+
+                    // If caller is the sub-bot owner, contacts belong to the owner
+                    if (isSubBotOwnerSession) {
+                        effectiveContactOwnerJid = subBotConfig.ownerJid;
+                    }
+                }
+            } catch {
+                // Sub-bot config not found or invalid
+            }
+        }
+
+        if (!subBotOwnerName) {
+            const primaryOwner = getPrimaryOwnerNumber();
+            if (primaryOwner) {
+                try {
+                    const ownerUser = await prisma.user.findFirst({
+                        where: {
+                            OR: [{ id: `${primaryOwner}@s.whatsapp.net` }, { id: primaryOwner }]
+                        }
+                    });
+                    subBotOwnerName = ownerUser?.pushName || ownerUser?.username || 'Razael';
+                } catch {
+                    subBotOwnerName = 'Razael';
+                }
+            } else {
+                subBotOwnerName = sock.user?.name || 'Razael';
+            }
+        }
+
+        // Fetch User and ID Card status
+        let user = null;
+        let hasIdCard = false;
+        try {
+            user = await prisma.user.findUnique({
+                where: { id: callerJid },
+                include: { idCard: true }
+            });
+            hasIdCard = Boolean(user?.idCard);
+        } catch {
+            // Proceed with null user
+        }
+
+        const rawCallerName = msg.pushName || user?.pushName || user?.username || subBotOwnerName || 'Razael';
+        const callerName = rawCallerName.replace(/^(Ir\.|Dr\.|Drs\.|Prof\.)\s*/i, '').trim() || rawCallerName;
+
+        // Chat Context
+        const isGroup = chatJid.endsWith('@g.us');
+        let groupTitle: string | undefined;
+        let isGroupAdmin = false;
+
+        if (isGroup) {
+            try {
+                const metadata = await sock.groupMetadata(chatJid);
+                groupTitle = metadata.subject;
+                const participant = metadata.participants.find((p) => cleanId(p.id) === cleanId(callerJid));
+                isGroupAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+            } catch {
+                groupTitle = 'Group Chat';
+            }
+        }
+
+        // Quoted Context & Location extraction
+        const unwrapped =
+            msg.message?.viewOnceMessage?.message ||
+            msg.message?.viewOnceMessageV2?.message ||
+            msg.message?.viewOnceMessageV2Extension?.message ||
+            msg.message;
+
+        const contextInfo =
+            unwrapped?.extendedTextMessage?.contextInfo ||
+            unwrapped?.imageMessage?.contextInfo ||
+            unwrapped?.videoMessage?.contextInfo ||
+            unwrapped?.locationMessage?.contextInfo;
+
+        const quotedMsg = contextInfo?.quotedMessage;
+        let referencedMessage: SaraPromptContext['referencedMessage'] = null;
+
+        if (quotedMsg) {
+            const senderParticipant = contextInfo?.participant || '';
+            const quotedLocation = quotedMsg.locationMessage || quotedMsg.liveLocationMessage;
+            const locName =
+                quotedLocation && 'name' in quotedLocation && typeof quotedLocation.name === 'string'
+                    ? quotedLocation.name
+                    : undefined;
+            const locAddress =
+                quotedLocation && 'address' in quotedLocation && typeof quotedLocation.address === 'string'
+                    ? quotedLocation.address
+                    : undefined;
+
+            const quotedText =
+                quotedMsg.conversation ||
+                quotedMsg.extendedTextMessage?.text ||
+                quotedMsg.imageMessage?.caption ||
+                quotedMsg.videoMessage?.caption ||
+                (quotedLocation ? `[Location: ${locName || 'Shared Location'}]` : '') ||
+                '';
+            referencedMessage = {
+                senderJid: senderParticipant,
+                senderName: senderParticipant ? cleanId(senderParticipant) || 'Participant' : 'Unknown',
+                text: quotedText,
+                hasMedia: Boolean(quotedMsg.imageMessage || quotedMsg.videoMessage || quotedMsg.audioMessage),
+                mediaType: quotedMsg.imageMessage
+                    ? 'image'
+                    : quotedMsg.videoMessage
+                      ? 'video'
+                      : quotedMsg.audioMessage
+                        ? 'audio'
+                        : undefined,
+                location: quotedLocation
+                    ? {
+                          degreesLatitude: quotedLocation.degreesLatitude ?? 0,
+                          degreesLongitude: quotedLocation.degreesLongitude ?? 0,
+                          name: locName,
+                          address: locAddress
+                      }
+                    : undefined
+            };
+        }
+
+        // Zero-Knowledge Pre-Minter:
+        // Query UserContactBook for the effective contact owner, decrypt numbers in server RAM,
+        // and mint ephemeral 128-bit tokens. Raw phone numbers are NEVER returned in context.
+        const knownContactTokens: Array<{ alias: string; token: string }> = [];
+        try {
+            const savedContacts = await prisma.userContactBook.findMany({
+                where: { ownerJid: effectiveContactOwnerJid }
+            });
+
+            for (const contact of savedContacts) {
+                try {
+                    const decryptedJid = decryptString(contact.encryptedJid);
+                    const token = EphemeralTokenStore.mintToken(decryptedJid, callerJid);
+                    knownContactTokens.push({
+                        alias: contact.alias,
+                        token
+                    });
+                } catch (decErr) {
+                    console.error(`[SaraPromptContextResolver] Failed to decrypt contact ${contact.alias}:`, decErr);
+                }
+            }
+        } catch (dbErr) {
+            console.error('[SaraPromptContextResolver] Failed to load UserContactBook:', dbErr);
+        }
+
+        // Pre-mint owner contact token so users can reference the Owner / Razael / Creator
+        try {
+            let ownerJid: string | null = null;
+            if (subBotNumber) {
+                try {
+                    const subBotConfig = loadConfig(subBotNumber);
+                    if (subBotConfig?.ownerJid) {
+                        ownerJid = toCanonicalJid(subBotConfig.ownerJid);
+                    }
+                } catch {
+                    // Ignore sub-bot config read error
+                }
+            }
+
+            if (!ownerJid) {
+                const primaryOwner = getPrimaryOwnerNumber();
+                if (primaryOwner) {
+                    ownerJid = toCanonicalJid(primaryOwner);
+                }
+            }
+
+            if (ownerJid) {
+                const ownerToken = EphemeralTokenStore.mintToken(ownerJid, callerJid);
+                const ownerAliases = new Set<string>();
+                if (subBotOwnerName) {
+                    ownerAliases.add(subBotOwnerName);
+                }
+                ownerAliases.add('Owner');
+                ownerAliases.add('Razael');
+
+                for (const alias of ownerAliases) {
+                    if (!knownContactTokens.some((c) => c.alias.toLowerCase() === alias.toLowerCase())) {
+                        knownContactTokens.push({ alias, token: ownerToken });
+                    }
+                }
+            }
+        } catch (ownerTokenErr) {
+            console.error('[SaraPromptContextResolver] Failed to mint owner contact token:', ownerTokenErr);
+        }
+        // Zero-Knowledge Group Pre-Minter:
+        // Query participating groups, enforce membership authorization (or bot owner permission),
+        // and mint ephemeral 128-bit tokens. Raw group IDs are NEVER exposed to the LLM.
+        const knownGroupTokens: Array<{ groupName: string; token: string }> = [];
+        try {
+            const allGroups = await getCachedParticipatingGroups(sock);
+            const callerClean = cleanId(callerJid);
+            const callerLidClean = callerLid ? cleanId(callerLid) : undefined;
+
+            for (const [groupId, meta] of Object.entries(allGroups)) {
+                if (!groupId || !groupId.endsWith('@g.us') || !meta) continue;
+
+                // Participant authorization check:
+                // Caller must be bot owner, OR verified participant of the group, OR in current group chat
+                let isParticipant = isOwner || (isGroup && chatJid === groupId);
+                let isCallerAdmin = isOwner;
+
+                if (!isParticipant && Array.isArray(meta.participants)) {
+                    for (const p of meta.participants) {
+                        const pIdClean = cleanId(p.id);
+                        const pLidClean = p.lid ? cleanId(p.lid) : undefined;
+                        if (
+                            pIdClean === callerClean ||
+                            (callerLidClean && pIdClean === callerLidClean) ||
+                            (pLidClean && pLidClean === callerClean) ||
+                            (callerLidClean && pLidClean && pLidClean === callerLidClean)
+                        ) {
+                            isParticipant = true;
+                            if (p.admin === 'admin' || p.admin === 'superadmin') {
+                                isCallerAdmin = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (!isParticipant) continue;
+
+                // If group is set to announcement-only (only admins can send), check admin or owner status
+                if (meta.announce && !isCallerAdmin && !isOwner) {
+                    continue;
+                }
+
+                const groupSubject = meta.subject ? String(meta.subject).trim() : 'Group';
+                const token = EphemeralTokenStore.mintToken(
+                    groupId,
+                    callerJid,
+                    new Set(['send_message', 'send_location'])
+                );
+
+                knownGroupTokens.push({
+                    groupName: groupSubject,
+                    token
+                });
+            }
+        } catch (groupTokenErr) {
+            console.error('[SaraPromptContextResolver] Failed to mint group tokens:', groupTokenErr);
+        }
+
+        return {
+            callerName,
+            callerJid,
+            callerLid,
+            isOwner,
+            isGroupAdmin,
+            hasIdCard,
+            chatType: isGroup ? 'group' : 'dm',
+            groupTitle,
+            chatJid,
+            botName: 'Sara',
+            locale,
+            subBotNumber,
+            subBotOwnerName,
+            isSubBotOwnerSession,
+            knownContactTokens,
+            knownGroupTokens,
+            sock,
+            referencedMessage
+        };
+    }
+}

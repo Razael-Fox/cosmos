@@ -1,7 +1,7 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { formatRupiah, parseCurrencyAmount } from '#utils/currency.js';
-import { getSenderJid, buildUserOrConditions } from '#utils/casino.js';
+import { formatRupiah, parseCurrencyAmount } from '#lib/currency.js';
+import { getSenderJid, buildUserOrConditions } from '#lib/casino.js';
 import { Groq } from 'groq-sdk';
 
 function getGroqClient(): Groq {

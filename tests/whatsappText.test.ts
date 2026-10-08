@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { toWhatsAppText } from '../src/services/agentEngine/whatsappText.js';
+import { toWhatsAppText } from '../src/services/agent/whatsappText.js';
 
 describe('WhatsApp text normalisation', () => {
     it('converts a Markdown pipe table into label/value lines', () => {

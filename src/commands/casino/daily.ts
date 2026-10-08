@@ -1,9 +1,9 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { prisma } from '#db.js';
-import { getSenderJid, getUser } from '#utils/casino.js';
-import { formatRupiah } from '#utils/currency.js';
-import { getTranslator } from '#utils/i18n.js';
-import { renderCard, renderProgressBar } from '#utils/uiFormatter.js';
+import { getSenderJid, getUser } from '#lib/casino.js';
+import { formatRupiah } from '#lib/currency.js';
+import { getTranslator } from '#lib/i18n.js';
+import { renderCard, renderProgressBar } from '#lib/uiFormatter.js';
 
 const dailyTool: ToolModule = {
     definition: {

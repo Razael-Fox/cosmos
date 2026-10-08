@@ -1,9 +1,9 @@
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
-import { getSenderJid, cleanId } from '#utils/casino.js';
-import { commandTokens, normalizeCommandKey, resolveCommandArgs } from '#utils/commandNormalize.js';
-import { getTranslator } from '#utils/i18n.js';
-import { formatRupiah } from '#utils/currency.js';
-import { registerCancellableSession, unregisterCancellableSessionByUser } from '#utils/cancellationManager.js';
+import { getSenderJid, cleanId } from '#lib/casino.js';
+import { commandTokens, normalizeCommandKey, resolveCommandArgs } from '#lib/commandNormalize.js';
+import { getTranslator } from '#lib/i18n.js';
+import { formatRupiah } from '#lib/currency.js';
+import { registerCancellableSession, unregisterCancellableSessionByUser } from '#lib/cancellationManager.js';
 import {
     getJobList,
     getUserJobStatus,
@@ -12,7 +12,7 @@ import {
     formatRemainingTime,
     ENTREPRENEUR_INITIAL_INVESTMENT
 } from '#services/jobs.js';
-import { renderCard, renderCatalogCard, CatalogItem } from '#utils/uiFormatter.js';
+import { renderCard, renderCatalogCard, CatalogItem } from '#lib/uiFormatter.js';
 
 export const definition: ToolDefinition = {
     name: 'job',

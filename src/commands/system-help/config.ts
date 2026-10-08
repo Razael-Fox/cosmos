@@ -1,5 +1,5 @@
 import { ToolDefinition, ToolContext } from '../types.js';
-import { getSenderJid, cleanId } from '#utils/casino.js';
+import { getSenderJid, cleanId } from '#lib/casino.js';
 import {
     loadConfig,
     updateFeature,
@@ -11,10 +11,10 @@ import {
     resetConfig,
     SubBotFeatures
 } from '#services/subBotConfigService.js';
-import { maskApiKey } from '#utils/apiKeyResolver.js';
-import { getPrimaryOwnerNumber } from '#utils/owner.js';
+import { maskApiKey } from '#lib/apiKeyResolver.js';
+import { getPrimaryOwnerNumber } from '#lib/owner.js';
 import { dbContext } from '#db.js';
-import { renderCard } from '#utils/uiFormatter.js';
+import { renderCard } from '#lib/uiFormatter.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
