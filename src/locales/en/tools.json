@@ -1201,6 +1201,9 @@
         "url_unsupported_type": "❌ The linked file is not a readable text file.",
         "too_long": "❌ Message text exceeds the 4,000 character limit.",
         "no_members": "ℹ️ No taggable members found in this group.",
+        "sara_confirm": "📢 Send this announcement tagging {{count}} members invisibly?\n\n> {{preview}}",
+        "sara_no_text": "❌ I could not find any text to announce. Please provide a message or a readable page URL.",
+        "sara_followup": "Anything else you'd like to hidetag?",
         "error": "❌ Failed to send hidetag: {{error}}"
     },
     "group_blacklist_add": {

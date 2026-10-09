@@ -231,12 +231,16 @@ export class AgentGuidancePlanner {
                     brief.primaryTool = null;
                     brief.guidanceInstructions =
                         'Decline gracefully with Sara persona. The requested action is not authorized.';
-                } else if (cleanTool === 'group_moderation' && (ctx.chatType !== 'group' || !ctx.isGroupAdmin)) {
-                    // Group administration is scoped to the current group and to group admins only.
-                    // This mirrors the guard inside the tool itself so a misfiring planner never
-                    // burns a Tier 2 turn on a request that cannot possibly succeed.
+                } else if (
+                    (cleanTool === 'group_moderation' || cleanTool === 'hidetag') &&
+                    (ctx.chatType !== 'group' || !ctx.isGroupAdmin)
+                ) {
+                    // Group administration and hidden tag-all are scoped to the current
+                    // group and to group admins only. This mirrors the guard inside the
+                    // tools themselves so a misfiring planner never burns a Tier 2 turn
+                    // on a request that cannot possibly succeed.
                     console.warn(
-                        `[CosmosAgentEngine] [SECURITY_DENIED] Tool: group_moderation, Reason: chatType=${ctx.chatType}, isGroupAdmin=${ctx.isGroupAdmin} for caller ${ctx.callerJid}`
+                        `[CosmosAgentEngine] [SECURITY_DENIED] Tool: ${cleanTool}, Reason: chatType=${ctx.chatType}, isGroupAdmin=${ctx.isGroupAdmin} for caller ${ctx.callerJid}`
                     );
                     brief.primaryTool = null;
                     brief.guidanceInstructions =

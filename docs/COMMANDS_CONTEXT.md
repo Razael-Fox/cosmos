@@ -347,6 +347,7 @@ Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah d
 - **Catatan:**
     - Identitas bot sendiri (JID dan LID) otomatis dikecualikan dari mention.
     - Batas pemakaian per pengirim: 3 / 10 / 25 per 10 menit (Pulse / Nova / Zenith).
+    - Via Sara AI: `.sara hidetag <pesan>` — khusus admin, staged dengan `.confirm` / `.cancel` sebelum dikirim (detail di tabel moderasi Sara §9.1).
 
 ---
 

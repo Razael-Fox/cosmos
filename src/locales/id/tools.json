@@ -1201,6 +1201,9 @@
         "url_unsupported_type": "❌ File tertaut bukan file teks yang dapat dibaca.",
         "too_long": "❌ Teks pesan melebihi batas 4.000 karakter.",
         "no_members": "ℹ️ Tidak ada anggota yang dapat ditandai di grup ini.",
+        "sara_confirm": "📢 Kirim pengumuman ini dengan menandai {{count}} anggota secara tak terlihat?\n\n> {{preview}}",
+        "sara_no_text": "❌ Saya tidak menemukan teks untuk diumumkan. Berikan pesan atau URL halaman yang dapat dibaca.",
+        "sara_followup": "Ada lagi yang ingin ditandai secara tak terlihat?",
         "error": "❌ Gagal mengirim hidetag: {{error}}"
     },
     "group_blacklist_add": {

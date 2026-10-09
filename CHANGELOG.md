@@ -9,6 +9,29 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P13] - 2026-10-09
+
+### Added — Gated Sara agent `hidetag` tool with `.confirm` flow (Issue #87)
+
+- New `CosmosAgentEngine` tool `hidetag` (`src/services/agent/tools/hideTag.ts`,
+  `CONFIRMATION_REQUIRED`): group-scoped, admin re-derived at staging and
+  re-validated at confirmed execution (TOCTOU), member count + 200-char
+  preview in `sara_confirm`, announcement self-sent unquoted with the
+  hardened dot-command path, quoted `sara_followup` acknowledgement.
+- Explicit per-plan ceiling on the confirmed path via
+  `tryConsume('hidetag:<senderJid>')` + `getTierCached` (agent path
+  bypasses the `CommandsHandler` funnel); only real dispatches metered.
+- Page/file URLs extracted via new Tavily Extract API helper
+  (`extractWebPage`, same key/timeout discipline) with SSRF-safe
+  plain-fetch fallback; HTML stripped server-side; `summarize` announces
+  the first 3 sentences deterministically.
+- Tier 1 maps hidetag/tag-everyone requests to the candidate
+  (`saraGuidance` + planner RBAC mirror); persona rule keeps
+  announcement and acknowledgement in separate messages.
+- Deviation noted: confirmed result carries the follow-up string
+  (required so the ack is sent quoted); `{dispatched:true}` stays
+  internal to the send step.
+
 ## [G2-F33-P12] - 2026-10-09
 
 ### Fixed — Keep `tag_hide` exposed to Sara/LLM tool-calling as planned

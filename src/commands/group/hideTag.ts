@@ -44,7 +44,7 @@ function isPhoneDigits(s: string): boolean {
     return /^\d{8,15}$/.test(s);
 }
 
-function extractQuotedText(quoted: any): string {
+export function extractQuotedText(quoted: any): string {
     if (!quoted || typeof quoted !== 'object') return '';
     if (typeof quoted.conversation === 'string' && quoted.conversation.trim()) return quoted.conversation.trim();
     const ext = quoted.extendedTextMessage;
