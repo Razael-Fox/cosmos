@@ -48,7 +48,8 @@
         "features": {
             "sticker": "Sticker & Brat Generation",
             "download": "Media Downloads",
-            "stt": "Speech to Text"
+            "stt": "Speech to Text",
+            "hidetag": "Hidden Tag-All"
         }
     }
 }

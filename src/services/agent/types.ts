@@ -75,6 +75,20 @@ export interface ToolExecutionResult {
     requiresConfirmation?: boolean;
     confirmationPrompt?: string;
     stagedActionId?: string;
+    /**
+     * Arguments the confirmed re-entry must execute with instead of the
+     * original model arguments. Lets a tool resolve server-side content once
+     * at staging (e.g. fetched page text behind the approved preview) and
+     * dispatch exactly that on confirm, rather than re-resolving.
+     */
+    stagedArguments?: Record<string, unknown>;
+    /**
+     * When true, the confirmed-action closure runs one tool-free Tier 2
+     * synthesis turn over the outcome facts so the acknowledgement is
+     * generated in Sara's voice instead of a static string. `data` must
+     * then carry a static fallback (and the facts) in case synthesis fails.
+     */
+    synthesizeFollowup?: boolean;
 }
 
 export interface AgentTool {

@@ -1100,6 +1100,9 @@
         },
         "group_blacklist_list": {
             "description": "Daftar semua pengguna yang ada di daftar hitam grup ini."
+        },
+        "tag_hide": {
+            "description": "Tandai semua anggota grup secara tak terlihat dengan pengumuman. Khusus admin."
         }
     },
     "group_kick": {
@@ -1185,6 +1188,23 @@
         "file_too_large": "❌ File yang dilampirkan melebihi batas 100 KB.",
         "too_long": "❌ Deskripsi grup tidak boleh lebih dari 512 karakter.",
         "error": "❌ Gagal memperbarui deskripsi grup: {{error}}"
+    },
+    "tag_hide": {
+        "group_only": "> ❌ *PERINTAH KHUSUS GRUP*\n> '.hidetag' hanya dapat digunakan dalam obrolan grup untuk menandai semua anggota secara tak terlihat.",
+        "caller_not_admin": "❌ Anda harus menjadi admin grup untuk menggunakan perintah ini.",
+        "usage": "*CARA PAKAI HIDETAG*\n\n• '.hidetag <pesan>' — umumkan teks langsung\n• Balas pesan dengan '.ht' — umumkan teks yang dikutip\n• Lampirkan file .txt/.md dengan caption '.hidetag' — umumkan isi file\n• '.hidetag <URL file mentah>' — umumkan isi file tertaut\n\nMenandai semua anggota secara tak terlihat. Khusus admin.",
+        "empty": "❌ Teks pesan kosong. Berikan teks, balas pesan, atau lampirkan file .txt/.md.",
+        "unsupported_file": "❌ Hanya file .txt dan .md yang didukung untuk hidetag.",
+        "file_too_large": "❌ File yang dilampirkan melebihi batas 100 KB.",
+        "fetch_failed": "❌ Gagal mengunduh URL file. Periksa tautan dan coba lagi.",
+        "url_too_large": "❌ File tertaut melebihi batas 100 KB.",
+        "url_unsupported_type": "❌ File tertaut bukan file teks yang dapat dibaca.",
+        "too_long": "❌ Teks pesan melebihi batas 4.000 karakter.",
+        "no_members": "ℹ️ Tidak ada anggota yang dapat ditandai di grup ini.",
+        "sara_confirm": "📢 Kirim pengumuman ini dengan menandai {{count}} anggota secara tak terlihat?\n\n> {{preview}}",
+        "sara_no_text": "❌ Saya tidak menemukan teks untuk diumumkan. Berikan pesan atau URL halaman yang dapat dibaca.",
+        "sara_followup": "Ada lagi yang ingin ditandai secara tak terlihat?",
+        "error": "❌ Gagal mengirim hidetag: {{error}}"
     },
     "group_blacklist_add": {
         "description": "Tambahkan pengguna ke daftar hitam grup.",

@@ -5,6 +5,7 @@ import { sendLocationTool } from './sendLocation.js';
 import { balanceTool } from './balance.js';
 import { bankTool } from './bank.js';
 import { groupModerationTool } from './groupModeration.js';
+import { hideTagTool } from './hideTag.js';
 import { webSearchTool } from './webSearch.js';
 
 export class AgentToolRegistry {
@@ -18,6 +19,7 @@ export class AgentToolRegistry {
         this.registerTool(balanceTool);
         this.registerTool(bankTool);
         this.registerTool(groupModerationTool);
+        this.registerTool(hideTagTool);
         this.registerTool(webSearchTool);
         this.initialized = true;
     }

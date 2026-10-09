@@ -316,6 +316,96 @@ function classifyFailure(err: unknown): TavilyUnavailableReason {
  * `axios.post` without one, so a controller would abort nothing while appearing
  * to provide a safety net.
  */
+/**
+ * Outcome of a page-content extraction for announcement use.
+ *
+ * Unlike search, extraction feeds a sender-controlled announcement body, so
+ * only `ok`/`empty`/`unavailable` are distinguished — no snippets or URLs
+ * ever reach the LLM context from here.
+ */
+export type WebPageExtractOutcome =
+    | { kind: 'ok'; text: string }
+    | { kind: 'empty' }
+    | { kind: 'unavailable' };
+
+/** Character ceiling on extracted page text before announcement use. */
+export const EXTRACT_TEXT_MAX_CHARS = 4000;
+
+const EXTRACT_TIMEOUT_SECONDS = Math.ceil(TAVILY_TIMEOUT_MS / SECONDS_PER_TIMEOUT_MS);
+
+/**
+ * Strips HTML down to plain text server-side (no new dependency).
+ *
+ * Removes script/style/noscript blocks first so embedded code never becomes
+ * announcement text, then replaces tags with whitespace, decodes the common
+ * entities, and collapses whitespace runs.
+ */
+export function stripHtmlToText(html: string): string {
+    return (html ?? '')
+        .replace(/<(script|style|noscript|template)[\s\S]*?<\/\1\s*>/gi, ' ')
+        .replace(/<(br|p|div|h[1-6]|li|tr|blockquote)[\s>]/gi, '\n<$1>')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#0*39;/g, "'")
+        .replace(/&#(\d+);/g, (_m, digits: string) => {
+            const code = Number(digits);
+            return Number.isSafeInteger(code) && code > 0 && code < 0x10ffff ? String.fromCodePoint(code) : ' ';
+        })
+        .replace(/[ \t\f\v\u00a0]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+/**
+ * Extracts readable page text for a URL via the Tavily Extract API (same key,
+ * same timeout discipline as search), falling back to a plain server-side
+ * fetch when Tavily is unconfigured or unreachable.
+ *
+ * The Tavily cloud fetches the target, never this host; the fallback reuses
+ * the SSRF-safe raw-file fetcher. Only `http(s)` URLs are accepted.
+ */
+export async function extractWebPage(rawUrl: string): Promise<WebPageExtractOutcome> {
+    const candidate = (rawUrl ?? '').trim();
+    let parsed: URL;
+    try {
+        parsed = new URL(candidate);
+    } catch {
+        return { kind: 'unavailable' };
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return { kind: 'unavailable' };
+
+    try {
+        const apiKey = readApiKey();
+        const client = tavily({ apiKey });
+        const response = await client.extract([parsed.toString()], {
+            extractDepth: 'basic',
+            format: 'text',
+            timeout: EXTRACT_TIMEOUT_SECONDS
+        });
+        const raw = response?.results?.find((row) => row && typeof row.rawContent === 'string')?.rawContent ?? '';
+        const text = stripHtmlToText(raw).slice(0, EXTRACT_TEXT_MAX_CHARS).trim();
+        return text ? { kind: 'ok', text } : { kind: 'empty' };
+    } catch (err: unknown) {
+        // Log the classification only — SDK errors can echo upstream text.
+        console.error(`[TavilyClient] Extract unavailable (${err instanceof Error ? err.name : 'unknown'}), trying direct fetch.`);
+    }
+
+    try {
+        const { fetchUrlText } = await import('../../commands/group/hideTag.js');
+        const fetched = await fetchUrlText(parsed.toString());
+        if (!fetched.ok) return { kind: 'unavailable' };
+        const text = stripHtmlToText(fetched.text).slice(0, EXTRACT_TEXT_MAX_CHARS).trim();
+        return text ? { kind: 'ok', text } : { kind: 'empty' };
+    } catch (err: unknown) {
+        console.error(`[TavilyClient] Extract fallback failed (${err instanceof Error ? err.name : 'unknown'}).`);
+        return { kind: 'unavailable' };
+    }
+}
+
 export async function searchWeb(params: TavilySearchParams): Promise<TavilyOutcome> {
     const apiKey = readApiKey();
     const client = tavily({ apiKey });

@@ -15,7 +15,7 @@ export interface CommandDefinition {
      * `CommandsHandler.execute()` only; agent-engine tools execute inside
      * `executor.ts` and are bounded by `AgentRateLimiter` instead.
      */
-    limitKey?: 'sticker' | 'download' | 'stt';
+    limitKey?: 'sticker' | 'download' | 'stt' | 'hidetag';
     /**
      * Fallback limit when the user's plan does not configure `limitKey`.
      * Max invocations per `windowMs` per JID. A command must declare this to be

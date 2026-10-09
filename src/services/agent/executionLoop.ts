@@ -122,21 +122,69 @@ export class AgentExecutionLoop {
                     const actionId = `agent_confirm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
                     console.log(`[CosmosAgentEngine] [CONFIRMATION_STAGED] Tool: ${funcName}, ActionId: ${actionId}`);
 
+                    // A tool may stage resolved server-side arguments (never
+                    // model-controlled) so the confirmed re-entry dispatches
+                    // exactly what the human previewed.
+                    const stagedArgs =
+                        result.stagedArguments && typeof result.stagedArguments === 'object'
+                            ? { ...result.stagedArguments }
+                            : safeArgs;
+
                     AgentConfirmationManager.stageAction({
                         actionId,
                         userJid: execCtx.callerJid,
                         userLid: execCtx.callerLid,
                         chatJid: execCtx.chatJid,
                         toolName: funcName,
-                        arguments: safeArgs,
+                        arguments: stagedArgs,
                         summary: result.confirmationPrompt || 'Pending Action',
                         execute: async () => {
                             // TRUSTED RE-ENTRY — the only place `_confirmed` may be set.
                             // Reached solely after the human replied `.confirm`, which
                             // AgentConfirmationManager has already identity-verified.
-                            const confirmedResult = await tool.execute({ ...safeArgs, _confirmed: true }, execCtx);
+                            const confirmedResult = await tool.execute({ ...stagedArgs, _confirmed: true }, execCtx);
                             if (!confirmedResult.success) {
                                 throw new Error(confirmedResult.error || 'Execution failed');
+                            }
+                            if (confirmedResult.synthesizeFollowup === true) {
+                                // AI-generated acknowledgement: one tool-free turn over
+                                // outcome facts only (never announcement text — URL
+                                // extracts are untrusted). Falls back to the tool's
+                                // static string when synthesis yields nothing.
+                                const facts =
+                                    confirmedResult.data && typeof confirmedResult.data === 'object'
+                                        ? JSON.stringify(confirmedResult.data)
+                                        : String(confirmedResult.data ?? '');
+                                try {
+                                    const synth = await AgentExecutor.executeTurn(
+                                        [
+                                            {
+                                                role: 'user',
+                                                content:
+                                                    `[Server fact, already completed, not a new request] The hidetag announcement was just dispatched in this chat (${facts}). Acknowledge briefly in character and ask whether there is anything else to announce. Do not repeat any announcement text.`
+                                            }
+                                        ],
+                                        promptCtx,
+                                        { ...brief, primaryTool: null, extractedParameters: {} }
+                                    );
+                                    const text = synth.message.content?.trim();
+                                    if (text) return toWhatsAppText(text);
+                                } catch (synthErr) {
+                                    console.error(
+                                        `[CosmosAgentEngine] Follow-up synthesis failed for ${funcName}:`,
+                                        synthErr instanceof Error ? synthErr.message : synthErr
+                                    );
+                                }
+                                const fallback =
+                                    confirmedResult.data && typeof confirmedResult.data === 'object'
+                                        ? String(
+                                              (confirmedResult.data as Record<string, unknown>).followup ??
+                                                  `✅ Operation ${funcName} successfully executed.`
+                                          )
+                                        : typeof confirmedResult.data === 'string'
+                                          ? confirmedResult.data
+                                          : `✅ Operation ${funcName} successfully executed.`;
+                                return fallback;
                             }
                             return typeof confirmedResult.data === 'string'
                                 ? confirmedResult.data

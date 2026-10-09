@@ -51,7 +51,8 @@ export const TIER_LIMITS: Record<SubscriptionTierName, TierLimits> = {
         featureLimits: {
             sticker: { max: 5, windowMs: 600_000 },
             download: { max: 3, windowMs: 600_000 },
-            stt: { max: 5, windowMs: 600_000 }
+            stt: { max: 5, windowMs: 600_000 },
+            hidetag: { max: 3, windowMs: 600_000 }
         }
     },
     SUBSIDIZED: {
@@ -62,7 +63,8 @@ export const TIER_LIMITS: Record<SubscriptionTierName, TierLimits> = {
         featureLimits: {
             sticker: { max: 15, windowMs: 600_000 },
             download: { max: 10, windowMs: 600_000 },
-            stt: { max: 20, windowMs: 600_000 }
+            stt: { max: 20, windowMs: 600_000 },
+            hidetag: { max: 10, windowMs: 600_000 }
         }
     },
     PARTNER: {
@@ -73,7 +75,8 @@ export const TIER_LIMITS: Record<SubscriptionTierName, TierLimits> = {
         featureLimits: {
             sticker: { max: 40, windowMs: 600_000 },
             download: { max: 25, windowMs: 600_000 },
-            stt: { max: 50, windowMs: 600_000 }
+            stt: { max: 50, windowMs: 600_000 },
+            hidetag: { max: 25, windowMs: 600_000 }
         }
     }
 };

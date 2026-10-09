@@ -9,6 +9,127 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P17] - 2026-10-09
+
+### Fixed — Duplicate test log line (Issue #87)
+
+- Removes a duplicated Test 9 header log in `tests/hideTagAgent.test.ts`
+  (CodeRabbit nitpick on review #4).
+
+## [G2-F33-P16] - 2026-10-09
+
+### Fixed — Bracketed/hex-mapped IPv6 literal SSRF edge (Issue #87)
+
+- `isPublicIpLiteral` strips URL brackets first and judges hex-mapped
+  `::ffff:XXXX:XXXX` via the embedded IPv4 address; `nodeHttpGet`
+  strips brackets before its literal gate (net.isIP rejects brackets).
+
+## [G2-F33-P15] - 2026-10-09
+
+### Fixed — Review round 3: DNS pin, staged body, truncation (Issue #87)
+
+- Pinned URL transport (`nodeHttpGet`): validating `lookup` hook pins
+  DNS names to the validated address set; IP literals validated up
+  front (net skips the hook for literals). Per-hop revalidation kept.
+- `stagedArguments`: confirmed Sara dispatches send exactly the
+  previewed body (no re-fetch); loop prefers staged args on re-entry.
+- `truncateWords` slices at `limit - 1` so output never exceeds the cap.
+- PR description rewritten (Sara gate shipped, not deferred).
+
+## [G2-F33-P14] - 2026-10-09
+
+### Fixed — AI-generated Sara follow-up in originating chat (Issue #87)
+
+- Confirmed `hidetag` dispatches now request one tool-free Tier 2
+  synthesis turn over outcome facts (member count only — never
+  announcement text, URL extracts are untrusted), so the quoted
+  acknowledgement is generated in Sara's voice instead of the static
+  `sara_followup` string (kept as fallback when synthesis fails).
+- Context routing unchanged and locked by test: announcement and
+  follow-up both go to the originating chat (`chatJid` preserved
+  through staging → `.confirm` → delivery), unquoted + quoted
+  respectively; DM-originated requests still hit the group guard.
+
+## [G2-F33-P13] - 2026-10-09
+
+### Added — Gated Sara agent `hidetag` tool with `.confirm` flow (Issue #87)
+
+- New `CosmosAgentEngine` tool `hidetag` (`src/services/agent/tools/hideTag.ts`,
+  `CONFIRMATION_REQUIRED`): group-scoped, admin re-derived at staging and
+  re-validated at confirmed execution (TOCTOU), member count + 200-char
+  preview in `sara_confirm`, announcement self-sent unquoted with the
+  hardened dot-command path, quoted `sara_followup` acknowledgement.
+- Explicit per-plan ceiling on the confirmed path via
+  `tryConsume('hidetag:<senderJid>')` + `getTierCached` (agent path
+  bypasses the `CommandsHandler` funnel); only real dispatches metered.
+- Page/file URLs extracted via new Tavily Extract API helper
+  (`extractWebPage`, same key/timeout discipline) with SSRF-safe
+  plain-fetch fallback; HTML stripped server-side; `summarize` announces
+  the first 3 sentences deterministically.
+- Tier 1 maps hidetag/tag-everyone requests to the candidate
+  (`saraGuidance` + planner RBAC mirror); persona rule keeps
+  announcement and acknowledgement in separate messages.
+- Deviation noted: confirmed result carries the follow-up string
+  (required so the ack is sent quoted); `{dispatched:true}` stays
+  internal to the send step.
+
+## [G2-F33-P12] - 2026-10-09
+
+### Fixed — Keep `tag_hide` exposed to Sara/LLM tool-calling as planned
+
+- Reverts the `EXCLUDED_GROQ_TOOLS` entry for `tag_hide`: the offline-AI
+  path (`offlineAi.ts` → `getGroqTools()`) executes through the same
+  `CommandsHandler.execute()` funnel, so the in-tool group admin gate
+  still applies at execution time — identical to every other group
+  moderation command (`group kick`, `group promote`, …), none of which
+  are excluded. Singling out `tag_hide` held it to a standard no
+  existing command meets.
+- A `CONFIRMATION_REQUIRED` agent-engine tool with `.confirm` flow
+  remains optional follow-up work, not a merge blocker.
+
+## [G2-F33-P11] - 2026-10-09
+
+### Fixed — Review findings on hidden tag-all (PR #88, SUMMARY.md)
+
+- SSRF boundary on URL fetch (`hideTag.ts`): per-hop DNS resolution
+  rejecting non-public IPs, manual redirect following (max 3) with
+  per-hop revalidation, streaming body cap (no post-buffer check),
+  `text/*` content-type gate, and a generic failure string (no dial/DNS
+  internals in chat).
+- Legacy Groq function-calling no longer auto-exposes `tag_hide`
+  (`EXCLUDED_GROQ_TOOLS`); a gated agent tool remains follow-up work.
+- Mention fan-out uses one `groupMetadata` snapshot with a local
+  LID→phone map (no per-member refetch); digit-validated before
+  suffixing `@s.whatsapp.net`.
+- Direct-text body capped at 4,000 chars (`too_long`); quota
+  attempt-metering documented as existing funnel behavior for all
+  commands. Attached-but-empty documents return `empty` instead of
+  falling through to the quoted reply; document streaming uses a
+  running counter and destroys the stream on overflow; admin gate
+  checks `participantAlt`/`remoteJidAlt` for LID-masked senders.
+
+## [G2-F33-P10] - 2026-10-09
+
+### Added — Hidden Tag-All (`.hidetag` / `.ht` / `.tag hide`, Issue #87)
+
+- New group-only, admin-gated command `tag hide` (`tandai sembunyi`)
+  with aliases `hidetag`, `ht`: announces a message while tagging all
+  members invisibly (verbatim body + zero-width padding, mentions via
+  `formatMentions`, bot JID/LID excluded).
+- Single text source, first hit wins: attached `.txt`/`.md` document
+  (100 KB cap) → raw-file URL in args (10 s timeout, 100 KB cap) →
+  direct text → quoted reply text → localized usage card. Explicit args
+  win over reply context. Success path self-sends unquoted and returns
+  `void` (no double-send); errors/usage are returned strings.
+- Per-plan quota via existing `featureLimiter` funnel
+  (`limitKey: 'hidetag'`): 3 / 10 / 25 per 10 min
+  (FREE / SUBSIDIZED / PARTNER). `.my quota` picks it up with no extra code.
+- `src/handlers/message.ts` now also reads `documentMessage.caption`
+  as command text (same as image/video captions) — previously a
+  `.txt`/`.md` sent with caption `.hidetag` never dispatched.
+- Deferred to a follow-up (per issue, "planned, not yet implemented"):
+  Sara agent `hidetag` tool + `.confirm` flow and Tavily page extraction.
+
 ## [G2-F33-P9] - 2026-10-09
 
 ### Fixed — Test Suite Isolation (Database Corruption Response)
