@@ -1,7 +1,7 @@
 import assert from 'assert';
-import { definition, execute, extractChannelInvite, findNewsletterRef } from '../src/tools/check_chid.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { cacheMessage } from '../src/utils/messageCache.js';
+import { definition, execute, extractChannelInvite, findNewsletterRef } from '../src/commands/tools-utilities/checkChid.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { cacheMessage } from '../src/lib/messageCache.js';
 
 process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test_groq_api_key';
 

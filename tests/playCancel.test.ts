@@ -5,10 +5,10 @@ import {
     hasActivePlaySession,
     clearPlaySession,
     clearAllPlaySessions
-} from '../src/utils/playSession.js';
-import { hasCancellableSession, cancelActiveSession } from '../src/utils/cancellationManager.js';
-import cancelTool from '../src/tools/cancel.js';
-import { getTranslator } from '../src/utils/i18n.js';
+} from '../src/lib/playSession.js';
+import { hasCancellableSession, cancelActiveSession } from '../src/lib/cancellationManager.js';
+import cancelTool from '../src/commands/system-help/cancel.js';
+import { getTranslator } from '../src/lib/i18n.js';
 
 async function runPlayCancelTests() {
     console.log('--- STARTING PLAY CANCELLATION INTEGRATION TESTS ---');
@@ -204,7 +204,7 @@ async function runPlayCancelTests() {
 
     // Now simulating download start:
     clearPlaySession(userJid, chatJid);
-    const { registerCancellableSession } = await import('../src/utils/cancellationManager.js');
+    const { registerCancellableSession } = await import('../src/lib/cancellationManager.js');
     const dlSessionId = `play_dl_${userJid}_${Date.now()}`;
 
     registerCancellableSession({

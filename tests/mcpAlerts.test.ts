@@ -27,9 +27,9 @@ process.env.COSMOS_MCP_TOKEN = 'unit-test-owner-key-0123456789';
 process.env.INTERNAL_IPC_SECRET = 'unit-test-ipc-secret';
 process.env.DATABASE_URL = `file:${SCRATCH_DB}`;
 
-const { MCP_NOTIFY_EVENTS, parseMcpAlertRequest } = await import('../src/services/statusNotifier/mcpAlert.js');
-const { NOTIFY_EVENTS, NOTIFY_SEVERITIES } = await import('../src/services/statusNotifier/types.js');
-const { getEventTitle } = await import('../src/services/statusNotifier/formatters.js');
+const { MCP_NOTIFY_EVENTS, parseMcpAlertRequest } = await import('../src/services/notifier/mcpAlert.js');
+const { NOTIFY_EVENTS, NOTIFY_SEVERITIES } = await import('../src/services/notifier/types.js');
+const { getEventTitle } = await import('../src/services/notifier/formatters.js');
 const {
     alertAuthRejected,
     alertEngineUnreachable,

@@ -7,12 +7,12 @@ import {
     resolveTags,
     POPULAR_TAG_ALIASES
 } from '../src/services/rule34Service.js';
-import { isNsfwEnabled, setNsfwEnabled } from '../src/utils/nsfwConfig.js';
+import { isNsfwEnabled, setNsfwEnabled } from '../src/lib/nsfwConfig.js';
 import menuService from '../src/services/menuService.js';
-import toolsHandler from '../src/tools/handler.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { definition as toggleDef } from '../src/tools/toggle_nsfw.js';
-import { definition as rule34Def } from '../src/tools/rule34.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { definition as toggleDef } from '../src/commands/settings/toggleNsfw.js';
+import { definition as rule34Def } from '../src/commands/media-stickers/rule34.js';
 
 async function runRule34NsfwTests() {
     console.log('--- STARTING RULE34 NSFW & MENU TUTORIAL SYSTEM TESTS ---');

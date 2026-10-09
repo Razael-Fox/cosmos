@@ -11,31 +11,52 @@ import {
     isFeatureEnabled,
     clearConfigCache
 } from '../src/services/subBotConfigService.js';
-import { resolveApiKey, maskApiKey } from '../src/utils/apiKeyResolver.js';
+import { resolveApiKey, maskApiKey } from '../src/lib/apiKeyResolver.js';
 import { requestPairing, broadcastSubBotForex, deleteSubBot } from '../src/services/subBotService.js';
 import {
     hasCancellableSession,
     cancelActiveSession,
     clearAllCancellableSessions
-} from '../src/utils/cancellationManager.js';
-import * as subbotTool from '../src/tools/subbot.js';
-import * as configTool from '../src/tools/config.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { activeConnections } from '../src/utils/connectionManager.js';
+} from '../src/lib/cancellationManager.js';
+import * as subbotTool from '../src/commands/system-help/subbot.js';
+import * as configTool from '../src/commands/system-help/config.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { activeConnections } from '../src/lib/connectionManager.js';
 
 const TEST_SUBBOT_NUM = '628999900001';
 const TEST_SUBBOT_NUM_2 = '628999900002';
 const t = getTranslator('en');
+
+// Mirrors the storage-root resolution in src/db.ts so this suite asserts
+// against the same location the code writes to (honours STORAGE_DIR, which
+// the isolated `pnpm test` runner sets to a scratch directory).
+function subBotDbPath(num: string): string {
+    const storageRoot =
+        process.env.STORAGE_DIR ||
+        (fs.existsSync('/app/storage') ? '/app/storage' : path.resolve(process.cwd(), 'storage'));
+    return path.join(storageRoot, 'sub-bot', num, 'database.sqlite');
+}
+
+function subBotDirs(num: string): string[] {
+    return [
+        path.resolve(process.cwd(), 'database', num),
+        path.resolve(process.cwd(), 'storage', 'sub-bot', num),
+        path.join(
+            process.env.STORAGE_DIR || path.resolve(process.cwd(), 'storage'),
+            'sub-bot',
+            num
+        )
+    ];
+}
 
 async function runTests() {
     console.log('=== STARTING SUB-BOT MULTI-DEVICE TEST SUITE ===\n');
 
     // Clean up test directories if leftover
     for (const num of [TEST_SUBBOT_NUM, TEST_SUBBOT_NUM_2]) {
-        const dir1 = path.resolve(process.cwd(), 'database', num);
-        const dir2 = path.resolve(process.cwd(), 'storage', 'sub-bot', num);
-        if (fs.existsSync(dir1)) fs.rmSync(dir1, { recursive: true, force: true });
-        if (fs.existsSync(dir2)) fs.rmSync(dir2, { recursive: true, force: true });
+        for (const dir of subBotDirs(num)) {
+            if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+        }
         clearConfigCache(num);
     }
     clearAllCancellableSessions();
@@ -44,19 +65,11 @@ async function runTests() {
         // [Test 1] Isolated Per-Bot Database Storage
         console.log('[Test 1] Testing Isolated Database Storage...');
         const client1 = getPrismaClient(`sub_${TEST_SUBBOT_NUM}`);
-        const dbPath1 = fs.existsSync(
-            path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM, 'database.sqlite')
-        )
-            ? path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM, 'database.sqlite')
-            : path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM, 'database.sqlite');
+        const dbPath1 = subBotDbPath(TEST_SUBBOT_NUM);
         assert(fs.existsSync(dbPath1), 'Sub-bot 1 SQLite file must exist');
 
         const client2 = getPrismaClient(`sub_${TEST_SUBBOT_NUM_2}`);
-        const dbPath2 = fs.existsSync(
-            path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM_2, 'database.sqlite')
-        )
-            ? path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM_2, 'database.sqlite')
-            : path.resolve(process.cwd(), 'database', TEST_SUBBOT_NUM_2, 'database.sqlite');
+        const dbPath2 = subBotDbPath(TEST_SUBBOT_NUM_2);
         assert(fs.existsSync(dbPath2), 'Sub-bot 2 SQLite file must exist');
 
         // Verify data isolation: create a group in sub-bot 1 DB
@@ -255,7 +268,7 @@ async function runTests() {
         // [Test 8] Deletion of Sub-Bot Data
         console.log('[Test 8] Testing Sub-Bot Deletion...');
         await deleteSubBot(TEST_SUBBOT_NUM);
-        const dirAfterDelete = path.resolve(process.cwd(), 'storage', 'sub-bot', TEST_SUBBOT_NUM);
+        const dirAfterDelete = path.dirname(subBotDbPath(TEST_SUBBOT_NUM));
         assert(!fs.existsSync(dirAfterDelete), 'Database directory must be removed on deleteSubBot');
         console.log('✓ Sub-bot deletion verified.\n');
 
@@ -265,10 +278,9 @@ async function runTests() {
     } finally {
         // Cleanup remaining files
         for (const num of [TEST_SUBBOT_NUM, TEST_SUBBOT_NUM_2]) {
-            const dir1 = path.resolve(process.cwd(), 'database', num);
-            const dir2 = path.resolve(process.cwd(), 'storage', 'sub-bot', num);
-            if (fs.existsSync(dir1)) fs.rmSync(dir1, { recursive: true, force: true });
-            if (fs.existsSync(dir2)) fs.rmSync(dir2, { recursive: true, force: true });
+            for (const dir of subBotDirs(num)) {
+                if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+            }
             clearConfigCache(num);
         }
         clearAllCancellableSessions();

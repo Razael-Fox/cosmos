@@ -8,7 +8,7 @@
  */
 import Database from 'better-sqlite3';
 import type { Statement } from 'better-sqlite3';
-import { resolveStatusDatabasePath } from '#services/statusNotifier/dbPath.js';
+import { resolveStatusDatabasePath } from '#services/notifier/dbPath.js';
 import { loadMcpConfig } from '../config.js';
 import { McpToolError } from '../errors.js';
 import { maskDeep } from '../privacy.js';

@@ -6,8 +6,8 @@ import {
     isRTL,
     normalizeLanguage,
     getItemWithTranslation
-} from '../src/utils/i18n.js';
-import { formatCurrency, formatNumber, formatDate } from '../src/utils/format.js';
+} from '../src/lib/i18n.js';
+import { formatCurrency, formatNumber, formatDate } from '../src/lib/format.js';
 
 async function runTests() {
     console.log('--- STARTING I18N SYSTEM TESTS ---');
@@ -97,7 +97,7 @@ async function runTests() {
         pushName: 'LangTester'
     };
 
-    const setLangModule = (await import('../src/tools/setlang.js')).default;
+    const setLangModule = (await import('../src/commands/settings/setlang.js')).default;
     const resSetLang = await setLangModule.execute(
         { language: 'en' },
         {
@@ -120,7 +120,7 @@ async function runTests() {
 
     // Test 7: setgrouplang tool
     console.log('[Test 7] Testing setgrouplang tool execution...');
-    const setGroupLangModule = (await import('../src/tools/setgrouplang.js')).default;
+    const setGroupLangModule = (await import('../src/commands/settings/setgrouplang.js')).default;
     const mockGroupMsg: any = {
         key: {
             remoteJid: 'test_group_i18n@g.us',

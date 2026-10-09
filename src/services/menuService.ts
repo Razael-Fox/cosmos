@@ -1,8 +1,8 @@
-import { ToolModule, resolveToolDescription } from '../tools/types.js';
-import toolsHandler from '../tools/handler.js';
-import { toDisplayCommand, getDisplayName } from '../utils/commandFormat.js';
-import { normalizeCommandKey } from '../utils/commandNormalize.js';
-import { formatTutorialHub, formatGenericTutorial } from '../utils/menuFormatter.js';
+import { type ToolModule, resolveToolDescription } from '../commands/types.js';
+import { toolsHandler } from '../handlers/commandHandler.js';
+import { toDisplayCommand, getDisplayName } from '../lib/commandFormat.js';
+import { normalizeCommandKey } from '../lib/commandNormalize.js';
+import { formatTutorialHub, formatGenericTutorial } from '../lib/menuFormatter.js';
 import tutorialService from './tutorialService.js';
 
 export interface NormalizedTool {
@@ -104,11 +104,13 @@ const CATEGORY_MAP: Record<string, string> = {
     'tools & utilities': 'Tools & Utilities',
     tools: 'Tools & Utilities',
     utilities: 'Tools & Utilities',
+    utility: 'Tools & Utilities',
     settings: 'Settings',
     setting: 'Settings',
     group: 'Group',
     groups: 'Group',
     grup: 'Group',
+    moderation: 'Group',
     general: 'System & Help',
     'system & help': 'System & Help',
     system: 'System & Help',

@@ -7,17 +7,17 @@ import {
     hasCancellableSession,
     cancelActiveSession,
     clearAllCancellableSessions
-} from '../src/utils/cancellationManager.js';
-import cancelTool from '../src/tools/cancel.js';
-import { startRegistrationSession, isUserRegistering, cancelRegistrationSession } from '../src/utils/idCard.js';
+} from '../src/lib/cancellationManager.js';
+import cancelTool from '../src/commands/system-help/cancel.js';
+import { startRegistrationSession, isUserRegistering, cancelRegistrationSession } from '../src/lib/idCard.js';
 import {
     registerPlaySession,
     getActivePlaySession,
     hasActivePlaySession,
     clearPlaySession,
     clearAllPlaySessions
-} from '../src/utils/playSession.js';
-import { getTranslator } from '../src/utils/i18n.js';
+} from '../src/lib/playSession.js';
+import { getTranslator } from '../src/lib/i18n.js';
 async function runTests() {
     console.log('--- STARTING GLOBAL CANCELLATION SYSTEM TESTS ---');
 

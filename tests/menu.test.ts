@@ -1,7 +1,7 @@
 import assert from 'assert';
 import path from 'path';
 import fs from 'fs';
-import { getMenuBannerBuffer, resetMenuBannerCache } from '../src/utils/menuAssets.js';
+import { getMenuBannerBuffer, resetMenuBannerCache } from '../src/lib/menuAssets.js';
 import menuService, {
     MenuService,
     CANONICAL_CATEGORY_ORDER,
@@ -18,12 +18,12 @@ import {
     formatNotFound,
     formatUptimeDuration,
     formatHeaderDate
-} from '../src/utils/menuFormatter.js';
-import toolsHandler from '../src/tools/handler.js';
-import { execute as helpExecute } from '../src/tools/help.js';
-import { execute as menuExecute } from '../src/tools/menu.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { ToolModule } from '../src/tools/types.js';
+} from '../src/lib/menuFormatter.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
+import { execute as helpExecute } from '../src/commands/system-help/help.js';
+import { execute as menuExecute } from '../src/commands/system-help/menu.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { ToolModule } from '../src/commands/types.js';
 
 process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test_groq_api_key';
 

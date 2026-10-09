@@ -1,5 +1,5 @@
 import assert from 'assert';
-import toolsHandler from '../src/tools/handler.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
 import menuService from '../src/services/menuService.js';
 import {
     normalizeCommandKey,
@@ -14,8 +14,8 @@ import {
     normalizeControlKeyword,
     resolveCommandArgs,
     sliceArgsAfterWords
-} from '../src/utils/commandNormalize.js';
-import { getLegacyCanonical } from '../src/utils/commandFormat.js';
+} from '../src/lib/commandNormalize.js';
+import { getLegacyCanonical } from '../src/lib/commandFormat.js';
 
 /**
  * Mirrors the command parser in src/handlers/message.ts.

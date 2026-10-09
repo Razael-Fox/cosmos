@@ -3,14 +3,14 @@ import path from 'path';
 import QRCode from 'qrcode';
 import Database from 'better-sqlite3';
 import { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import { activeConnections, connectToWhatsApp, stopConnection } from '#utils/connectionManager.js';
+import { activeConnections, connectToWhatsApp, stopConnection } from '#lib/connectionManager.js';
 import { getPrismaClient, disconnectPrismaClient } from '#db.js';
-import { registerCancellableSession, unregisterCancellableSession } from '#utils/cancellationManager.js';
+import { registerCancellableSession, unregisterCancellableSession } from '#lib/cancellationManager.js';
 import { loadConfig, clearConfigCache, isFeatureEnabled } from '#services/subBotConfigService.js';
-import { renderCard } from '#utils/uiFormatter.js';
-import { getPrimaryOwnerNumber } from '#utils/owner.js';
+import { renderCard } from '#lib/uiFormatter.js';
+import { getPrimaryOwnerNumber } from '#lib/owner.js';
 import { renderForexBroadcast } from '#services/economyBroadcast.js';
-import { getChatLanguage, getTranslator } from '#utils/i18n.js';
+import { getChatLanguage, getTranslator } from '#lib/i18n.js';
 
 export const MAX_SUB_BOTS = 50;
 
@@ -168,7 +168,7 @@ export async function requestPairing(
 
     try {
         const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
-        const { isOwnerId } = await import('#utils/owner.js');
+        const { isOwnerId } = await import('#lib/owner.js');
         const privileged = isOwnerId(userJid);
         const check = await executeWithUserLock(userJid, () => QuotaService.canPairSubBot(userJid, privileged));
         if (!check.allowed) {
@@ -413,7 +413,7 @@ export async function requestPairingHeadless(
 
     try {
         const { QuotaService, executeWithUserLock } = await import('#services/quotaService.js');
-        const { isOwnerId } = await import('#utils/owner.js');
+        const { isOwnerId } = await import('#lib/owner.js');
         const privileged = isOwnerId(requesterJid);
         const check = await executeWithUserLock(requesterJid, () =>
             QuotaService.canPairSubBot(requesterJid, privileged)

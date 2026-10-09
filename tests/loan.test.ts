@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { prisma } from '../src/db.js';
-import { saveIdCard } from '../src/utils/idCard.js';
+import { saveIdCard } from '../src/lib/idCard.js';
 import { registerBankAccount, depositToBank } from '../src/services/bankService.js';
 import {
     getCreditProfile,
@@ -11,10 +11,10 @@ import {
     disburseLoan,
     repayLoan
 } from '../src/services/loanService.js';
-import loanTool, { processLoanConfirmation, getPendingLoan } from '../src/tools/loan.js';
-import { cancelActiveSession } from '../src/utils/cancellationManager.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import { formatRupiah } from '../src/utils/currency.js';
+import loanTool, { processLoanConfirmation, getPendingLoan } from '../src/commands/economy-banking/loan.js';
+import { cancelActiveSession } from '../src/lib/cancellationManager.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import { formatRupiah } from '../src/lib/currency.js';
 
 async function runLoanTests() {
     console.log('--- STARTING BANK LOAN SYSTEM TESTS ---');

@@ -11,7 +11,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { REPO_ROOT } from '#utils/versioning.js';
+import { REPO_ROOT } from '#lib/versioning.js';
 
 export interface IsolationTarget {
     tool: 'eslint' | 'prettier' | 'git';

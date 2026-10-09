@@ -9,6 +9,59 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P9] - 2026-10-09
+
+### Fixed — Test Suite Isolation (Database Corruption Response)
+
+- `pnpm test` now forces `DATABASE_URL` and `STORAGE_DIR` to scratch
+  paths under `/tmp/opencode/`, so the suite can never again write to the
+  live bind-mounted `storage/database.sqlite`. This was the mechanism
+  behind test-induced production writes.
+- `tests/subbot.test.ts` now resolves sub-bot database paths through the
+  same `STORAGE_DIR`-aware logic as `src/db.ts` instead of hardcoded
+  cwd-relative paths.
+- Full suite result on the isolated database: **153/153 passing**.
+- Production note: the live database failed `integrity_check` (alerts
+  02:00/02:06), was recovered via `sqlite3 .recover` into a verified-clean
+  file (`integrity_check: ok`, 99 users / 72 bank accounts / 1191 session
+  credentials / 19 groups preserved, test-junk rows purged), and swapped
+  in with a ~2-minute bot/api/mcp restart. The corrupt original is kept
+  at `storage/database.sqlite.corrupt-20261009`.
+
+## [G2-F33-P8] - 2026-10-09
+
+### Changed — Extract `src/events/` (Phase 3 of the `src/` restructure)
+
+- All 8 Baileys socket subscriptions moved out of
+  `src/lib/connectionManager.ts` into one file per event:
+  `connection.ts` (`connection.update`, `creds.update`), `contacts.ts`
+  (`messaging-history.set`, `contacts.upsert/update`), `presence.ts`,
+  `participants.ts` (`group-participants.update`), `messages.ts`, plus
+  `index.ts` (`registerEvents`, same registration order) and
+  `eventContext.ts` (typed per-connection state, no `any` bag).
+- Handler bodies moved verbatim; `connectionManager.ts` keeps socket
+  construction, pairing, and lifecycle and is 456 lines shorter.
+- Deliberate deviation: `BlacklistEnforcer` keeps its class API and its
+  subscription body untouched — `participants.ts` invokes it via
+  `startListening()` instead of inlining the LID-resolution loop, so the
+  moderation path has zero behavior drift.
+- Verified: `typecheck`, `lint`, `build` clean; 122/122 hermetic test
+  assertions green (same as baseline); DB-backed checks fail identically
+  before/after (pre-existing live-DB integrity issue on this machine).
+
+## [G2-F33-P7] - 2026-10-09
+
+### Added — Test Runner Wiring
+
+- Added the missing `test` script (`tsx --test "tests/*.test.ts"`) so
+  `pnpm test` actually executes the 42-file suite instead of silently
+  passing with no script. Verified: 153 tests collected, 122 passing
+  across 10 database-independent files.
+- Known pre-existing failures (unchanged by this commit): the remaining
+  suite files require the live development database
+  (`storage/database.sqlite`), which fails `integrity_check` on this
+  machine, so they fail identically with and without this change.
+
 ## [G2-F33-P6] - 2026-10-08
 
 ### Changed — Dependency Updates (dotenv 18, better-sqlite3 13)

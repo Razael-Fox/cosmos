@@ -1,11 +1,11 @@
 import assert from 'assert';
 import tutorialService from '../src/services/tutorialService.js';
 import menuService from '../src/services/menuService.js';
-import toolsHandler from '../src/tools/handler.js';
-import { formatGenericTutorial, formatTutorialHub } from '../src/utils/menuFormatter.js';
-import { getTranslator } from '../src/utils/i18n.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
+import { formatGenericTutorial, formatTutorialHub } from '../src/lib/menuFormatter.js';
+import { getTranslator } from '../src/lib/i18n.js';
 import { i18n, initI18n } from '../src/locales/i18n.config.js';
-import { ToolContext } from '../src/tools/types.js';
+import { ToolContext } from '../src/commands/types.js';
 
 process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test_groq_api_key';
 

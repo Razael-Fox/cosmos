@@ -14,7 +14,7 @@ import {
     parseVersion,
     serializeVersionFile,
     validateVersionFile
-} from '../src/utils/versioning.js';
+} from '../src/lib/versioning.js';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 

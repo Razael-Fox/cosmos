@@ -11,18 +11,18 @@ import {
     processRegistrationStep,
     parseBirthPlaceAndDate,
     calculateAge
-} from '../src/utils/idCard.js';
+} from '../src/lib/idCard.js';
 import {
     generateIdCardImage,
     generateIdCardImageLocal,
     createPlaceholderPhotoBuffer
-} from '../src/utils/imageProcessing.js';
-import { formatMentions, cleanId } from '../src/utils/casino.js';
-import { getTranslator } from '../src/utils/i18n.js';
-import idCardTool from '../src/tools/idcard.js';
-import loanTool from '../src/tools/loan.js';
-import applyLicenseTool from '../src/tools/apply_license.js';
-import jobTool from '../src/tools/job.js';
+} from '../src/lib/imageProcessing.js';
+import { formatMentions, cleanId } from '../src/lib/casino.js';
+import { getTranslator } from '../src/lib/i18n.js';
+import idCardTool from '../src/commands/system-help/idcard.js';
+import loanTool from '../src/commands/economy-banking/loan.js';
+import applyLicenseTool from '../src/commands/employment/applyLicense.js';
+import jobTool from '../src/commands/employment/job.js';
 
 async function runTests() {
     console.log('--- STARTING ENHANCED VIRTUAL ID CARD TESTS ---');

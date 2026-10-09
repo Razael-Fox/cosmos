@@ -1,13 +1,13 @@
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
-import { getChatLanguage, getTranslator } from '#utils/i18n.js';
+import { formatRupiah } from '#lib/currency.js';
+import { getChatLanguage, getTranslator } from '#lib/i18n.js';
 import { getBankAccountByUser } from '#services/bankService.js';
 import cron from 'node-cron';
 import dotenv from 'dotenv';
-import { getGroqClient } from '#utils/apiKeyResolver.js';
+import { getGroqClient } from '#lib/apiKeyResolver.js';
 
 dotenv.config();
-import { DecisionClient } from './agentEngine/decisionClient.js';
+import { DecisionClient } from './agent/decisionClient.js';
 
 export interface CreditProfile {
     userId: string;

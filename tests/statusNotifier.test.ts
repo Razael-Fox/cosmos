@@ -6,12 +6,12 @@ import {
     formatWhatsAppText,
     getEventTitle,
     redactIdentifiers
-} from '../src/services/statusNotifier/formatters.js';
+} from '../src/services/notifier/formatters.js';
 import {
     getStatusNotifierConfig,
     maskSecret,
     resetStatusNotifierConfigCache
-} from '../src/services/statusNotifier/config.js';
+} from '../src/services/notifier/config.js';
 
 describe('Status notifier formatters', () => {
     it('redacts raw JIDs and phone numbers from outbound text', () => {

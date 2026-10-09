@@ -1,6 +1,6 @@
 import { prisma } from '#db.js';
-import { formatRupiah } from '#utils/currency.js';
-import { getUser, cleanId } from '#utils/casino.js';
+import { formatRupiah } from '#lib/currency.js';
+import { getUser, cleanId } from '#lib/casino.js';
 import cron from 'node-cron';
 
 export const BANK_REGISTRATION_FEE = 10000;

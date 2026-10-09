@@ -11,7 +11,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { REPO_ROOT } from '#utils/versioning.js';
+import { REPO_ROOT } from '#lib/versioning.js';
 import { loadSchemaCatalogue, type SchemaCatalogue } from './prismaCatalog.js';
 
 /** The two DDL drivers Rule W requires to be maintained symmetrically. */

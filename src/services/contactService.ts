@@ -2,10 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { prisma } from '../db.js';
-import { cleanPhoneNumber, toCanonicalJid } from '../utils/phone.js';
-import { cleanId, resolveId } from '../utils/casino.js';
+import { cleanPhoneNumber, toCanonicalJid } from '../lib/phone.js';
+import { cleanId, resolveId } from '../lib/casino.js';
 import { encryptSessionData, decryptSessionData, encryptString, decryptString } from './storageEncryption.js';
-import { AgentGroqClient } from './agentEngine/groqClient.js';
+import { AgentGroqClient } from './agent/groqClient.js';
 import type { WASocket } from '@whiskeysockets/baileys';
 
 export interface ContactNameValidationResult {

@@ -9,7 +9,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { authenticateOwnerKey, type McpIdentity } from './auth.js';
 import { loadMcpConfig } from './config.js';
-import { getVersionInfo } from '#utils/versioning.js';
+import { getVersionInfo } from '#lib/versioning.js';
 import { registerDbTools } from './tools/dbTools.js';
 import { registerFeatureTools } from './tools/featureTools.js';
 import { registerBotTools } from './tools/botTools.js';

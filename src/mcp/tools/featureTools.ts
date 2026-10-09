@@ -6,9 +6,9 @@
  * a coding agent knows that the command is `.bank deposit` and not `.bank`
  * without reading the source.
  */
-import toolsHandler from '#tools/handler.js';
-import { resolveToolDescription, type ToolDefinition } from '#tools/types.js';
-import { getTranslator } from '#utils/i18n.js';
+import { toolsHandler } from '#handlers/commandHandler.js';
+import { resolveToolDescription, type ToolDefinition } from '#commands/types.js';
+import { getTranslator } from '#lib/i18n.js';
 import { runI18nCheck } from '../schema/i18nAudit.js';
 import { runSchemaChecks } from '../schema/ddlMirror.js';
 import { runToolingIsolationCheck } from '../schema/toolingIsolation.js';
@@ -121,7 +121,7 @@ export const registerFeatureTools: ToolRegistrar = (server, deps, summary) => {
         'cosmos_feature_list',
         {
             description:
-                'Enumerate the Cosmos bot command registry: every registered feature with its canonical spaced invocation (Rule AF), Formal English description, descriptionKey, aliases, and English/Indonesian display names. Use this instead of reading src/tools/ by hand.',
+                'Enumerate the Cosmos bot command registry: every registered feature with its canonical spaced invocation (Rule AF), Formal English description, descriptionKey, aliases, and English/Indonesian display names. Use this instead of reading src/commands/ by hand.',
             inputSchema: {
                 category: zod.optionalString('Return only features in this category.'),
                 query: zod.optionalString('Return only features whose name, alias, or description contains this text.'),

@@ -21,13 +21,13 @@ import {
     clearChatArchiveCache,
     ChatLastMessage
 } from '../src/services/chatArchiveService.js';
-import { execute as executeAutoArchive } from '../src/tools/autoarchive.js';
-import { execute as executeWhitelist } from '../src/tools/whitelist.js';
-import toolsHandler from '../src/tools/handler.js';
-import { getLegacyCanonical } from '../src/utils/commandFormat.js';
-import type { ToolContext } from '../src/tools/types.js';
+import { execute as executeAutoArchive } from '../src/commands/system-help/autoarchive.js';
+import { execute as executeWhitelist } from '../src/commands/system-help/whitelist.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
+import { getLegacyCanonical } from '../src/lib/commandFormat.js';
+import type { ToolContext } from '../src/commands/types.js';
 import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
-import { getTranslator } from '../src/utils/i18n.js';
+import { getTranslator } from '../src/lib/i18n.js';
 
 // Owner authorization reads OWNER_PHONE_NUMBER from the environment, so pin it
 // to the fixture below instead of depending on the local .env.

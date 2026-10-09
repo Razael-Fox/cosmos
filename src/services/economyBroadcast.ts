@@ -1,6 +1,6 @@
 import { WASocket } from '@whiskeysockets/baileys';
-import { formatRupiah } from '../utils/currency.js';
-import { getTranslator } from '../utils/i18n.js';
+import { formatRupiah } from '../lib/currency.js';
+import { getTranslator } from '../lib/i18n.js';
 
 export function renderForexBroadcast(multiplier: number, reasoning: string, rate: number, lang: string = 'id'): string {
     const t = getTranslator(lang);

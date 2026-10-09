@@ -32,7 +32,7 @@ export interface TierLimits {
     customPrefix: boolean;
     economyMultiplier: number;
     /**
-     * Ceilings for expensive command classes, resolved in `src/utils/featureLimiter.ts`.
+     * Ceilings for expensive command classes, resolved in `src/lib/featureLimiter.ts`.
      * Only classes with an enforcement point are listed: the agent/LLM path executes
      * inside `executor.ts` and stays bounded by `AgentRateLimiter`, so it has no entry here.
      *

@@ -1,0 +1,149 @@
+import { WASocket, WAMessage } from '@whiskeysockets/baileys';
+import { getSenderJid } from '../../lib/casino.js';
+import { getTranslator } from '../../lib/i18n.js';
+import { SaraPromptContextResolver } from './prompts/contextResolver.js';
+import { AgentGuidancePlanner } from './guidancePlanner.js';
+import { AgentExecutionLoop } from './executionLoop.js';
+import { AgentRateLimiter } from './rateLimiter.js';
+import { AgentLocationStager } from './locationStager.js';
+import { AgentExecutionContext } from './types.js';
+import { OpenRouterDocsClient } from './openRouterDocsClient.js';
+
+const MAX_DOCS_ANSWER_CHARS = 8000;
+
+export class CosmosAgentEngine {
+    /**
+     * Main entry point for processing incoming WhatsApp messages through the CosmosAgentEngine runtime.
+     */
+    public static async processMessage(
+        sock: WASocket,
+        msg: WAMessage,
+        chatJid: string,
+        promptText: string,
+        locale: string = 'en'
+    ): Promise<string | null> {
+        const callerJid = getSenderJid(msg, sock);
+        if (!callerJid) return null;
+
+        // 1. Rate Limiting Check
+        const rateCheck = AgentRateLimiter.checkUserLimit(callerJid);
+        if (!rateCheck.allowed) {
+            const waitSec = rateCheck.retryAfterSec || 5;
+            const message =
+                locale === 'id'
+                    ? `⏳ Anda mengirim permintaan terlalu cepat. Mohon tunggu ${waitSec} detik lagi.`
+                    : `⏳ You are sending requests too quickly. Please wait ${waitSec} seconds.`;
+            await sock.sendMessage(chatJid, { text: message }, { quoted: msg });
+            return message;
+        }
+
+        // 2. Chat Concurrency Lock
+        const lockAcquired = AgentRateLimiter.acquireJidLock(chatJid);
+        if (!lockAcquired) {
+            console.log(
+                `[CosmosAgentEngine] Chat ${chatJid} is already processing an active AI turn. Ignoring duplicate.`
+            );
+            return null;
+        }
+
+        try {
+            await sock.sendPresenceUpdate('composing', chatJid);
+
+            // 3. Dynamic Context Resolution
+            const promptCtx = await SaraPromptContextResolver.resolveContext(sock, msg, chatJid, locale);
+
+            // 4. Tier 1: Guidance Planning LLM (openai/gpt-oss-20b)
+            const brief = await AgentGuidancePlanner.plan(promptText, promptCtx);
+
+            // 4b. Documentation question fast-path: route through free OpenRouter models
+            // carrying the unbounded knowledge base. Any failure falls through to the
+            // existing Groq Tier 2 path unchanged (fail-open).
+            // Only a pure conversational brief with no dispatched tool may take the docs route;
+            // otherwise an inconsistent planner brief could swallow a real tool intent.
+            if (brief.docQuestion === true && brief.primaryTool == null && brief.intent === 'CONVERSATION') {
+                const docsAnswer = await OpenRouterDocsClient.answer(promptText, promptCtx).catch((err: unknown) => {
+                    const errMsg = err instanceof Error ? err.message : String(err);
+                    console.warn('[CosmosAgentEngine] OpenRouter docs route failed, falling back to Groq:', errMsg);
+                    return null;
+                });
+
+                if (docsAnswer && docsAnswer.trim().length > 0) {
+                    let trimmedAnswer = docsAnswer.trim();
+                    if (trimmedAnswer.length > MAX_DOCS_ANSWER_CHARS) {
+                        trimmedAnswer = `${trimmedAnswer.slice(0, MAX_DOCS_ANSWER_CHARS)}\n\n_…(answer truncated for length)_`;
+                    }
+                    await sock.sendMessage(chatJid, { text: trimmedAnswer }, { quoted: msg });
+                    AgentRateLimiter.recordRequest(callerJid);
+                    return trimmedAnswer;
+                }
+            }
+
+            // 5. Special Mode B: Interactive Location Forwarding Staging ("shareloc" flow)
+            // If the user wants to send a location but no location was quoted or attached:
+            if (
+                brief.intent === 'SEND_LOCATION' &&
+                !promptCtx.referencedMessage?.location &&
+                brief.target?.recipientToken
+            ) {
+                const targetAlias = brief.target.rawAlias || 'Recipient';
+                const sessionId = `loc_stage_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                const ownerName = promptCtx.subBotOwnerName || promptCtx.callerName || 'Owner';
+
+                AgentLocationStager.registerSession({
+                    sessionId,
+                    userJid: callerJid,
+                    userLid: promptCtx.callerLid,
+                    chatJid,
+                    targetToken: brief.target.recipientToken,
+                    targetAlias,
+                    subBotOwnerName: ownerName
+                });
+
+                const promptReply =
+                    locale === 'id'
+                        ? `Saya siap! Silakan kirimkan lokasi Anda di pesan berikutnya (atau balas dengan 'shareloc' beserta lokasi), dan saya akan segera meneruskannya ke ${targetAlias}.`
+                        : `I'm ready! Please share the location in your next message (or reply with 'shareloc' and attach your location), and I'll forward it to ${targetAlias} right away.`;
+
+                await sock.sendMessage(chatJid, { text: promptReply }, { quoted: msg });
+                AgentRateLimiter.recordRequest(callerJid);
+                return promptReply;
+            }
+
+            // 6. Build Execution Context
+            const execCtx: AgentExecutionContext = {
+                sock,
+                msg,
+                chatJid,
+                callerJid,
+                callerLid: promptCtx.callerLid,
+                callerName: promptCtx.callerName,
+                isOwner: promptCtx.isOwner,
+                locale,
+                t: getTranslator(locale),
+                subBotNumber: promptCtx.subBotNumber,
+                subBotOwnerName: promptCtx.subBotOwnerName
+            };
+
+            // 7. Tier 2: Execution & Synthesis LLM (openai/gpt-oss-20b) in Bounded ReAct Loop
+            const responseText = await AgentExecutionLoop.run(promptText, promptCtx, execCtx, brief);
+
+            if (responseText && responseText.trim().length > 0) {
+                await sock.sendMessage(chatJid, { text: responseText.trim() }, { quoted: msg });
+            }
+
+            // 8. Record Rate Limit
+            AgentRateLimiter.recordRequest(callerJid);
+            return responseText;
+        } catch (err: unknown) {
+            console.error('[CosmosAgentEngine] Execution error:', err);
+            const fallbackMsg =
+                locale === 'id'
+                    ? 'Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.'
+                    : 'I apologize, but an error occurred while processing your request. Please try again shortly.';
+            await sock.sendMessage(chatJid, { text: fallbackMsg }, { quoted: msg });
+            return fallbackMsg;
+        } finally {
+            AgentRateLimiter.releaseJidLock(chatJid);
+        }
+    }
+}

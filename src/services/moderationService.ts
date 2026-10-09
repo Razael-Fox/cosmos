@@ -1,7 +1,7 @@
 import { GroupMetadata, WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { prisma } from '../db.js';
-import { cleanId, formatMentions } from '../utils/casino.js';
-import { isOwnerId } from '../utils/owner.js';
+import { cleanId, formatMentions } from '../lib/casino.js';
+import { isOwnerId } from '../lib/owner.js';
 
 export interface ModerationAction {
     action: 'kick' | 'promote' | 'demote' | 'close' | 'open' | 'invite' | 'approve' | 'reject';

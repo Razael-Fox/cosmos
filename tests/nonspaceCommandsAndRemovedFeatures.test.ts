@@ -1,10 +1,10 @@
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
-import toolsHandler from '../src/tools/handler.js';
+import toolsHandler from '../src/handlers/commandHandler.js';
 import menuService from '../src/services/menuService.js';
 import tutorialService from '../src/services/tutorialService.js';
-import { toDisplayCommand, getLegacyCanonical } from '../src/utils/commandFormat.js';
+import { toDisplayCommand, getLegacyCanonical } from '../src/lib/commandFormat.js';
 
 async function runNonSpaceAndRemovedFeaturesTest() {
     console.log('--- STARTING NON-SPACE COMMANDS & REMOVED FEATURES TEST ---');

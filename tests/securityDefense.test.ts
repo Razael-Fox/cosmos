@@ -1,6 +1,6 @@
 import assert from 'assert';
-import { inspectMessageForMalice } from '../src/utils/security/bugDetector.js';
-import { antiSpamGuard } from '../src/utils/security/antiSpamGuard.js';
+import { inspectMessageForMalice } from '../src/lib/security/bugDetector.js';
+import { antiSpamGuard } from '../src/lib/security/antiSpamGuard.js';
 import { securityEnforcementService } from '../src/services/securityEnforcementService.js';
 import { WAMessage } from '@whiskeysockets/baileys';
 
