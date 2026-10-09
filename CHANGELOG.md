@@ -9,6 +9,13 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P17] - 2026-10-09
+
+### Fixed — Duplicate test log line (Issue #87)
+
+- Removes a duplicated Test 9 header log in `tests/hideTagAgent.test.ts`
+  (CodeRabbit nitpick on review #4).
+
 ## [G2-F33-P16] - 2026-10-09
 
 ### Fixed — Bracketed/hex-mapped IPv6 literal SSRF edge (Issue #87)

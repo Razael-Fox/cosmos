@@ -306,7 +306,6 @@ async function runTests() {
 
     // [Test 9] Page extraction helpers (offline-deterministic paths)
     console.log('[Test 9] Testing extraction helpers...');
-    console.log('[Test 9] Testing extraction helpers...');
     assert.strictEqual(stripHtmlToText('<script>alert(1)</script><p>Hello &amp; bye</p>'), 'Hello & bye');
     assert.strictEqual(stripHtmlToText('<style>.x{color:red}</style>  a  b'), 'a b');
     const badScheme = await extractWebPage('notaurl');
