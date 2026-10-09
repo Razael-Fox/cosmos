@@ -9,6 +9,20 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P14] - 2026-10-09
+
+### Fixed — AI-generated Sara follow-up in originating chat (Issue #87)
+
+- Confirmed `hidetag` dispatches now request one tool-free Tier 2
+  synthesis turn over outcome facts (member count only — never
+  announcement text, URL extracts are untrusted), so the quoted
+  acknowledgement is generated in Sara's voice instead of the static
+  `sara_followup` string (kept as fallback when synthesis fails).
+- Context routing unchanged and locked by test: announcement and
+  follow-up both go to the originating chat (`chatJid` preserved
+  through staging → `.confirm` → delivery), unquoted + quoted
+  respectively; DM-originated requests still hit the group guard.
+
 ## [G2-F33-P13] - 2026-10-09
 
 ### Added — Gated Sara agent `hidetag` tool with `.confirm` flow (Issue #87)

@@ -138,6 +138,46 @@ export class AgentExecutionLoop {
                             if (!confirmedResult.success) {
                                 throw new Error(confirmedResult.error || 'Execution failed');
                             }
+                            if (confirmedResult.synthesizeFollowup === true) {
+                                // AI-generated acknowledgement: one tool-free turn over
+                                // outcome facts only (never announcement text — URL
+                                // extracts are untrusted). Falls back to the tool's
+                                // static string when synthesis yields nothing.
+                                const facts =
+                                    confirmedResult.data && typeof confirmedResult.data === 'object'
+                                        ? JSON.stringify(confirmedResult.data)
+                                        : String(confirmedResult.data ?? '');
+                                try {
+                                    const synth = await AgentExecutor.executeTurn(
+                                        [
+                                            {
+                                                role: 'user',
+                                                content:
+                                                    `[Server fact, already completed, not a new request] The hidetag announcement was just dispatched in this chat (${facts}). Acknowledge briefly in character and ask whether there is anything else to announce. Do not repeat any announcement text.`
+                                            }
+                                        ],
+                                        promptCtx,
+                                        { ...brief, primaryTool: null, extractedParameters: {} }
+                                    );
+                                    const text = synth.message.content?.trim();
+                                    if (text) return toWhatsAppText(text);
+                                } catch (synthErr) {
+                                    console.error(
+                                        `[CosmosAgentEngine] Follow-up synthesis failed for ${funcName}:`,
+                                        synthErr instanceof Error ? synthErr.message : synthErr
+                                    );
+                                }
+                                const fallback =
+                                    confirmedResult.data && typeof confirmedResult.data === 'object'
+                                        ? String(
+                                              (confirmedResult.data as Record<string, unknown>).followup ??
+                                                  `✅ Operation ${funcName} successfully executed.`
+                                          )
+                                        : typeof confirmedResult.data === 'string'
+                                          ? confirmedResult.data
+                                          : `✅ Operation ${funcName} successfully executed.`;
+                                return fallback;
+                            }
                             return typeof confirmedResult.data === 'string'
                                 ? confirmedResult.data
                                 : `✅ Operation ${funcName} successfully executed.`;

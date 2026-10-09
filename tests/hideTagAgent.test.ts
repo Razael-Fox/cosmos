@@ -3,6 +3,9 @@ import { hideTagTool } from '../src/services/agent/tools/hideTag.js';
 import { AgentToolRegistry } from '../src/services/agent/tools/registry.js';
 import { AgentToolPolicyManager } from '../src/services/agent/policy.js';
 import { ToolAiPolicy } from '../src/services/agent/types.js';
+import { AgentExecutionLoop } from '../src/services/agent/executionLoop.js';
+import { AgentConfirmationManager } from '../src/services/agent/confirmationManager.js';
+import { AgentGroqClient } from '../src/services/agent/groqClient.js';
 import { buildSaraGuidancePrompt } from '../src/services/agent/prompts/saraGuidance.js';
 import { buildSaraPersonaPrompt } from '../src/services/agent/prompts/saraPersona.js';
 import { extractWebPage, stripHtmlToText } from '../src/services/agent/tavilyClient.js';
@@ -46,6 +49,7 @@ function createExecCtx(options: {
         sock: {
             user: { id: BOT_JID },
             groupMetadata: async () => ({ participants: options.participants ?? [] }),
+            sendPresenceUpdate: async () => {},
             sendMessage: async (jid: string, content: { text: string; mentions?: string[] }, opts?: any) => {
                 sent.push({ jid, text: content.text, mentions: content.mentions, quoted: Boolean(opts?.quoted) });
                 return { key: {} };
@@ -137,14 +141,18 @@ async function runTests() {
     }
     console.log('✓ Confirmation staging verified.');
 
-    // [Test 5] Confirmed dispatch: unquoted announcement + quoted follow-up data
+    // [Test 5] Confirmed dispatch: unquoted announcement + facts for synthesis
     console.log('[Test 5] Testing confirmed dispatch...');
     {
         const { ctx, sent } = createExecCtx({ participants: adminParticipants() });
         const result = await hideTagTool.execute({ message: 'Meeting at 7 PM', _confirmed: true }, ctx);
         assert.strictEqual(result.success, true);
-        assert.strictEqual(result.data, getTranslator('en')('tools.tag_hide.sara_followup'));
+        assert.strictEqual(result.synthesizeFollowup, true);
+        const data = result.data as Record<string, unknown>;
+        assert.strictEqual(data.followup, getTranslator('en')('tools.tag_hide.sara_followup'));
+        assert.strictEqual(data.members, 3);
         assert.strictEqual(sent.length, 1);
+        assert.strictEqual(sent[0].jid, GROUP_JID, 'Announcement stays in the originating chat');
         assert.ok(sent[0].text.startsWith('Meeting at 7 PM'));
         assert.ok(!sent[0].text.includes('@'), 'No visible @-list in the announcement');
         assert.strictEqual(sent[0].quoted, false, 'Announcement must be unquoted');
@@ -211,6 +219,72 @@ async function runTests() {
     const ftp = await extractWebPage('ftp://example.com/x.txt');
     assert.strictEqual(ftp.kind, 'unavailable');
     console.log('✓ Extraction helpers verified.');
+
+    // [Test 10] End-to-end: stage → .confirm → unquoted announcement +
+    // AI-generated follow-up, both in the originating chat.
+    console.log('[Test 10] Testing end-to-end confirm flow with AI follow-up...');
+    AgentConfirmationManager.clearAll();
+    const realCompletion = AgentGroqClient.createCompletion;
+    try {
+        let calls = 0;
+        AgentGroqClient.createCompletion = (async () => {
+            calls++;
+            if (calls === 1) {
+                return {
+                    message: {
+                        content: null,
+                        tool_calls: [
+                            {
+                                id: 'call_1',
+                                type: 'function',
+                                function: { name: 'hidetag', arguments: JSON.stringify({ message: 'E2E hello' }) }
+                            }
+                        ]
+                    },
+                    finishReason: 'tool_calls'
+                };
+            }
+            return {
+                message: { content: 'Done — everyone has been tagged! Anything else to announce?', tool_calls: [] },
+                finishReason: 'stop'
+            };
+        }) as typeof realCompletion;
+
+        const { ctx, sent } = createExecCtx({ participants: adminParticipants() });
+        const staged = await AgentExecutionLoop.run(
+            '.sara hidetag E2E hello',
+            dummyPromptCtx(),
+            ctx,
+            { intent: 'HIDETAG', primaryTool: 'hidetag', confidence: 1, guidanceInstructions: '', docQuestion: false }
+        );
+        assert.ok(staged.includes('3 members'), `Staging prompt must show the count, got: ${staged}`);
+        assert.strictEqual(sent.length, 0, 'Nothing dispatched before confirm');
+
+        const handled = await AgentConfirmationManager.processConfirmation(
+            ctx.sock as any,
+            ctx.msg as any,
+            ADMIN_JID,
+            GROUP_JID,
+            '.confirm'
+        );
+        assert.strictEqual(handled, true);
+        assert.strictEqual(sent.length, 2, 'Announcement + follow-up must both send');
+        assert.strictEqual(sent[0].jid, GROUP_JID);
+        assert.strictEqual(sent[1].jid, GROUP_JID, 'Follow-up stays in the originating chat');
+        assert.ok(sent[0].text.startsWith('E2E hello'));
+        assert.strictEqual(sent[0].quoted, false);
+        assert.strictEqual(sent[1].text, 'Done — everyone has been tagged! Anything else to announce?');
+        assert.strictEqual(sent[1].quoted, true, 'Follow-up is a quoted reply in context');
+        assert.notStrictEqual(
+            sent[1].text,
+            getTranslator('en')('tools.tag_hide.sara_followup'),
+            'Follow-up must be AI-generated, not the static string'
+        );
+    } finally {
+        AgentGroqClient.createCompletion = realCompletion;
+        AgentConfirmationManager.clearAll();
+    }
+    console.log('✓ End-to-end confirm flow verified.');
 
     console.log('--- ALL HIDETAG AGENT GATE TESTS PASSED ---');
 }

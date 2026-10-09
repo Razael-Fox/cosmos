@@ -14,6 +14,25 @@ import {
 /** Preview length in the confirmation prompt; the full body still dispatches on confirm. */
 const CONFIRM_PREVIEW_CHARS = 200;
 
+/** Counts taggable members (bot excluded) from live metadata. */
+async function countTaggable(sock: AgentExecutionContext['sock'], groupJid: string): Promise<number> {
+    try {
+        const metadata = await sock.groupMetadata(groupJid);
+        const botId = cleanId((sock.user as { id?: string } | undefined)?.id);
+        const botLid = cleanId((sock.user as { lid?: string } | undefined)?.lid);
+        let count = 0;
+        for (const p of metadata?.participants ?? []) {
+            const ids = [cleanId(p.id), cleanId((p as { lid?: string }).lid)].filter(Boolean);
+            if (ids.length === 0 || ids.includes(botId) || (botLid && ids.includes(botLid))) continue;
+            count++;
+        }
+        return count;
+    } catch (err) {
+        console.error('[hideTagTool] Failed to count taggable members:', err);
+        return 0;
+    }
+}
+
 /**
  * Re-derives caller admin status (callerJid + callerLid) so the agent path
  * reuses the exact same gate as the dot-prefixed command, including at
@@ -116,19 +135,7 @@ export const hideTagTool: AgentTool = {
         // ── 4. Confirmation staging (count + preview, never JIDs) ──
         const confirmed = args._confirmed === true;
         if (!confirmed) {
-            let count = 0;
-            try {
-                const metadata = await ctx.sock.groupMetadata(groupJid);
-                const botId = cleanId((ctx.sock.user as { id?: string } | undefined)?.id);
-                const botLid = cleanId((ctx.sock.user as { lid?: string } | undefined)?.lid);
-                for (const p of metadata?.participants ?? []) {
-                    const ids = [cleanId(p.id), cleanId((p as { lid?: string }).lid)].filter(Boolean);
-                    if (ids.length === 0 || ids.includes(botId) || (botLid && ids.includes(botLid))) continue;
-                    count++;
-                }
-            } catch (err) {
-                console.error('[hideTagTool] Failed to count taggable members:', err);
-            }
+            const count = await countTaggable(ctx.sock, groupJid);
             const preview = body.length > CONFIRM_PREVIEW_CHARS ? `${body.slice(0, CONFIRM_PREVIEW_CHARS)}…` : body;
             const prompt = `${t('tools.tag_hide.sara_confirm', { count, preview })} ${t('tools.agent_moderation.confirm_suffix')}`;
             return { success: true, requiresConfirmation: true, confirmationPrompt: prompt };
@@ -167,8 +174,16 @@ export const hideTagTool: AgentTool = {
             return { success: false, error: result };
         }
 
-        // String data flows back as the quoted acknowledgement; the announcement
-        // itself was already sent unquoted, so no LLM chatter can leak into it.
-        return { success: true, data: t('tools.tag_hide.sara_followup') };
+        // The acknowledgement is synthesized by Tier 2 from these outcome
+        // facts (see executionLoop staged closure); the static follow-up rides
+        // along only as a fallback. Facts carry a member count, never the
+        // announcement text — URL extracts are untrusted external data and
+        // must not re-enter an LLM context.
+        const members = await countTaggable(ctx.sock, groupJid);
+        return {
+            success: true,
+            data: { followup: t('tools.tag_hide.sara_followup'), members },
+            synthesizeFollowup: true
+        };
     }
 };
