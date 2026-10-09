@@ -228,6 +228,7 @@ class CommandsHandler {
             transfer: true,
             bank: true,
             loan: true,
+            tag_hide: true,
             tgpair: true,
             setgrouplang: true,
             setlang: true,

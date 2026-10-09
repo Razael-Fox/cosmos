@@ -9,6 +9,27 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P11] - 2026-10-09
+
+### Fixed — Review findings on hidden tag-all (PR #88, SUMMARY.md)
+
+- SSRF boundary on URL fetch (`hideTag.ts`): per-hop DNS resolution
+  rejecting non-public IPs, manual redirect following (max 3) with
+  per-hop revalidation, streaming body cap (no post-buffer check),
+  `text/*` content-type gate, and a generic failure string (no dial/DNS
+  internals in chat).
+- Legacy Groq function-calling no longer auto-exposes `tag_hide`
+  (`EXCLUDED_GROQ_TOOLS`); a gated agent tool remains follow-up work.
+- Mention fan-out uses one `groupMetadata` snapshot with a local
+  LID→phone map (no per-member refetch); digit-validated before
+  suffixing `@s.whatsapp.net`.
+- Direct-text body capped at 4,000 chars (`too_long`); quota
+  attempt-metering documented as existing funnel behavior for all
+  commands. Attached-but-empty documents return `empty` instead of
+  falling through to the quoted reply; document streaming uses a
+  running counter and destroys the stream on overflow; admin gate
+  checks `participantAlt`/`remoteJidAlt` for LID-masked senders.
+
 ## [G2-F33-P10] - 2026-10-09
 
 ### Added — Hidden Tag-All (`.hidetag` / `.ht` / `.tag hide`, Issue #87)

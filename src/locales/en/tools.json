@@ -1196,8 +1196,10 @@
         "empty": "❌ Message text is empty. Provide text, reply to a message, or attach a .txt/.md file.",
         "unsupported_file": "❌ Only .txt and .md files are supported for hidetag.",
         "file_too_large": "❌ The attached file exceeds the 100 KB limit.",
-        "fetch_failed": "❌ Failed to fetch the file URL: {{error}}",
+        "fetch_failed": "❌ Failed to fetch the file URL. Please check the link and try again.",
         "url_too_large": "❌ The linked file exceeds the 100 KB limit.",
+        "url_unsupported_type": "❌ The linked file is not a readable text file.",
+        "too_long": "❌ Message text exceeds the 4,000 character limit.",
         "no_members": "ℹ️ No taggable members found in this group.",
         "error": "❌ Failed to send hidetag: {{error}}"
     },

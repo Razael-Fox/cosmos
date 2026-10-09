@@ -1196,8 +1196,10 @@
         "empty": "❌ Teks pesan kosong. Berikan teks, balas pesan, atau lampirkan file .txt/.md.",
         "unsupported_file": "❌ Hanya file .txt dan .md yang didukung untuk hidetag.",
         "file_too_large": "❌ File yang dilampirkan melebihi batas 100 KB.",
-        "fetch_failed": "❌ Gagal mengunduh URL file: {{error}}",
+        "fetch_failed": "❌ Gagal mengunduh URL file. Periksa tautan dan coba lagi.",
         "url_too_large": "❌ File tertaut melebihi batas 100 KB.",
+        "url_unsupported_type": "❌ File tertaut bukan file teks yang dapat dibaca.",
+        "too_long": "❌ Teks pesan melebihi batas 4.000 karakter.",
         "no_members": "ℹ️ Tidak ada anggota yang dapat ditandai di grup ini.",
         "error": "❌ Gagal mengirim hidetag: {{error}}"
     },
