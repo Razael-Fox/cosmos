@@ -48,7 +48,8 @@
         "features": {
             "sticker": "Pembuatan Stiker & Brat",
             "download": "Unduhan Media",
-            "stt": "Ucapan ke Teks"
+            "stt": "Ucapan ke Teks",
+            "hidetag": "Tandai Tersembunyi"
         }
     }
 }

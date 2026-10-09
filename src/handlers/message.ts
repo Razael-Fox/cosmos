@@ -199,6 +199,7 @@ export async function handleMessage(sock: WASocket, msg: WAMessage): Promise<voi
         msg.message.extendedTextMessage?.text ||
         msg.message.imageMessage?.caption ||
         msg.message.videoMessage?.caption ||
+        msg.message.documentMessage?.caption ||
         '';
 
     // Detect if sender is owner (supports JID, LID, device JID, and OWNER_PHONE_NUMBER)

@@ -9,6 +9,28 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P10] - 2026-10-09
+
+### Added — Hidden Tag-All (`.hidetag` / `.ht` / `.tag hide`, Issue #87)
+
+- New group-only, admin-gated command `tag hide` (`tandai sembunyi`)
+  with aliases `hidetag`, `ht`: announces a message while tagging all
+  members invisibly (verbatim body + zero-width padding, mentions via
+  `formatMentions`, bot JID/LID excluded).
+- Single text source, first hit wins: attached `.txt`/`.md` document
+  (100 KB cap) → raw-file URL in args (10 s timeout, 100 KB cap) →
+  direct text → quoted reply text → localized usage card. Explicit args
+  win over reply context. Success path self-sends unquoted and returns
+  `void` (no double-send); errors/usage are returned strings.
+- Per-plan quota via existing `featureLimiter` funnel
+  (`limitKey: 'hidetag'`): 3 / 10 / 25 per 10 min
+  (FREE / SUBSIDIZED / PARTNER). `.my quota` picks it up with no extra code.
+- `src/handlers/message.ts` now also reads `documentMessage.caption`
+  as command text (same as image/video captions) — previously a
+  `.txt`/`.md` sent with caption `.hidetag` never dispatched.
+- Deferred to a follow-up (per issue, "planned, not yet implemented"):
+  Sara agent `hidetag` tool + `.confirm` flow and Tavily page extraction.
+
 ## [G2-F33-P9] - 2026-10-09
 
 ### Fixed — Test Suite Isolation (Database Corruption Response)

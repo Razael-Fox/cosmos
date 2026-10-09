@@ -335,6 +335,19 @@ Perintah pengguna `.telegram dl`, `.tg add`, `.tg del`, dan `.tg list` **sudah d
     - Dapat dipakai di grup maupun chat pribadi. ID saluran adalah pengenal publik, bukan PII.
     - Terdapat cooldown 10 detik per pengirim di setiap obrolan.
 
+### `.hidetag` / `.ht` / `.tag hide` (Hidden Tag-All)
+
+- **Fungsi:** Mengumumkan pesan ke grup sambil menandai seluruh anggota secara tak terlihat (tanpa daftar `@` yang terlihat). Khusus admin grup.
+- **Aliases:** `.hidetag`, `.ht`, `.tag hide`, `.tandai sembunyi`
+- **Penggunaan:**
+    - `.hidetag <pesan>` — umumkan teks langsung.
+    - Balas pesan dengan `.ht` — umumkan teks yang dikutip.
+    - Kirim file `.txt`/`.md` dengan caption `.hidetag` — umumkan isi file (maksimal 100 KB).
+    - `.hidetag <URL file mentah>` — umumkan isi file tertaut (timeout 10 detik, maksimal 100 KB).
+- **Catatan:**
+    - Identitas bot sendiri (JID dan LID) otomatis dikecualikan dari mention.
+    - Batas pemakaian per pengirim: 3 / 10 / 25 per 10 menit (Pulse / Nova / Zenith).
+
 ---
 
 ## 9.1 Moderasi Grup (Group Moderation — Admin Only)
@@ -357,6 +370,7 @@ Seluruh perintah di bawah ini hanya dapat dipakai **di dalam obrolan grup**, han
 | `.group blacklist add <target> [reason]` | `.gbl add`                 | Menambahkan anggota ke daftar hitam grup.        |
 | `.group blacklist remove <target>`       | `.gbl remove`              | Menghapus anggota dari daftar hitam grup.        |
 | `.group blacklist list`                  | `.gbl list`                | Menampilkan daftar hitam grup.                   |
+| `.tag hide <message>`                     | `.hidetag`, `.ht`          | Menandai seluruh anggota secara tak terlihat.    |
 
 ### `.sara <permintaan moderasi>` (Moderasi Lewat Sara AI)
 

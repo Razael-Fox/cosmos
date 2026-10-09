@@ -1100,6 +1100,9 @@
         },
         "group_blacklist_list": {
             "description": "List all blacklisted users for this group."
+        },
+        "tag_hide": {
+            "description": "Tag all group members invisibly with an announcement. Admin only."
         }
     },
     "group_kick": {
@@ -1185,6 +1188,18 @@
         "file_too_large": "❌ The attached file exceeds the 100 KB limit.",
         "too_long": "❌ Group description cannot exceed 512 characters.",
         "error": "❌ Failed to update group description: {{error}}"
+    },
+    "tag_hide": {
+        "group_only": "> ❌ *GROUP-ONLY COMMAND*\n> '.hidetag' can only be used in a group chat to mention all members invisibly.",
+        "caller_not_admin": "❌ You must be a group admin to use this command.",
+        "usage": "*HIDETAG USAGE*\n\n• '.hidetag <message>' — announce direct text\n• Reply to a message with '.ht' — announce the quoted text\n• Attach a .txt/.md file with caption '.hidetag' — announce the file content\n• '.hidetag <raw file URL>' — announce the linked file content\n\nTags all members invisibly. Admin only.",
+        "empty": "❌ Message text is empty. Provide text, reply to a message, or attach a .txt/.md file.",
+        "unsupported_file": "❌ Only .txt and .md files are supported for hidetag.",
+        "file_too_large": "❌ The attached file exceeds the 100 KB limit.",
+        "fetch_failed": "❌ Failed to fetch the file URL: {{error}}",
+        "url_too_large": "❌ The linked file exceeds the 100 KB limit.",
+        "no_members": "ℹ️ No taggable members found in this group.",
+        "error": "❌ Failed to send hidetag: {{error}}"
     },
     "group_blacklist_add": {
         "description": "Add a user to the group blacklist.",
