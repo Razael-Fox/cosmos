@@ -9,6 +9,20 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P12] - 2026-10-09
+
+### Fixed — Keep `tag_hide` exposed to Sara/LLM tool-calling as planned
+
+- Reverts the `EXCLUDED_GROQ_TOOLS` entry for `tag_hide`: the offline-AI
+  path (`offlineAi.ts` → `getGroqTools()`) executes through the same
+  `CommandsHandler.execute()` funnel, so the in-tool group admin gate
+  still applies at execution time — identical to every other group
+  moderation command (`group kick`, `group promote`, …), none of which
+  are excluded. Singling out `tag_hide` held it to a standard no
+  existing command meets.
+- A `CONFIRMATION_REQUIRED` agent-engine tool with `.confirm` flow
+  remains optional follow-up work, not a merge blocker.
+
 ## [G2-F33-P11] - 2026-10-09
 
 ### Fixed — Review findings on hidden tag-all (PR #88, SUMMARY.md)
