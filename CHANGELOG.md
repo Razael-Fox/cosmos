@@ -9,6 +9,17 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P19] - 2026-10-09
+
+### Fixed — LID-masked admins denied by Sara context resolver
+
+- `SaraPromptContextResolver` matched group members by `p.id` only, so
+  LID-masked senders (phone in `participantAlt`) resolved
+  `isGroupAdmin=false` and Sara refused admin-gated tools (seen live:
+  `.sara hidetag hello` declined for a real admin). Now uses the dual
+  JID/LID identifier match, mirroring the group-token minter in the
+  same file. Covered by `tests/saraAdminLid.test.ts`.
+
 ## [G2-F33-P18] - 2026-10-09
 
 ### Fixed — `.sara <tool> …` short invocations no longer eaten by clarify gate

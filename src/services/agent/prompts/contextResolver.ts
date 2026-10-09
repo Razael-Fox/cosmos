@@ -131,7 +131,22 @@ export class SaraPromptContextResolver {
             try {
                 const metadata = await sock.groupMetadata(chatJid);
                 groupTitle = metadata.subject;
-                const participant = metadata.participants.find((p) => cleanId(p.id) === cleanId(callerJid));
+                // Dual-identifier match: LID-masked senders only resolve via the
+                // companion identifier (participantAlt/remoteJidAlt), while group
+                // metadata may key the member under either id or lid.
+                const callerClean = cleanId(callerJid);
+                const callerLidClean = callerLid ? cleanId(callerLid) : undefined;
+                const participant = metadata.participants.find((p) => {
+                    const pIdClean = cleanId(p.id);
+                    const pLidClean =
+                        'lid' in p && typeof p.lid === 'string' ? cleanId(p.lid) : undefined;
+                    return (
+                        pIdClean === callerClean ||
+                        (callerLidClean !== undefined && pIdClean === callerLidClean) ||
+                        (pLidClean !== undefined && pLidClean === callerClean) ||
+                        (callerLidClean !== undefined && pLidClean !== undefined && pLidClean === callerLidClean)
+                    );
+                });
                 isGroupAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
             } catch {
                 groupTitle = 'Group Chat';
