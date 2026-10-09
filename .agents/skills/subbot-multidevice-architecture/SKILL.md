@@ -18,10 +18,10 @@ Cosmos mendukung arsitektur multi-sesi otonom di mana pengguna dapat menautkan n
 
 - `src/services/subBotService.ts`: Mengelola siklus hidup koneksi Baileys sub-bot (`start`, `stop`, `delete`, `status`, `list`, `initSubBots`, `broadcastSubBotForex`).
 - `src/services/subBotConfigService.ts`: Mengelola persistensi `database/{phoneNumber}/config.json` dengan _in-memory caching_.
-- `src/utils/apiKeyResolver.ts`: Menyelesaikan kunci API AI secara bertingkat (`Sub-Bot Custom Key -> Parent Bot Fallback`).
-- `src/tools/subbot.ts` & `src/tools/config.ts`: Antarmuka perintah pengguna (`.subbot` dan `.config`).
+- `src/lib/apiKeyResolver.ts`: Menyelesaikan kunci API AI secara bertingkat (`Sub-Bot Custom Key -> Parent Bot Fallback`).
+- `src/commands/system-help/subbot.ts` & `src/commands/system-help/config.ts`: Antarmuka perintah pengguna (`.subbot` dan `.config`).
 - `src/db.ts`: Inisialisasi basis data SQLite per sesi (`database/{phoneNumber}/database.sqlite`) dan bootstrapping skema DDL.
-- `src/utils/connectionManager.ts`: Abstraksi koneksi Baileys multi-sesi dengan proteksi diskoneksi terisolasi.
+- `src/lib/connectionManager.ts`: Pabrik socket Baileys multi-sesi (konstruksi, QR/pairing, lifecycle); seluruh subscription event didaftarkan via `registerEvents()` dari `src/events/`.
 
 ---
 
@@ -114,7 +114,7 @@ connectToWhatsApp({
     ```
 2. **Masking Kredensial:**
    Saat menampilkan status kunci API pada kartu CGDS atau respon perintah:
-    - Gunakan `maskApiKey(key)` dari `src/utils/apiKeyResolver.ts` (menghasilkan format `gsk_••••••••9aB2`).
+    - Gunakan `maskApiKey(key)` dari `src/lib/apiKeyResolver.ts` (menghasilkan format `gsk_••••••••9aB2`).
     - Dilarang menampilkan kunci API secara mentah (plain text) ke pengguna.
 3. **Peringatan Keamanan Obrolan Grup:**
    Jika pengguna mengonfigurasi kunci API di dalam grup WhatsApp publik (`chatJid.endsWith('@g.us')`), bot **WAJIB** menyertakan peringatan keamanan untuk menghapus pesan dan menyarankan konfigurasi via pesan pribadi (DM).

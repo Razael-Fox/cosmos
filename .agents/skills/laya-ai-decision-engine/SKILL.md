@@ -81,7 +81,7 @@ Hasil keputusan Laya hanya berperan sebagai **sinyal rekomendasi (advisory signa
 | ------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **API Decision Service** | `.worktrees/api/src/services/decisionService.ts`                        | Klien upstream System One, manajemen circuit breaker, fallback lokal.                               |
 | **API Decision Routes**  | `.worktrees/api/src/routes/decision.ts`                                 | Rute Fastify `/api/v1/decision/intent` & `/loan`, autentikasi JWT/IPC, rate limiting, validasi Zod. |
-| **Bot Decision Client**  | `src/services/agentEngine/decisionClient.ts`                            | Utilitas sanitasi PII zero-knowledge, pemanggilan HTTP gateway internal, graceful error catch.      |
-| **Bot Guidance Planner** | `src/services/agentEngine/guidancePlanner.ts`                           | Fast-path penanganan obrolan murni berbasis Laya sebelum pemanggilan LLM generatif.                 |
+| **Bot Decision Client**  | `src/services/agent/decisionClient.ts`                            | Utilitas sanitasi PII zero-knowledge, pemanggilan HTTP gateway internal, graceful error catch.      |
+| **Bot Guidance Planner** | `src/services/agent/guidancePlanner.ts`                           | Fast-path penanganan obrolan murni berbasis Laya sebelum pemanggilan LLM generatif.                 |
 | **Loan Underwriting**    | `src/services/loanService.ts`                                           | Penilaian risiko kredit berbasis metrik tersanitasi Laya yang diikat batas kode.                    |
 | **Automated Tests**      | `.worktrees/api/tests/decision.test.ts`, `tests/decisionClient.test.ts` | Verifikasi autentikasi, skema, sanitasi PII, dan fallback gateway.                                  |

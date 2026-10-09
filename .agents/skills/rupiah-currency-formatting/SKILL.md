@@ -1,7 +1,7 @@
 ---
 name: rupiah-currency-formatting
 description: >
-    Aturan baku untuk selalu menggunakan konvensi format mata uang Rupiah (IDR) lokal secara global (Rp tanpa spasi, pemisah ribuan titik, tanpa desimal) dan memanfaatkan utility src/utils/currency.ts.
+    Aturan baku untuk selalu menggunakan konvensi format mata uang Rupiah (IDR) lokal secara global (Rp tanpa spasi, pemisah ribuan titik, tanpa desimal) dan memanfaatkan utility src/lib/currency.ts.
 ---
 
 # Indonesian Rupiah (IDR) Currency Standards
@@ -11,7 +11,7 @@ description: >
 Seluruh fitur dalam repositori Cosmos yang menangani nilai uang/saldo/taruhan (ekonomi, kasino, minigame, transfer, reward, vault) **WAJIB** menggunakan konvensi format mata uang lokal Indonesia (bukan format internasional/ISO dengan koma ribuan).
 
 Semua format dan parsing nilai mata uang Rupiah harus didelegasikan ke modul utility global:
-`src/utils/currency.ts`.
+`src/lib/currency.ts`.
 
 ---
 
@@ -26,14 +26,14 @@ Semua format dan parsing nilai mata uang Rupiah harus didelegasikan ke modul uti
 
 ---
 
-## Utility Global (`src/utils/currency.ts`)
+## Utility Global (`src/lib/currency.ts`)
 
-Selalu import dan gunakan helper dari `src/utils/currency.ts`:
+Selalu import dan gunakan helper dari `src/lib/currency.ts`:
 
 ### 1. Formatting (`formatRupiah`)
 
 ```typescript
-import { formatRupiah } from '../utils/currency.js';
+import { formatRupiah } from '../lib/currency.js';
 
 // Format angka atau BigInt ke Rupiah lokal
 formatRupiah(1000000); // "Rp1.000.000"
@@ -43,7 +43,7 @@ formatRupiah(user.balance); // "Rp10.000"
 ### 2. Parsing User Input (`parseCurrencyAmount`)
 
 ```typescript
-import { parseCurrencyAmount } from '../utils/currency.js';
+import { parseCurrencyAmount } from '../lib/currency.js';
 
 // Mendukung:
 // - Titik ribuan: "1.000.000" -> 1000000

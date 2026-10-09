@@ -8,7 +8,7 @@ description: >
 
 ## 1. Ringkasan & Konteks
 
-Cosmos Central Bank (CCB) adalah subsistem perbankan terdesentralisasi virtual pada Cosmos WhatsApp Bot framework (`src/services/bankService.ts` dan `src/tools/bank.ts`). Subsistem ini mengelola rekening pengguna (`BankAccount`), transaksi pembukuan ganda (_double-entry ledger_) yang tidak dapat diubah (`BankTransaction`), limit transfer harian, bunga majemuk harian, serta konfirmasi transfer interaktif yang terhubung ke sistem pembatalan global.
+Cosmos Central Bank (CCB) adalah subsistem perbankan terdesentralisasi virtual pada Cosmos WhatsApp Bot framework (`src/services/bankService.ts` dan `src/commands/economy-banking/bank.ts`). Subsistem ini mengelola rekening pengguna (`BankAccount`), transaksi pembukuan ganda (_double-entry ledger_) yang tidak dapat diubah (`BankTransaction`), limit transfer harian, bunga majemuk harian, serta konfirmasi transfer interaktif yang terhubung ke sistem pembatalan global.
 
 Semua implementasi modul perbankan atau fitur ekonomi baru yang berinteraksi dengan saldo bank wajib mengikuti pedoman teknis di dokumen ini.
 
@@ -119,7 +119,7 @@ const receiverMsg = targetT('tools:bank.messages.transfer_received', {
 
 - Saat mengisi array `mentions` pada pesan Baileys, gunakan utility `formatMentions`:
     ```typescript
-    import { formatMentions } from '../utils/casino.js';
+    import { formatMentions } from '../lib/casino.js';
     const mentions = formatMentions([targetUserJid]);
     ```
 - Dukung pencarian user baik via format nomor telepon murni (`628xxx`), JID (`...@s.whatsapp.net`), maupun LID (`...@lid`).
@@ -128,8 +128,8 @@ const receiverMsg = targetT('tools:bank.messages.transfer_received', {
 
 ## 6. Format Mata Uang & Standar Output
 
-- **Format Rupiah:** Selalu gunakan `formatRupiah` dari `src/utils/currency.ts` untuk menampilkan saldo, limit, atau nominal uang (`Rp10.000`, `Rp50.000.000`).
-- **Parsing Nominal:** Selalu gunakan `parseCurrencyAmount` dari `src/utils/currency.ts` untuk menangani format teks fleksibel dari pengguna (`10k`, `1jt`, `10.000`).
+- **Format Rupiah:** Selalu gunakan `formatRupiah` dari `src/lib/currency.ts` untuk menampilkan saldo, limit, atau nominal uang (`Rp10.000`, `Rp50.000.000`).
+- **Parsing Nominal:** Selalu gunakan `parseCurrencyAmount` dari `src/lib/currency.ts` untuk menangani format teks fleksibel dari pengguna (`10k`, `1jt`, `10.000`).
 - **Pesan Formal English / i18n:** Seluruh output teks harus melalui namespace `tools:bank.*` pada file JSON lokalisasi (`src/locales/en/tools.json` dan `src/locales/id/tools.json`).
 
 ---

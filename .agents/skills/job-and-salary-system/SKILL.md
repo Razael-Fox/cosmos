@@ -8,7 +8,7 @@ description: >
 
 ## 1. Ringkasan & Konteks
 
-Subsistem Pekerjaan dan Gaji (**Job & Salary System**) adalah fitur perkembangan ekonomi non-perjudian pada Cosmos WhatsApp Bot framework (`src/services/jobs.ts`, `src/tools/job.ts`, `src/tools/work.ts`). Sistem ini memberikan alternatif bagi pengguna untuk mendapatkan saldo (`balance`) secara konsisten melalui shift kerja dan dividen usaha yang nilainya berfluktuasi mengikuti kondisi makroekonomi riil.
+Subsistem Pekerjaan dan Gaji (**Job & Salary System**) adalah fitur perkembangan ekonomi non-perjudian pada Cosmos WhatsApp Bot framework (`src/services/jobs.ts`, `src/commands/employment/job.ts`, `src/commands/employment/work.ts`). Sistem ini memberikan alternatif bagi pengguna untuk mendapatkan saldo (`balance`) secara konsisten melalui shift kerja dan dividen usaha yang nilainya berfluktuasi mengikuti kondisi makroekonomi riil.
 
 Fitur utama meliputi:
 
@@ -67,7 +67,7 @@ Setiap shift kerja `.work` menghitung penghasilan bersih menggunakan rumus:
 $$\text{Final Payout} = \text{round}(\text{Base Payout} \times \text{EconomyMultiplier})$$
 
 - `EconomyMultiplier` dibaca dari record terbaru tabel `EconomyMultiplier`. Jika tidak ada data atau bernilai <= 0, default fallback adalah `1.0`.
-- Format output mata uang **WAJIB** menggunakan fungsi `formatRupiah` dari `src/utils/currency.ts` (misal: `Rp250.000`).
+- Format output mata uang **WAJIB** menggunakan fungsi `formatRupiah` dari `src/lib/currency.ts` (misal: `Rp250.000`).
 
 ---
 
@@ -101,7 +101,7 @@ Contoh: `G2-F24-P7`, `G1-F12-P2.2026-09-30`, `G2-F24-P7.2026-09-30-beta`.
 
 ### 6.2 Metadata pada `version.json`
 
-Sumber kebenaran metadata versi adalah `version.json` di root repo, dibaca lewat `src/utils/versioning.ts` (`getVersionInfo()`). Dilarang memakai `package.json` sebagai sumber versi.
+Sumber kebenaran metadata versi adalah `version.json` di root repo, dibaca lewat `src/lib/versioning.ts` (`getVersionInfo()`). Dilarang memakai `package.json` sebagai sumber versi.
 
 ```json
 {

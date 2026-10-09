@@ -8,7 +8,7 @@ description: >
 
 ## 1. Ringkasan & Konteks
 
-Subsistem Pinjaman Bank (**Bank Loan System / BLS**) adalah fasilitas peminjaman dana berbasis penilaian risiko kredit AI pada Cosmos WhatsApp Bot framework (`src/services/loanService.ts` dan `src/tools/loan.ts`). Subsistem ini terintegrasi erat dengan Cosmos Central Bank (CCB), KTP Virtual ID (`IdCard`), katalog properti real estat (`PropertyCatalog`), serta sistem inventaris (`UserInventory`).
+Subsistem Pinjaman Bank (**Bank Loan System / BLS**) adalah fasilitas peminjaman dana berbasis penilaian risiko kredit AI pada Cosmos WhatsApp Bot framework (`src/services/loanService.ts` dan `src/commands/economy-banking/loan.ts`). Subsistem ini terintegrasi erat dengan Cosmos Central Bank (CCB), KTP Virtual ID (`IdCard`), katalog properti real estat (`PropertyCatalog`), serta sistem inventaris (`UserInventory`).
 
 Fitur utama meliputi:
 
@@ -155,7 +155,7 @@ Jika pinjaman melewati tanggal `dueDate` dan belum lunas:
 ## 6. Standar Notifikasi, Bahasa, dan Format Rupiah
 
 1. **Formal English Output:** Seluruh respon bot, pesan penolakan, pengingat jatuh tempo, dan rincian penyitaan wajib menggunakan Bahasa Inggris Formal melalui file lokalisasi `src/locales/en/tools.json` dan `src/locales/id/tools.json` pada namespace `tools.loan.*`.
-2. **Format Rupiah Baku:** Semua angka nominal mata uang wajib diformat menggunakan fungsi global `formatRupiah` dari `src/utils/currency.ts` (contoh: `Rp25.000.000`).
+2. **Format Rupiah Baku:** Semua angka nominal mata uang wajib diformat menggunakan fungsi global `formatRupiah` dari `src/lib/currency.ts` (contoh: `Rp25.000.000`).
 3. **Pembatalan Global:** Sesi interaktif pengajuan pinjaman wajib didaftarkan ke `cancellationManager` dan dapat dibatalkan sewaktu-waktu menggunakan perintah `.cancel`, `cancel`, atau `batal`.
 
 ---

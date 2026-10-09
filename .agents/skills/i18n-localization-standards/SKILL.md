@@ -107,7 +107,7 @@ return t('tools.setlang.success', { language: langName });
 
 ### G. Standar Kompatibilitas Deskripsi Perintah i18n (Command Description i18n Standards)
 
-Setiap tool di `src/tools/` wajib mendukung lokalisasi deskripsi perintah:
+Setiap tool di `src/commands/` wajib mendukung lokalisasi deskripsi perintah:
 
 1. **Deklarasi `ToolDefinition`:**
     - Menyertakan atribut `descriptionKey` berformat `tools.commands.<clean_name>.description`.
@@ -136,7 +136,7 @@ export const definition: ToolDefinition = {
     ```
 
 3. **Resolusi Dinamis via Helper:**
-    - Gunakan `resolveToolDescription(tool, t)` dari `src/tools/types.ts` atau `menuService.getToolDescription(tool, t)` untuk merender teks deskripsi pada tampilan menu/help.
+    - Gunakan `resolveToolDescription(tool, t)` dari `src/commands/types.ts` atau `menuService.getToolDescription(tool, t)` untuk merender teks deskripsi pada tampilan menu/help.
 
 ---
 
@@ -151,7 +151,7 @@ Pastikan setiap key baru ditambahkan secara simetris di kedua file JSON:
 
 ### 2. Mengakses Translasi di Dalam Tool
 
-Di dalam setiap file tool (`src/tools/**/*.ts`):
+Di dalam setiap file tool (`src/commands/**/*.ts`):
 
 ```typescript
 export async function execute(args: Record<string, any>, ctx: ToolContext): Promise<string> {
