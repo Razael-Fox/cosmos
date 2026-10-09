@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { hideTagTool } from '../src/services/agent/tools/hideTag.js';
+import { hideTagTool, hideTagAgentDeps } from '../src/services/agent/tools/hideTag.js';
 import { AgentToolRegistry } from '../src/services/agent/tools/registry.js';
 import { AgentToolPolicyManager } from '../src/services/agent/policy.js';
 import { ToolAiPolicy } from '../src/services/agent/types.js';
@@ -21,6 +21,8 @@ const ADMIN_JID = '6281111111111@s.whatsapp.net';
 const MEMBER_A = '6282222222222@s.whatsapp.net';
 const MEMBER_B = '6283333333333@s.whatsapp.net';
 const QUOTA_JID = '6284444444444@s.whatsapp.net';
+const STAGE_JID = '6285555555555@s.whatsapp.net';
+const CAP_JID = '6286666666666@s.whatsapp.net';
 
 interface SentMessage {
     jid: string;
@@ -35,6 +37,10 @@ function adminParticipants(): any[] {
 
 function quotaParticipants(): any[] {
     return [{ id: BOT_JID }, { id: QUOTA_JID, admin: 'admin' }, { id: MEMBER_A }];
+}
+
+function adminAs(jid: string): any[] {
+    return [{ id: BOT_JID }, { id: jid, admin: 'admin' }, { id: MEMBER_A }, { id: MEMBER_B }];
 }
 
 function createExecCtx(options: {
@@ -137,6 +143,7 @@ async function runTests() {
         assert.ok(result.confirmationPrompt?.includes('3 members'), `Got: ${result.confirmationPrompt}`);
         assert.ok(result.confirmationPrompt?.includes('Meeting at 7 PM'));
         assert.ok(result.confirmationPrompt?.includes('.confirm'));
+        assert.deepStrictEqual(result.stagedArguments, { message: 'Meeting at 7 PM' });
         assert.strictEqual(sent.length, 0, 'Staging must not dispatch');
     }
     console.log('✓ Confirmation staging verified.');
@@ -210,7 +217,95 @@ async function runTests() {
     }
     console.log('✓ Summarize flag verified.');
 
+    // [Test 11] Fix B: staged body is dispatched verbatim on confirm even
+    // when the page changes afterwards — full loop with arg spy.
+    console.log('[Test 11] Testing staged-body reuse on confirm...');
+    const realExtract = hideTagAgentDeps.extractPage;
+    const realGetTool = AgentToolRegistry.getTool;
+    const realCompletion11 = AgentGroqClient.createCompletion;
+    try {
+        let pageText = 'staged v1 body';
+        hideTagAgentDeps.extractPage = (async () => ({ kind: 'ok', text: pageText }) as const) as typeof realExtract;
+        const confirmCalls: Array<Record<string, unknown>> = [];
+        (AgentToolRegistry as any).getTool = (name: string) => {
+            const tool = realGetTool.call(AgentToolRegistry, name);
+            if (tool?.name !== 'hidetag') return tool;
+            return {
+                ...tool,
+                execute: async (args: Record<string, unknown>, c: any) => {
+                    confirmCalls.push({ ...args });
+                    return tool.execute(args, c);
+                }
+            };
+        };
+        let synthCalls = 0;
+        AgentGroqClient.createCompletion = (async () => {
+            synthCalls++;
+            if (synthCalls === 1) {
+                return {
+                    message: {
+                        content: null,
+                        tool_calls: [
+                            {
+                                id: 'call_b',
+                                type: 'function',
+                                function: { name: 'hidetag', arguments: JSON.stringify({ url: 'https://example.com/p.txt' }) }
+                            }
+                        ]
+                    },
+                    finishReason: 'tool_calls'
+                };
+            }
+            return { message: { content: 'AI ack', tool_calls: [] }, finishReason: 'stop' };
+        }) as typeof realCompletion11;
+
+        const { ctx, sent } = createExecCtx({ caller: STAGE_JID, participants: adminAs(STAGE_JID) });
+        const staged = await AgentExecutionLoop.run(
+            '.sara hidetag https://example.com/p.txt',
+            dummyPromptCtx({ callerJid: STAGE_JID }),
+            ctx,
+            { intent: 'HIDETAG', primaryTool: 'hidetag', confidence: 1, guidanceInstructions: '', docQuestion: false }
+        );
+        assert.ok(staged.includes('staged v1 body'), `Preview must show staged text, got: ${staged}`);
+
+        pageText = 'evil v2 body';
+        const handled = await AgentConfirmationManager.processConfirmation(
+            ctx.sock as any,
+            ctx.msg as any,
+            STAGE_JID,
+            GROUP_JID,
+            '.confirm'
+        );
+        assert.strictEqual(handled, true);
+        assert.strictEqual(confirmCalls.length, 2, 'Staging call + one confirmed re-entry');
+        assert.deepStrictEqual(confirmCalls[1], { message: 'staged v1 body', _confirmed: true });
+        assert.strictEqual(sent.length, 2);
+        assert.ok(sent[0].text.startsWith('staged v1 body'), `Must dispatch staged text, got: ${sent[0].text}`);
+        assert.ok(!sent[0].text.includes('evil'));
+        assert.strictEqual(sent[1].text, 'AI ack');
+    } finally {
+        hideTagAgentDeps.extractPage = realExtract;
+        (AgentToolRegistry as any).getTool = realGetTool;
+        AgentGroqClient.createCompletion = realCompletion11;
+        AgentConfirmationManager.clearAll();
+    }
+    console.log('✓ Staged-body reuse verified.');
+
+    // [Test 12] Fix C: truncation never exceeds the cap (limit - 1 + ellipsis).
+    console.log('[Test 12] Testing truncation cap...');
+    {
+        const { ctx, sent } = createExecCtx({ caller: CAP_JID, participants: adminAs(CAP_JID) });
+        const big = 'x'.repeat(4500);
+        const done = await hideTagTool.execute({ message: big, _confirmed: true }, ctx);
+        assert.strictEqual(done.success, true);
+        const body = sent[0].text.replace(/\n\u200B$/, '');
+        assert.ok(body.length <= 4000, `Body must fit the cap, got ${body.length}`);
+        assert.ok(body.endsWith('…'));
+    }
+    console.log('✓ Truncation cap verified.');
+
     // [Test 9] Page extraction helpers (offline-deterministic paths)
+    console.log('[Test 9] Testing extraction helpers...');
     console.log('[Test 9] Testing extraction helpers...');
     assert.strictEqual(stripHtmlToText('<script>alert(1)</script><p>Hello &amp; bye</p>'), 'Hello & bye');
     assert.strictEqual(stripHtmlToText('<style>.x{color:red}</style>  a  b'), 'a b');

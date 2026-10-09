@@ -9,6 +9,18 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P15] - 2026-10-09
+
+### Fixed — Review round 3: DNS pin, staged body, truncation (Issue #87)
+
+- Pinned URL transport (`nodeHttpGet`): validating `lookup` hook pins
+  DNS names to the validated address set; IP literals validated up
+  front (net skips the hook for literals). Per-hop revalidation kept.
+- `stagedArguments`: confirmed Sara dispatches send exactly the
+  previewed body (no re-fetch); loop prefers staged args on re-entry.
+- `truncateWords` slices at `limit - 1` so output never exceeds the cap.
+- PR description rewritten (Sara gate shipped, not deferred).
+
 ## [G2-F33-P14] - 2026-10-09
 
 ### Fixed — AI-generated Sara follow-up in originating chat (Issue #87)

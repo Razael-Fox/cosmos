@@ -122,19 +122,27 @@ export class AgentExecutionLoop {
                     const actionId = `agent_confirm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
                     console.log(`[CosmosAgentEngine] [CONFIRMATION_STAGED] Tool: ${funcName}, ActionId: ${actionId}`);
 
+                    // A tool may stage resolved server-side arguments (never
+                    // model-controlled) so the confirmed re-entry dispatches
+                    // exactly what the human previewed.
+                    const stagedArgs =
+                        result.stagedArguments && typeof result.stagedArguments === 'object'
+                            ? { ...result.stagedArguments }
+                            : safeArgs;
+
                     AgentConfirmationManager.stageAction({
                         actionId,
                         userJid: execCtx.callerJid,
                         userLid: execCtx.callerLid,
                         chatJid: execCtx.chatJid,
                         toolName: funcName,
-                        arguments: safeArgs,
+                        arguments: stagedArgs,
                         summary: result.confirmationPrompt || 'Pending Action',
                         execute: async () => {
                             // TRUSTED RE-ENTRY — the only place `_confirmed` may be set.
                             // Reached solely after the human replied `.confirm`, which
                             // AgentConfirmationManager has already identity-verified.
-                            const confirmedResult = await tool.execute({ ...safeArgs, _confirmed: true }, execCtx);
+                            const confirmedResult = await tool.execute({ ...stagedArgs, _confirmed: true }, execCtx);
                             if (!confirmedResult.success) {
                                 throw new Error(confirmedResult.error || 'Execution failed');
                             }

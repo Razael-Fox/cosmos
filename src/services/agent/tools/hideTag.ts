@@ -14,6 +14,11 @@ import {
 /** Preview length in the confirmation prompt; the full body still dispatches on confirm. */
 const CONFIRM_PREVIEW_CHARS = 200;
 
+// Test seam so the suite can stub page extraction without network/Tavily.
+export const hideTagAgentDeps: { extractPage: (url: string) => Promise<import('../tavilyClient.js').WebPageExtractOutcome> } = {
+    extractPage: (url: string) => extractWebPage(url)
+};
+
 /** Counts taggable members (bot excluded) from live metadata. */
 async function countTaggable(sock: AgentExecutionContext['sock'], groupJid: string): Promise<number> {
     try {
@@ -62,7 +67,7 @@ function firstSentences(text: string, max: number): string {
 function truncateWords(text: string, limit: number): string {
     const clean = text.trim();
     if (clean.length <= limit) return clean;
-    const slice = clean.slice(0, limit);
+    const slice = clean.slice(0, limit - 1);
     const lastSpace = slice.lastIndexOf(' ');
     return `${(lastSpace > limit * 0.6 ? slice.slice(0, lastSpace) : slice).trimEnd()}…`;
 }
@@ -115,7 +120,7 @@ export const hideTagTool: AgentTool = {
             if (!/^https?:\/\/\S+$/i.test(url)) {
                 return { success: false, error: t('tools.tag_hide.sara_no_text') };
             }
-            const page = await extractWebPage(url);
+            const page = await hideTagAgentDeps.extractPage(url);
             if (page.kind !== 'ok' || !page.text) {
                 return { success: false, error: t('tools.tag_hide.sara_no_text') };
             }
@@ -133,12 +138,19 @@ export const hideTagTool: AgentTool = {
         body = truncateWords(body, MAX_HIDETAG_CHARS);
 
         // ── 4. Confirmation staging (count + preview, never JIDs) ──
+        // The resolved body is staged with the action so the confirmed
+        // dispatch sends exactly what the human previewed — no re-fetch.
         const confirmed = args._confirmed === true;
         if (!confirmed) {
             const count = await countTaggable(ctx.sock, groupJid);
             const preview = body.length > CONFIRM_PREVIEW_CHARS ? `${body.slice(0, CONFIRM_PREVIEW_CHARS)}…` : body;
             const prompt = `${t('tools.tag_hide.sara_confirm', { count, preview })} ${t('tools.agent_moderation.confirm_suffix')}`;
-            return { success: true, requiresConfirmation: true, confirmationPrompt: prompt };
+            return {
+                success: true,
+                requiresConfirmation: true,
+                confirmationPrompt: prompt,
+                stagedArguments: { message: body }
+            };
         }
 
         // ── 5. Confirmed execution ──

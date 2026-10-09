@@ -1,4 +1,7 @@
 import { lookup } from 'node:dns/promises';
+import http from 'node:http';
+import https from 'node:https';
+import { isIP } from 'node:net';
 import { ToolDefinition, ToolContext, ToolModule } from '../types.js';
 import { cleanId, formatMentions } from '#lib/casino.js';
 import { getCachedMessage } from '#lib/messageCache.js';
@@ -117,26 +120,118 @@ async function defaultAllowUrl(raw: string): Promise<boolean> {
     return isPublicHttpUrl(raw);
 }
 
+export interface PinnedGetResult {
+    status: number;
+    headers: Headers;
+    body: AsyncIterable<Uint8Array>;
+    cancel: () => void;
+}
+
+export type HttpGetter = (rawUrl: string) => Promise<PinnedGetResult>;
+
+/**
+ * `lookup` hook that only resolves public addresses and hands the validated
+ * set back to the connector, so the established connection cannot land on an
+ * address that was never validated (DNS-rebinding pin). Note this hook never
+ * fires for IP-literal hostnames (net skips DNS for literals) — those are
+ * validated up front in `nodeHttpGet`.
+ */
+export function publicLookup(
+    hostname: string,
+    _options: unknown,
+    callback: (err: Error | null, addresses: Array<{ address: string; family: number }>) => void
+): void {
+    lookup(hostname, { all: true }).then(
+        (addresses) => {
+            if (addresses.length === 0 || !addresses.every((entry) => isPublicIpLiteral(entry.address))) {
+                callback(new Error(`Blocked non-public address for ${hostname}`), []);
+                return;
+            }
+            callback(
+                null,
+                addresses.map((entry) => ({ address: entry.address, family: entry.family }))
+            );
+        },
+        (err) => callback(err as Error, [])
+    );
+}
+
+/**
+ * Production URL transport over node:http(s) with the connection pinned to
+ * DNS-validated public addresses. Redirects are never followed here — the
+ * caller loops manually so every hop is revalidated.
+ */
+export function nodeHttpGet(rawUrl: string): Promise<PinnedGetResult> {
+    return new Promise((resolve, reject) => {
+        let parsed: URL;
+        try {
+            parsed = new URL(rawUrl);
+        } catch {
+            reject(new Error('Invalid URL'));
+            return;
+        }
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            reject(new Error('Unsupported protocol'));
+            return;
+        }
+        // IP literals bypass the lookup hook, so they are validated here.
+        if (isIP(parsed.hostname) !== 0 && !isPublicIpLiteral(parsed.hostname)) {
+            reject(new Error(`Blocked non-public address ${parsed.hostname}`));
+            return;
+        }
+        const lib = parsed.protocol === 'https:' ? https : http;
+        const req = lib.request(
+            parsed,
+            { method: 'GET', lookup: publicLookup as typeof lookup, timeout: FETCH_TIMEOUT_MS },
+            (res) => {
+                const headers = new Headers();
+                for (const [key, value] of Object.entries(res.headers)) {
+                    if (Array.isArray(value)) {
+                        for (const item of value) headers.append(key, item);
+                    } else if (value !== undefined) {
+                        headers.append(key, String(value));
+                    }
+                }
+                resolve({
+                    status: res.statusCode ?? 0,
+                    headers,
+                    body: res as unknown as AsyncIterable<Uint8Array>,
+                    cancel: () => res.destroy()
+                });
+            }
+        );
+        req.on('timeout', () => req.destroy(new Error('Request timed out')));
+        req.on('error', reject);
+        req.end();
+    });
+}
+
 export async function fetchUrlText(
     startUrl: string,
-    allowUrl: (raw: string) => Promise<boolean> = defaultAllowUrl
+    allowUrl: (raw: string) => Promise<boolean> = defaultAllowUrl,
+    get: HttpGetter = nodeHttpGet
 ): Promise<FetchOutcome> {
     let current = startUrl;
     for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop++) {
-        // SSRF boundary: every hop (including redirect targets) must resolve
-        // to public addresses only; redirects are followed manually so each
-        // target is revalidated instead of trusting fetch's built-in follower.
+        // SSRF boundary, two layers: a cheap DNS pre-check rejects blocked
+        // hosts before any socket exists, and the pinned transport below
+        // guarantees the connection only uses validated addresses. Redirects
+        // are followed manually so each target is revalidated per hop.
         if (!(await allowUrl(current))) return { ok: false, reason: 'BLOCKED' };
-        let res: Response;
+        let res: PinnedGetResult;
         try {
-            res = await fetch(current, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), redirect: 'manual' });
+            res = await get(current);
         } catch (err) {
             console.error('[hidetag] URL fetch failed:', err instanceof Error ? err.message : err);
             return { ok: false, reason: 'NETWORK' };
         }
         if (res.status >= 300 && res.status < 400) {
             const location = res.headers.get('location');
-            await res.body?.cancel().catch(() => {});
+            try {
+                res.cancel();
+            } catch {
+                /* ignore */
+            }
             if (!location || hop === MAX_REDIRECT_HOPS) return { ok: false, reason: 'NETWORK' };
             try {
                 current = new URL(location, current).toString();
@@ -145,18 +240,30 @@ export async function fetchUrlText(
             }
             continue;
         }
-        if (!res.ok) {
-            await res.body?.cancel().catch(() => {});
+        if (res.status < 200 || res.status >= 300) {
+            try {
+                res.cancel();
+            } catch {
+                /* ignore */
+            }
             return { ok: false, reason: 'NETWORK' };
         }
         const contentType = (res.headers.get('content-type') || '').toLowerCase();
         if (contentType && !contentType.startsWith('text/') && !contentType.includes('json') && !contentType.includes('markdown')) {
-            await res.body?.cancel().catch(() => {});
+            try {
+                res.cancel();
+            } catch {
+                /* ignore */
+            }
             return { ok: false, reason: 'UNSUPPORTED_TYPE' };
         }
         const announced = Number(res.headers.get('content-length'));
         if (Number.isFinite(announced) && announced > MAX_HIDETAG_BYTES) {
-            await res.body?.cancel().catch(() => {});
+            try {
+                res.cancel();
+            } catch {
+                /* ignore */
+            }
             return { ok: false, reason: 'TOO_LARGE' };
         }
         // Stream with a running counter: the cap is enforced while reading so
@@ -164,10 +271,14 @@ export async function fetchUrlText(
         const chunks: Buffer[] = [];
         let total = 0;
         try {
-            for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+            for await (const chunk of res.body) {
                 total += (chunk as Uint8Array).byteLength;
                 if (total > MAX_HIDETAG_BYTES) {
-                    await res.body?.cancel().catch(() => {});
+                    try {
+                        res.cancel();
+                    } catch {
+                        /* ignore */
+                    }
                     return { ok: false, reason: 'TOO_LARGE' };
                 }
                 chunks.push(Buffer.from(chunk as Uint8Array));

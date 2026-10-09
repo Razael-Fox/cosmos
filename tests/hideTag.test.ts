@@ -4,8 +4,11 @@ import {
     execute,
     fetchUrlText,
     hideTagDeps,
+    nodeHttpGet,
+    publicLookup,
     MAX_HIDETAG_BYTES,
-    MAX_HIDETAG_CHARS
+    MAX_HIDETAG_CHARS,
+    type HttpGetter
 } from '../src/commands/group/hideTag.js';
 import { getTranslator } from '../src/lib/i18n.js';
 import { normalizeCommandKey } from '../src/lib/commandNormalize.js';
@@ -193,76 +196,120 @@ async function runTests() {
     console.log('✓ Document guards verified.');
 
     // [Test 8] URL fetch: SSRF block (no request leaves the host), streaming
-    // cap, content-type gate, and redirect revalidation — all with generic,
-    // digit-free failure strings.
+    // Pinned transport, streaming cap, content-type gate, and redirect
+    // revalidation — all with generic, digit-free failure strings.
     console.log('[Test 8] Testing URL fetch SSRF boundary...');
-    const realFetch = globalThis.fetch;
     const allowPublic = async () => true;
-    try {
-        // 8a. Blocked target: fetch must never be called.
-        let fetchCalls = 0;
-        globalThis.fetch = (async () => {
-            fetchCalls++;
-            throw new Error('must not be called');
-        }) as any;
-        const blocked = await fetchUrlText('http://169.254.169.254/latest/meta-data/');
-        assert.ok(!blocked.ok && (blocked as any).reason === 'BLOCKED');
-        assert.strictEqual(fetchCalls, 0, 'No request may leave the host for link-local IPs');
-        const { ctx } = createCtx({ participants: adminParticipants(), argsStr: 'http://169.254.169.254/x' });
-        const blockedResult = await execute({}, ctx);
-        assert.strictEqual(blockedResult, getTranslator('en')('tools.tag_hide.fetch_failed'));
-        assert.strictEqual(fetchCalls, 0, 'Execute path must not fetch blocked hosts either');
+    const textHeaders = (extra: Record<string, string> = {}) =>
+        new Headers({ 'content-type': 'text/plain', ...extra });
+    const fakeGet =
+        (handler: (url: string) => { status: number; headers: Headers; chunks: string[] }): HttpGetter =>
+        (async (url: string) => {
+            const res = handler(url);
+            return {
+                status: res.status,
+                headers: res.headers,
+                body: (async function* () {
+                    for (const chunk of res.chunks) yield Buffer.from(chunk);
+                })(),
+                cancel: () => {}
+            };
+        }) as HttpGetter;
+    // 8a. Blocked target: transport must never be called.
+    let getCalls = 0;
+    const countingGet: HttpGetter = async () => {
+        getCalls++;
+        throw new Error('must not be called');
+    };
+    const blocked = await fetchUrlText('http://169.254.169.254/latest/meta-data/', undefined, countingGet);
+    assert.ok(!blocked.ok && (blocked as any).reason === 'BLOCKED');
+    assert.strictEqual(getCalls, 0, 'No request may leave the host for link-local IPs');
+    const { ctx } = createCtx({ participants: adminParticipants(), argsStr: 'http://169.254.169.254/x' });
+    const blockedResult = await execute({}, ctx);
+    assert.strictEqual(blockedResult, getTranslator('en')('tools.tag_hide.fetch_failed'));
 
-        // 8b. Streaming cap enforced while reading (no Content-Length hint).
-        globalThis.fetch = (async () =>
-            new Response('x'.repeat(MAX_HIDETAG_BYTES + 1), {
-                headers: { 'content-type': 'text/plain' }
-            }) as any) as any;
-        const big = await fetchUrlText('https://example.com/big.txt', allowPublic);
-        assert.ok(!big.ok && (big as any).reason === 'TOO_LARGE');
+    // 8b. Streaming cap enforced while reading (no Content-Length hint).
+    const big = await fetchUrlText(
+        'https://example.com/big.txt',
+        allowPublic,
+        fakeGet(() => ({ status: 200, headers: textHeaders(), chunks: ['x'.repeat(MAX_HIDETAG_BYTES + 1)] }))
+    );
+    assert.ok(!big.ok && (big as any).reason === 'TOO_LARGE');
 
-        // 8c. Non-text content rejected before buffering.
-        globalThis.fetch = (async () =>
-            new Response('%PDF-1.4 binary', {
-                headers: { 'content-type': 'application/pdf' }
-            }) as any) as any;
-        const pdf = await fetchUrlText('https://example.com/f.pdf', allowPublic);
-        assert.ok(!pdf.ok && (pdf as any).reason === 'UNSUPPORTED_TYPE');
+    // 8c. Non-text content rejected before buffering.
+    const pdf = await fetchUrlText(
+        'https://example.com/f.pdf',
+        allowPublic,
+        fakeGet(() => ({ status: 200, headers: new Headers({ 'content-type': 'application/pdf' }), chunks: ['%PDF'] }))
+    );
+    assert.ok(!pdf.ok && (pdf as any).reason === 'UNSUPPORTED_TYPE');
 
-        // 8d. Redirect targets revalidated per hop.
-        const seen: string[] = [];
-        globalThis.fetch = (async (_input: any) =>
-            new Response(null, {
-                status: 302,
-                headers: { location: 'http://169.254.169.254/evil' }
-            }) as any) as any;
-        const redirect = await fetchUrlText('https://example.com/r', async (raw) => {
+    // 8d. Redirect targets revalidated per hop.
+    const seen: string[] = [];
+    const redirect = await fetchUrlText(
+        'https://example.com/r',
+        async (raw) => {
             seen.push(raw);
             return !raw.includes('169.254.169.254');
-        });
-        assert.deepStrictEqual(seen, ['https://example.com/r', 'http://169.254.169.254/evil']);
-        assert.ok(!redirect.ok && (redirect as any).reason === 'BLOCKED');
+        },
+        fakeGet(() => ({
+            status: 302,
+            headers: new Headers({ location: 'http://169.254.169.254/evil' }),
+            chunks: []
+        }))
+    );
+    assert.deepStrictEqual(seen, ['https://example.com/r', 'http://169.254.169.254/evil']);
+    assert.ok(!redirect.ok && (redirect as any).reason === 'BLOCKED');
 
-        // 8e. Happy path still delivers text.
-        globalThis.fetch = (async () =>
-            new Response('linked hello', {
-                headers: { 'content-type': 'text/plain; charset=utf-8' }
-            }) as any) as any;
-        const good = await fetchUrlText('https://example.com/note.txt', allowPublic);
-        assert.ok(good.ok && (good as any).text === 'linked hello');
+    // 8e. Happy path still delivers text.
+    const good = await fetchUrlText(
+        'https://example.com/note.txt',
+        allowPublic,
+        fakeGet(() => ({ status: 200, headers: textHeaders(), chunks: ['linked ', 'hello'] }))
+    );
+    assert.ok(good.ok && (good as any).text === 'linked hello');
 
-        // 8f. Transport failure maps to the generic string (no dial internals).
-        globalThis.fetch = (async () => {
-            throw new Error('connect ECONNREFUSED 127.0.0.1: Bali');
-        }) as any;
-        const { ctx: failCtx } = createCtx({
-            participants: adminParticipants(),
-            argsStr: 'https://example.com/down.txt'
+    // 8f. Transport failure maps to the generic string (no dial internals).
+    const down = await fetchUrlText(
+        'https://example.com/down.txt',
+        allowPublic,
+        fakeGet(() => {
+            throw new Error('connect ECONNREFUSED 127.0.0.1:9');
+        })
+    );
+    assert.ok(!down.ok && (down as any).reason === 'NETWORK');
+
+    // 8g. Pinned transport blocks loopback even with the pre-check bypassed —
+    // a listening local server must receive zero requests. IP literals never
+    // reach the lookup hook, so the transport validates them up front.
+    {
+        const http = await import('node:http');
+        let hits = 0;
+        const server = http.createServer((_req, res) => {
+            hits++;
+            res.end('nope');
         });
-        const failResult = await execute({}, failCtx);
-        assert.strictEqual(failResult, getTranslator('en')('tools.tag_hide.fetch_failed'));
-    } finally {
-        globalThis.fetch = realFetch;
+        await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+        try {
+            const port = (server.address() as any).port;
+            const pinned = await fetchUrlText(`http://127.0.0.1:${port}/secret`, allowPublic, nodeHttpGet);
+            assert.ok(!pinned.ok, 'Loopback must never connect');
+            assert.strictEqual(hits, 0, 'Pinned transport must not emit any request to loopback');
+        } finally {
+            server.close();
+        }
+    }
+
+    // 8h. The lookup hook itself rejects non-public resolutions.
+    {
+        const loopback = await new Promise<{ err: Error | null }>((resolve) =>
+            publicLookup('127.0.0.1', {}, (err) => resolve({ err }))
+        );
+        assert.ok(loopback.err instanceof Error, 'Loopback resolution must be rejected');
+        const unresolvable = await new Promise<{ err: Error | null }>((resolve) =>
+            publicLookup('nonexistent-invalid-test.local', {}, (err) => resolve({ err }))
+        );
+        assert.ok(unresolvable.err instanceof Error, 'Unresolvable hosts must be rejected');
     }
     console.log('✓ URL fetch SSRF boundary verified.');
 
