@@ -1,5 +1,7 @@
 import { ToolModule, ToolContext } from '../types.js';
 import { CosmosAgentEngine } from '#services/agent/index.js';
+import { AgentToolRegistry } from '#services/agent/tools/registry.js';
+import { toolsHandler } from '#handlers/commandHandler.js';
 import { getTranslator } from '#lib/i18n.js';
 
 /**
@@ -17,6 +19,22 @@ const INTENT_VERB_PATTERN =
 export function isCasualFragment(promptText: string): boolean {
     const tokenCount = promptText.split(/\s+/).length;
     return tokenCount <= 3 && !promptText.includes('?') && !INTENT_VERB_PATTERN.test(promptText);
+}
+
+/**
+ * True when the prompt opens with a registered agent tool or dot-command
+ * (e.g. `.sara hidetag hello`). Short imperative invocations are actionable
+ * even though the casual gate above would eat them (≤3 tokens, no verb).
+ * Longest-prefix over the first two words, mirroring the message handler.
+ */
+export function opensWithRegisteredTool(promptText: string): boolean {
+    const words = promptText.toLowerCase().split(/\s+/).filter(Boolean);
+    for (let len = Math.min(2, words.length); len >= 1; len--) {
+        const candidate = words.slice(0, len).join(' ');
+        if (AgentToolRegistry.getTool(candidate)) return true;
+        if (toolsHandler.getTool(candidate)) return true;
+    }
+    return false;
 }
 
 const saraTool: ToolModule = {
@@ -53,8 +71,9 @@ const saraTool: ToolModule = {
         // Confidence gate (Issue #71, Step 3): a bare fragment such as
         // `.ai is useless` (≤ 3 tokens, no question mark, no request verb) is
         // casual prose, not a prompt — ask for clarification instead of
-        // forwarding it to the AI engine.
-        if (promptText && isCasualFragment(promptText)) {
+        // forwarding it to the AI engine. Prompts that open with a registered
+        // tool (`.sara hidetag hello`) are always actionable, never casual.
+        if (promptText && isCasualFragment(promptText) && !opensWithRegisteredTool(promptText)) {
             const t = ctx.t || getTranslator('en');
             await sock.sendMessage(chatJid, { text: t('tools.sara.clarify') }, { quoted: msg });
             return;

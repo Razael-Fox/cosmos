@@ -9,6 +9,16 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P18] - 2026-10-09
+
+### Fixed — `.sara <tool> …` short invocations no longer eaten by clarify gate
+
+- `.sara hidetag hello` (2 tokens, no intent verb) hit Issue #71's
+  casual-fragment guard and got the clarify reply instead of reaching
+  Sara. Prompts opening with a registered agent tool or dot-command
+  (`opensWithRegisteredTool`, longest-prefix over the first two words)
+  now bypass the guard; genuine casual prose still clarifies.
+
 ## [G2-F33-P17] - 2026-10-09
 
 ### Fixed — Duplicate test log line (Issue #87)

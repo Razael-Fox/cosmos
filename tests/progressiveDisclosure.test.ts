@@ -1,5 +1,6 @@
 import assert from 'assert';
-import saraTool, { isCasualFragment } from '../src/commands/tools-utilities/sara.js';
+import saraTool, { isCasualFragment, opensWithRegisteredTool } from '../src/commands/tools-utilities/sara.js';
+import { CosmosAgentEngine } from '../src/services/agent/index.js';
 import { recordCommandUse, pickHintCommand } from '../src/lib/commandHints.js';
 import { getTranslator } from '../src/lib/i18n.js';
 
@@ -43,6 +44,32 @@ async function runTests() {
     assert.strictEqual(isCasualFragment('cek saldo'), false, 'Indonesian verb must route');
     assert.strictEqual(isCasualFragment('summarize this'), false, 'Short EN imperative must route');
     assert.strictEqual(isCasualFragment('ringkas ini'), false, 'Short ID imperative must route');
+
+    // 1.4 Tool-led fragments bypass the clarify guard (Issue #87 follow-up):
+    // `.sara hidetag hello` names a registered agent tool, so it must reach
+    // the engine even though the casual predicate alone would eat it.
+    assert.strictEqual(isCasualFragment('hidetag hello'), true, 'Predicate itself is unchanged');
+    assert.strictEqual(opensWithRegisteredTool('hidetag hello'), true, 'Agent tool opener must be actionable');
+    assert.strictEqual(opensWithRegisteredTool('HIDETAG hello'), true, 'Opener match must be case-insensitive');
+    assert.strictEqual(opensWithRegisteredTool('is useless'), false, 'Casual prose must stay casual');
+    const realProcess = CosmosAgentEngine.processMessage;
+    let forwarded: string | null = null;
+    (CosmosAgentEngine as any).processMessage = async (_s: any, _m: any, _j: any, prompt: string) => {
+        forwarded = prompt;
+        return null;
+    };
+    try {
+        captured.length = 0;
+        await saraTool.execute({ prompt: 'hidetag hello' }, ctx);
+        assert.strictEqual(forwarded, 'hidetag hello', 'Tool-led fragment must reach the engine');
+        assert.strictEqual(captured.length, 0, 'Tool-led fragment must not clarify');
+        forwarded = null;
+        await saraTool.execute({ prompt: 'is useless' }, ctx);
+        assert.strictEqual(forwarded, null, 'Casual prose must not reach the engine');
+        assert.strictEqual(captured.length, 1, 'Casual prose must still clarify');
+    } finally {
+        CosmosAgentEngine.processMessage = realProcess;
+    }
     console.log('✓ Sara clarify guard verified.');
 
     // [Test 2] Contextual hint adjacency & suppression (Issue #71, Step 4)
