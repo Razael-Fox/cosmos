@@ -9,6 +9,27 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P8] - 2026-10-09
+
+### Changed — Extract `src/events/` (Phase 3 of the `src/` restructure)
+
+- All 8 Baileys socket subscriptions moved out of
+  `src/lib/connectionManager.ts` into one file per event:
+  `connection.ts` (`connection.update`, `creds.update`), `contacts.ts`
+  (`messaging-history.set`, `contacts.upsert/update`), `presence.ts`,
+  `participants.ts` (`group-participants.update`), `messages.ts`, plus
+  `index.ts` (`registerEvents`, same registration order) and
+  `eventContext.ts` (typed per-connection state, no `any` bag).
+- Handler bodies moved verbatim; `connectionManager.ts` keeps socket
+  construction, pairing, and lifecycle and is 456 lines shorter.
+- Deliberate deviation: `BlacklistEnforcer` keeps its class API and its
+  subscription body untouched — `participants.ts` invokes it via
+  `startListening()` instead of inlining the LID-resolution loop, so the
+  moderation path has zero behavior drift.
+- Verified: `typecheck`, `lint`, `build` clean; 122/122 hermetic test
+  assertions green (same as baseline); DB-backed checks fail identically
+  before/after (pre-existing live-DB integrity issue on this machine).
+
 ## [G2-F33-P7] - 2026-10-09
 
 ### Added — Test Runner Wiring
