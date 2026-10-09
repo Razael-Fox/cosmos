@@ -9,6 +9,19 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P7] - 2026-10-09
+
+### Added — Test Runner Wiring
+
+- Added the missing `test` script (`tsx --test "tests/*.test.ts"`) so
+  `pnpm test` actually executes the 42-file suite instead of silently
+  passing with no script. Verified: 153 tests collected, 122 passing
+  across 10 database-independent files.
+- Known pre-existing failures (unchanged by this commit): the remaining
+  suite files require the live development database
+  (`storage/database.sqlite`), which fails `integrity_check` on this
+  machine, so they fail identically with and without this change.
+
 ## [G2-F33-P6] - 2026-10-08
 
 ### Changed — Dependency Updates (dotenv 18, better-sqlite3 13)
