@@ -9,6 +9,14 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P16] - 2026-10-09
+
+### Fixed — Bracketed/hex-mapped IPv6 literal SSRF edge (Issue #87)
+
+- `isPublicIpLiteral` strips URL brackets first and judges hex-mapped
+  `::ffff:XXXX:XXXX` via the embedded IPv4 address; `nodeHttpGet`
+  strips brackets before its literal gate (net.isIP rejects brackets).
+
 ## [G2-F33-P15] - 2026-10-09
 
 ### Fixed — Review round 3: DNS pin, staged body, truncation (Issue #87)

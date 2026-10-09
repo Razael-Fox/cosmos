@@ -4,6 +4,7 @@ import {
     execute,
     fetchUrlText,
     hideTagDeps,
+    isPublicIpLiteral,
     nodeHttpGet,
     publicLookup,
     MAX_HIDETAG_BYTES,
@@ -310,6 +311,63 @@ async function runTests() {
             publicLookup('nonexistent-invalid-test.local', {}, (err) => resolve({ err }))
         );
         assert.ok(unresolvable.err instanceof Error, 'Unresolvable hosts must be rejected');
+    }
+
+    // 8i. Bracketed + hex-mapped IPv6 literals are judged, not trusted.
+    {
+        assert.strictEqual(isPublicIpLiteral('[::1]'), false);
+        assert.strictEqual(isPublicIpLiteral('[::ffff:127.0.0.1]'), false);
+        assert.strictEqual(isPublicIpLiteral('[::ffff:7f00:1]'), false);
+        assert.strictEqual(isPublicIpLiteral('[fe80::1]'), false);
+        assert.strictEqual(isPublicIpLiteral('::ffff:7f00:1'), false, 'Unbracketed hex-mapped must also be caught');
+        assert.strictEqual(isPublicIpLiteral('[2606:4700:4700::1111]'), true, 'Public IPv6 stays allowed');
+        assert.strictEqual(isPublicIpLiteral('2606:4700:4700::1111'), true);
+        for (const target of [
+            'http://[::1]/x',
+            'http://[::ffff:127.0.0.1]/x',
+            'http://[::ffff:7f00:1]/x',
+            'http://[fe80::1]/x'
+        ]) {
+            let calls = 0;
+            const out = await fetchUrlText(
+                target,
+                undefined,
+                (async () => {
+                    calls++;
+                    throw new Error('must not be called');
+                }) as HttpGetter
+            );
+            assert.ok(!out.ok, `${target} must be blocked`);
+            assert.strictEqual(calls, 0, `No request for ${target}`);
+        }
+    }
+
+    // 8j. IPv6-loopback listener variant: zero requests even pre-check-bypassed.
+    {
+        const http = await import('node:http');
+        let hits = 0;
+        const server = http.createServer((_req, res) => {
+            hits++;
+            res.end('nope');
+        });
+        try {
+            await new Promise<void>((resolve, reject) => {
+                server.on('error', reject);
+                server.listen(0, '::1', resolve);
+            });
+            const port = (server.address() as any).port;
+            const pinned = await fetchUrlText(`http://[::1]:${port}/secret`, allowPublic, nodeHttpGet);
+            assert.ok(!pinned.ok, 'IPv6 loopback must never connect');
+            assert.strictEqual(hits, 0, 'No request to IPv6 loopback');
+        } catch (err) {
+            if ((err as any)?.code === 'EAFNOSUPPORT') {
+                console.log('    (skipped: no IPv6 loopback in this environment)');
+            } else {
+                throw err;
+            }
+        } finally {
+            server.close();
+        }
     }
     console.log('✓ URL fetch SSRF boundary verified.');
 

@@ -68,12 +68,22 @@ function fileSizeHint(docMsg: any): number {
     return 0;
 }
 
-function isPublicIpLiteral(ip: string): boolean {
-    if (ip.includes(':')) {
-        const lower = ip.toLowerCase();
+export function isPublicIpLiteral(ip: string): boolean {
+    // URL hostnames keep IPv6 brackets (`[::1]`); strip them first so every
+    // check below sees the bare literal.
+    const literal = ip.replace(/^\[|\]$/g, '');
+    if (literal.includes(':')) {
+        const lower = literal.toLowerCase();
         // IPv4-mapped IPv6: judge the inner IPv4 address.
         const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
         if (mapped) return isPublicIpLiteral(mapped[1]);
+        // Hex-mapped ::ffff:XXXX:XXXX: judge the embedded IPv4 address.
+        const hexMapped = lower.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+        if (hexMapped) {
+            const hi = parseInt(hexMapped[1], 16);
+            const lo = parseInt(hexMapped[2], 16);
+            return isPublicIpLiteral(`${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`);
+        }
         if (lower === '::' || lower === '::1') return false;
         // Multicast ff00::/8, link-local fe80::/10, unique-local fc00::/7,
         // documentation 2001:db8::/32, discard 100::/64.
@@ -83,7 +93,7 @@ function isPublicIpLiteral(ip: string): boolean {
         if (lower.startsWith('100::')) return false;
         return true;
     }
-    const octets = ip.split('.').map(Number);
+    const octets = literal.split('.').map(Number);
     if (octets.length !== 4 || octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
     const [a, b] = octets;
     if (a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31)) return false;
@@ -174,8 +184,10 @@ export function nodeHttpGet(rawUrl: string): Promise<PinnedGetResult> {
             reject(new Error('Unsupported protocol'));
             return;
         }
-        // IP literals bypass the lookup hook, so they are validated here.
-        if (isIP(parsed.hostname) !== 0 && !isPublicIpLiteral(parsed.hostname)) {
+        // IP literals bypass the lookup hook, so they are validated here
+        // (brackets stripped: URL keeps `[::1]`, net.isIP does not parse it).
+        const bareHost = parsed.hostname.replace(/^\[|\]$/g, '');
+        if (isIP(bareHost) !== 0 && !isPublicIpLiteral(bareHost)) {
             reject(new Error(`Blocked non-public address ${parsed.hostname}`));
             return;
         }
