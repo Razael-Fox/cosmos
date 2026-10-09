@@ -9,6 +9,25 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P9] - 2026-10-09
+
+### Fixed — Test Suite Isolation (Database Corruption Response)
+
+- `pnpm test` now forces `DATABASE_URL` and `STORAGE_DIR` to scratch
+  paths under `/tmp/opencode/`, so the suite can never again write to the
+  live bind-mounted `storage/database.sqlite`. This was the mechanism
+  behind test-induced production writes.
+- `tests/subbot.test.ts` now resolves sub-bot database paths through the
+  same `STORAGE_DIR`-aware logic as `src/db.ts` instead of hardcoded
+  cwd-relative paths.
+- Full suite result on the isolated database: **153/153 passing**.
+- Production note: the live database failed `integrity_check` (alerts
+  02:00/02:06), was recovered via `sqlite3 .recover` into a verified-clean
+  file (`integrity_check: ok`, 99 users / 72 bank accounts / 1191 session
+  credentials / 19 groups preserved, test-junk rows purged), and swapped
+  in with a ~2-minute bot/api/mcp restart. The corrupt original is kept
+  at `storage/database.sqlite.corrupt-20261009`.
+
 ## [G2-F33-P8] - 2026-10-09
 
 ### Changed — Extract `src/events/` (Phase 3 of the `src/` restructure)

@@ -1,6 +1,6 @@
 {
     "name": "cosmos",
-    "version": "G2-F33-P8",
+    "version": "G2-F33-P9",
     "description": "A modern, enterprise-grade WhatsApp Bot framework",
     "repository": {
         "type": "git",
@@ -26,7 +26,7 @@
         "build": "tsc && tsx scripts/i18n/copy-locales.ts",
         "typecheck": "tsc --noEmit",
         "lint": "eslint .",
-        "test": "tsx --test \"tests/*.test.ts\"",
+        "test": "DATABASE_URL=\"file:/tmp/opencode/test-database.sqlite\" STORAGE_DIR=\"/tmp/opencode/test-storage\" tsx --test \"tests/*.test.ts\"",
         "format": "prettier --write .",
         "validate:i18n": "tsx scripts/i18n/validate.ts && tsx scripts/i18n/check-usage.ts",
         "mcp:start": "tsx src/mcp/index.ts",
