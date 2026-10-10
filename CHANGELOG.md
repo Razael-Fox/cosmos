@@ -9,6 +9,28 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P20] - 2026-10-10
+
+### Changed — Agent Guidance for the New Source Structure (Phase 4 Docs)
+
+- New skill `.agents/skills/cosmos-structure/SKILL.md`: role boundaries for
+  `commands/`/`events/`/`handlers/`/`lib/`, camelCase-file and kebab-case-folder
+  conventions, the folder↔category invariant, the new-code placement table,
+  and the deliberate non-renames (`mcp/tools/`, `agent/tools/`, `tools.json`,
+  `ToolDefinition`/`ToolsHandler` aliases).
+- `AGENTS.md` §2 directory map rewritten for the new layout; Rules E, L, N,
+  S, T, AC now point at `src/lib/*` and `CommandDefinition` in `src/commands/`.
+- All 12 affected skill files updated from `src/tools/`→`src/commands/`,
+  `src/utils/`→`src/lib/`, `services/agentEngine/`→`services/agent/`.
+
+### Fixed — `.check online` Subscribes Presence on First Use
+
+- First invocation per group now calls `presenceSubscribe` once for each
+  `@s.whatsapp.net` member (fire-and-forget, one-time per group), so the
+  passive presence map fills in and later runs list actually-online members
+  instead of almost nobody. Retries on failure; never delays the reply.
+  Covered by Test 9 in `tests/checkOnline.test.ts`.
+
 ## [G2-F33-P19] - 2026-10-09
 
 ### Fixed — LID-masked admins denied by Sara context resolver
