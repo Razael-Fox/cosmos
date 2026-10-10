@@ -73,7 +73,7 @@ Seluruh metadata versi disimpan di `version.json` pada root repo supaya mudah di
 
 ---
 
-## 4. Pembacaan Programatik: `src/utils/versioning.ts`
+## 4. Pembacaan Programatik: `src/lib/versioning.ts`
 
 Versi **wajib** dibaca melalui utility terpusat ini. **Dilarang** mengambil versi dari `package.json` atau mem-parse `CHANGELOG.md` secara manual.
 
@@ -85,7 +85,7 @@ import {
     bumpVersion,
     compareVersions,
     isValidVersion
-} from './utils/versioning.js';
+} from '#lib/versioning.js';
 
 const info = getVersionInfo(); // { version, generation, featureMilestone, patch, releaseDate }
 formatVersion(info); // "G2-F24-P7"

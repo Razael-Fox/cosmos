@@ -1,7 +1,7 @@
 ---
 name: global-cancellation-manager
 description: >
-    Panduan baku untuk mengintegrasikan alur interaktif bertingkat (multi-step flows), konfirmasi transaksi, atau lobby game ke dalam sistem pembatalan global (.cancel) menggunakan src/utils/cancellationManager.ts.
+    Panduan baku untuk mengintegrasikan alur interaktif bertingkat (multi-step flows), konfirmasi transaksi, atau lobby game ke dalam sistem pembatalan global (.cancel) menggunakan src/lib/cancellationManager.ts.
 ---
 
 # Global Cancellation Manager Standard (`.cancel`)
@@ -14,7 +14,7 @@ Dalam WhatsApp bot framework Cosmos, berbagai perintah membutuhkan interaksi lan
 - Lobby game yang menunggu pemain lain atau host, misalnya Buckshot Roulette (`.creategame`).
 - Dialog konfirmasi aksi berisiko tinggi (misalnya konfirmasi penjualan properti atau transfer dana).
 
-Untuk memberikan pengalaman pengguna yang seragam dan mencegah pengguna terjebak di tengah alur, **seluruh fitur bertingkat atau konfirmasi WAJIB diintegrasikan ke dalam Sistem Pembatalan Global** (`src/utils/cancellationManager.ts`).
+Untuk memberikan pengalaman pengguna yang seragam dan mencegah pengguna terjebak di tengah alur, **seluruh fitur bertingkat atau konfirmasi WAJIB diintegrasikan ke dalam Sistem Pembatalan Global** (`src/lib/cancellationManager.ts`).
 
 Dengan integrasi ini, pengguna dapat mengetikkan `.cancel`, `cancel`, `.batal`, `batal`, `.abort`, atau `abort` kapan saja untuk membatalkan operasi yang sedang berlangsung dengan aman.
 
@@ -22,11 +22,11 @@ Dengan integrasi ini, pengguna dapat mengetikkan `.cancel`, `cancel`, `.batal`, 
 
 ## 2. Arsitektur & Modul Utama
 
-1. **Manager Utility (`src/utils/cancellationManager.ts`)**:
+1. **Manager Utility (`src/lib/cancellationManager.ts`)**:
     - Menyimpan registry sesi aktif dalam memori dengan isolasi ketat berdasarkan user (`userJid`) dan obrolan (`chatJid`).
     - Menyediakan API registrasi, pencarian, dan penanganan pembatalan.
 
-2. **Dedicated Tool (`src/tools/cancel.ts`)**:
+2. **Dedicated Tool (`src/commands/system-help/cancel.ts`)**:
     - Menangani command `.cancel` (alias: `batal`, `abort`).
     - Jika ada sesi aktif untuk pengguna di chat tersebut, menjalankan callback pembatalan (`onCancel`).
     - Jika tidak ada sesi aktif, mengembalikan pesan informatif:
@@ -44,8 +44,8 @@ Dengan integrasi ini, pengguna dapat mengetikkan `.cancel`, `cancel`, `.batal`, 
 Saat perintah memulai alur interaktif, panggil `registerCancellableSession`:
 
 ```typescript
-import { registerCancellableSession } from '#/utils/cancellationManager.js';
-import { cleanId } from '#/utils/casino.js';
+import { registerCancellableSession } from '#lib/cancellationManager.js';
+import { cleanId } from '#lib/casino.js';
 
 // Di dalam eksekusi tool atau inisialisasi alur
 registerCancellableSession({
@@ -75,7 +75,7 @@ registerCancellableSession({
 Setelah alur selesai (misalnya data berhasil disimpan atau game dimulai), hapus sesi dari cancellation manager:
 
 ```typescript
-import { unregisterCancellableSessionByUser } from '#/utils/cancellationManager.js';
+import { unregisterCancellableSessionByUser } from '#lib/cancellationManager.js';
 
 // Saat alur selesai dengan sukses:
 unregisterCancellableSessionByUser(cleanId(userJid), remoteJid);
@@ -84,7 +84,7 @@ unregisterCancellableSessionByUser(cleanId(userJid), remoteJid);
 Atau jika menggunakan `sessionId`:
 
 ```typescript
-import { unregisterCancellableSession } from '#/utils/cancellationManager.js';
+import { unregisterCancellableSession } from '#lib/cancellationManager.js';
 
 unregisterCancellableSession(`roulette_${sessionId}`);
 ```

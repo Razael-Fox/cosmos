@@ -23,15 +23,16 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### 📁 Struktur Direktori
 
-- `src/` - Kode sumber utama TypeScript (bot engine):
+- `src/` - Kode sumber utama TypeScript (bot engine). Struktur peran & penamaan baku: rujuk `.agents/skills/cosmos-structure/SKILL.md`.
     - `cli/` - CLI pairing (`pair.ts` WhatsApp, `tgpair.ts` Telegram).
     - `seeds/` - Seeder katalog (`items.ts`, `properties.ts`), dipanggil dari `src/index.ts`.
-    - `handlers/` - Router pesan (`message.ts`).
-    - `tools/` - Satu file per command. Command satu keluarga ditaruh di subfolder (`tools/group/`, `tools/property/`). `handler.ts` memuat tool secara **rekursif**, jadi subfolder baru otomatis terdeteksi; `handler.ts` dan `types.ts` tidak dimuat sebagai tool.
-    - `services/` - Logika domain & infrastruktur (bank, loan, job, agentEngine, statusNotifier, IPC, broadcast).
-    - `utils/` - Helper lintas-fitur (`utils/sticker/` untuk modul stiker, `utils/security/` untuk guard keamanan).
-    - `mcp/` - Cosmos MCP server. Contoh konfigurasi klien ada di `docs/mcp/` (bukan di `src/mcp/`).
-    - `locales/` - Terjemahan `en` dan `id` (5 namespace JSON per bahasa).
+    - `commands/` - Satu file per command bot dalam 11 subfolder kebab-case (`commands/group/`, `commands/economy-banking/`, ...). Nama file camelCase dan **tidak** mengkodekan string pemanggilan (`applyLicense.ts` ↔ `.apply license`); `definition.name` adalah sumber kebenaran. `commandHandler.ts` memuat command secara **rekursif**, jadi subfolder baru otomatis terdeteksi; `types.ts` tidak dimuat sebagai command.
+    - `events/` - Subscriber event Baileys, satu file per event (`connection.ts`, `messages.ts`, `contacts.ts`, `presence.ts`, `participants.ts`) dengan satu entry point `registerEvents(sock, ctx)` di `index.ts`. Urutan registrasi bersifat load-bearing — jangan diubah.
+    - `handlers/` - Pipeline request Cosmos: `message.ts` (parse + resolusi command) dan `commandHandler.ts` (registry + dispatch via `CommandsHandler`).
+    - `services/` - Logika domain & infrastruktur (bank, loan, job, `agent/` untuk CosmosAgentEngine, `notifier/` untuk status notifier, IPC, broadcast).
+    - `lib/` - Helper lintas-fitur tanpa pengetahuan socket/command (`lib/sticker/` untuk modul stiker, `lib/security/` untuk guard keamanan).
+    - `mcp/` - Cosmos MCP server. Contoh konfigurasi klien ada di `docs/mcp/` (bukan di `src/mcp/`). `mcp/tools/` adalah permukaan protokol MCP, bukan command bot — jangan rename.
+    - `locales/` - Terjemahan `en` dan `id` (5 namespace JSON per bahasa). Namespace `tools.json` dan key `tools.commands.*` dipertahankan apa adanya (berbeda dari nama folder by design).
     - `generated/` - Output Prisma Client (gitignored; jangan diedit).
 - `scripts/` - Dikelompokkan per tujuan: `admin/` (alat operator), `docker/` (build/deploy/dev), `i18n/` (copy-locales, validate, check-usage), `infra/` (Cloudflare tunnel, Turnstile, Doppler), `migrations/` (migrasi data sekali jalan), `release/` (`version.ts`, `release.ts`). Skrip shell menghitung `ROOT_DIR` dengan `/../..`; pertahankan itu bila memindahkan skrip.
 - `assets/` - Aset statis yang ikut ke image Docker (banner menu, `ktp_template.jpg`, `fonts/`). Aset statis **dilarang** ditaruh di `storage/`.
@@ -96,7 +97,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 ### E. Integrasi Baileys (WhatsApp API)
 
 - **Kompatibilitas JID vs LID:** Di Baileys v7+, identifikasi pengguna dapat berupa JID (`@s.whatsapp.net`) atau LID (`@lid`). Gunakan helper/logic pencocokan yang mendukung kedua format tersebut agar identifikasi pengguna tidak mismatch.
-- **Mentions Hijau (Green Mentions):** Untuk memastikan JID/LID dapat di-mention dengan benar oleh WhatsApp dan merender nama pengguna (pushname), **WAJIB** menggunakan fungsi global `formatMentions` dari `src/utils/casino.ts` saat mengisi array `mentions`. Jangan menebak domain `@s.whatsapp.net` atau `@lid` secara manual karena dapat menyebabkan mention gagal dirender (plain-text).
+- **Mentions Hijau (Green Mentions):** Untuk memastikan JID/LID dapat di-mention dengan benar oleh WhatsApp dan merender nama pengguna (pushname), **WAJIB** menggunakan fungsi global `formatMentions` dari `src/lib/casino.ts` saat mengisi array `mentions`. Jangan menebak domain `@s.whatsapp.net` atau `@lid` secara manual karena dapat menyebabkan mention gagal dirender (plain-text).
 
 ### F. Integrasi Groq SDK & LLM
 
@@ -142,7 +143,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 ### L. Format Mata Uang Rupiah (IDR Currency Standards)
 
 - **Rupiah Formatting Convention:** Setiap kali menampilkan atau memproses nilai mata uang Rupiah (saldo, taruhan, reward, payout, harga), **WAJIB** menggunakan konvensi lokal Indonesia (`Rp` tepat di depan angka tanpa spasi, pemisah ribuan berupa titik `.`, dan tanpa desimal secara default, misal: `Rp10.000`, `Rp1.000.000`).
-- **Global Currency Utility:** **WAJIB** menggunakan fungsi global `formatRupiah` dan `parseCurrencyAmount` dari `src/utils/currency.ts`. Dilarang memformat string mata uang manual secara terpecah-pecah atau menggunakan `parseInt` mentah yang merusak titik ribuan (rujuk panduan di `.agents/skills/rupiah-currency-formatting/SKILL.md`).
+- **Global Currency Utility:** **WAJIB** menggunakan fungsi global `formatRupiah` dan `parseCurrencyAmount` dari `src/lib/currency.ts`. Dilarang memformat string mata uang manual secara terpecah-pecah atau menggunakan `parseInt` mentah yang merusak titik ribuan (rujuk panduan di `.agents/skills/rupiah-currency-formatting/SKILL.md`).
 
 ### M. Bot Prefix (Command Prefix)
 
@@ -150,7 +151,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### N. Pembatalan Global & Alur Interaktif (Global Cancellation System)
 
-- **Global Cancellation Registry:** Seluruh fitur interaktif yang memiliki alur percakapan bertingkat (_multi-step conversational flow_), dialog konfirmasi aksi berisiko, atau sesi tunggu/lobby game (seperti Buckshot Roulette atau pendaftaran Virtual ID/KTP) **WAJIB** diintegrasikan ke dalam `src/utils/cancellationManager.ts` menggunakan fungsi `registerCancellableSession`.
+- **Global Cancellation Registry:** Seluruh fitur interaktif yang memiliki alur percakapan bertingkat (_multi-step conversational flow_), dialog konfirmasi aksi berisiko, atau sesi tunggu/lobby game (seperti Buckshot Roulette atau pendaftaran Virtual ID/KTP) **WAJIB** diintegrasikan ke dalam `src/lib/cancellationManager.ts` menggunakan fungsi `registerCancellableSession`.
 - **Dukungan Command `.cancel`:** Pengguna harus selalu dapat membatalkan proses dengan mengetikkan `.cancel` (atau `cancel`, `.batal`, `batal`, `.abort`, `abort`). Handler pembatalan wajib membersihkan state, timeout/timer, atau mengembalikan saldo/taruhan jika ada, lalu membatalkan pendaftaran sesi (`unregisterCancellableSession` atau `unregisterCancellableSessionByUser`). Rujuk panduan lengkap di `.agents/skills/global-cancellation-manager/SKILL.md`.
 
 ### O. Sistem Internasionalisasi & Multibahasa (i18n Localization Standards)
@@ -200,7 +201,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
     2. `generation`, `featureMilestone`, dan `patch` **wajib** berupa bilangan bulat non-negatif.
     3. `releaseDate` **wajib** berformat ISO 8601 (`YYYY-MM-DD`) dan merupakan tanggal kalender yang valid.
     4. Field `version` pada `package.json` **wajib** selalu identik dengan `version.json` (divalidasi oleh `pnpm run version:check`).
-- **Sumber Kebenaran & Pembacaan Programatik:** Versi **wajib** dibaca melalui utility terpusat `src/utils/versioning.ts` (`getVersionInfo()`, `formatVersion()`, `parseVersion()`, `bumpVersion()`, `compareVersions()`). Dilarang membaca `package.json` sebagai sumber versi, dan dilarang mem-parse versi dari `CHANGELOG.md` secara manual. Modul ini melakukan validasi invarian di atas dan melempar error deskriptif bila data rusak.
+- **Sumber Kebenaran & Pembacaan Programatik:** Versi **wajib** dibaca melalui utility terpusat `src/lib/versioning.ts` (`getVersionInfo()`, `formatVersion()`, `parseVersion()`, `bumpVersion()`, `compareVersions()`). Dilarang membaca `package.json` sebagai sumber versi, dan dilarang mem-parse versi dari `CHANGELOG.md` secara manual. Modul ini melakukan validasi invarian di atas dan melempar error deskriptif bila data rusak.
 - **Kapan AI Agent WAJIB menaikkan versi (Kapan incremented):**
     | Situasi                                       | Increment                  | Contoh                    |
     | :-------------------------------------------- | :------------------------- | :------------------------ |
@@ -251,7 +252,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### T. Standar Menu Bot & Kompatibilitas Deskripsi Perintah i18n (Menu & Command Description i18n Standards)
 
-- **Kompatibilitas Deskripsi Perintah (i18n Command Description):** Setiap deklarasi `ToolDefinition` di `src/tools/` **WAJIB** menyertakan atribut `descriptionKey` (berformat `tools.commands.<clean_name>.description`) selain `description` default berbahasa Inggris untuk keperluan Groq LLM tool calling. Seluruh deskripsi perintah wajib didaftarkan secara simetris di `src/locales/en/tools.json` dan `src/locales/id/tools.json` pada objek `"commands"`.
+- **Kompatibilitas Deskripsi Perintah (i18n Command Description):** Setiap deklarasi `CommandDefinition` di `src/commands/` **WAJIB** menyertakan atribut `descriptionKey` (berformat `tools.commands.<clean_name>.description`) selain `description` default berbahasa Inggris untuk keperluan Groq LLM tool calling. Seluruh deskripsi perintah wajib didaftarkan secara simetris di `src/locales/en/tools.json` dan `src/locales/id/tools.json` pada objek `"commands"`.
 - **Resolusi Deskripsi Dinamis:** Penampilan deskripsi perintah pada menu dan panduan bantuan (`.menu`, `.help`, `.menu <category>`, `.help <command>`) **WAJIB** diselesaikan secara dinamis melalui helper `resolveToolDescription(tool, t)` atau `menuService.getToolDescription(tool, t)` agar bahasa deskripsi dirender sesuai preferensi bahasa pengguna/obrolan (`ctx.t`).
 - **Modern Hero Banner & Baileys ExternalAdReply:** Seluruh respon tampilan menu bot (`.menu`, `.help`) **WAJIB** dikirimkan via Baileys `externalAdReply` dengan atribut `renderLargerThumbnail: true`, memanfaatkan buffer thumbnail aman dari `getMenuBannerBuffer()` (otomatis fallback ke placeholder jika file kosong/rusak), serta mengembalikan `undefined` untuk mencegah echo duplikasi pesan pada pipeline handler.
 
@@ -309,7 +310,7 @@ Dokumen ini berisi panduan, instruksi, serta peraturan baku untuk AI Coding Agen
 
 ### AC. Standar Ekstraksi String & Monospace WhatsApp (WhatsApp Monospace Filtering Standards)
 
-- **Utility Terpusat (`monospace.ts`):** Seluruh parsing argumen perintah yang memerlukan pemisahan parameter berisiko spasi (seperti alias kontak) atau isolasi teks harfiah (seperti teks brat tanpa terpicu keyword animasi) **WAJIB** menggunakan helper `extractLeadingMonospace` atau `unwrapMonospace` dari `src/utils/monospace.ts`.
+- **Utility Terpusat (`monospace.ts`):** Seluruh parsing argumen perintah yang memerlukan pemisahan parameter berisiko spasi (seperti alias kontak) atau isolasi teks harfiah (seperti teks brat tanpa terpicu keyword animasi) **WAJIB** menggunakan helper `extractLeadingMonospace` atau `unwrapMonospace` dari `src/lib/monospace.ts`.
 - **Dukungan Monospace WhatsApp:** Sistem wajib mendukung format monospace triple backtick (` ```...``` `) dan inline backtick (`` `...` ``) serta kutipan tanda petik ganda/tunggal (`"..."`, `'...'`) secara konsisten. Rujuk panduan di `.agents/skills/whatsapp-monospace-filtering/SKILL.md`.
 
 ### AD. Perencanaan Issue & Prosedur Pembuatan GitHub Issue via ISSUE.md (Issue Planning & GitHub Issue Creation Standards)

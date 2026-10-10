@@ -6,7 +6,7 @@ description: >
 
 # CosmosAgentEngine Architecture & Operational Standards
 
-Dokumen ini adalah standar operasional dan panduan arsitektur baku untuk **CosmosAgentEngine**, runtime eksekusi tool AI yang aman, deterministik, dan zero-knowledge pada Cosmos WhatsApp Bot framework (`src/services/agentEngine/`).
+Dokumen ini adalah standar operasional dan panduan arsitektur baku untuk **CosmosAgentEngine**, runtime eksekusi tool AI yang aman, deterministik, dan zero-knowledge pada Cosmos WhatsApp Bot framework (`src/services/agent/`).
 
 ---
 
@@ -101,7 +101,7 @@ Semua perintah dan tool AI dikelompokkan secara ketat pada `ToolAiPolicy`:
 
 ---
 
-## 6. Sanitasi & Normalisasi Nomor Telepon Internasional (`src/utils/phone.ts`)
+## 6. Sanitasi & Normalisasi Nomor Telepon Internasional (`src/lib/phone.ts`)
 
 1. **Multi-Token Spaced Parsing:** Perintah `.contact add <alias> <phoneNumber>` menggabungkan seluruh sisa token (`parts.slice(2).join(' ')`), sehingga nomor berjarak seperti `+94 77 000 0112` terbaca utuh. Mendukung alias dengan spasi menggunakan format monospace WhatsApp (`\`name\``atau`\`\`\`name\`\`\`).
 2. **Scrubbing Karakter:** Menghapus seluruh karakter non-angka (`\s`, `-`, `()`, `+`, `.`, dll.).

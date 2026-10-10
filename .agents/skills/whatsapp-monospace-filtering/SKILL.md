@@ -24,15 +24,15 @@ Pengguna sering menggunakan format monospace ini (atau tanda kutip ganda `"` / t
 
 ---
 
-## 2. Utility Global (`src/utils/monospace.ts`)
+## 2. Utility Global (`src/lib/monospace.ts`)
 
-Seluruh parsing parameter yang membutuhkan ekstraksi string berformat monospace atau bertanda kutip **WAJIB** menggunakan utility terpusat dari `src/utils/monospace.ts`:
+Seluruh parsing parameter yang membutuhkan ekstraksi string berformat monospace atau bertanda kutip **WAJIB** menggunakan utility terpusat dari `src/lib/monospace.ts`:
 
 - `extractLeadingMonospace(input: string)`:
   Mengekstrak blok monospace/kutipan terdepan dari teks parameter dan mengembalikan sisa parameter yang belum diproses.
 
     ```typescript
-    import { extractLeadingMonospace } from '#utils/monospace.js';
+    import { extractLeadingMonospace } from '#lib/monospace.js';
 
     const { matched, extracted, remainder } = extractLeadingMonospace('`Ls Friends` 08123456789');
     // matched: true
@@ -44,7 +44,7 @@ Seluruh parsing parameter yang membutuhkan ekstraksi string berformat monospace 
   Membuka pembungkus monospace (`...` atau `...`) atau kutipan ("...", '...') jika seluruh teks terbungkus.
 
     ````typescript
-    import { unwrapMonospace } from '#utils/monospace.js';
+    import { unwrapMonospace } from '#lib/monospace.js';
 
     const { text, wasWrapped } = unwrapMonospace('```animasi keren```');
     // text: 'animasi keren'
@@ -59,7 +59,7 @@ Seluruh parsing parameter yang membutuhkan ekstraksi string berformat monospace 
 ## 3. Aturan Baku Penggunaan
 
 1. **Dilarang Menulis Regex Monospace Terpisah-pisah**:
-   Jangan menduplikasi regex `match(/^(?:```([\s\S]+?)```|`([^`]+)`...)/)`secara manual di berbagai tools. Gunakan fungsi dari`src/utils/monospace.ts`.
+   Jangan menduplikasi regex `match(/^(?:```([\s\S]+?)```|`([^`]+)`...)/)`secara manual di berbagai tools. Gunakan fungsi dari`src/lib/monospace.ts`.
 2. **Prioritas Ekstraksi**:
    Urutan presedensi ekstraksi adalah:
     - Triple backtick (`...`)
