@@ -9,6 +9,17 @@ Releases published before the 2026-09-30 migration use the legacy `RF-YYMM-BUILD
 
 ---
 
+## [G2-F33-P21] - 2026-10-10
+
+### Fixed — Sara Self-Healing Interceptor Ignored Live `tool_use_failed` Errors
+
+- `recoverFailedGeneration` read `err.error.code` directly, but the live Groq
+  SDK delivers the API envelope (`err.error = { error: {...} }`), so the code
+  check never matched and knowledge questions (`.sara ...`) crashed with a
+  generic error instead of recovering the `web_search` call. The interceptor
+  now unwraps one envelope level while still accepting the flat shape.
+  Covered by Scenario C in `tests/agentEngine.test.ts`.
+
 ## [G2-F33-P20] - 2026-10-10
 
 ### Changed — Agent Guidance for the New Source Structure (Phase 4 Docs)

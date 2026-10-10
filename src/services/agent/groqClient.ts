@@ -127,7 +127,12 @@ export class AgentGroqClient {
         err: Record<string, unknown>,
         options: GroqCompletionOptions
     ): GroqCompletionResponse | null {
-        const errorBody = err?.error as Record<string, unknown> | undefined;
+        const rawBody = err?.error as Record<string, unknown> | undefined;
+        // Live Groq SDK errors carry the API envelope (err.error = { error: {...} }),
+        // while some surfaces pass the inner object directly. Accept both.
+        const nested = rawBody?.error as Record<string, unknown> | undefined;
+        const errorBody =
+            nested && typeof nested === 'object' && !Array.isArray(nested) ? nested : rawBody;
         if (errorBody?.code === 'tool_use_failed' && errorBody.failed_generation) {
             console.log('[CosmosAgentEngine] [SELF_HEALING] Intercepted tool_use_failed from Groq API');
             let failedGen: { name?: string; arguments?: unknown } | null = null;
