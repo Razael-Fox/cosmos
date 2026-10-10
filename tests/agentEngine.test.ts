@@ -321,6 +321,32 @@ async function runTests() {
     assert(validRecovery !== null, 'Valid failed_generation must be recovered');
     assert.strictEqual(validRecovery.finishReason, 'tool_calls');
     assert.strictEqual(validRecovery.message.tool_calls?.[0]?.function.name, 'send_message');
+
+    // Scenario C: Live Groq SDK envelope (err.error = { error: {...} }).
+    // Production 400s arrive wrapped; the interceptor must unwrap one level.
+    const envelopedFailedGen = {
+        status: 400,
+        error: {
+            error: {
+                message: 'Tool choice is none, but model called a tool',
+                type: 'invalid_request_error',
+                code: 'tool_use_failed',
+                failed_generation:
+                    '{"name": "web_search", "arguments": {"query": "soffel beverage alcohol content", "topn": 5, "source": "news"}}'
+            }
+        }
+    };
+
+    const envelopedRecovery = AgentGroqClient.recoverFailedGeneration(envelopedFailedGen, {
+        model: 'openai/gpt-oss-20b',
+        messages: [],
+        isOwner: false,
+        locale: 'en'
+    });
+
+    assert(envelopedRecovery !== null, 'Enveloped tool_use_failed must be intercepted');
+    assert.strictEqual(envelopedRecovery.finishReason, 'tool_calls');
+    assert.strictEqual(envelopedRecovery.message.tool_calls?.[0]?.function.name, 'web_search');
     console.log('  ✔ Groq self-healing interceptor and policy gate re-validation passed.');
 
     // =========================================================================
