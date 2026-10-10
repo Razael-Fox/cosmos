@@ -19,14 +19,18 @@ function createCtx(options: {
     botId?: string;
     botLid?: string;
     failMetadata?: boolean;
-}): { ctx: any; sent: SentMessage[] } {
+}): { ctx: any; sent: SentMessage[]; subscribed: string[] } {
     const sent: SentMessage[] = [];
+    const subscribed: string[] = [];
     const ctx = {
         sock: {
             user: { id: options.botId, lid: options.botLid },
             groupMetadata: async () => {
                 if (options.failMetadata) throw new Error('metadata unavailable');
                 return { participants: options.participants ?? [] };
+            },
+            presenceSubscribe: async (target: string) => {
+                subscribed.push(target);
             },
             sendMessage: async (jid: string, content: { text: string; mentions?: string[] }) => {
                 sent.push({ jid, text: content.text, mentions: content.mentions });
@@ -41,7 +45,7 @@ function createCtx(options: {
         t: getTranslator(options.lang),
         lang: options.lang
     };
-    return { ctx, sent };
+    return { ctx, sent, subscribed };
 }
 
 async function runTests() {
@@ -180,6 +184,38 @@ async function runTests() {
         assert.ok(otherCtx.sent[0].text.includes('ONLINE MEMBERS'), 'Other senders must not be locked out');
     }
     console.log('✓ Per-sender cooldown verified.');
+
+    // [Test 9] First invocation subscribes phone JIDs once; second does not resubscribe
+    console.log('[Test 9] Testing one-time presence subscription...');
+    {
+        const jid = '120363000000000009@g.us';
+        const first = createCtx({
+            jid,
+            lang: 'en',
+            participants: [
+                { id: '628555000111@s.whatsapp.net', lid: '111111111111111@lid' },
+                { id: '628555000333@s.whatsapp.net' }
+            ]
+        });
+        await execute({}, first.ctx);
+        await new Promise((r) => setImmediate(r));
+        assert.deepStrictEqual(
+            [...first.subscribed].sort(),
+            ['628555000111@s.whatsapp.net', '628555000333@s.whatsapp.net'],
+            'Only @s.whatsapp.net JIDs must be subscribed'
+        );
+
+        const second = createCtx({
+            jid,
+            lang: 'en',
+            participants: [{ id: '628555000111@s.whatsapp.net' }]
+        });
+        second.ctx.msg.key.participant = '6286666666666@s.whatsapp.net';
+        await execute({}, second.ctx);
+        await new Promise((r) => setImmediate(r));
+        assert.strictEqual(second.subscribed.length, 0, 'Subscribed group must not resubscribe');
+    }
+    console.log('✓ One-time presence subscription verified.');
 
     console.log('--- ALL CHECK ONLINE TESTS PASSED ---');
 }

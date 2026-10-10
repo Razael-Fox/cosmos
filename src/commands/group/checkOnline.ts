@@ -6,6 +6,11 @@ import { getAllOnlineIds } from '#services/presenceService.js';
 const COOLDOWN_MS = 30 * 1000;
 const lastCheckedAt = new Map<string, number>();
 
+// Presence subscription is one-time per group: re-subscribing on every
+// invocation is spam-shaped traffic, and the passive presence.update events
+// keep the map fresh afterwards.
+const subscribedGroups = new Set<string>();
+
 function toDigits(idStr: string | null | undefined): string {
     if (!idStr) return '';
     return idStr.split(':')[0].split('@')[0].replace(/\D/g, '');
@@ -96,6 +101,31 @@ export async function execute(_args: Record<string, any>, ctx: ToolContext): Pro
 
     // Only consume the cooldown once the lookup actually succeeded.
     lastCheckedAt.set(cooldownKey, Date.now());
+
+    if (!subscribedGroups.has(jid) && typeof sock.presenceSubscribe === 'function') {
+        const targets = new Set<string>();
+        for (const p of participants) {
+            for (const candidate of [p.id, p.lid]) {
+                if (candidate && candidate.endsWith('@s.whatsapp.net')) targets.add(candidate);
+            }
+        }
+        if (targets.size === 0) {
+            // Nothing subscribable; fall through to normal rendering.
+        } else try {
+            Promise.allSettled([...targets].map((target) => sock.presenceSubscribe(target)))
+            .then((results) => {
+                subscribedGroups.add(jid);
+                const failed = results.filter((r) => r.status === 'rejected').length;
+                console.log(`[Check Online] Presence subscribed for ${jid}: ${targets.size - failed}/${targets.size}`);
+            })
+            .catch((err) => {
+                // Leave the group unmarked so a later invocation retries.
+                console.error('[Check Online] Presence subscribe failed:', err);
+            });
+        } catch (err) {
+            console.error('[Check Online] Presence subscribe failed:', err);
+        }
+    }
 
     if (total === 0) {
         await sock.sendMessage(jid, { text: buildEmptyCard(ctx) }, { quoted: msg });
